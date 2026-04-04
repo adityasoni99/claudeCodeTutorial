@@ -1,0 +1,136 @@
+{
+  "projectName": "context",
+  "nodes": [
+    {
+      "id": "context",
+      "label": "context",
+      "type": "module",
+      "summary": "This project provides the foundational **React contexts** and state management infrastructure for a complex **terminal-based user interface**. It orchestrates low-level UI concerns like **z-index emulation** (overlays and modals), captures and processes **voice input**, and manages asynchronous communication via a **notification pipeline** and **message mailbox**. Additionally, it includes a centralized **telemetry system** to monitor application performance and frame rates.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "context/01_overlay___input_coordination",
+          "label": "Overlay & Input Coordination",
+          "type": "chapter",
+          "summary": "Manages UI elements that float above the main content, such as autocomplete suggestions or dialogs. In a terminal interface, this is critical for handling \"Z-index\" behavior and input capturing. The `overlayContext` coordinates global keys (like Escape) to ensure the correct layer responds, while `promptOverlayContext` acts as a portal to render content outside the standard clipping bounds of the main layout.",
+          "contentPath": "01_overlay___input_coordination.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "context/02_modal___portal_layouts",
+          "label": "Modal & Portal Layouts",
+          "type": "chapter",
+          "summary": "Provides context-awareness for components rendered inside specific \"slots\" or modals within the terminal. Because terminal UIs have fixed character grids, components need to know exactly how many rows and columns they occupy to handle scrolling and pagination correctly. This abstraction helps detached components behave as if they are part of the main document flow regarding size and scrolling logic.",
+          "contentPath": "02_modal___portal_layouts.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "context/03_message_handling___queues",
+          "label": "Message Handling & Queues",
+          "type": "chapter",
+          "summary": "Mechanisms for managing asynchronous communication and message presentation. The `Mailbox` serves as a container for signals or data passed between disparate parts of the app, while `QueuedMessageContext` manages the visual layout state (like indentation and padding) for messages as they are streamed or rendered into the terminal output.",
+          "contentPath": "03_message_handling___queues.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "context/04_voice_state_manager",
+          "label": "Voice State Manager",
+          "type": "chapter",
+          "summary": "A specialized state store designed to handle microphone interactions. It isolates the high-frequency updates of audio processing (like volume levels or interim transcription text) from the main React tree. This prevents the entire application from re-rendering constantly during voice input, ensuring the UI remains snappy while recording and processing speech.",
+          "contentPath": "04_voice_state_manager.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "context/05_notification_pipeline",
+          "label": "Notification Pipeline",
+          "type": "chapter",
+          "summary": "A robust system for displaying user alerts with advanced flow control. It functions like a smart traffic controller for messages, handling prioritization (immediate vs. background), auto-dismissal timeouts, and \"folding.\" Folding allows consecutive updates of the same type (e.g., \"Loading 10%... 20%...\") to update in place rather than spamming the user with a stack of individual notifications.",
+          "contentPath": "05_notification_pipeline.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "context/06_telemetry___stats_store",
+          "label": "Telemetry & Stats Store",
+          "type": "chapter",
+          "summary": "A centralized system for tracking application performance and usage metrics. It provides tools to record counters, gauges, and timers (histograms). It acts like the dashboard of a car, collecting data on everything from UI frame rates (`fpsMetrics`) to internal event frequencies, ensuring performance issues can be diagnosed and usage patterns understood.",
+          "contentPath": "06_telemetry___stats_store.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "context/06_telemetry___stats_store",
+          "target": "context/01_overlay___input_coordination",
+          "label": "Feeds autocomplete suggestions"
+        },
+        {
+          "source": "context/05_notification_pipeline",
+          "target": "context/01_overlay___input_coordination",
+          "label": "Registers input blocking"
+        },
+        {
+          "source": "context/04_voice_state_manager",
+          "target": "context/06_telemetry___stats_store",
+          "label": "Sends transcribed text"
+        },
+        {
+          "source": "context/02_modal___portal_layouts",
+          "target": "context/03_message_handling___queues",
+          "label": "Logs alert metrics"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "context/06_telemetry___stats_store",
+      "target": "context/01_overlay___input_coordination",
+      "label": "Feeds autocomplete suggestions"
+    },
+    {
+      "source": "context/05_notification_pipeline",
+      "target": "context/01_overlay___input_coordination",
+      "label": "Registers input blocking"
+    },
+    {
+      "source": "context/04_voice_state_manager",
+      "target": "context/06_telemetry___stats_store",
+      "label": "Sends transcribed text"
+    },
+    {
+      "source": "context/02_modal___portal_layouts",
+      "target": "context/03_message_handling___queues",
+      "label": "Logs alert metrics"
+    }
+  ],
+  "storyPath": [
+    "context/01_overlay___input_coordination",
+    "context/02_modal___portal_layouts",
+    "context/03_message_handling___queues",
+    "context/04_voice_state_manager",
+    "context/05_notification_pipeline",
+    "context/06_telemetry___stats_store"
+  ]
+}

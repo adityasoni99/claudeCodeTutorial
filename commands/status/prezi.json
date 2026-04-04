@@ -1,0 +1,124 @@
+{
+  "projectName": "status",
+  "nodes": [
+    {
+      "id": "status",
+      "label": "status",
+      "type": "module",
+      "summary": "This project implements the `status` command for the application, enabling users to view system details like version and account info. It utilizes a **Local JSX Architecture** to render interactive, React-based interfaces within the terminal. The implementation features **Dynamic Module Loading** to optimize performance by only fetching code when the command is run, and it leverages **UI Component Composition** to reuse existing visual elements.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "status/01_command_definition",
+          "label": "Command Definition",
+          "type": "chapter",
+          "summary": "This is the blueprint for adding new capabilities to the application. It defines the \"what\" and \"how\" of a feature. It includes metadata like the command's name (`status`), description, and type (`local-jsx`), as well as a pointer to the code that executes it.\n\nIt's like an item on a restaurant menu. The menu lists the name and description of the dish (metadata) so the customer knows what to order, and the kitchen knows which recipe (the implementation logic) to use when that order comes in.",
+          "contentPath": "01_command_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "status/02_dynamic_module_loading",
+          "label": "Dynamic Module Loading",
+          "type": "chapter",
+          "summary": "This pattern ensures that heavy code is only loaded into memory when it is actually needed. In the command definition, the `load` property uses a dynamic `import()` statement rather than a static import at the top of the file.\n\nIt's like a library that keeps its rare books in a separate storage facility. They don't crowd the main reading room (system memory) and are only fetched (loaded) when a patron specifically requests to read one.",
+          "contentPath": "02_dynamic_module_loading.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "status/03_local_jsx_architecture",
+          "label": "Local JSX Architecture",
+          "type": "chapter",
+          "summary": "This abstraction allows the application to render rich, interactive user interfaces using React, even though it likely runs in a terminal or local environment. Instead of just printing text to the console, it returns a React Node.\n\nThink of it like a \"Smart TV\" interface compared to an old radio. Instead of just listening to a stream of audio (text output), you have a visual, interactive screen where you can navigate menus and see structured information.",
+          "contentPath": "03_local_jsx_architecture.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "status/04_ui_component_composition",
+          "label": "UI Component Composition",
+          "type": "chapter",
+          "summary": "This abstraction leverages existing UI building blocks to create new views. The `status` command doesn't draw the screen from scratch; instead, it imports and configures a `Settings` component, passing it a specific `defaultTab`.\n\nIt's like using a modular furniture kit. You don't cut the wood and weld the metal every time you need a table; you take pre-made legs and a surface (the `Settings` component) and assemble them to fit your specific need (the \"Status\" view).",
+          "contentPath": "04_ui_component_composition.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "status/05_command_execution_lifecycle",
+          "label": "Command Execution Lifecycle",
+          "type": "chapter",
+          "summary": "This abstraction manages the flow of a command's life. It provides the `onDone` callback and the `context` object. The `context` provides necessary data (like environment variables or state), and `onDone` signals when the user is finished with the command.\n\nIt's like renting a car. The rental agency gives you the keys and the car (the `context` to do the job), and you agree to return the car to a specific location (call `onDone`) when your trip is complete so the agency can close the contract.",
+          "contentPath": "05_command_execution_lifecycle.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "status/01_command_definition",
+          "target": "status/03_local_jsx_architecture",
+          "label": "Configures"
+        },
+        {
+          "source": "status/03_local_jsx_architecture",
+          "target": "status/02_dynamic_module_loading",
+          "label": "Imports"
+        },
+        {
+          "source": "status/05_command_execution_lifecycle",
+          "target": "status/02_dynamic_module_loading",
+          "label": "Provides context to"
+        },
+        {
+          "source": "status/02_dynamic_module_loading",
+          "target": "status/04_ui_component_composition",
+          "label": "Renders"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "status/01_command_definition",
+      "target": "status/03_local_jsx_architecture",
+      "label": "Configures"
+    },
+    {
+      "source": "status/03_local_jsx_architecture",
+      "target": "status/02_dynamic_module_loading",
+      "label": "Imports"
+    },
+    {
+      "source": "status/05_command_execution_lifecycle",
+      "target": "status/02_dynamic_module_loading",
+      "label": "Provides context to"
+    },
+    {
+      "source": "status/02_dynamic_module_loading",
+      "target": "status/04_ui_component_composition",
+      "label": "Renders"
+    }
+  ],
+  "storyPath": [
+    "status/01_command_definition",
+    "status/02_dynamic_module_loading",
+    "status/03_local_jsx_architecture",
+    "status/04_ui_component_composition",
+    "status/05_command_execution_lifecycle"
+  ]
+}

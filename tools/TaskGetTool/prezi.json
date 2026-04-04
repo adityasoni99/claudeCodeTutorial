@@ -1,0 +1,144 @@
+{
+  "projectName": "TaskGetTool",
+  "nodes": [
+    {
+      "id": "taskgettool",
+      "label": "TaskGetTool",
+      "type": "module",
+      "summary": "This project implements the **TaskGetTool**, a specialized interface that enables an *AI agent* to retrieve detailed information about a specific task by its ID. It combines strict **Data Contract Schemas** for safety, detailed *Prompt Configurations* for context, and a formatting strategy to present the retrieved **Task Domain Entity** (including dependencies like blocks) in a clear, human-readable format.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "taskgettool/01_task_domain_entity",
+          "label": "Task Domain Entity",
+          "type": "chapter",
+          "summary": "The conceptual model of a unit of work within the system. It encompasses the data structure (`id`, `subject`, `status`) and the relational logic (`blocks`, `blockedBy`) required to manage project workflows.\n\nIt is the \"noun\" the tool operates on. By exposing fields like dependencies (blocks/blockedBy), it allows the AI to understand the task not just as text, but as a node in a dependency graph, enabling reasoning about order of operations.",
+          "contentPath": "01_task_domain_entity.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "taskgettool/02_data_contract_schemas",
+          "label": "Data Contract Schemas",
+          "type": "chapter",
+          "summary": "Defines the strict structure of data entering and leaving the tool using the Zod library. The `inputSchema` validates arguments provided by the AI, while `outputSchema` defines the shape of the data returned by the system.\n\nIt acts like a strict border guard between the probabilistic world of the AI (which generates text/JSON) and the deterministic world of the code. It ensures that the function receives exactly the data types it expects, preventing runtime errors caused by malformed AI inputs.",
+          "contentPath": "02_data_contract_schemas.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "taskgettool/03_prompt_configuration",
+          "label": "Prompt Configuration",
+          "type": "chapter",
+          "summary": "Contains the textual instructions provided to the AI model explaining the tool's purpose and usage guidelines. Located in `prompt.ts`, this includes a concise description and a detailed prompt strategy (e.g., explaining when to use the tool vs. others).\n\nThis is effectively \"documentation for the machine.\" Just as developers read API docs, the AI reads these prompts to understand the semantic context of the tool, such as checking for task dependencies before starting work.",
+          "contentPath": "03_prompt_configuration.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "taskgettool/04_result_formatting_strategy",
+          "label": "Result Formatting Strategy",
+          "type": "chapter",
+          "summary": "Handles the translation of structured data back into a format optimal for the AI's context window. Implemented via `mapToolResultToToolResultBlockParam`, this logic converts the raw JSON output of the tool into a human-readable text block.\n\nIt serves as a \"View\" layer. While the tool's logic retrieves a complex object, this abstraction decides how to present it\u2014formatting lists of blocked tasks or summarizing status\u2014ensuring the AI receives clear, concise feedback from its actions.",
+          "contentPath": "04_result_formatting_strategy.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "taskgettool/05_tool_definition",
+          "label": "Tool Definition",
+          "type": "chapter",
+          "summary": "Represents a distinct capability exposed to the AI agent. This abstraction aggregates metadata (name, description), configuration flags (isReadOnly, isEnabled), validation schemas, and the actual execution logic (`call`) into a single object created via `buildTool`.\n\nThink of it as a specialized API endpoint designed for an LLM. It wraps underlying business functions with the necessary context and safety checks, allowing the AI to \"know\" what actions it can perform and how to perform them safely.",
+          "contentPath": "05_tool_definition.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "taskgettool/01_task_domain_entity",
+          "target": "taskgettool/02_data_contract_schemas",
+          "label": "Validates I/O with"
+        },
+        {
+          "source": "taskgettool/01_task_domain_entity",
+          "target": "taskgettool/03_prompt_configuration",
+          "label": "Uses instructions from"
+        },
+        {
+          "source": "taskgettool/01_task_domain_entity",
+          "target": "taskgettool/05_tool_definition",
+          "label": "Retrieves"
+        },
+        {
+          "source": "taskgettool/01_task_domain_entity",
+          "target": "taskgettool/04_result_formatting_strategy",
+          "label": "Implements"
+        },
+        {
+          "source": "taskgettool/04_result_formatting_strategy",
+          "target": "taskgettool/05_tool_definition",
+          "label": "Formats properties of"
+        },
+        {
+          "source": "taskgettool/02_data_contract_schemas",
+          "target": "taskgettool/05_tool_definition",
+          "label": "Defines shape of"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "taskgettool/01_task_domain_entity",
+      "target": "taskgettool/02_data_contract_schemas",
+      "label": "Validates I/O with"
+    },
+    {
+      "source": "taskgettool/01_task_domain_entity",
+      "target": "taskgettool/03_prompt_configuration",
+      "label": "Uses instructions from"
+    },
+    {
+      "source": "taskgettool/01_task_domain_entity",
+      "target": "taskgettool/05_tool_definition",
+      "label": "Retrieves"
+    },
+    {
+      "source": "taskgettool/01_task_domain_entity",
+      "target": "taskgettool/04_result_formatting_strategy",
+      "label": "Implements"
+    },
+    {
+      "source": "taskgettool/04_result_formatting_strategy",
+      "target": "taskgettool/05_tool_definition",
+      "label": "Formats properties of"
+    },
+    {
+      "source": "taskgettool/02_data_contract_schemas",
+      "target": "taskgettool/05_tool_definition",
+      "label": "Defines shape of"
+    }
+  ],
+  "storyPath": [
+    "taskgettool/01_task_domain_entity",
+    "taskgettool/02_data_contract_schemas",
+    "taskgettool/03_prompt_configuration",
+    "taskgettool/04_result_formatting_strategy",
+    "taskgettool/05_tool_definition"
+  ]
+}

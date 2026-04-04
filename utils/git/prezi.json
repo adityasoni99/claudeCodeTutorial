@@ -1,0 +1,124 @@
+{
+  "projectName": "git",
+  "nodes": [
+    {
+      "id": "git",
+      "label": "git",
+      "type": "module",
+      "summary": "This project implements a high-performance, **filesystem-based** interface for reading and monitoring Git repository state directly, bypassing the overhead of standard CLI commands. It features a **reactive watching system** that efficiently updates cached data upon detecting file changes, alongside specialized tools for **parsing configurations**, **resolving references** (like translating branch names to SHAs), and managing **ignore rules**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "git/01_filesystem_based_git_internals",
+          "label": "Filesystem-Based Git Internals",
+          "type": "chapter",
+          "summary": "This abstraction bypasses the standard `git` command-line interface to read repository state directly from the `.git` directory structure. It handles the complexity of locating the correct metadata directory (whether it is a standard folder, a worktree pointer, or a submodule file) and reading raw status files like `HEAD` and `shallow`.\nThink of it like a mechanic opening the hood to check the engine's physical dipstick and belts directly, rather than relying on the dashboard check-engine light. This allows for faster, synchronous checks without the overhead of spawning new processes.",
+          "contentPath": "01_filesystem_based_git_internals.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "git/02_reactive_git_state_watching",
+          "label": "Reactive Git State Watching",
+          "type": "chapter",
+          "summary": "This system actively monitors specific files within the `.git` directory (like `HEAD` and reference pointers) to detect changes in the repository's state, such as branch switches or new commits. It utilizes a caching mechanism that invalidates stored data only when the underlying files are modified.\nIt acts like a security system with sensors on specific doors. Instead of a guard walking around checking every door constantly (polling), the system sits quietly and only wakes up to update the status board when a sensor triggers an alarm (file change event).",
+          "contentPath": "02_reactive_git_state_watching.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "git/03_reference_resolution___validation",
+          "label": "Reference Resolution & Validation",
+          "type": "chapter",
+          "summary": "This logic is responsible for translating human-readable branch names (refs) into computer-readable Commit IDs (SHAs). It handles the complexity of checking \"loose\" files (individual files per branch) and falling back to \"packed-refs\" (a single compressed file), while ensuring all inputs are sanitized to prevent security issues like path traversal.\nIt functions like a library card catalog system. You start with a book title (the branch name), and the system looks through both the new arrivals shelf (loose refs) and the main archive index (packed-refs) to find the exact call number (SHA) needed to locate the content.",
+          "contentPath": "03_reference_resolution___validation.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "git/04_git_configuration_parsing",
+          "label": "Git Configuration Parsing",
+          "type": "chapter",
+          "summary": "A specialized parser designed to read `.git/config` files without using the `git config` command. It understands the specific INI-like syntax of Git configurations, including case-insensitive sections, quoted subsections, and backslash escape sequences.\nImagine a translator who speaks a very specific, local dialect. Instead of hiring a general interpreter (the Git binary), this lightweight tool reads the user's settings diary directly to quickly find specific preferences, like remote origin URLs, without the heavy administrative overhead of a formal inquiry.",
+          "contentPath": "04_git_configuration_parsing.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "git/05_ignore_rule_management",
+          "label": "Ignore Rule Management",
+          "type": "chapter",
+          "summary": "This abstraction manages the rules that tell Git which files to overlook. It provides utilities to query whether a specific path is ignored (consulting local and global rules) and allows for programmatically adding new patterns to the global gitignore file.\nThink of it as the \"Do Not Disturb\" registry or a club bouncer's blacklist. It checks every file approaching the repository against a set of rules to decide if it should be let in (tracked) or turned away (ignored), and it can update the master list to block new types of nuisances automatically.",
+          "contentPath": "05_ignore_rule_management.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "git/02_reactive_git_state_watching",
+          "target": "git/01_filesystem_based_git_internals",
+          "label": "Monitors files"
+        },
+        {
+          "source": "git/01_filesystem_based_git_internals",
+          "target": "git/04_git_configuration_parsing",
+          "label": "Resolves references"
+        },
+        {
+          "source": "git/01_filesystem_based_git_internals",
+          "target": "git/03_reference_resolution___validation",
+          "label": "Parses remote config"
+        },
+        {
+          "source": "git/05_ignore_rule_management",
+          "target": "git/01_filesystem_based_git_internals",
+          "label": "Checks repo existence"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "git/02_reactive_git_state_watching",
+      "target": "git/01_filesystem_based_git_internals",
+      "label": "Monitors files"
+    },
+    {
+      "source": "git/01_filesystem_based_git_internals",
+      "target": "git/04_git_configuration_parsing",
+      "label": "Resolves references"
+    },
+    {
+      "source": "git/01_filesystem_based_git_internals",
+      "target": "git/03_reference_resolution___validation",
+      "label": "Parses remote config"
+    },
+    {
+      "source": "git/05_ignore_rule_management",
+      "target": "git/01_filesystem_based_git_internals",
+      "label": "Checks repo existence"
+    }
+  ],
+  "storyPath": [
+    "git/01_filesystem_based_git_internals",
+    "git/02_reactive_git_state_watching",
+    "git/03_reference_resolution___validation",
+    "git/04_git_configuration_parsing",
+    "git/05_ignore_rule_management"
+  ]
+}

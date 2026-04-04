@@ -1,0 +1,124 @@
+{
+  "projectName": "buddy",
+  "nodes": [
+    {
+      "id": "buddy",
+      "label": "buddy",
+      "type": "module",
+      "summary": "The project implements a persistent **digital companion** that lives in the terminal alongside the user. It uses *deterministic generation* to create a unique creature (like a duck or robot) based on the user's ID, renders it using dynamic **ASCII art**, and manages its lifecycle with idle animations, reactions, and AI context awareness.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "buddy/01_deterministic_generation__soul___bones_",
+          "label": "Deterministic Generation (Soul & Bones)",
+          "type": "chapter",
+          "summary": "The logic that creates a unique companion for every user. It uses a seeded random number generator (based on the user's ID) to determine immutable traits called \"Bones\" (species, rarity, stats), while the \"Soul\" (name, personality) is stored in the config.\nIt's like digital DNA: your user ID is the seed that grows a specific, permanent creature just for you.",
+          "contentPath": "01_deterministic_generation__soul___bones_.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "buddy/02_ascii_sprite_renderer",
+          "label": "ASCII Sprite Renderer",
+          "type": "chapter",
+          "summary": "The graphics engine for the terminal. It holds the raw ASCII art templates for all species and handles the dynamic substitution of parts (like eyes and hats) and frame selection.\nThink of it as the costume department that assembles the puppet based on the design blueprint before it goes on stage.",
+          "contentPath": "02_ascii_sprite_renderer.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "buddy/03_live_component___animation",
+          "label": "Live Component & Animation",
+          "type": "chapter",
+          "summary": "The React (Ink) component that renders the companion in the terminal. It manages the \"heartbeat\" (a tick loop) to trigger idle animations like blinking or fidgeting and handles the positioning of speech bubbles.\nThis is the actor on stage performing the script in real-time, breathing and reacting to the environment.",
+          "contentPath": "03_live_component___animation.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "buddy/04_context_injection",
+          "label": "Context Injection",
+          "type": "chapter",
+          "summary": "Functions that introduce the companion to the AI model. By injecting a description of the companion (name, species) into the system prompt, the AI knows how to acknowledge or roleplay as the sidekick.\nIt's like handing a character sheet to the Dungeon Master so they know there is a goblin sitting on your shoulder during the adventure.",
+          "contentPath": "04_context_injection.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "buddy/05_feature_discovery___teaser",
+          "label": "Feature Discovery & Teaser",
+          "type": "chapter",
+          "summary": "Manages the user's first encounter with the feature. It includes logic for time-gated teasers (specific dates) and visual notifications (rainbow text) to announce the availability of the buddy command.\nSimilar to a \"Coming Soon\" movie poster or a launch event notification that alerts passersby to something new.",
+          "contentPath": "05_feature_discovery___teaser.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "buddy/03_live_component___animation",
+          "target": "buddy/01_deterministic_generation__soul___bones_",
+          "label": "Retrieves companion state"
+        },
+        {
+          "source": "buddy/03_live_component___animation",
+          "target": "buddy/02_ascii_sprite_renderer",
+          "label": "Generates visual frames"
+        },
+        {
+          "source": "buddy/04_context_injection",
+          "target": "buddy/01_deterministic_generation__soul___bones_",
+          "label": "Injects companion info"
+        },
+        {
+          "source": "buddy/05_feature_discovery___teaser",
+          "target": "buddy/01_deterministic_generation__soul___bones_",
+          "label": "Checks existence state"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "buddy/03_live_component___animation",
+      "target": "buddy/01_deterministic_generation__soul___bones_",
+      "label": "Retrieves companion state"
+    },
+    {
+      "source": "buddy/03_live_component___animation",
+      "target": "buddy/02_ascii_sprite_renderer",
+      "label": "Generates visual frames"
+    },
+    {
+      "source": "buddy/04_context_injection",
+      "target": "buddy/01_deterministic_generation__soul___bones_",
+      "label": "Injects companion info"
+    },
+    {
+      "source": "buddy/05_feature_discovery___teaser",
+      "target": "buddy/01_deterministic_generation__soul___bones_",
+      "label": "Checks existence state"
+    }
+  ],
+  "storyPath": [
+    "buddy/01_deterministic_generation__soul___bones_",
+    "buddy/02_ascii_sprite_renderer",
+    "buddy/03_live_component___animation",
+    "buddy/04_context_injection",
+    "buddy/05_feature_discovery___teaser"
+  ]
+}

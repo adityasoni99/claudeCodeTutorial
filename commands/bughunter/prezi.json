@@ -1,0 +1,102 @@
+{
+  "projectName": "bughunter",
+  "nodes": [
+    {
+      "id": "bughunter",
+      "label": "bughunter",
+      "type": "module",
+      "summary": "This project defines a **structural placeholder** (or \"stub\") for a software component, ensuring the system can recognize it without requiring concrete logic yet. It uses specific properties to establish the component's *identity* while keeping it structurally present but explicitly *disabled* and *hidden* from the user interface.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "bughunter/01_module_stub",
+          "label": "Module Stub",
+          "type": "chapter",
+          "summary": "This abstraction represents the structural contract for a component within the system. It is currently implemented as a placeholder (stub) that satisfies the required interface without providing concrete logic.\nIt's like a \"Reserved\" sign on a table; it occupies the space and holds the identity of the guest, even though the guest isn't actually there doing anything yet.",
+          "contentPath": "01_module_stub.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bughunter/02_component_identity",
+          "label": "Component Identity",
+          "type": "chapter",
+          "summary": "Defined by the `name` property, this abstraction provides a unique string identifier ('stub') for the system to reference this specific module internally.\nIt works like a nametag or a badge worn by an employee, allowing the central management system to know exactly who (or what module) it is interacting with.",
+          "contentPath": "02_component_identity.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bughunter/03_feature_gating",
+          "label": "Feature Gating",
+          "type": "chapter",
+          "summary": "Encapsulated by the `isEnabled` function, this abstraction controls whether the module's logic is active. Currently hardcoded to return `false`, it serves as a toggle mechanism.\nThink of it as a master circuit breaker for a specific room in a house. Even if the room is fully furnished, if the breaker is off, the lights and outlets won't work.",
+          "contentPath": "03_feature_gating.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bughunter/04_visibility_state",
+          "label": "Visibility State",
+          "type": "chapter",
+          "summary": "Managed by the `isHidden` property, this concept separates the existence of a module from its visual presence in the user interface.\nIt's similar to a \"stealth mode\" on an aircraft; the plane is flying and physically present in the sky, but it does not appear on the radar screen.",
+          "contentPath": "04_visibility_state.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "bughunter/01_module_stub",
+          "target": "bughunter/04_visibility_state",
+          "label": "Defines identity"
+        },
+        {
+          "source": "bughunter/01_module_stub",
+          "target": "bughunter/02_component_identity",
+          "label": "Determines activity"
+        },
+        {
+          "source": "bughunter/01_module_stub",
+          "target": "bughunter/03_feature_gating",
+          "label": "Configures appearance"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "bughunter/01_module_stub",
+      "target": "bughunter/04_visibility_state",
+      "label": "Defines identity"
+    },
+    {
+      "source": "bughunter/01_module_stub",
+      "target": "bughunter/02_component_identity",
+      "label": "Determines activity"
+    },
+    {
+      "source": "bughunter/01_module_stub",
+      "target": "bughunter/03_feature_gating",
+      "label": "Configures appearance"
+    }
+  ],
+  "storyPath": [
+    "bughunter/01_module_stub",
+    "bughunter/02_component_identity",
+    "bughunter/03_feature_gating",
+    "bughunter/04_visibility_state"
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "projectName": "ConfigTool",
+  "nodes": [
+    {
+      "id": "configtool",
+      "label": "ConfigTool",
+      "type": "module",
+      "summary": "This project implements a **configuration management tool** that empowers an AI agent to inspect and modify application settings. It uses a **central registry** to define schemas and validation rules, orchestrates a **dual-layer storage strategy** to separate *global* preferences from *project-specific* data, and delivers **visual feedback** to the user upon execution.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "configtool/01_configuration_registry",
+          "label": "Configuration Registry",
+          "type": "chapter",
+          "summary": "This is the central source of truth for all configurable settings. It defines the schema for every setting, including its data type (boolean, string), valid options, description, and where it lives (global vs. project). It also handles feature flagging to hide unsupported settings.\n\nThink of it as the \"menu\" for a restaurant. It lists every dish available, what ingredients it contains (types), and the price (validation), ensuring customers (the AI) only order items that actually exist.",
+          "contentPath": "01_configuration_registry.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "configtool/02_dual_layer_storage_strategy",
+          "label": "Dual-Layer Storage Strategy",
+          "type": "chapter",
+          "summary": "The system distinguishes between two storage scopes: `global` (user-wide settings like themes) and `settings` (project-specific settings like memory). The code determines where to read/write based on the configuration definition, merging them into a cohesive view.\n\nThink of it like the difference between your backpack and a filing cabinet at work. Your backpack (Global) goes with you everywhere and holds your personal items. The filing cabinet (Project) stays in one office and holds items specific only to that job.",
+          "contentPath": "02_dual_layer_storage_strategy.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "configtool/03_tool_execution_logic",
+          "label": "Tool Execution Logic",
+          "type": "chapter",
+          "summary": "This is the controller that bridges the AI's intent with the application's internal state. It handles the input validation using Zod schemas, executes the read (get) or write (set) operations, and manages side effects like permissions checks and updating the active application state (AppState).\n\nIt acts like a universal remote control. The user presses a button (inputs a command), and this logic translates that signal into the specific electrical impulse needed to change the channel or volume on the TV (the system config).",
+          "contentPath": "03_tool_execution_logic.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "configtool/04_dynamic_context_injection",
+          "label": "Dynamic Context Injection",
+          "type": "chapter",
+          "summary": "This mechanism generates the documentation string provided to the AI model. Instead of a static text file, the prompt is built programmatically. It filters out settings that are disabled by feature flags (like Voice Mode) to prevent the AI from hallucinating capabilities that don't exist in the current environment.\n\nImagine a tour guide who rewrites their script every morning. If a specific museum wing is closed for renovations today, the guide removes it from the script so they don't promise tourists a visit to a closed exhibit.",
+          "contentPath": "04_dynamic_context_injection.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "configtool/05_visual_feedback_components",
+          "label": "Visual Feedback Components",
+          "type": "chapter",
+          "summary": "This abstraction manages how the tool's actions and results are rendered visually to the user in the CLI. It handles different states: showing what the tool intends to do (setting a value), displaying the result (success/failure), and handling errors.\n\nIt's like the dashboard display in a car. When you change drive modes, the car's internal computer does the work, but this component is responsible for lighting up the \"Sport Mode\" icon so the driver knows the change actually happened.",
+          "contentPath": "05_visual_feedback_components.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "configtool/02_dual_layer_storage_strategy",
+          "target": "configtool/01_configuration_registry",
+          "label": "Validates inputs against"
+        },
+        {
+          "source": "configtool/02_dual_layer_storage_strategy",
+          "target": "configtool/03_tool_execution_logic",
+          "label": "Generates documentation via"
+        },
+        {
+          "source": "configtool/02_dual_layer_storage_strategy",
+          "target": "configtool/05_visual_feedback_components",
+          "label": "Persists data using"
+        },
+        {
+          "source": "configtool/02_dual_layer_storage_strategy",
+          "target": "configtool/04_dynamic_context_injection",
+          "label": "Renders output via"
+        },
+        {
+          "source": "configtool/03_tool_execution_logic",
+          "target": "configtool/01_configuration_registry",
+          "label": "Reads definitions from"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "configtool/02_dual_layer_storage_strategy",
+      "target": "configtool/01_configuration_registry",
+      "label": "Validates inputs against"
+    },
+    {
+      "source": "configtool/02_dual_layer_storage_strategy",
+      "target": "configtool/03_tool_execution_logic",
+      "label": "Generates documentation via"
+    },
+    {
+      "source": "configtool/02_dual_layer_storage_strategy",
+      "target": "configtool/05_visual_feedback_components",
+      "label": "Persists data using"
+    },
+    {
+      "source": "configtool/02_dual_layer_storage_strategy",
+      "target": "configtool/04_dynamic_context_injection",
+      "label": "Renders output via"
+    },
+    {
+      "source": "configtool/03_tool_execution_logic",
+      "target": "configtool/01_configuration_registry",
+      "label": "Reads definitions from"
+    }
+  ],
+  "storyPath": [
+    "configtool/01_configuration_registry",
+    "configtool/02_dual_layer_storage_strategy",
+    "configtool/03_tool_execution_logic",
+    "configtool/04_dynamic_context_injection",
+    "configtool/05_visual_feedback_components"
+  ]
+}

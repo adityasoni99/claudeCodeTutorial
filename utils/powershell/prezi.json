@@ -1,0 +1,124 @@
+{
+  "projectName": "powershell",
+  "nodes": [
+    {
+      "id": "powershell",
+      "label": "powershell",
+      "type": "module",
+      "summary": "This project serves as a secure **PowerShell analysis bridge** for Node.js, designed to safely interpret and classify user commands. It spawns a native `pwsh` process to parse scripts into a structured **Abstract Syntax Tree (AST)**, which is then normalized into typed objects. The system uses this structured data to detect **security patterns** (like injection risks), validate against a registry of **dangerous cmdlets**, and generate **least-privilege** permission suggestions for the user interface.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "powershell/01_ast_based_parsing_bridge",
+          "label": "AST-Based Parsing Bridge",
+          "type": "chapter",
+          "summary": "The core engine that bridges Node.js and PowerShell. Because TypeScript cannot natively parse PowerShell syntax, this abstraction spawns a `pwsh` subprocess and feeds it a custom, embedded PowerShell script (`PARSE_SCRIPT_BODY`). This script utilizes the native .NET System.Management.Automation parser to generate an Abstract Syntax Tree (AST), which is returned as JSON.\nIt acts like a foreign language translator: sending raw text to a native speaker (PowerShell) and receiving a structured grammatical diagram back.",
+          "contentPath": "01_ast_based_parsing_bridge.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "powershell/02_ast_transformation___normalization",
+          "label": "AST Transformation & Normalization",
+          "type": "chapter",
+          "summary": "Logic that converts raw, verbose .NET AST nodes (like `CommandExpressionAst` or `MergingRedirectionAst`) into simplified, type-safe TypeScript interfaces (`ParsedPowerShellCommand`, `ParsedCommandElement`). It handles normalization tasks like resolving aliases, stripping module prefixes (e.g., changing `Microsoft.PowerShell.Management\\Get-Process` to `Get-Process`), and classifying command types.\nIt serves as a filter, distilling the complex, noisy output of the raw parser into a clean, usable format for the rest of the application.",
+          "contentPath": "02_ast_transformation___normalization.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "powershell/03_security_pattern_detection",
+          "label": "Security Pattern Detection",
+          "type": "chapter",
+          "summary": "A set of heuristics derived directly from the parsed AST to identify dangerous syntax patterns regardless of the specific command names. It scans for features like script blocks (`{ ... }`), sub-expressions (`$( ... )`), variable splatting, or method invocations.\nIt functions like an airport X-ray scanner: it doesn't just look at the passenger's name (the command), it looks inside their luggage for dangerous objects (syntax that allows code injection or obfuscation).",
+          "contentPath": "03_security_pattern_detection.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "powershell/04_static_prefix_extraction",
+          "label": "Static Prefix Extraction",
+          "type": "chapter",
+          "summary": "A system designed to generate \"least privilege\" permission suggestions for the UI. Instead of asking the user to allow a broad command like `git`, it analyzes the AST to suggest a specific subcommand prefix like `git push` or `npm run`. It uses \"fig specs\" to distinguish between flags (which shouldn't be part of the prefix) and subcommands.\nThink of it as an intelligent key cutter: instead of giving a master key for the whole building, it tries to cut a key that opens only the specific door the user is trying to walk through.",
+          "contentPath": "04_static_prefix_extraction.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "powershell/05_dangerous_cmdlet_registry",
+          "label": "Dangerous Cmdlet Registry",
+          "type": "chapter",
+          "summary": "A centralized knowledge base of PowerShell cmdlets and external binaries deemed inherently risky. It categorizes commands based on their capabilities, such as arbitrary code execution (`Invoke-Expression`), network access (`Invoke-WebRequest`), or process spawning.\nThis acts as a security watch-list. If a command appears on this list (e.g., in `NEVER_SUGGEST`), the system knows to treat it with extreme caution, often disabling auto-approval features or refusing to generate wildcard permissions.",
+          "contentPath": "05_dangerous_cmdlet_registry.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "powershell/01_ast_based_parsing_bridge",
+          "target": "powershell/02_ast_transformation___normalization",
+          "label": "Feeds raw AST data"
+        },
+        {
+          "source": "powershell/03_security_pattern_detection",
+          "target": "powershell/01_ast_based_parsing_bridge",
+          "label": "Invokes parsing logic"
+        },
+        {
+          "source": "powershell/03_security_pattern_detection",
+          "target": "powershell/04_static_prefix_extraction",
+          "label": "Filters unsafe cmdlets"
+        },
+        {
+          "source": "powershell/01_ast_based_parsing_bridge",
+          "target": "powershell/05_dangerous_cmdlet_registry",
+          "label": "Runs detection heuristics"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "powershell/01_ast_based_parsing_bridge",
+      "target": "powershell/02_ast_transformation___normalization",
+      "label": "Feeds raw AST data"
+    },
+    {
+      "source": "powershell/03_security_pattern_detection",
+      "target": "powershell/01_ast_based_parsing_bridge",
+      "label": "Invokes parsing logic"
+    },
+    {
+      "source": "powershell/03_security_pattern_detection",
+      "target": "powershell/04_static_prefix_extraction",
+      "label": "Filters unsafe cmdlets"
+    },
+    {
+      "source": "powershell/01_ast_based_parsing_bridge",
+      "target": "powershell/05_dangerous_cmdlet_registry",
+      "label": "Runs detection heuristics"
+    }
+  ],
+  "storyPath": [
+    "powershell/01_ast_based_parsing_bridge",
+    "powershell/02_ast_transformation___normalization",
+    "powershell/03_security_pattern_detection",
+    "powershell/04_static_prefix_extraction",
+    "powershell/05_dangerous_cmdlet_registry"
+  ]
+}

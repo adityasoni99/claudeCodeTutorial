@@ -1,0 +1,80 @@
+{
+  "projectName": "break-cache",
+  "nodes": [
+    {
+      "id": "break-cache",
+      "label": "break-cache",
+      "type": "module",
+      "summary": "This project serves as a **placeholder** component that is technically present but functionally *inert*. It provides a basic structure that is explicitly **disabled** and **hidden**, ensuring it does not appear in menus or perform any actions until it is updated with real logic.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "break-cache/01_stub_definition",
+          "label": "Stub Definition",
+          "type": "chapter",
+          "summary": "The central export of the file is a placeholder object. It identifies itself explicitly as a 'stub' and provides a default structure that likely satisfies a larger interface requirement (such as a plugin protocol) without implementing actual logic.\n\nIt is like a \"dummy plug\" used in electronics or a \"Coming Soon\" sign in a store window; it fits into the socket to keep the system consistent or reserves the space, but it doesn't actually conduct signals, sell products, or perform any active work yet.",
+          "contentPath": "01_stub_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "break-cache/02_feature_state_control",
+          "label": "Feature State Control",
+          "type": "chapter",
+          "summary": "The `isEnabled` method is the mechanism used to determine if the module should be active. Currently, it is a function that explicitly returns `false`, effectively turning the feature off completely within the host system.\n\nIt acts like a master circuit breaker that has been intentionally tripped or a safety switch on a power tool; even though the machinery (the module) is present and plugged in, the power is cut internally, ensuring that the tool remains inert and does not affect the surrounding environment or operation.",
+          "contentPath": "02_feature_state_control.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "break-cache/03_visibility_configuration",
+          "label": "Visibility Configuration",
+          "type": "chapter",
+          "summary": "The `isHidden` property controls the display status of the module within the host application. By setting this to `true`, the module prevents itself from appearing in user-facing menus, lists, or help outputs.\n\nThink of it as a \"hidden file\" on your operating system or a backstage area in a theater; the entity exists technically within the environment and has a defined name, but it is deliberately kept out of the general view to avoid cluttering the interface or confusing the standard user.",
+          "contentPath": "03_visibility_configuration.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "break-cache/01_stub_definition",
+          "target": "break-cache/02_feature_state_control",
+          "label": "Defines activation logic"
+        },
+        {
+          "source": "break-cache/01_stub_definition",
+          "target": "break-cache/03_visibility_configuration",
+          "label": "Configures interface visibi..."
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "break-cache/01_stub_definition",
+      "target": "break-cache/02_feature_state_control",
+      "label": "Defines activation logic"
+    },
+    {
+      "source": "break-cache/01_stub_definition",
+      "target": "break-cache/03_visibility_configuration",
+      "label": "Configures interface visibility"
+    }
+  ],
+  "storyPath": [
+    "break-cache/01_stub_definition",
+    "break-cache/02_feature_state_control",
+    "break-cache/03_visibility_configuration"
+  ]
+}

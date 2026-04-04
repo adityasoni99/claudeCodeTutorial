@@ -1,0 +1,134 @@
+{
+  "projectName": "ide",
+  "nodes": [
+    {
+      "id": "ide",
+      "label": "ide",
+      "type": "module",
+      "summary": "This functionality acts as a bridge between the CLI and **Integrated Development Environments (IDEs)**. It provides an **interactive terminal interface** to detect running IDEs (like VS Code or JetBrains), install extensions, and manage the **Model Context Protocol (MCP)** connection lifecycle to ensure seamless communication between the tools.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "ide/01_command_registration",
+          "label": "Command Registration",
+          "type": "chapter",
+          "summary": "This abstraction defines the entry point for the `ide` command within the CLI application. It acts like a menu entry in a restaurant; it lists the name, description, and usage hints, but the actual \"cooking\" (logic) is lazy-loaded from another file only when ordered. This pattern keeps the initial application startup fast by deferring the loading of heavy dependencies until the command is actually executed.",
+          "contentPath": "01_command_registration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ide/02_ide_discovery_and_setup_flow",
+          "label": "IDE Discovery and Setup Flow",
+          "type": "chapter",
+          "summary": "This logic governs the process of identifying available development environments. It distinguishes between IDEs that are simply running and those that are fully \"connected\" (have the necessary extension installed). It guides the user through a decision tree: if no connected IDE is found, it looks for running ones to install extensions; if multiple are found, it asks for a selection. It acts as a setup wizard, ensuring the environment is ready before attempting to perform actions.",
+          "contentPath": "02_ide_discovery_and_setup_flow.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ide/03_interactive_terminal_interface",
+          "label": "Interactive Terminal Interface",
+          "type": "chapter",
+          "summary": "This layer uses React (specifically the Ink library) to render a graphical user interface directly inside the text-based terminal. Instead of simple text prompts, it provides rich, interactive components like dialog boxes, selection lists, and status indicators. It's akin to running a mini-website inside your console window, allowing users to navigate options and make selections using keyboard controls rather than typing complex command-line arguments.",
+          "contentPath": "03_interactive_terminal_interface.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ide/04_mcp_connection_lifecycle",
+          "label": "MCP Connection Lifecycle",
+          "type": "chapter",
+          "summary": "This abstraction manages the connection state between the CLI tool and the IDE using the Model Context Protocol (MCP). It handles the complex \"handshake\" process: updating dynamic configurations, initiating connections via WebSockets or Server-Sent Events (SSE), handling timeouts, and cleaning up resources upon disconnection. Think of it as a switchboard operator that ensures a stable communication line is established and maintained between the two separate applications (the CLI and the Editor).",
+          "contentPath": "04_mcp_connection_lifecycle.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ide/05_workspace_path_formatting",
+          "label": "Workspace Path Formatting",
+          "type": "chapter",
+          "summary": "A specialized utility for presenting file system paths within the constrained visual space of a terminal UI. It handles complex string manipulation tasks like normalizing Unicode characters (NFC/NFD), calculating paths relative to the current working directory, and intelligently truncating long paths with ellipses. It ensures that \"messy\" absolute paths are converted into clean, readable labels for the user interface, much like how a GPS displays \"Home\" instead of raw latitude/longitude coordinates.",
+          "contentPath": "05_workspace_path_formatting.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "ide/01_command_registration",
+          "target": "ide/04_mcp_connection_lifecycle",
+          "label": "Lazy-loads execution logic"
+        },
+        {
+          "source": "ide/04_mcp_connection_lifecycle",
+          "target": "ide/02_ide_discovery_and_setup_flow",
+          "label": "Renders selector screens"
+        },
+        {
+          "source": "ide/04_mcp_connection_lifecycle",
+          "target": "ide/03_interactive_terminal_interface",
+          "label": "Initiates connection manager"
+        },
+        {
+          "source": "ide/03_interactive_terminal_interface",
+          "target": "ide/02_ide_discovery_and_setup_flow",
+          "label": "Displays status UI"
+        },
+        {
+          "source": "ide/02_ide_discovery_and_setup_flow",
+          "target": "ide/05_workspace_path_formatting",
+          "label": "Formats paths for display"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "ide/01_command_registration",
+      "target": "ide/04_mcp_connection_lifecycle",
+      "label": "Lazy-loads execution logic"
+    },
+    {
+      "source": "ide/04_mcp_connection_lifecycle",
+      "target": "ide/02_ide_discovery_and_setup_flow",
+      "label": "Renders selector screens"
+    },
+    {
+      "source": "ide/04_mcp_connection_lifecycle",
+      "target": "ide/03_interactive_terminal_interface",
+      "label": "Initiates connection manager"
+    },
+    {
+      "source": "ide/03_interactive_terminal_interface",
+      "target": "ide/02_ide_discovery_and_setup_flow",
+      "label": "Displays status UI"
+    },
+    {
+      "source": "ide/02_ide_discovery_and_setup_flow",
+      "target": "ide/05_workspace_path_formatting",
+      "label": "Formats paths for display"
+    }
+  ],
+  "storyPath": [
+    "ide/01_command_registration",
+    "ide/02_ide_discovery_and_setup_flow",
+    "ide/03_interactive_terminal_interface",
+    "ide/04_mcp_connection_lifecycle",
+    "ide/05_workspace_path_formatting"
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "projectName": "TaskCreateTool",
+  "nodes": [
+    {
+      "id": "taskcreatetool",
+      "label": "TaskCreateTool",
+      "type": "module",
+      "summary": "This project defines a specialized **TaskCreate** tool that allows an AI agent to *programmatically* add new items to a structured task list. It acts as a bridge between the agent's intent and the system's database, ensuring that every task has a clear **subject** and **description** while strictly validating data and checking feature flags before execution.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "taskcreatetool/01_tool_definition_architecture",
+          "label": "Tool Definition Architecture",
+          "type": "chapter",
+          "summary": "This is the foundational structure that wraps the specific functionality into a standardized unit the AI agent can use. It uses the `buildTool` helper to define metadata, behavior, and interfaces.\n\nThink of it as a \"Driver Adapter\" or a \"Plug.\" Just as a USB device needs a specific connector shape to fit into a computer, this abstraction ensures the specific logic of creating tasks fits perfectly into the general agent framework, exposing the right methods for name, description, and execution.",
+          "contentPath": "01_tool_definition_architecture.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "taskcreatetool/02_schema_based_data_contracts",
+          "label": "Schema-Based Data Contracts",
+          "type": "chapter",
+          "summary": "Using the `zod` library, this abstraction strictly defines the shape of data entering (input) and leaving (output) the tool. It ensures that required fields like `subject` and `description` are present and that optional fields like `activeForm` are handled correctly before any code executes.\n\nThink of this as a strict \"Immigration Form\" or \"Building Permit Application.\" Before the system processes anything, this layer checks the paperwork. If a field is missing or the wrong data type is provided, the application is rejected immediately, preventing errors deeper in the system.",
+          "contentPath": "02_schema_based_data_contracts.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "taskcreatetool/03_dynamic_contextual_prompting",
+          "label": "Dynamic Contextual Prompting",
+          "type": "chapter",
+          "summary": "This abstraction defines how the tool presents itself to the AI model. Unlike static descriptions, this logic dynamically alters the instructions based on the environment (e.g., if \"Agent Swarms\" are enabled). It tells the AI *when* to use the tool, *how* to write titles, and *what* tips to follow.\n\nIt acts like a \"Briefing Officer\" for a mission. Before the agent starts working, this abstraction hands them a specific manual that updates automatically\u2014if the agent is working alone, the manual is simple; if working in a team, the manual adds pages about delegation.",
+          "contentPath": "03_dynamic_contextual_prompting.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "taskcreatetool/04_feature_gating_and_availability",
+          "label": "Feature Gating and Availability",
+          "type": "chapter",
+          "summary": "This abstraction controls the visibility and operability of the tool based on system configuration. Through checks like `isEnabled()` returning `isTodoV2Enabled()`, the code determines if this specific tool should be exposed to the agent at all.\n\nImagine a \"Circuit Breaker\" or a \"Master Switch.\" Even if the tool is fully built and installed, this logic decides if the power is turned on. It allows the developers to deploy code that is only active for certain users or when specific feature flags are toggled on.",
+          "contentPath": "04_feature_gating_and_availability.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "taskcreatetool/05_task_execution___lifecycle_management",
+          "label": "Task Execution & Lifecycle Management",
+          "type": "chapter",
+          "summary": "Encapsulated within the `call` method, this is the core engine that performs the actual work. It orchestrates a sequence of events: creating the task in the database, executing \"hooks\" (side effects or validations), handling errors by rolling back changes (deleting the task if hooks fail), and updating the UI state (expanding the task view).\n\nIt works like a \"Transaction Manager\" at a bank. It doesn't just move money; it verifies funds, logs the transfer, notifies the recipient, and if anything goes wrong during the process, it cancels the whole thing to ensure no money is lost.",
+          "contentPath": "05_task_execution___lifecycle_management.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "taskcreatetool/01_tool_definition_architecture",
+          "target": "taskcreatetool/02_schema_based_data_contracts",
+          "label": "Retrieves instructions"
+        },
+        {
+          "source": "taskcreatetool/01_tool_definition_architecture",
+          "target": "taskcreatetool/03_dynamic_contextual_prompting",
+          "label": "Enforces input structure"
+        },
+        {
+          "source": "taskcreatetool/01_tool_definition_architecture",
+          "target": "taskcreatetool/04_feature_gating_and_availability",
+          "label": "Invokes core logic"
+        },
+        {
+          "source": "taskcreatetool/01_tool_definition_architecture",
+          "target": "taskcreatetool/05_task_execution___lifecycle_management",
+          "label": "Verifies activation status"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "taskcreatetool/01_tool_definition_architecture",
+      "target": "taskcreatetool/02_schema_based_data_contracts",
+      "label": "Retrieves instructions"
+    },
+    {
+      "source": "taskcreatetool/01_tool_definition_architecture",
+      "target": "taskcreatetool/03_dynamic_contextual_prompting",
+      "label": "Enforces input structure"
+    },
+    {
+      "source": "taskcreatetool/01_tool_definition_architecture",
+      "target": "taskcreatetool/04_feature_gating_and_availability",
+      "label": "Invokes core logic"
+    },
+    {
+      "source": "taskcreatetool/01_tool_definition_architecture",
+      "target": "taskcreatetool/05_task_execution___lifecycle_management",
+      "label": "Verifies activation status"
+    }
+  ],
+  "storyPath": [
+    "taskcreatetool/01_tool_definition_architecture",
+    "taskcreatetool/02_schema_based_data_contracts",
+    "taskcreatetool/03_dynamic_contextual_prompting",
+    "taskcreatetool/04_feature_gating_and_availability",
+    "taskcreatetool/05_task_execution___lifecycle_management"
+  ]
+}

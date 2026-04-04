@@ -1,0 +1,134 @@
+{
+  "projectName": "plugins",
+  "nodes": [
+    {
+      "id": "plugins",
+      "label": "plugins",
+      "type": "module",
+      "summary": "This project manages **built-in plugins** that are compiled directly into the application code but function like modular extensions. It allows the system to *register*, *configure*, and *adapt* these internal features so users can toggle them on or off in their settings, distinguishing them from external marketplace downloads while ensuring they integrate smoothly with the core command system.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "plugins/01_built_in_plugin_registry",
+          "label": "Built-in Plugin Registry",
+          "type": "chapter",
+          "summary": "A centralized system (`BUILTIN_PLUGINS`) that manages the lifecycle of plugins shipped directly with the CLI. Think of it as a \"factory settings\" catalog. Unlike external plugins downloaded from a marketplace, these are compiled into the code but treated as modular components. This registry allows the application to list, retrieve, and manage these internal features, enabling the UI to display them distinctively under a \"Built-in\" section without requiring a network lookup.",
+          "contentPath": "01_built_in_plugin_registry.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plugins/02_plugin_namespacing",
+          "label": "Plugin Namespacing",
+          "type": "chapter",
+          "summary": "A logic strategy used to uniquely identify the origin of a plugin using the suffix `@builtin`. This is similar to a domain name or a verified badge. It prevents naming collisions between official features and third-party extensions. By checking if an ID ends with this specific suffix (`isBuiltinPluginId`), the system knows to look in the local memory registry rather than querying an external marketplace database.",
+          "contentPath": "02_plugin_namespacing.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plugins/03_runtime_plugin_state",
+          "label": "Runtime Plugin State",
+          "type": "chapter",
+          "summary": "Represented by the `LoadedPlugin` interface, this abstraction determines the actual availability of a plugin at runtime. It acts like a smart switch that combines the plugin's static definition with the user's persistent settings. Even if a plugin is registered, this layer checks `getSettings_DEPRECATED()` to see if the user has explicitly enabled or disabled it. It resolves conflicts between defaults and user preferences to generate the final list of active tools.",
+          "contentPath": "03_runtime_plugin_state.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plugins/04_skill_to_command_adaptation",
+          "label": "Skill-to-Command Adaptation",
+          "type": "chapter",
+          "summary": "A transformation layer that converts specific plugin capabilities (Skills) into the generic `Command` objects the CLI core understands. It's like a universal adapter plug. The core system operates on \"Commands\" (prompts, tools), so this abstraction wraps the plugin-specific metadata\u2014like allowed tools, prompts, and context\u2014into a standard format. It explicitly tags them as `source: 'bundled'` to ensure they integrate correctly with analytics and the Skill tool while retaining their identity as user-toggleable features.",
+          "contentPath": "04_skill_to_command_adaptation.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plugins/05_initialization_scaffolding",
+          "label": "Initialization Scaffolding",
+          "type": "chapter",
+          "summary": "The bootstrapping entry point (`initBuiltinPlugins`) responsible for loading internal plugins during the application startup. It serves as the manufacturing assembly line where specific features are registered into the main system. This abstraction separates the definition of features (what they do) from their registration (when they are added), allowing developers to easily migrate hardcoded \"bundled\" skills into user-manageable \"built-in\" plugins.",
+          "contentPath": "05_initialization_scaffolding.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "plugins/05_initialization_scaffolding",
+          "target": "plugins/01_built_in_plugin_registry",
+          "label": "Populates"
+        },
+        {
+          "source": "plugins/02_plugin_namespacing",
+          "target": "plugins/01_built_in_plugin_registry",
+          "label": "Reads definitions from"
+        },
+        {
+          "source": "plugins/02_plugin_namespacing",
+          "target": "plugins/04_skill_to_command_adaptation",
+          "label": "Applies ID syntax from"
+        },
+        {
+          "source": "plugins/03_runtime_plugin_state",
+          "target": "plugins/02_plugin_namespacing",
+          "label": "Consumes enabled list from"
+        },
+        {
+          "source": "plugins/03_runtime_plugin_state",
+          "target": "plugins/01_built_in_plugin_registry",
+          "label": "Transforms skills from"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "plugins/05_initialization_scaffolding",
+      "target": "plugins/01_built_in_plugin_registry",
+      "label": "Populates"
+    },
+    {
+      "source": "plugins/02_plugin_namespacing",
+      "target": "plugins/01_built_in_plugin_registry",
+      "label": "Reads definitions from"
+    },
+    {
+      "source": "plugins/02_plugin_namespacing",
+      "target": "plugins/04_skill_to_command_adaptation",
+      "label": "Applies ID syntax from"
+    },
+    {
+      "source": "plugins/03_runtime_plugin_state",
+      "target": "plugins/02_plugin_namespacing",
+      "label": "Consumes enabled list from"
+    },
+    {
+      "source": "plugins/03_runtime_plugin_state",
+      "target": "plugins/01_built_in_plugin_registry",
+      "label": "Transforms skills from"
+    }
+  ],
+  "storyPath": [
+    "plugins/01_built_in_plugin_registry",
+    "plugins/02_plugin_namespacing",
+    "plugins/03_runtime_plugin_state",
+    "plugins/04_skill_to_command_adaptation",
+    "plugins/05_initialization_scaffolding"
+  ]
+}

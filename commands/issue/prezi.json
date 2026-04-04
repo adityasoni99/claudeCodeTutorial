@@ -1,0 +1,58 @@
+{
+  "projectName": "issue",
+  "nodes": [
+    {
+      "id": "issue",
+      "label": "issue",
+      "type": "module",
+      "summary": "This project defines a **placeholder** mechanism for software features that are currently inactive or under development. It creates a *stub*\u2014a dummy component\u2014that strictly follows a standard configuration layout, ensuring the system can recognize the feature exists while keeping it **disabled** and **hidden** from the user interface.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "issue/01_feature_configuration_interface",
+          "label": "Feature Configuration Interface",
+          "type": "chapter",
+          "summary": "This represents the implicit contract or schema that feature modules are expected to follow. Although the code provided is a stub, it outlines the standard API structure (`name`, `isEnabled`, `isHidden`) that the hosting application uses to manage plugins.\n\nIt acts like a standardized ID card for modules. The core system doesn't need to know the internal complexity of a feature; it only needs to check this surface-level configuration to decide if the feature should be initialized, displayed in the UI, or ignored entirely.",
+          "contentPath": "01_feature_configuration_interface.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "issue/02_feature_stub",
+          "label": "Feature Stub",
+          "type": "chapter",
+          "summary": "This abstraction represents a placeholder or a default \"null\" state for a feature within the application. It serves as a stand-in for a module that is either not yet implemented, deprecated, or intentionally disabled.\n\nThink of it like a \"closed\" sign on a shop window or a dummy switch on a dashboard; the slot for the feature exists and is recognized by the system (via its `name`), but it is configured to remain inactive (`isEnabled` returns false) and invisible to the user (`isHidden` is true), ensuring no interactions occur.",
+          "contentPath": "02_feature_stub.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "issue/01_feature_configuration_interface",
+          "target": "issue/02_feature_stub",
+          "label": "Implements"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "issue/01_feature_configuration_interface",
+      "target": "issue/02_feature_stub",
+      "label": "Implements"
+    }
+  ],
+  "storyPath": [
+    "issue/01_feature_configuration_interface",
+    "issue/02_feature_stub"
+  ]
+}

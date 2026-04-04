@@ -1,0 +1,134 @@
+{
+  "projectName": "deepLink",
+  "nodes": [
+    {
+      "id": "deeplink",
+      "label": "deepLink",
+      "type": "module",
+      "summary": "This project implements a secure **deep linking** system that allows external applications (like browsers) to launch a CLI tool via `claude-cli://` URLs. It orchestrates the entire flow by handling **OS-level protocol registration**, strictly **sanitizing** inputs to prevent command injection, and intelligently detecting the user's preferred **terminal emulator** to start an interactive session. It also includes **provenance checks** to warn users about the source and content of the triggered session.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "deeplink/01_deep_link_orchestration",
+          "label": "Deep Link Orchestration",
+          "type": "chapter",
+          "summary": "This is the central controller that ties the entire flow together. It receives the incoming URI, invokes the parser, resolves the target file system path (checking for local Git clones), and delegates execution to the terminal launcher. It runs in a \"trampoline\" process\u2014a temporary, headless instance that exists solely to set up the real session.\nIt acts like an Air Traffic Controller. It identifies the incoming plane (the link), determines which runway is clear (the working directory/repo), and signals the ground crew (the terminal launcher) to guide the plane in safely.",
+          "contentPath": "01_deep_link_orchestration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "deeplink/02_os_protocol_registration",
+          "label": "OS Protocol Registration",
+          "type": "chapter",
+          "summary": "This abstraction handles the low-level operating system integration required to make `claude-cli://` links work. It writes the necessary registry keys (Windows), `.desktop` files (Linux), or `.app` bundles (macOS) to tell the OS that this application handles a specific URL scheme.\nIt acts like registering a custom mailing address with the post office; once set up, the post office (OS) knows exactly which house (application) to deliver mail (links) marked with that specific label.",
+          "contentPath": "02_os_protocol_registration.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "deeplink/03_uri_parsing_and_sanitization",
+          "label": "URI Parsing and Sanitization",
+          "type": "chapter",
+          "summary": "This layer is responsible for converting a raw URL string into a safe, structured action object. It enforces strict security boundaries to prevent command injection attacks, such as rejecting control characters and limiting the length of pre-filled prompts.\nThink of it as a security guard at a building entrance who inspects a visitor's badge (the URL). The guard checks credentials, confiscates dangerous items (illegal characters), and writes down exactly where the visitor is allowed to go (target directory) before letting them in.",
+          "contentPath": "03_uri_parsing_and_sanitization.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "deeplink/04_session_provenance___security_ui",
+          "label": "Session Provenance & Security UI",
+          "type": "chapter",
+          "summary": "This component builds the immediate visual feedback users see when a deep-linked session starts. It generates a warning banner that explains why the session started, identifies the source repository, and explicitly warns the user to review pre-filled text before executing it.\nIt is analogous to the \"External Sender\" warning banner found in corporate emails. It ensures the user knows the context (\"This didn't start normally\") and prompts them to be vigilant about the content (\"Check the prompt carefully\") to prevent social engineering attacks.",
+          "contentPath": "04_session_provenance___security_ui.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "deeplink/05_terminal_emulator_abstraction",
+          "label": "Terminal Emulator Abstraction",
+          "type": "chapter",
+          "summary": "This logic bridges the gap between a headless background process and a user-facing interactive session. It detects which terminal program the user prefers (e.g., iTerm, PowerShell, Ghostty) and constructs the specific command-line arguments required to launch a new window in that specific application.\nIt functions like a universal translator or a polyglot driver. Whether the vehicle is a manual transmission truck (cmd.exe) or a modern electric car (Ghostty), this abstraction knows exactly which buttons to push and levers to pull to get the engine running.",
+          "contentPath": "05_terminal_emulator_abstraction.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "deeplink/04_session_provenance___security_ui",
+          "target": "deeplink/02_os_protocol_registration",
+          "label": "Parses and validates URI"
+        },
+        {
+          "source": "deeplink/04_session_provenance___security_ui",
+          "target": "deeplink/03_uri_parsing_and_sanitization",
+          "label": "Delegates terminal launch"
+        },
+        {
+          "source": "deeplink/04_session_provenance___security_ui",
+          "target": "deeplink/05_terminal_emulator_abstraction",
+          "label": "Retrieves repo metadata"
+        },
+        {
+          "source": "deeplink/04_session_provenance___security_ui",
+          "target": "deeplink/01_deep_link_orchestration",
+          "label": "Verifies macOS bundle ID"
+        },
+        {
+          "source": "deeplink/01_deep_link_orchestration",
+          "target": "deeplink/02_os_protocol_registration",
+          "label": "Imports protocol scheme"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "deeplink/04_session_provenance___security_ui",
+      "target": "deeplink/02_os_protocol_registration",
+      "label": "Parses and validates URI"
+    },
+    {
+      "source": "deeplink/04_session_provenance___security_ui",
+      "target": "deeplink/03_uri_parsing_and_sanitization",
+      "label": "Delegates terminal launch"
+    },
+    {
+      "source": "deeplink/04_session_provenance___security_ui",
+      "target": "deeplink/05_terminal_emulator_abstraction",
+      "label": "Retrieves repo metadata"
+    },
+    {
+      "source": "deeplink/04_session_provenance___security_ui",
+      "target": "deeplink/01_deep_link_orchestration",
+      "label": "Verifies macOS bundle ID"
+    },
+    {
+      "source": "deeplink/01_deep_link_orchestration",
+      "target": "deeplink/02_os_protocol_registration",
+      "label": "Imports protocol scheme"
+    }
+  ],
+  "storyPath": [
+    "deeplink/01_deep_link_orchestration",
+    "deeplink/02_os_protocol_registration",
+    "deeplink/03_uri_parsing_and_sanitization",
+    "deeplink/04_session_provenance___security_ui",
+    "deeplink/05_terminal_emulator_abstraction"
+  ]
+}

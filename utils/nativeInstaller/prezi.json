@@ -1,0 +1,134 @@
+{
+  "projectName": "nativeInstaller",
+  "nodes": [
+    {
+      "id": "nativeinstaller",
+      "label": "nativeInstaller",
+      "type": "module",
+      "summary": "The **nativeInstaller** project manages the lifecycle of the application by coordinating safe, **Atomic Version Management** for updates and installations. It orchestrates the process by fetching binaries via **Dual-Source Artifact Retrieval**, preventing conflicts with **PID-Based Concurrency Locking**, and seamlessly switching versions using **Symlink-Based Activation**. Additionally, it employs **Installation Origin Detection** to ensure it respects existing installations managed by third-party tools like Homebrew or Winget.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "nativeinstaller/01_atomic_version_management",
+          "label": "Atomic Version Management",
+          "type": "chapter",
+          "summary": "This is the core orchestration layer of the installer. It manages the lifecycle of the application updates, ensuring that the system never enters an invalid state. It handles the \"check, download, stage, install, switch\" pipeline.\n\nThink of it like a pit crew changing tires on a race car. They prepare the new tire (download to staging) and verify it before touching the car. Then, in one swift motion, they swap the old tire for the new one (atomic move/rename). If anything goes wrong during preparation, the car keeps driving on the old tires, ensuring the driver (user) is never left stranded without a working vehicle.",
+          "contentPath": "01_atomic_version_management.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "nativeinstaller/02_installation_origin_detection",
+          "label": "Installation Origin Detection",
+          "type": "chapter",
+          "summary": "This component identifies *how* the application was originally installed on the user's system. It acts as a diagnostic tool to determine if the app is managed by a third-party package manager (like Homebrew, Winget, or apt) or if it is a standalone native install.\n\nIt works like a forensic detective examining a building. By looking at the foundation and surrounding structures (file paths, environment variables, and system registries), it determines if the building was constructed by a specific contractor (Homebrew, Winget) or built independently. This distinction is crucial because the native installer shouldn't interfere with files managed by another contractor.",
+          "contentPath": "02_installation_origin_detection.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "nativeinstaller/03_dual_source_artifact_retrieval",
+          "label": "Dual-Source Artifact Retrieval",
+          "type": "chapter",
+          "summary": "This layer abstracts the complexity of fetching the actual application binaries. It handles the logic for choosing between different storage backends (Artifactory for internal users vs. Google Cloud Storage for public users) and ensures data integrity via checksums.\n\nThink of this as a universal shipping receiver. It doesn't matter if the package comes via a local bike courier (NPM/Artifactory) or an international cargo ship (Binary/GCS); the receiver handles the specific paperwork for that carrier, checks the security seal (integrity hash) to ensure it wasn't tampered with, and hands off the verified box to the installer.",
+          "contentPath": "03_dual_source_artifact_retrieval.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "nativeinstaller/04_symlink_based_activation",
+          "label": "Symlink-Based Activation",
+          "type": "chapter",
+          "summary": "This is the mechanism used to switch the \"active\" version of the software. Instead of overwriting the executable file every time, the installer keeps multiple versioned folders and updates a symbolic link (symlink) to point to the latest one.\n\nImagine a library where the book on the display stand is just a card pointing to a specific shelf. When a new edition comes out, the librarian doesn't burn the old book; they simply put the new book on a new shelf and update the card on the display stand to point to the new location. The user just grabs \"the book on display\" (the symlink) and automatically gets the newest version.",
+          "contentPath": "04_symlink_based_activation.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "nativeinstaller/05_pid_based_concurrency_locking",
+          "label": "PID-Based Concurrency Locking",
+          "type": "chapter",
+          "summary": "This abstraction prevents race conditions when multiple instances of the application are running or updating simultaneously. Unlike traditional file locks that might persist indefinitely if a process crashes, this system ties the lock to a specific Process ID (PID).\n\nImagine a \"Meeting in Progress\" sign on a conference room door that magically knows if the people inside have vanished. If a process crashes, the OS removes the PID, and the lock automatically becomes \"stale\" and claimable by others. This ensures the system doesn't get stuck waiting for a \"ghost\" process that no longer exists to release a file.",
+          "contentPath": "05_pid_based_concurrency_locking.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "nativeinstaller/01_atomic_version_management",
+          "target": "nativeinstaller/02_installation_origin_detection",
+          "label": "Acquires process locks"
+        },
+        {
+          "source": "nativeinstaller/01_atomic_version_management",
+          "target": "nativeinstaller/03_dual_source_artifact_retrieval",
+          "label": "Downloads artifacts"
+        },
+        {
+          "source": "nativeinstaller/03_dual_source_artifact_retrieval",
+          "target": "nativeinstaller/01_atomic_version_management",
+          "label": "Uses platform config"
+        },
+        {
+          "source": "nativeinstaller/01_atomic_version_management",
+          "target": "nativeinstaller/04_symlink_based_activation",
+          "label": "Consults installation type"
+        },
+        {
+          "source": "nativeinstaller/01_atomic_version_management",
+          "target": "nativeinstaller/05_pid_based_concurrency_locking",
+          "label": "Updates active symlink"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "nativeinstaller/01_atomic_version_management",
+      "target": "nativeinstaller/02_installation_origin_detection",
+      "label": "Acquires process locks"
+    },
+    {
+      "source": "nativeinstaller/01_atomic_version_management",
+      "target": "nativeinstaller/03_dual_source_artifact_retrieval",
+      "label": "Downloads artifacts"
+    },
+    {
+      "source": "nativeinstaller/03_dual_source_artifact_retrieval",
+      "target": "nativeinstaller/01_atomic_version_management",
+      "label": "Uses platform config"
+    },
+    {
+      "source": "nativeinstaller/01_atomic_version_management",
+      "target": "nativeinstaller/04_symlink_based_activation",
+      "label": "Consults installation type"
+    },
+    {
+      "source": "nativeinstaller/01_atomic_version_management",
+      "target": "nativeinstaller/05_pid_based_concurrency_locking",
+      "label": "Updates active symlink"
+    }
+  ],
+  "storyPath": [
+    "nativeinstaller/01_atomic_version_management",
+    "nativeinstaller/02_installation_origin_detection",
+    "nativeinstaller/03_dual_source_artifact_retrieval",
+    "nativeinstaller/04_symlink_based_activation",
+    "nativeinstaller/05_pid_based_concurrency_locking"
+  ]
+}

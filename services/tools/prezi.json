@@ -1,0 +1,134 @@
+{
+  "projectName": "tools",
+  "nodes": [
+    {
+      "id": "tools",
+      "label": "tools",
+      "type": "module",
+      "summary": "This system manages the **secure and efficient execution** of tools (functions/scripts) requested by an AI model. It handles the complete lifecycle of a tool call, from **real-time streaming** and queuing to validating inputs and enforcing **concurrency rules** (running safe tools in parallel while blocking for risky ones). The architecture integrates a central execution pipeline with *lifecycle hooks* and a robust **permission system** to ensure all actions are authorized and monitored.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "tools/01_tool_execution_pipeline",
+          "label": "Tool Execution Pipeline",
+          "type": "chapter",
+          "summary": "The central engine that performs the actual work of calling a tool. It handles the entire \"flight plan\" for a single tool usage: validating the input arguments against a schema (Zod), checking user permissions, executing the underlying function (or MCP tool), and formatting the result (or error) for the AI to read. It serves as the bridge between the abstract request and the concrete action.",
+          "contentPath": "01_tool_execution_pipeline.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tools/02_lifecycle_hooks",
+          "label": "Lifecycle Hooks",
+          "type": "chapter",
+          "summary": "A system of interceptors that run before and after a tool executes. It operates like a security checkpoint and a quality control station. \"Pre-hooks\" can block execution, modify inputs, or ask for permissions. \"Post-hooks\" analyze the results, log analytics, or trigger secondary actions based on success or failure. This ensures cross-cutting concerns (logging, security) are separated from core tool logic.",
+          "contentPath": "02_lifecycle_hooks.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tools/03_permission_resolution",
+          "label": "Permission Resolution",
+          "type": "chapter",
+          "summary": "The logic that decides if the AI is allowed to perform an action. It's like a sophisticated bouncer that checks a list of rules. It combines automatic rules (allow/deny), user configuration, and hook results to produce a final `PermissionDecision`. It handles complex flows where a hook might approve an action, but a user setting forces a manual confirmation dialog.",
+          "contentPath": "03_permission_resolution.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tools/04_streaming_tool_executor",
+          "label": "Streaming Tool Executor",
+          "type": "chapter",
+          "summary": "Manages the lifecycle of tool calls as they are streamed in real-time from the AI model. It acts like a sophisticated task queue manager that handles tasks (tools) the moment they arrive. It maintains the state of every tool (queued, executing, completed) and ensures that tools specifically marked as \"non-concurrent\" block the queue until they finish, while safe tools run in parallel.",
+          "contentPath": "04_streaming_tool_executor.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tools/05_tool_orchestration___concurrency_strategy",
+          "label": "Tool Orchestration & Concurrency strategy",
+          "type": "chapter",
+          "summary": "Determines how multiple tool requests should be grouped and executed efficiently. Think of it as a traffic controller deciding which cars (tools) can drive side-by-side (concurrently) and which oversize loads need the entire road to themselves (serially). It partitions a list of tool blocks into \"safe\" batches and \"unsafe\" individual items to maximize speed without breaking state.",
+          "contentPath": "05_tool_orchestration___concurrency_strategy.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "tools/01_tool_execution_pipeline",
+          "target": "tools/03_permission_resolution",
+          "label": "Delegates individual execut..."
+        },
+        {
+          "source": "tools/02_lifecycle_hooks",
+          "target": "tools/03_permission_resolution",
+          "label": "Executes batches via"
+        },
+        {
+          "source": "tools/03_permission_resolution",
+          "target": "tools/04_streaming_tool_executor",
+          "label": "Triggers pre/post hooks"
+        },
+        {
+          "source": "tools/03_permission_resolution",
+          "target": "tools/05_tool_orchestration___concurrency_strategy",
+          "label": "Verifies authorization with"
+        },
+        {
+          "source": "tools/04_streaming_tool_executor",
+          "target": "tools/05_tool_orchestration___concurrency_strategy",
+          "label": "Feeds decision data to"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "tools/01_tool_execution_pipeline",
+      "target": "tools/03_permission_resolution",
+      "label": "Delegates individual execution to"
+    },
+    {
+      "source": "tools/02_lifecycle_hooks",
+      "target": "tools/03_permission_resolution",
+      "label": "Executes batches via"
+    },
+    {
+      "source": "tools/03_permission_resolution",
+      "target": "tools/04_streaming_tool_executor",
+      "label": "Triggers pre/post hooks"
+    },
+    {
+      "source": "tools/03_permission_resolution",
+      "target": "tools/05_tool_orchestration___concurrency_strategy",
+      "label": "Verifies authorization with"
+    },
+    {
+      "source": "tools/04_streaming_tool_executor",
+      "target": "tools/05_tool_orchestration___concurrency_strategy",
+      "label": "Feeds decision data to"
+    }
+  ],
+  "storyPath": [
+    "tools/01_tool_execution_pipeline",
+    "tools/02_lifecycle_hooks",
+    "tools/03_permission_resolution",
+    "tools/04_streaming_tool_executor",
+    "tools/05_tool_orchestration___concurrency_strategy"
+  ]
+}

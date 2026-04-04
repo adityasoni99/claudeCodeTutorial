@@ -1,0 +1,114 @@
+{
+  "projectName": "notifs",
+  "nodes": [
+    {
+      "id": "notifs",
+      "label": "notifs",
+      "type": "module",
+      "summary": "The `notifs` project implements a comprehensive **notification management system** for the Claude Code application using React hooks. It monitors various system states including **one-time startup events**, **external tool integration** (LSP, IDE, MCP), **usage quotas** (rate limits, fast mode), and **configuration health**. By centralizing these checks, the system ensures users receive timely, prioritized alerts about connection failures, deprecated settings, or usage limits without notification fatigue.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "notifs/01_one_time_startup_alerts",
+          "label": "One-Time Startup Alerts",
+          "type": "chapter",
+          "summary": "A dedicated abstraction for handling notifications that should appear exactly once when the application launches. It encapsulates the logic for asynchronous checks, verifying if the application is in \"remote mode\" (to suppress local alerts), and ensuring messages aren't repeated during a session. It acts like a receptionist handing you important memos only when you first arrive.",
+          "contentPath": "01_one_time_startup_alerts.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "notifs/02_usage_quotas___modes",
+          "label": "Usage Quotas & Modes",
+          "type": "chapter",
+          "summary": "Manages notifications related to system limits and operation modes. It monitors \"Fast Mode\" availability, rate limits, and billing status. By tracking cooldowns and organization settings, it proactively warns users when they are approaching limits or when a feature is disabled, similar to a data usage warning on a mobile phone.",
+          "contentPath": "02_usage_quotas___modes.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "notifs/03_configuration_validation",
+          "label": "Configuration Validation",
+          "type": "chapter",
+          "summary": "Validates the user's static configuration and environment settings. These hooks watch for invalid settings, deprecated models, or misconfigurations, providing immediate feedback. It serves as a linter for the user's runtime environment, flagging potential \"configuration rot\" or errors before they cause deeper issues.",
+          "contentPath": "03_configuration_validation.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "notifs/04_tool_integration_status",
+          "label": "Tool Integration Status",
+          "type": "chapter",
+          "summary": "Monitors the \"heartbeat\" of connections to external tools and services. These hooks track the status of the IDE (VS Code/JetBrains), Language Servers (LSP), and Model Context Protocol (MCP) servers. They function as a dashboard warning system, alerting the user immediately if a peripheral integration disconnects, fails, or requires authentication.",
+          "contentPath": "04_tool_integration_status.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "notifs/05_dynamic_lifecycle_tracking",
+          "label": "Dynamic Lifecycle Tracking",
+          "type": "chapter",
+          "summary": "Tracks the activity of dynamic components like plugins and \"teammate\" agents. It handles the noise of frequent events (like agents spawning or plugins updating) by aggregating them into concise summaries or \"folded\" notifications. This ensures the user is aware of background changes without being spammed by individual event logs.",
+          "contentPath": "05_dynamic_lifecycle_tracking.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "notifs/01_one_time_startup_alerts",
+          "target": "notifs/05_dynamic_lifecycle_tracking",
+          "label": "Updates legacy config"
+        },
+        {
+          "source": "notifs/01_one_time_startup_alerts",
+          "target": "notifs/03_configuration_validation",
+          "label": "Prompts auth for quotas"
+        },
+        {
+          "source": "notifs/02_usage_quotas___modes",
+          "target": "notifs/04_tool_integration_status",
+          "label": "Reports plugin LSP errors"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "notifs/01_one_time_startup_alerts",
+      "target": "notifs/05_dynamic_lifecycle_tracking",
+      "label": "Updates legacy config"
+    },
+    {
+      "source": "notifs/01_one_time_startup_alerts",
+      "target": "notifs/03_configuration_validation",
+      "label": "Prompts auth for quotas"
+    },
+    {
+      "source": "notifs/02_usage_quotas___modes",
+      "target": "notifs/04_tool_integration_status",
+      "label": "Reports plugin LSP errors"
+    }
+  ],
+  "storyPath": [
+    "notifs/01_one_time_startup_alerts",
+    "notifs/02_usage_quotas___modes",
+    "notifs/03_configuration_validation",
+    "notifs/04_tool_integration_status",
+    "notifs/05_dynamic_lifecycle_tracking"
+  ]
+}

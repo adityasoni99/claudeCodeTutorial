@@ -1,0 +1,102 @@
+{
+  "projectName": "testing",
+  "nodes": [
+    {
+      "id": "testing",
+      "label": "testing",
+      "type": "module",
+      "summary": "This project defines a **testing tool** for an AI system designed to verify **permission workflows**. Instead of performing a real task, this tool acts as a \"dummy\" capability that always pauses to ask for user approval (\"Run test?\"), ensuring that the system's **security gatekeeping** and confirmation dialogs function correctly.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "testing/01_tool_definition",
+          "label": "Tool Definition",
+          "type": "chapter",
+          "summary": "The structural framework for creating capabilities (\"tools\") available to the system. It uses `buildTool` to bundle metadata (like `name` and `description`), configuration flags (like `isReadOnly`), and execution logic into a standard `Tool` object. It's like a blueprint that tells the AI model what a specific gadget does and how to handle it.",
+          "contentPath": "01_tool_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "testing/02_input_schema_validation",
+          "label": "Input Schema Validation",
+          "type": "chapter",
+          "summary": "Defines the expected data structure for tool arguments using the Zod library. The `inputSchema` property ensures that inputs provided by the model match strict requirements (in this case, an empty object), similar to type-checking function arguments before execution.",
+          "contentPath": "02_input_schema_validation.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "testing/03_permission_control",
+          "label": "Permission Control",
+          "type": "chapter",
+          "summary": "A security mechanism permitting tools to interrupt execution to request user approval. The `checkPermissions` method determines the interaction behavior (e.g., returning `'ask'` with a message), acting like a gatekeeper or a \"Confirm Action\" dialog box for sensitive operations.",
+          "contentPath": "03_permission_control.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "testing/04_tool_execution_lifecycle",
+          "label": "Tool Execution Lifecycle",
+          "type": "chapter",
+          "summary": "Manages the runtime behavior of a tool, from the actual operation logic in the `call` method to the UI feedback loops. It includes a suite of render methods (e.g., `renderToolUseMessage`, `renderToolResultMessage`) that control what users see while the tool is queued, running, or completing.",
+          "contentPath": "04_tool_execution_lifecycle.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "testing/01_tool_definition",
+          "target": "testing/04_tool_execution_lifecycle",
+          "label": "Enforces structure using"
+        },
+        {
+          "source": "testing/01_tool_definition",
+          "target": "testing/02_input_schema_validation",
+          "label": "Configures security checks"
+        },
+        {
+          "source": "testing/01_tool_definition",
+          "target": "testing/03_permission_control",
+          "label": "Defines runtime operations"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "testing/01_tool_definition",
+      "target": "testing/04_tool_execution_lifecycle",
+      "label": "Enforces structure using"
+    },
+    {
+      "source": "testing/01_tool_definition",
+      "target": "testing/02_input_schema_validation",
+      "label": "Configures security checks"
+    },
+    {
+      "source": "testing/01_tool_definition",
+      "target": "testing/03_permission_control",
+      "label": "Defines runtime operations"
+    }
+  ],
+  "storyPath": [
+    "testing/01_tool_definition",
+    "testing/02_input_schema_validation",
+    "testing/03_permission_control",
+    "testing/04_tool_execution_lifecycle"
+  ]
+}

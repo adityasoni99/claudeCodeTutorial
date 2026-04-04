@@ -1,0 +1,134 @@
+{
+  "projectName": "remoteManagedSettings",
+  "nodes": [
+    {
+      "id": "remotemanagedsettings",
+      "label": "remoteManagedSettings",
+      "type": "module",
+      "summary": "This system manages the **remote configuration** of the application, allowing enterprise administrators to push settings to users securely. It features a central **lifecycle manager** that orchestrates fetching updates from the network, checking user *eligibility*, and caching data locally to avoid circular dependencies. Crucially, it includes a **security layer** that halts execution to ask for **user consent** via an interactive dialog if any \"dangerous\" settings are detected.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "remotemanagedsettings/01_remote_settings_lifecycle_manager",
+          "label": "Remote Settings Lifecycle Manager",
+          "type": "chapter",
+          "summary": "This is the central nervous system of the project. It orchestrates the entire process of loading settings: checking eligibility, fetching from the network, validating data, triggering security checks, and scheduling background updates.\n\nThink of it as a project manager who coordinates between the warehouse (cache), the supplier (API), and security (compliance check) to ensure the right supplies arrive safely and on time without blocking the assembly line (application startup).",
+          "contentPath": "01_remote_settings_lifecycle_manager.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "remotemanagedsettings/02_security___consent_dialog",
+          "label": "Security & Consent Dialog",
+          "type": "chapter",
+          "summary": "This component protects the user from \"dangerous\" configuration changes pushed remotely (like enabling shell execution). If a new setting poses a security risk, it pauses execution and renders an interactive TUI (Text User Interface) dialog requiring explicit user approval.\n\nIt acts like a customs officer at an airport. Even if you have a valid ticket to enter the country, if you are carrying hazardous materials in your luggage, the officer stops you and asks you to explicitly declare and approve them before letting you pass.",
+          "contentPath": "02_security___consent_dialog.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "remotemanagedsettings/03_eligibility_gatekeeper",
+          "label": "Eligibility Gatekeeper",
+          "type": "chapter",
+          "summary": "This abstraction determines whether a user is allowed to receive remote settings before any network calls are made. It checks authentication status, subscription type (Enterprise/Team), and environment context.\n\nThink of it as a bouncer at a club. Before you can even approach the bar (the API), the bouncer checks your ID and membership card to ensure you are actually allowed inside. If you aren't on the list (e.g., a standard user), you are turned away immediately to save time.",
+          "contentPath": "03_eligibility_gatekeeper.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "remotemanagedsettings/04_api_transport___schema_validation",
+          "label": "API Transport & Schema Validation",
+          "type": "chapter",
+          "summary": "This layer handles the HTTP communication with the remote server and ensures the data received matches the expected structure. It implements retry logic, checksum verification (to avoid redownloading unchanged data), and Zod schema validation.\n\nThink of it as a secure courier service. It doesn't just drop off a package; it verifies the package hasn't been tampered with (checksum), ensures the contents aren't broken (schema validation), and will try delivering multiple times if the recipient isn't home (retries).",
+          "contentPath": "04_api_transport___schema_validation.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "remotemanagedsettings/05_leaf_state_storage__circular_dependency_breaker_",
+          "label": "Leaf State Storage (Circular Dependency Breaker)",
+          "type": "chapter",
+          "summary": "This module handles the physical reading and writing of settings to the disk and memory. Crucially, it is designed as a \"leaf\" node in the dependency tree\u2014it contains state but no business logic regarding *who* the user is.\n\nThink of this like a physical safe deposit box. It doesn't know *who* owns the jewelry inside or *why* they put it there; its only job is to hold the items securely and provide them when the correct key is turned, preventing complex logical tangles (circular dependencies) elsewhere in the bank.",
+          "contentPath": "05_leaf_state_storage__circular_dependency_breaker_.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "remotemanagedsettings/01_remote_settings_lifecycle_manager",
+          "target": "remotemanagedsettings/02_security___consent_dialog",
+          "label": "Checks user eligibility"
+        },
+        {
+          "source": "remotemanagedsettings/01_remote_settings_lifecycle_manager",
+          "target": "remotemanagedsettings/03_eligibility_gatekeeper",
+          "label": "Reads and writes cache"
+        },
+        {
+          "source": "remotemanagedsettings/01_remote_settings_lifecycle_manager",
+          "target": "remotemanagedsettings/05_leaf_state_storage__circular_dependency_breaker_",
+          "label": "Validates response schema"
+        },
+        {
+          "source": "remotemanagedsettings/01_remote_settings_lifecycle_manager",
+          "target": "remotemanagedsettings/04_api_transport___schema_validation",
+          "label": "Triggers approval dialog"
+        },
+        {
+          "source": "remotemanagedsettings/02_security___consent_dialog",
+          "target": "remotemanagedsettings/03_eligibility_gatekeeper",
+          "label": "Caches eligibility state"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "remotemanagedsettings/01_remote_settings_lifecycle_manager",
+      "target": "remotemanagedsettings/02_security___consent_dialog",
+      "label": "Checks user eligibility"
+    },
+    {
+      "source": "remotemanagedsettings/01_remote_settings_lifecycle_manager",
+      "target": "remotemanagedsettings/03_eligibility_gatekeeper",
+      "label": "Reads and writes cache"
+    },
+    {
+      "source": "remotemanagedsettings/01_remote_settings_lifecycle_manager",
+      "target": "remotemanagedsettings/05_leaf_state_storage__circular_dependency_breaker_",
+      "label": "Validates response schema"
+    },
+    {
+      "source": "remotemanagedsettings/01_remote_settings_lifecycle_manager",
+      "target": "remotemanagedsettings/04_api_transport___schema_validation",
+      "label": "Triggers approval dialog"
+    },
+    {
+      "source": "remotemanagedsettings/02_security___consent_dialog",
+      "target": "remotemanagedsettings/03_eligibility_gatekeeper",
+      "label": "Caches eligibility state"
+    }
+  ],
+  "storyPath": [
+    "remotemanagedsettings/01_remote_settings_lifecycle_manager",
+    "remotemanagedsettings/02_security___consent_dialog",
+    "remotemanagedsettings/03_eligibility_gatekeeper",
+    "remotemanagedsettings/04_api_transport___schema_validation",
+    "remotemanagedsettings/05_leaf_state_storage__circular_dependency_breaker_"
+  ]
+}

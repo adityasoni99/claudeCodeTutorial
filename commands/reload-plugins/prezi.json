@@ -1,0 +1,124 @@
+{
+  "projectName": "reload-plugins",
+  "nodes": [
+    {
+      "id": "reload-plugins",
+      "label": "reload-plugins",
+      "type": "module",
+      "summary": "This project enables the **hot-swapping** of AI assistant capabilities, allowing users to update skills, agents, and plugins in the running session without a full restart. It utilizes a **lazy-loading** command architecture to keep startup fast and ensures consistency by handling **remote settings synchronization** automatically before applying any changes.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "reload-plugins/01_command_architecture___lazy_loading",
+          "label": "Command Architecture & Lazy Loading",
+          "type": "chapter",
+          "summary": "This abstraction defines how the application registers and executes user actions. Instead of loading every feature at startup, the system uses a lightweight definition (metadata) and only imports the heavy implementation logic when the user actually requests it.\n\nThink of it like a restaurant menu. The menu (`index.ts`) lists the available dishes and their descriptions so you can choose, but the kitchen doesn't actually start cooking (`reload-plugins.ts`) or use ingredients until you place an order. This keeps the application startup fast and efficient.",
+          "contentPath": "01_command_architecture___lazy_loading.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "reload-plugins/02_remote_settings_synchronization",
+          "label": "Remote Settings Synchronization",
+          "type": "chapter",
+          "summary": "This abstraction handles the complexity of running the CLI in a remote or headless environment (like a cloud container or VS Code extension). It ensures that configuration changes made by the user in one place are pulled down and applied to the actual runner process before operations take place.\n\nIt acts like a cloud file sync service (like Dropbox). If you edit a document on your laptop, this system ensures the latest version is downloaded to your desktop before you open it, so you aren't working with outdated information.",
+          "contentPath": "02_remote_settings_synchronization.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "reload-plugins/03_change_detection___notification",
+          "label": "Change Detection & Notification",
+          "type": "chapter",
+          "summary": "This system bridges the gap between file operations and the application's runtime awareness. When settings are updated (programmatically or via sync), this mechanism explicitly notifies listeners that a change has occurred, ensuring the UI and internal logic react immediately.\n\nThink of it like a doorbell or a push notification. When a package (new settings) arrives on the porch, the doorbell (`notifyChange`) rings to alert the people inside (the application) to come pick it up, rather than them having to check the door every few minutes.",
+          "contentPath": "03_change_detection___notification.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "reload-plugins/04_plugin_state_refresh__layer_3_",
+          "label": "Plugin State Refresh (Layer-3)",
+          "type": "chapter",
+          "summary": "This is the core business logic for updating the running session without restarting the entire application. It triggers a re-scan of plugins, skills, agents, and hooks, effectively hot-swapping the capabilities of the AI assistant based on pending changes.\n\nImagine you are playing a video game and you buy a \"DLC pack\" or new equipment. Instead of turning the console off and on again to use it, the game simply \"refreshes\" your inventory, and the new items appear instantly while you are still playing.",
+          "contentPath": "04_plugin_state_refresh__layer_3_.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "reload-plugins/05_result_aggregation___formatting",
+          "label": "Result Aggregation & Formatting",
+          "type": "chapter",
+          "summary": "This abstraction deals with collecting the results of a complex operation and summarizing them into a human-readable format. It counts specific entities (skills, agents, servers) and handles pluralization and error reporting to give the user clear feedback.\n\nIt is similar to a receipt or a report card. After a complex process is finished (shopping or a school term), you don't want to see every raw log entry; you want a summary that says \"5 Items Purchased\" or \"3 Passed Exams,\" highlighting exactly what changed or went wrong.",
+          "contentPath": "05_result_aggregation___formatting.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "reload-plugins/01_command_architecture___lazy_loading",
+          "target": "reload-plugins/03_change_detection___notification",
+          "label": "Initiates sync check"
+        },
+        {
+          "source": "reload-plugins/03_change_detection___notification",
+          "target": "reload-plugins/04_plugin_state_refresh__layer_3_",
+          "label": "Triggers notification"
+        },
+        {
+          "source": "reload-plugins/01_command_architecture___lazy_loading",
+          "target": "reload-plugins/02_remote_settings_synchronization",
+          "label": "Lazily loads and executes"
+        },
+        {
+          "source": "reload-plugins/02_remote_settings_synchronization",
+          "target": "reload-plugins/05_result_aggregation___formatting",
+          "label": "Provides stats to"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "reload-plugins/01_command_architecture___lazy_loading",
+      "target": "reload-plugins/03_change_detection___notification",
+      "label": "Initiates sync check"
+    },
+    {
+      "source": "reload-plugins/03_change_detection___notification",
+      "target": "reload-plugins/04_plugin_state_refresh__layer_3_",
+      "label": "Triggers notification"
+    },
+    {
+      "source": "reload-plugins/01_command_architecture___lazy_loading",
+      "target": "reload-plugins/02_remote_settings_synchronization",
+      "label": "Lazily loads and executes"
+    },
+    {
+      "source": "reload-plugins/02_remote_settings_synchronization",
+      "target": "reload-plugins/05_result_aggregation___formatting",
+      "label": "Provides stats to"
+    }
+  ],
+  "storyPath": [
+    "reload-plugins/01_command_architecture___lazy_loading",
+    "reload-plugins/02_remote_settings_synchronization",
+    "reload-plugins/03_change_detection___notification",
+    "reload-plugins/04_plugin_state_refresh__layer_3_",
+    "reload-plugins/05_result_aggregation___formatting"
+  ]
+}

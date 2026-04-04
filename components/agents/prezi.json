@@ -1,0 +1,218 @@
+{
+  "projectName": "agents",
+  "nodes": [
+    {
+      "id": "agents",
+      "label": "agents",
+      "type": "module",
+      "summary": "This project manages **AI Agents**, which are specialized configurations of the Claude model tailored with specific system prompts, tools, and capabilities. It features a central **Menu Controller** for browsing and managing agents, a **Creation Wizard** that supports both manual and *AI-assisted* setup, and an **Agent Editor** for modifying existing configurations. All agent data is validated and stored as **Markdown files** on the filesystem.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "agents/01_agent_definition___validation",
+          "label": "Agent Definition & Validation",
+          "type": "chapter",
+          "summary": "The core data structure representing an AI agent. It defines the blueprint\u2014identity, system prompt, allowed tools, and configuration options. It includes logic to validate these definitions against constraints (e.g., unique names, valid tools).\nThink of it as a \"Character Sheet\" for an RPG character, detailing their name, stats (model), backstory (prompt), and equipment (tools).",
+          "contentPath": "01_agent_definition___validation.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agents/02_menu_controller",
+          "label": "Menu Controller",
+          "type": "chapter",
+          "summary": "The central hub and router for the user interface. It manages the high-level application state, switching between different modes such as listing agents, viewing details, creating new ones, or editing existing ones.\nIt functions like a main dashboard or a dispatcher, routing user inputs to the appropriate sub-screens.",
+          "contentPath": "02_menu_controller.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agents/03_file_persistence_layer",
+          "label": "File Persistence Layer",
+          "type": "chapter",
+          "summary": "Handles the translation between in-memory agent objects and physical Markdown files on the disk. It manages file paths, directory structures (user vs. project settings), and formatting (YAML frontmatter).\nThis acts as the database adapter/storage engine, ensuring agents are saved to and loaded from the filesystem correctly.",
+          "contentPath": "03_file_persistence_layer.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agents/04_creation_wizard",
+          "label": "Creation Wizard",
+          "type": "chapter",
+          "summary": "A multi-step state machine that guides users through the sequential process of building a new agent. It manages the accumulation of configuration data across various screens (Type, Prompt, Tools, Model, Color) before finalizing creation.\nIt acts like an installation wizard or a tax filing form, ensuring all necessary information is collected piece-by-piece before submission.",
+          "contentPath": "04_creation_wizard.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agents/05_tool_selection_system",
+          "label": "Tool Selection System",
+          "type": "chapter",
+          "summary": "A specialized UI abstraction for browsing, categorizing, and selecting the capabilities (\"tools\") an agent can use. It groups tools into logical buckets (Read-only, Edit, Execution, MCP Servers).\nIt works like a shopping cart in a hardware store, where you browse different aisles (buckets) to pick the specific equipment your agent needs to do its job.",
+          "contentPath": "05_tool_selection_system.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agents/06_ai_generator_service",
+          "label": "AI Generator Service",
+          "type": "chapter",
+          "summary": "A feature that uses an LLM (Claude) to automatically generate a complete agent configuration from a high-level user description. It handles the prompt engineering required to get valid JSON output defining the agent.\nIt's like asking a senior HR manager to draft a detailed job description and requirements list based on a simple request like \"I need a code reviewer.\"",
+          "contentPath": "06_ai_generator_service.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agents/07_agent_editor",
+          "label": "Agent Editor",
+          "type": "chapter",
+          "summary": "The workflow for modifying an existing agent. It allows users to tweak specific fields (like color, model, or tools) or open the underlying file in an external editor for advanced changes.\nSimilar to a \"Settings\" or \"Edit Profile\" screen where specific attributes of an existing entity can be updated without recreating it from scratch.",
+          "contentPath": "07_agent_editor.md",
+          "x": -800.0,
+          "y": 450.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "agents/03_file_persistence_layer",
+          "target": "agents/02_menu_controller",
+          "label": "Initiates creation flow"
+        },
+        {
+          "source": "agents/03_file_persistence_layer",
+          "target": "agents/07_agent_editor",
+          "label": "Initiates editing flow"
+        },
+        {
+          "source": "agents/03_file_persistence_layer",
+          "target": "agents/01_agent_definition___validation",
+          "label": "Lists and displays"
+        },
+        {
+          "source": "agents/03_file_persistence_layer",
+          "target": "agents/04_creation_wizard",
+          "label": "Deletes agent files"
+        },
+        {
+          "source": "agents/02_menu_controller",
+          "target": "agents/06_ai_generator_service",
+          "label": "Uses for generation"
+        },
+        {
+          "source": "agents/02_menu_controller",
+          "target": "agents/05_tool_selection_system",
+          "label": "Uses for configuration"
+        },
+        {
+          "source": "agents/02_menu_controller",
+          "target": "agents/01_agent_definition___validation",
+          "label": "Builds and validates"
+        },
+        {
+          "source": "agents/02_menu_controller",
+          "target": "agents/04_creation_wizard",
+          "label": "Saves new agents"
+        },
+        {
+          "source": "agents/07_agent_editor",
+          "target": "agents/05_tool_selection_system",
+          "label": "Uses for modification"
+        },
+        {
+          "source": "agents/07_agent_editor",
+          "target": "agents/04_creation_wizard",
+          "label": "Updates agent files"
+        },
+        {
+          "source": "agents/06_ai_generator_service",
+          "target": "agents/01_agent_definition___validation",
+          "label": "Produces configuration"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "agents/03_file_persistence_layer",
+      "target": "agents/02_menu_controller",
+      "label": "Initiates creation flow"
+    },
+    {
+      "source": "agents/03_file_persistence_layer",
+      "target": "agents/07_agent_editor",
+      "label": "Initiates editing flow"
+    },
+    {
+      "source": "agents/03_file_persistence_layer",
+      "target": "agents/01_agent_definition___validation",
+      "label": "Lists and displays"
+    },
+    {
+      "source": "agents/03_file_persistence_layer",
+      "target": "agents/04_creation_wizard",
+      "label": "Deletes agent files"
+    },
+    {
+      "source": "agents/02_menu_controller",
+      "target": "agents/06_ai_generator_service",
+      "label": "Uses for generation"
+    },
+    {
+      "source": "agents/02_menu_controller",
+      "target": "agents/05_tool_selection_system",
+      "label": "Uses for configuration"
+    },
+    {
+      "source": "agents/02_menu_controller",
+      "target": "agents/01_agent_definition___validation",
+      "label": "Builds and validates"
+    },
+    {
+      "source": "agents/02_menu_controller",
+      "target": "agents/04_creation_wizard",
+      "label": "Saves new agents"
+    },
+    {
+      "source": "agents/07_agent_editor",
+      "target": "agents/05_tool_selection_system",
+      "label": "Uses for modification"
+    },
+    {
+      "source": "agents/07_agent_editor",
+      "target": "agents/04_creation_wizard",
+      "label": "Updates agent files"
+    },
+    {
+      "source": "agents/06_ai_generator_service",
+      "target": "agents/01_agent_definition___validation",
+      "label": "Produces configuration"
+    }
+  ],
+  "storyPath": [
+    "agents/01_agent_definition___validation",
+    "agents/02_menu_controller",
+    "agents/03_file_persistence_layer",
+    "agents/04_creation_wizard",
+    "agents/05_tool_selection_system",
+    "agents/06_ai_generator_service",
+    "agents/07_agent_editor"
+  ]
+}

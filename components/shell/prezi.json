@@ -1,0 +1,80 @@
+{
+  "projectName": "shell",
+  "nodes": [
+    {
+      "id": "shell",
+      "label": "shell",
+      "type": "module",
+      "summary": "This project provides a **React-based terminal UI** for shell interactions, focusing on readability and user feedback. It features **Smart Output Line Rendering** to prettify JSON and linkify text, **Execution Progress Feedback** to show live timers and output tails for running commands, and an **Output Visibility Context** to intelligently manage **verbosity** (auto-expanding or truncating content) across the component tree.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "shell/01_output_visibility_context",
+          "label": "Output Visibility Context",
+          "type": "chapter",
+          "summary": "A mechanism to control output verbosity across the component tree. It acts like a \"global switch\" for a specific subtree, indicating whether shell output should be shown in full or truncated. This is used to automatically expand the output of the most recent user command while keeping older or less relevant outputs concise.",
+          "contentPath": "01_output_visibility_context.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "shell/02_smart_output_line_rendering",
+          "label": "Smart Output Line Rendering",
+          "type": "chapter",
+          "summary": "Handles the display of individual lines of shell output with intelligent formatting. It acts like a syntax highlighter for raw terminal text: it attempts to detect and pretty-print JSON structures, converts textual URLs into clickable hyperlinks, and sanitizes problematic ANSI codes (specifically underlines). It also handles truncation logic based on terminal width to ensure the UI remains readable.",
+          "contentPath": "02_smart_output_line_rendering.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "shell/03_execution_progress_feedback",
+          "label": "Execution Progress Feedback",
+          "type": "chapter",
+          "summary": "Provides visual feedback for active or completed shell commands. It serves as a dashboard for the running process, displaying the execution duration, timeout warnings, data volume (bytes/lines), and a \"tail\" of the most recent output lines. This ensures the user sees activity without flooding the screen with the entire history of a long-running command.",
+          "contentPath": "03_execution_progress_feedback.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "shell/01_output_visibility_context",
+          "target": "shell/03_execution_progress_feedback",
+          "label": "Consumes visibility context"
+        },
+        {
+          "source": "shell/02_smart_output_line_rendering",
+          "target": "shell/03_execution_progress_feedback",
+          "label": "Controlled by verbosity state"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "shell/01_output_visibility_context",
+      "target": "shell/03_execution_progress_feedback",
+      "label": "Consumes visibility context"
+    },
+    {
+      "source": "shell/02_smart_output_line_rendering",
+      "target": "shell/03_execution_progress_feedback",
+      "label": "Controlled by verbosity state"
+    }
+  ],
+  "storyPath": [
+    "shell/01_output_visibility_context",
+    "shell/02_smart_output_line_rendering",
+    "shell/03_execution_progress_feedback"
+  ]
+}

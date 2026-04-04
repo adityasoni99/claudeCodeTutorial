@@ -1,0 +1,146 @@
+{
+  "projectName": "thinkback",
+  "nodes": [
+    {
+      "id": "thinkback",
+      "label": "thinkback",
+      "type": "module",
+      "summary": "This project implements a **Year in Review** experience for Claude Code users, generating a personalized *ASCII animation* of their coding activity. It manages the full lifecycle from **lazy loading** the command and installing necessary **plugins** to orchestrating an interactive terminal UI that allows users to *play*, *edit*, or *fix* their generative content.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "thinkback/01_lazy_command_entry_point",
+          "label": "Lazy Command Entry Point",
+          "type": "chapter",
+          "summary": "This abstraction defines the command's identity (name, description) and manages its visibility via feature flags, but delays loading the heavy implementation logic until the command is actually executed.\nIt is like a menu item in a restaurant; it describes the dish and checks if it's available (feature enabled), but the kitchen (the heavy logic) doesn't start cooking until you actually order it.",
+          "contentPath": "01_lazy_command_entry_point.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "thinkback/02_ink_based_ui_orchestration",
+          "label": "Ink-based UI Orchestration",
+          "type": "chapter",
+          "summary": "The `ThinkbackFlow` and `ThinkbackMenu` components utilize the `ink` library to render interactive React components inside the text-based terminal. They manage the user interface state, switching between loading spinners, error messages, and interactive menus.\nIt is like a sophisticated dashboard for a machine; even though the machine runs on complex internal gears (code), the dashboard provides clear buttons and lights (text UI) for the operator to control it easily.",
+          "contentPath": "02_ink_based_ui_orchestration.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "thinkback/03_animation_runtime_engine",
+          "label": "Animation Runtime Engine",
+          "type": "chapter",
+          "summary": "The `playAnimation` function is the engine that executes the visual \"Year in Review\". It validates file existence, takes over the terminal window (alternate screen), spawns a child node process to render the animation, and opens a browser fallback.\nIt is like a cinema projectionist who checks if the film reel exists, dims the house lights (clears terminal), plays the movie, and then brings the lights back up when finished.",
+          "contentPath": "03_animation_runtime_engine.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "thinkback/04_generative_action_dispatch",
+          "label": "Generative Action Dispatch",
+          "type": "chapter",
+          "summary": "This abstraction handles the logic for modifying content. When a user selects \"Edit,\" \"Fix,\" or \"Regenerate,\" this system maps that intent to a specific prompt string and hands control back to the AI model.\nIt is like a work order system: the user clicks a button (e.g., \"Fix\"), and the system writes a detailed ticket (the prompt) for the specialist (the AI agent) to perform the actual repairs.",
+          "contentPath": "04_generative_action_dispatch.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "thinkback/05_plugin_installation_state_machine",
+          "label": "Plugin Installation State Machine",
+          "type": "chapter",
+          "summary": "The `ThinkbackInstaller` component acts as an automated setup wizard. It manages a sequence of dependent states: checking for the marketplace, installing it if missing, installing the specific plugin, and finally enabling it.\nIt is like a construction crew manager who ensures the foundation is laid (marketplace) and the frame is built (plugin installed) before allowing the tenants (users) to move in.",
+          "contentPath": "05_plugin_installation_state_machine.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "thinkback/06_skill_environment_resolution",
+          "label": "Skill Environment Resolution",
+          "type": "chapter",
+          "summary": "The `getThinkbackSkillDir` function abstracts away the complexity of finding where the plugin's data actually lives on the user's file system. It navigates through installed plugins to find the specific \"skill\" folder.\nIt is like a librarian who knows exactly which shelf and aisle a specific book is located on, so the user doesn't have to search the entire library (file system) themselves.",
+          "contentPath": "06_skill_environment_resolution.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "thinkback/01_lazy_command_entry_point",
+          "target": "thinkback/06_skill_environment_resolution",
+          "label": "Loads and initializes"
+        },
+        {
+          "source": "thinkback/06_skill_environment_resolution",
+          "target": "thinkback/02_ink_based_ui_orchestration",
+          "label": "Manages installation via"
+        },
+        {
+          "source": "thinkback/06_skill_environment_resolution",
+          "target": "thinkback/05_plugin_installation_state_machine",
+          "label": "Locates resources using"
+        },
+        {
+          "source": "thinkback/06_skill_environment_resolution",
+          "target": "thinkback/04_generative_action_dispatch",
+          "label": "Maps user intent using"
+        },
+        {
+          "source": "thinkback/06_skill_environment_resolution",
+          "target": "thinkback/03_animation_runtime_engine",
+          "label": "Executes playback via"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "thinkback/01_lazy_command_entry_point",
+      "target": "thinkback/06_skill_environment_resolution",
+      "label": "Loads and initializes"
+    },
+    {
+      "source": "thinkback/06_skill_environment_resolution",
+      "target": "thinkback/02_ink_based_ui_orchestration",
+      "label": "Manages installation via"
+    },
+    {
+      "source": "thinkback/06_skill_environment_resolution",
+      "target": "thinkback/05_plugin_installation_state_machine",
+      "label": "Locates resources using"
+    },
+    {
+      "source": "thinkback/06_skill_environment_resolution",
+      "target": "thinkback/04_generative_action_dispatch",
+      "label": "Maps user intent using"
+    },
+    {
+      "source": "thinkback/06_skill_environment_resolution",
+      "target": "thinkback/03_animation_runtime_engine",
+      "label": "Executes playback via"
+    }
+  ],
+  "storyPath": [
+    "thinkback/01_lazy_command_entry_point",
+    "thinkback/02_ink_based_ui_orchestration",
+    "thinkback/03_animation_runtime_engine",
+    "thinkback/04_generative_action_dispatch",
+    "thinkback/05_plugin_installation_state_machine",
+    "thinkback/06_skill_environment_resolution"
+  ]
+}

@@ -1,0 +1,168 @@
+{
+  "projectName": "skills",
+  "nodes": [
+    {
+      "id": "skills",
+      "label": "skills",
+      "type": "module",
+      "summary": "This project implements a **hot-reloading engine** for user skills and commands, enabling the application to update capabilities at runtime without restarting. It orchestrates **file system watching** with *stability debouncing* to efficiently handle batch file changes, ensuring that internal **caches are invalidated** and the system is notified via **reactive signals** only after file operations have settled.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "skills/01_skill_change_detection",
+          "label": "Skill Change Detection",
+          "type": "chapter",
+          "summary": "The central mechanism for monitoring the filesystem to allow users to add or modify skills and commands at runtime without restarting the application. It acts like a \"hot-reloading\" engine for user capabilities, watching specific configuration paths and triggering updates the moment a file is touched.",
+          "contentPath": "01_skill_change_detection.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skills/02_path_discovery",
+          "label": "Path Discovery",
+          "type": "chapter",
+          "summary": "The logic determines exactly which directories exist and should be watched. It checks standard locations (like user settings and project settings) and custom flags, verifying their existence before attaching watchers. This prevents the system from wasting resources trying to watch non-existent folders. It's like a scout verifying the location of landmarks before sending the main surveillance team.",
+          "contentPath": "02_path_discovery.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skills/03_file_system_watching",
+          "label": "File System Watching",
+          "type": "chapter",
+          "summary": "Wraps the `chokidar` library to create persistent watchers on target directories. It handles platform-specific complexities (like polling on Bun to avoid deadlocks) and manages the configuration for stability thresholds. Think of it as a security camera system that is specifically trained to ignore noise (like temporary files) and focus on relevant changes in skill folders.",
+          "contentPath": "03_file_system_watching.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skills/04_reload_debouncing",
+          "label": "Reload Debouncing",
+          "type": "chapter",
+          "summary": "A stability layer that groups multiple rapid file change events into a single action. When a user switches branches in git or performs a batch operation, dozens of files might change instantly. This abstraction waits for the dust to settle (using a timer) before triggering a reload, preventing the application from freezing due to hundreds of redundant update cycles. It's like a bus driver waiting a moment for running passengers to arrive before closing the doors.",
+          "contentPath": "04_reload_debouncing.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skills/05_cache_invalidation",
+          "label": "Cache Invalidation",
+          "type": "chapter",
+          "summary": "The logic responsible for clearing internal memory stores when external files change. Because parsing skills is expensive, the system caches the results. This abstraction ensures that when the detector notices a file change, the old caches (for commands and skills) are wiped clean so the new code is loaded. It is akin to flushing a web browser's cache to ensure you are seeing the latest version of a website.",
+          "contentPath": "05_cache_invalidation.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skills/06_reactive_signaling",
+          "label": "Reactive Signaling",
+          "type": "chapter",
+          "summary": "Uses a signal pattern (`createSignal`) to decouple the detection of file changes from the rest of the application. Instead of the detector knowing exactly who needs to update, it simply emits a \"skills changed\" signal. Other parts of the system subscribe to this signal to react. It operates like a radio broadcast: the detector transmits the news, and any component tuned in receives the update.",
+          "contentPath": "06_reactive_signaling.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skills/07_lifecycle_management",
+          "label": "Lifecycle Management",
+          "type": "chapter",
+          "summary": "Handles the safe initialization and disposal of resources. It ensures that watchers are closed, timers are cleared, and event listeners are removed when the application shuts down or during testing resets. This prevents memory leaks and \"zombie\" processes that could keep files locked. It is the janitorial service that ensures the room is clean before and after use.",
+          "contentPath": "07_lifecycle_management.md",
+          "x": -800.0,
+          "y": 450.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "skills/01_skill_change_detection",
+          "target": "skills/06_reactive_signaling",
+          "label": "Discovers watchable paths"
+        },
+        {
+          "source": "skills/01_skill_change_detection",
+          "target": "skills/02_path_discovery",
+          "label": "Configures watcher"
+        },
+        {
+          "source": "skills/01_skill_change_detection",
+          "target": "skills/03_file_system_watching",
+          "label": "Schedules debounced update"
+        },
+        {
+          "source": "skills/03_file_system_watching",
+          "target": "skills/04_reload_debouncing",
+          "label": "Clears outdated caches"
+        },
+        {
+          "source": "skills/03_file_system_watching",
+          "target": "skills/05_cache_invalidation",
+          "label": "Emits update signal"
+        },
+        {
+          "source": "skills/07_lifecycle_management",
+          "target": "skills/02_path_discovery",
+          "label": "Disposes watcher resources"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "skills/01_skill_change_detection",
+      "target": "skills/06_reactive_signaling",
+      "label": "Discovers watchable paths"
+    },
+    {
+      "source": "skills/01_skill_change_detection",
+      "target": "skills/02_path_discovery",
+      "label": "Configures watcher"
+    },
+    {
+      "source": "skills/01_skill_change_detection",
+      "target": "skills/03_file_system_watching",
+      "label": "Schedules debounced update"
+    },
+    {
+      "source": "skills/03_file_system_watching",
+      "target": "skills/04_reload_debouncing",
+      "label": "Clears outdated caches"
+    },
+    {
+      "source": "skills/03_file_system_watching",
+      "target": "skills/05_cache_invalidation",
+      "label": "Emits update signal"
+    },
+    {
+      "source": "skills/07_lifecycle_management",
+      "target": "skills/02_path_discovery",
+      "label": "Disposes watcher resources"
+    }
+  ],
+  "storyPath": [
+    "skills/01_skill_change_detection",
+    "skills/02_path_discovery",
+    "skills/03_file_system_watching",
+    "skills/04_reload_debouncing",
+    "skills/05_cache_invalidation",
+    "skills/06_reactive_signaling",
+    "skills/07_lifecycle_management"
+  ]
+}

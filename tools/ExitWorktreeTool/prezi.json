@@ -1,0 +1,124 @@
+{
+  "projectName": "ExitWorktreeTool",
+  "nodes": [
+    {
+      "id": "exitworktreetool",
+      "label": "ExitWorktreeTool",
+      "type": "module",
+      "summary": "The **ExitWorktreeTool** provides a safe mechanism for an AI agent to conclude a temporary coding session (\"worktree\"). It allows the agent to either **keep** the changes for later or **remove** them cleanly, while automatically detecting uncommitted work to prevent accidental data loss. Once the session ends, it strictly *restores* the environment (working directory and caches) to its original state.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "exitworktreetool/01_tool_definition___interface",
+          "label": "Tool Definition & Interface",
+          "type": "chapter",
+          "summary": "The blueprint that makes the `ExitWorktree` functionality accessible to the AI agent. It bundles the input schema (parameters like `action`), the output schema, and the \"instruction manual\" (system prompt) that teaches the AI when and how to use the tool.\n\nThink of it as an API specification designed specifically for an LLM, defining the contract for \"exiting a worktree.\"",
+          "contentPath": "01_tool_definition___interface.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "exitworktreetool/02_safety_gates__change_detection_",
+          "label": "Safety Gates (Change Detection)",
+          "type": "chapter",
+          "summary": "A defensive mechanism used to prevent accidental data loss. Before executing a `remove` action, this abstraction uses Git commands to scan for uncommitted files or unmerged commits.\n\nIt functions like the \"You have unsaved changes\" dialog in a word processor, refusing to close the session unless the user explicitly confirms they want to discard their work.",
+          "contentPath": "02_safety_gates__change_detection_.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "exitworktreetool/03_worktree_lifecycle_actions",
+          "label": "Worktree Lifecycle Actions",
+          "type": "chapter",
+          "summary": "The core logic branching that determines the physical fate of the temporary workspace. It handles the two primary modes: `remove` (clean up the directory and branch to save space) and `keep` (detach the session but leave files on disk).\n\nIt is analogous to deciding whether to \"Delete\" a draft email or \"Save as Draft\" when closing the composer window.",
+          "contentPath": "03_worktree_lifecycle_actions.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "exitworktreetool/04_session_context_restoration",
+          "label": "Session Context Restoration",
+          "type": "chapter",
+          "summary": "This logic handles the state transition from a \"temporary worktree\" back to the \"original project.\" It ensures that when the tool runs, the working directory, project root, and various system caches (memory files, plans) are reset to their pre-worktree state.\n\nIt acts like loading a \"save game\" file, restoring the environment exactly as it was before the user started the temporary work session.",
+          "contentPath": "04_session_context_restoration.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "exitworktreetool/05_ui_rendering",
+          "label": "UI Rendering",
+          "type": "chapter",
+          "summary": "Separates the tool's execution logic from its visual presentation. While the tool calculates raw data (paths, file counts), this abstraction uses React components to format that data into a user-friendly console message.\n\nIt's like the \"View\" in a Model-View-Controller architecture, responsible for displaying the result (e.g., \"Kept worktree (branch fix-bug)\") to the human user.",
+          "contentPath": "05_ui_rendering.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "exitworktreetool/01_tool_definition___interface",
+          "target": "exitworktreetool/03_worktree_lifecycle_actions",
+          "label": "Validates safe removal"
+        },
+        {
+          "source": "exitworktreetool/01_tool_definition___interface",
+          "target": "exitworktreetool/04_session_context_restoration",
+          "label": "Executes cleanup or preserv..."
+        },
+        {
+          "source": "exitworktreetool/01_tool_definition___interface",
+          "target": "exitworktreetool/02_safety_gates__change_detection_",
+          "label": "Triggers state reset"
+        },
+        {
+          "source": "exitworktreetool/01_tool_definition___interface",
+          "target": "exitworktreetool/05_ui_rendering",
+          "label": "Formats output message"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "exitworktreetool/01_tool_definition___interface",
+      "target": "exitworktreetool/03_worktree_lifecycle_actions",
+      "label": "Validates safe removal"
+    },
+    {
+      "source": "exitworktreetool/01_tool_definition___interface",
+      "target": "exitworktreetool/04_session_context_restoration",
+      "label": "Executes cleanup or preservation"
+    },
+    {
+      "source": "exitworktreetool/01_tool_definition___interface",
+      "target": "exitworktreetool/02_safety_gates__change_detection_",
+      "label": "Triggers state reset"
+    },
+    {
+      "source": "exitworktreetool/01_tool_definition___interface",
+      "target": "exitworktreetool/05_ui_rendering",
+      "label": "Formats output message"
+    }
+  ],
+  "storyPath": [
+    "exitworktreetool/01_tool_definition___interface",
+    "exitworktreetool/02_safety_gates__change_detection_",
+    "exitworktreetool/03_worktree_lifecycle_actions",
+    "exitworktreetool/04_session_context_restoration",
+    "exitworktreetool/05_ui_rendering"
+  ]
+}

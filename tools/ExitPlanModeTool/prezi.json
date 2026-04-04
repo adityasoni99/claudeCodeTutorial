@@ -1,0 +1,124 @@
+{
+  "projectName": "ExitPlanModeTool",
+  "nodes": [
+    {
+      "id": "exitplanmodetool",
+      "label": "ExitPlanModeTool",
+      "type": "module",
+      "summary": "The **ExitPlanModeTool** acts as a formal checkpoint in the agent's workflow, signaling the transition from a **Planning** phase to a **Coding** phase. It ensures a plan is saved to disk and orchestrates the workflow based on the agent's role: solo users exit immediately, while *Teammate* agents must submit their plan for a **Team Lead's** approval. The tool integrates strict prompt instructions and dynamic UI feedback to manage this critical lifecycle event.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "exitplanmodetool/01_tool_definition___lifecycle",
+          "label": "Tool Definition & Lifecycle",
+          "type": "chapter",
+          "summary": "This abstraction defines the `ExitPlanMode` tool as a distinct capability within the agent's toolkit. It uses a builder pattern (`buildTool`) to establish the tool's identity, input/output schemas (using Zod), and execution logic.\nThink of this as defining a \"Skill Card\" in a role-playing game. The card lists the skill's name, what it costs to use (inputs), what happens when played (execution), and the rules for when it can be played (validators). This file encapsulates the entire behavior of the action \"I am done planning.\"",
+          "contentPath": "01_tool_definition___lifecycle.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "exitplanmodetool/02_plan_mode_state_transition",
+          "label": "Plan Mode State Transition",
+          "type": "chapter",
+          "summary": "This logic governs the specific phase change from \"Planning\" to \"Coding.\" The tool validates that the user is currently in the correct state (`plan` mode) before allowing execution. Upon success, it updates the global application state (`setHasExitedPlanMode`, `setNeedsPlanModeExitAttachment`) to unlock the next phase of interaction.\nImagine a secure airlock system. You are currently in the \"Decontamination Chamber\" (Plan Mode). You cannot enter the \"Laboratory\" (Coding Mode) until you hit the green button (this tool), which verifies you are clean and opens the door, changing your location status.",
+          "contentPath": "02_plan_mode_state_transition.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "exitplanmodetool/03_teammate_approval_protocol",
+          "label": "Teammate Approval Protocol",
+          "type": "chapter",
+          "summary": "This abstraction handles the workflow difference between a solo user and a \"Teammate\" agent. If the agent is acting as a subordinate teammate, calling this tool doesn't just exit mode locally; it packages the plan and sends a `plan_approval_request` to a \"Team Lead\" via a virtual mailbox.\nIt's like the difference between a freelancer and a corporate employee. The freelancer (Solo) decides when to start working. The employee (Teammate) drafts a proposal and must submit it to their manager's inbox for a signature before they are allowed to break ground on the project.",
+          "contentPath": "03_teammate_approval_protocol.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "exitplanmodetool/04_prompt_engineering",
+          "label": "Prompt Engineering",
+          "type": "chapter",
+          "summary": "This defines the natural language instructions given to the AI model about how to use this tool. It sets strict boundaries: the tool is only for implementing code tasks, not research, and serves as a signal of completion rather than a question.\nThink of this as the \"Director's Notes\" given to an actor before a scene. The script says \"Exit Plan Mode,\" but these notes explain the *motivation*: \"Only say this line when you are absolutely sure you know what you are doing. Do not say it if you are still confused about the plot.\"",
+          "contentPath": "04_prompt_engineering.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "exitplanmodetool/05_cli_ui_rendering",
+          "label": "CLI UI Rendering",
+          "type": "chapter",
+          "summary": "This abstraction handles the visual presentation of the tool's result in the terminal using React-based components (via Ink). It dynamically renders different messages based on the outcome: a simple confirmation for solo users, or a \"Waiting for approval\" status for teammates.\nIt acts like the dashboard display in a car. Depending on what the engine (the Tool logic) does, the dashboard might light up a green \"Ready\" light (Plan Approved) or a yellow \"Check Engine\" light (Waiting for Lead), translating complex internal states into a human-readable format.",
+          "contentPath": "05_cli_ui_rendering.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "exitplanmodetool/01_tool_definition___lifecycle",
+          "target": "exitplanmodetool/04_prompt_engineering",
+          "label": "Uses instructions from"
+        },
+        {
+          "source": "exitplanmodetool/01_tool_definition___lifecycle",
+          "target": "exitplanmodetool/02_plan_mode_state_transition",
+          "label": "Triggers state change"
+        },
+        {
+          "source": "exitplanmodetool/01_tool_definition___lifecycle",
+          "target": "exitplanmodetool/03_teammate_approval_protocol",
+          "label": "Enforces approval rules"
+        },
+        {
+          "source": "exitplanmodetool/01_tool_definition___lifecycle",
+          "target": "exitplanmodetool/05_cli_ui_rendering",
+          "label": "Renders output via"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "exitplanmodetool/01_tool_definition___lifecycle",
+      "target": "exitplanmodetool/04_prompt_engineering",
+      "label": "Uses instructions from"
+    },
+    {
+      "source": "exitplanmodetool/01_tool_definition___lifecycle",
+      "target": "exitplanmodetool/02_plan_mode_state_transition",
+      "label": "Triggers state change"
+    },
+    {
+      "source": "exitplanmodetool/01_tool_definition___lifecycle",
+      "target": "exitplanmodetool/03_teammate_approval_protocol",
+      "label": "Enforces approval rules"
+    },
+    {
+      "source": "exitplanmodetool/01_tool_definition___lifecycle",
+      "target": "exitplanmodetool/05_cli_ui_rendering",
+      "label": "Renders output via"
+    }
+  ],
+  "storyPath": [
+    "exitplanmodetool/01_tool_definition___lifecycle",
+    "exitplanmodetool/02_plan_mode_state_transition",
+    "exitplanmodetool/03_teammate_approval_protocol",
+    "exitplanmodetool/04_prompt_engineering",
+    "exitplanmodetool/05_cli_ui_rendering"
+  ]
+}

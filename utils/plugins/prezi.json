@@ -1,0 +1,166 @@
+{
+  "projectName": "plugins",
+  "nodes": [
+    {
+      "id": "plugins",
+      "label": "plugins",
+      "type": "module",
+      "summary": "This project implements a modular **plugin system** that extends the core application with external capabilities like commands, agents, and tools. It relies on a central **Installation Orchestrator** to fetch plugins from various **Marketplaces**, manage their lifecycle in a versioned **Installation Registry**, and dynamically load their features via **Integration Layers** while securely injecting user **Configuration & Secrets**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "plugins/01_plugin_identity___schema",
+          "label": "Plugin Identity & Schema",
+          "type": "chapter",
+          "summary": "Defines what a plugin *is* and how it is identified.\nSimilar to a blueprint or a passport, this layer establishes the contract (`plugin.json` structure) and the naming convention (`name@marketplace`). It includes strict Zod schemas to validate manifests, ensuring every plugin provides the expected metadata, permissions, and configuration fields before the system attempts to load it.",
+          "contentPath": "01_plugin_identity___schema.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plugins/02_marketplace_manager",
+          "label": "Marketplace Manager",
+          "type": "chapter",
+          "summary": "The procurement department for plugins.\nIt manages the upstream sources where plugins live (GitHub repos, URLs, local directories). It handles fetching these catalogs, caching them locally, and maintaining the `known_marketplaces.json` registry. It abstracts away the details of `git clone` or HTTP downloads, presenting a unified catalog of available plugins to the rest of the system.",
+          "contentPath": "02_marketplace_manager.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plugins/03_installation_orchestrator",
+          "label": "Installation Orchestrator",
+          "type": "chapter",
+          "summary": "The workflow engine for adding new plugins.\nIt coordinates the complex multi-step process of installing a plugin: resolving dependencies, checking enterprise policies, fetching files, calculating versions, and updating settings. It ensures that when you ask for \"Plugin X\", you also get \"Dependency Y\", and that everything is secure and compliant.",
+          "contentPath": "03_installation_orchestrator.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plugins/04_installation_registry",
+          "label": "Installation Registry",
+          "type": "chapter",
+          "summary": "The local librarian tracking what is physically stored on disk.\nIt separates the concept of \"installation\" (files present in the global cache) from \"enablement\" (active in a specific project). It manages the `installed_plugins.json` file, handles versioning (V1/V2 storage formats), and creates the directory structures where plugin code resides.",
+          "contentPath": "04_installation_registry.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plugins/05_component_integration_layers",
+          "label": "Component Integration Layers",
+          "type": "chapter",
+          "summary": "Adapters that plug distinct plugin features into the core system.\nPlugins aren't just generic code; they provide specific capabilities. These integrations scan plugin directories to load Agents (workflow logic), Commands (prompts), MCP Servers (tools/resources), and LSP Servers (language intelligence), translating them into formats the runtime uses.",
+          "contentPath": "05_component_integration_layers.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plugins/06_configuration___secrets_storage",
+          "label": "Configuration & Secrets Storage",
+          "type": "chapter",
+          "summary": "A secure vault for user settings.\nPlugins often need API keys or user preferences. This abstraction splits storage based on sensitivity: standard options go into the plaintext `settings.json`, while sensitive data (like tokens) is routed to the OS keychain or secure credential files. It also handles variable substitution (e.g., injecting `${user_config.api_key}` into commands).",
+          "contentPath": "06_configuration___secrets_storage.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "plugins/05_component_integration_layers",
+          "target": "plugins/02_marketplace_manager",
+          "label": "Fetches plugin sources"
+        },
+        {
+          "source": "plugins/05_component_integration_layers",
+          "target": "plugins/03_installation_orchestrator",
+          "label": "Registers installed plugins"
+        },
+        {
+          "source": "plugins/05_component_integration_layers",
+          "target": "plugins/01_plugin_identity___schema",
+          "label": "Resolves dependencies"
+        },
+        {
+          "source": "plugins/02_marketplace_manager",
+          "target": "plugins/01_plugin_identity___schema",
+          "label": "Validates manifests"
+        },
+        {
+          "source": "plugins/04_installation_registry",
+          "target": "plugins/03_installation_orchestrator",
+          "label": "Scans installed directories"
+        },
+        {
+          "source": "plugins/04_installation_registry",
+          "target": "plugins/01_plugin_identity___schema",
+          "label": "Validates component config"
+        },
+        {
+          "source": "plugins/04_installation_registry",
+          "target": "plugins/06_configuration___secrets_storage",
+          "label": "Injects user settings"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "plugins/05_component_integration_layers",
+      "target": "plugins/02_marketplace_manager",
+      "label": "Fetches plugin sources"
+    },
+    {
+      "source": "plugins/05_component_integration_layers",
+      "target": "plugins/03_installation_orchestrator",
+      "label": "Registers installed plugins"
+    },
+    {
+      "source": "plugins/05_component_integration_layers",
+      "target": "plugins/01_plugin_identity___schema",
+      "label": "Resolves dependencies"
+    },
+    {
+      "source": "plugins/02_marketplace_manager",
+      "target": "plugins/01_plugin_identity___schema",
+      "label": "Validates manifests"
+    },
+    {
+      "source": "plugins/04_installation_registry",
+      "target": "plugins/03_installation_orchestrator",
+      "label": "Scans installed directories"
+    },
+    {
+      "source": "plugins/04_installation_registry",
+      "target": "plugins/01_plugin_identity___schema",
+      "label": "Validates component config"
+    },
+    {
+      "source": "plugins/04_installation_registry",
+      "target": "plugins/06_configuration___secrets_storage",
+      "label": "Injects user settings"
+    }
+  ],
+  "storyPath": [
+    "plugins/01_plugin_identity___schema",
+    "plugins/02_marketplace_manager",
+    "plugins/03_installation_orchestrator",
+    "plugins/04_installation_registry",
+    "plugins/05_component_integration_layers",
+    "plugins/06_configuration___secrets_storage"
+  ]
+}

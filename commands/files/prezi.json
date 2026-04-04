@@ -1,0 +1,124 @@
+{
+  "projectName": "files",
+  "nodes": [
+    {
+      "id": "files",
+      "label": "files",
+      "type": "module",
+      "summary": "This project builds a modular **command system** where tools (like a file lister) are defined via a lightweight *registration interface*. It uses a **lazy loading** strategy to fetch the heavy *implementation logic* only when needed, ensuring the command executes within a specific context and returns data in a consistent, **standardized format**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "files/01_command_registration_interface",
+          "label": "Command Registration Interface",
+          "type": "chapter",
+          "summary": "This abstraction acts as the manifesto or metadata layer for a feature. Instead of putting all logic in one place, the system uses a definition object to describe *what* the command is (name, description, type) and *when* it should be available (enabled state) before the actual code is even loaded.\n\nThink of it like a menu entry in a restaurant. The menu describes the dish, lists the ingredients, and tells you if it's available for lunch or dinner, but it isn't the actual plate of food itself. The kitchen (implementation) is separate.",
+          "contentPath": "01_command_registration_interface.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "files/02_execution_context___state",
+          "label": "Execution Context & State",
+          "type": "chapter",
+          "summary": "The `ToolUseContext` abstraction provides a snapshot of the current environment passed into every command. Instead of commands searching globally for data, they are handed a specific \"briefcase\" containing everything they need to know about the current session, such as which files are currently open or cached (`readFileState`).\n\nImagine a contractor arriving at a job site. Instead of asking \"Where is the hammer? Where is the blueprint?\", they are handed a fully equipped toolbelt and a clipboard with the specific project details for that day.",
+          "contentPath": "02_execution_context___state.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "files/03_standardized_result_objects",
+          "label": "Standardized Result Objects",
+          "type": "chapter",
+          "summary": "The codebase uses a strict contract for return values, specifically the `LocalCommandResult` type. This abstraction ensures that no matter what a command does (calculates math, reads files, or fetches data), it returns data in a consistent format (e.g., `{ type: 'text', value: ... }`) that the core system can understand and render.\n\nThink of this like a universal shipping container. It doesn't matter if the container holds electronics, bananas, or cars; the crane and the truck are designed to handle that specific box shape and locking mechanism, making logistics seamless.",
+          "contentPath": "03_standardized_result_objects.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "files/04_command_implementation_logic",
+          "label": "Command Implementation Logic",
+          "type": "chapter",
+          "summary": "This represents the \"engine room\" of a specific tool. Separated from the definition, this abstraction contains the actual execution logic (`call` function) that runs when a user invokes the command. It processes input arguments and interacts with the system.\n\nIt's like the chef in the kitchen. Once the waiter (the Registration Interface) sends the order back, the chef (Implementation Logic) chops the vegetables, cooks the meal, and plates it. The chef doesn't worry about printing the menu, only about executing the recipe requested.",
+          "contentPath": "04_command_implementation_logic.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "files/05_lazy_loading_mechanism",
+          "label": "Lazy Loading Mechanism",
+          "type": "chapter",
+          "summary": "This abstraction optimizes performance by deferring the importation of heavy logic until it is strictly necessary. The `load` property in the command definition uses a dynamic import to fetch the implementation file only when the command is actually triggered.\n\nIt is similar to a \"Just-in-Time\" manufacturing process. A car factory doesn't store thousands of tires on the assembly floor (which takes up space and memory). Instead, they order the tires to arrive exactly when the car frame reaches the wheel assembly station.",
+          "contentPath": "05_lazy_loading_mechanism.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "files/01_command_registration_interface",
+          "target": "files/04_command_implementation_logic",
+          "label": "Defines strategy"
+        },
+        {
+          "source": "files/04_command_implementation_logic",
+          "target": "files/02_execution_context___state",
+          "label": "Imports dynamically"
+        },
+        {
+          "source": "files/02_execution_context___state",
+          "target": "files/03_standardized_result_objects",
+          "label": "Consumes data"
+        },
+        {
+          "source": "files/02_execution_context___state",
+          "target": "files/05_lazy_loading_mechanism",
+          "label": "Produces"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "files/01_command_registration_interface",
+      "target": "files/04_command_implementation_logic",
+      "label": "Defines strategy"
+    },
+    {
+      "source": "files/04_command_implementation_logic",
+      "target": "files/02_execution_context___state",
+      "label": "Imports dynamically"
+    },
+    {
+      "source": "files/02_execution_context___state",
+      "target": "files/03_standardized_result_objects",
+      "label": "Consumes data"
+    },
+    {
+      "source": "files/02_execution_context___state",
+      "target": "files/05_lazy_loading_mechanism",
+      "label": "Produces"
+    }
+  ],
+  "storyPath": [
+    "files/01_command_registration_interface",
+    "files/02_execution_context___state",
+    "files/03_standardized_result_objects",
+    "files/04_command_implementation_logic",
+    "files/05_lazy_loading_mechanism"
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "projectName": "memory",
+  "nodes": [
+    {
+      "id": "memory",
+      "label": "memory",
+      "type": "module",
+      "summary": "This project is a **terminal-based memory management system** designed to help an AI organize and access context files across different scopes like *User*, *Project*, and specialized *Agents*. It features a unified dashboard that formats complex file paths into **human-readable text**, dynamically creates storage folders for active tools, and allows the user to control background maintenance tasks like \"Auto-Dreaming\" directly from the command line.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "memory/01_memory_hierarchy_interface",
+          "label": "Memory Hierarchy Interface",
+          "type": "chapter",
+          "summary": "A unified system for organizing and selecting different types of AI context (\"memory\"). It aggregates global User memory, local Project memory, and specialized Agent memories into a single interactive list, handling the creation of default files (like `CLAUDE.md`) if they don't exist.\nIt's like a smart bookshelf that automatically sorts your personal diary, work project binders, and reference manuals into one easy-to-browse catalog.",
+          "contentPath": "01_memory_hierarchy_interface.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "memory/02_dynamic_agent_scope",
+          "label": "Dynamic Agent Scope",
+          "type": "chapter",
+          "summary": "A mechanism that dynamically exposes memory storage locations for specific \"Agents\" (specialized tools). It reads the application state to find active agents and generates navigation options for their specific memory folders.\nImagine distinct cubicles for different specialists (like a coder or researcher). This system automatically creates and labels a specific drawer for each specialist so they keep their notes separate from the general pile.",
+          "contentPath": "02_dynamic_agent_scope.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "memory/03_terminal_interaction_layer",
+          "label": "Terminal Interaction Layer",
+          "type": "chapter",
+          "summary": "The UI presentation layer built using `ink` (React for the terminal). It handles rendering visual components (Boxes, Text lists) and managing user interaction through keyboard shortcuts (keybindings) for navigation and toggling settings.\nIt acts as the dashboard for the application in a text-only environment, translating your physical keystrokes into actions and drawing the visual interface on the command line.",
+          "contentPath": "03_terminal_interaction_layer.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "memory/04_path_contextualization",
+          "label": "Path Contextualization",
+          "type": "chapter",
+          "summary": "A utility logic that translates complex absolute file paths into human-readable relative paths. It prefers shorter representations relative to the user's home directory (`~`) or the current working directory (`./`) for cleaner UI display.\nInstead of giving a friend exact GPS coordinates, you simply tell them a location is \"at your house\" or \"down the street,\" making the location immediately recognizable.",
+          "contentPath": "04_path_contextualization.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "memory/05_auto_dreaming_controls",
+          "label": "Auto-Dreaming Controls",
+          "type": "chapter",
+          "summary": "The interface for managing the \"Dreaming\" process, a background task for consolidating memory. It includes logic to toggle the feature, track its running state, and display the last execution time to the user.\nIt's like a control panel for a robotic archivist that organizes files while you sleep. You can flip a switch to enable it and check a log to see when it last finished cleaning up.",
+          "contentPath": "05_auto_dreaming_controls.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "memory/01_memory_hierarchy_interface",
+          "target": "memory/02_dynamic_agent_scope",
+          "label": "Formats paths using"
+        },
+        {
+          "source": "memory/01_memory_hierarchy_interface",
+          "target": "memory/03_terminal_interaction_layer",
+          "label": "Manages state of"
+        },
+        {
+          "source": "memory/01_memory_hierarchy_interface",
+          "target": "memory/04_path_contextualization",
+          "label": "Discovers folders via"
+        },
+        {
+          "source": "memory/01_memory_hierarchy_interface",
+          "target": "memory/05_auto_dreaming_controls",
+          "label": "Renders UI with"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "memory/01_memory_hierarchy_interface",
+      "target": "memory/02_dynamic_agent_scope",
+      "label": "Formats paths using"
+    },
+    {
+      "source": "memory/01_memory_hierarchy_interface",
+      "target": "memory/03_terminal_interaction_layer",
+      "label": "Manages state of"
+    },
+    {
+      "source": "memory/01_memory_hierarchy_interface",
+      "target": "memory/04_path_contextualization",
+      "label": "Discovers folders via"
+    },
+    {
+      "source": "memory/01_memory_hierarchy_interface",
+      "target": "memory/05_auto_dreaming_controls",
+      "label": "Renders UI with"
+    }
+  ],
+  "storyPath": [
+    "memory/01_memory_hierarchy_interface",
+    "memory/02_dynamic_agent_scope",
+    "memory/03_terminal_interaction_layer",
+    "memory/04_path_contextualization",
+    "memory/05_auto_dreaming_controls"
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "projectName": "doctor",
+  "nodes": [
+    {
+      "id": "doctor",
+      "label": "doctor",
+      "type": "module",
+      "summary": "This project implements a **system diagnostic tool** designed to verify the installation and settings of the application. It utilizes a **lazy loading** strategy to fetch the command logic only when needed and renders an interactive *React-based* user interface directly within the terminal to display the diagnosis results.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "doctor/01_command_definition",
+          "label": "Command Definition",
+          "type": "chapter",
+          "summary": "Defines the metadata and behavior of a CLI command. It serves as the blueprint for the command, specifying its identity (name, description), its type (e.g., 'local-jsx'), and conditions for when it should be active. Think of it as a menu item entry that tells the system what the command is and how to treat it before it is actually ordered (executed).",
+          "contentPath": "01_command_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "doctor/02_environment_feature_flags",
+          "label": "Environment Feature Flags",
+          "type": "chapter",
+          "summary": "A mechanism to control the availability of commands based on the runtime environment variables. In the context, `isEnabled` checks `process.env` to determine if the command should be active. This acts like a circuit breaker or a toggle switch, allowing features to be turned on or off without changing the codebase.",
+          "contentPath": "02_environment_feature_flags.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "doctor/03_lazy_module_loading",
+          "label": "Lazy Module Loading",
+          "type": "chapter",
+          "summary": "A performance optimization pattern used to import the heavy implementation logic of a command only when it is explicitly requested. It uses dynamic imports (e.g., `import('./doctor.js')`) inside the `load` function. This is like keeping a tool in the shed and only fetching it when you specifically need to use it, rather than carrying it around all day.",
+          "contentPath": "03_lazy_module_loading.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "doctor/04_local_jsx_command_handler",
+          "label": "Local JSX Command Handler",
+          "type": "chapter",
+          "summary": "A specific implementation pattern for commands that render interactive User Interfaces (UI) using React. Instead of just running a script, this abstraction acts as a bridge that initializes a React component tree within the terminal environment. It handles the lifecycle of the command execution, such as passing an `onDone` callback to signal completion.",
+          "contentPath": "04_local_jsx_command_handler.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "doctor/05_screen_component_integration",
+          "label": "Screen Component Integration",
+          "type": "chapter",
+          "summary": "Represents the usage of high-level UI components (like `<Doctor />`) to drive the command's visual output. This abstraction treats the command logic as a container for a specific screen or view, delegating the actual user interaction and display logic to a dedicated React component.",
+          "contentPath": "05_screen_component_integration.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "doctor/01_command_definition",
+          "target": "doctor/04_local_jsx_command_handler",
+          "label": "Checks availability via"
+        },
+        {
+          "source": "doctor/01_command_definition",
+          "target": "doctor/03_lazy_module_loading",
+          "label": "Uses"
+        },
+        {
+          "source": "doctor/03_lazy_module_loading",
+          "target": "doctor/02_environment_feature_flags",
+          "label": "Loads"
+        },
+        {
+          "source": "doctor/02_environment_feature_flags",
+          "target": "doctor/05_screen_component_integration",
+          "label": "Renders"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "doctor/01_command_definition",
+      "target": "doctor/04_local_jsx_command_handler",
+      "label": "Checks availability via"
+    },
+    {
+      "source": "doctor/01_command_definition",
+      "target": "doctor/03_lazy_module_loading",
+      "label": "Uses"
+    },
+    {
+      "source": "doctor/03_lazy_module_loading",
+      "target": "doctor/02_environment_feature_flags",
+      "label": "Loads"
+    },
+    {
+      "source": "doctor/02_environment_feature_flags",
+      "target": "doctor/05_screen_component_integration",
+      "label": "Renders"
+    }
+  ],
+  "storyPath": [
+    "doctor/01_command_definition",
+    "doctor/02_environment_feature_flags",
+    "doctor/03_lazy_module_loading",
+    "doctor/04_local_jsx_command_handler",
+    "doctor/05_screen_component_integration"
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "projectName": "mcp",
+  "nodes": [
+    {
+      "id": "mcp",
+      "label": "mcp",
+      "type": "module",
+      "summary": "The **MCP Settings** module provides a comprehensive user interface for configuring and managing **Model Context Protocol** servers within an application. It allows users to browse a registry of connected servers, manage their *lifecycles* (such as connecting, authenticating, or disabling), and inspect the specific **tools** and **resources** each server provides. The system also includes robust features for handling connection errors, managing authentication tokens, and displaying configuration diagnostics to help users troubleshoot their setup.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "mcp/01_mcp_settings_coordinator",
+          "label": "MCP Settings Coordinator",
+          "type": "chapter",
+          "summary": "The top-level React component that acts as the router and state manager for the entire MCP settings interface. It orchestrates the transition between different views\u2014such as the server list, individual server menus, and tool details\u2014and prepares the initial data by fetching server configurations and agent definitions from the global app state.",
+          "contentPath": "01_mcp_settings_coordinator.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcp/02_server_registry_view",
+          "label": "Server Registry View",
+          "type": "chapter",
+          "summary": "The main dashboard component responsible for rendering the list of all configured MCP servers. It organizes servers into logical groups based on their scope (Project, User, Local, Enterprise) or type (Agent, Built-in), functioning like a directory explorer that allows users to navigate to specific server configurations.",
+          "contentPath": "02_server_registry_view.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcp/03_server_instance_controllers",
+          "label": "Server Instance Controllers",
+          "type": "chapter",
+          "summary": "Components dedicated to managing the lifecycle and interaction for specific types of MCP servers. These \"control panels\" handle transport-specific logic, such as managing local processes via Stdio or handling OAuth flows for Agent/HTTP servers, providing options to enable, disable, authenticate, or reconnect.",
+          "contentPath": "03_server_instance_controllers.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcp/04_tool_introspection",
+          "label": "Tool Introspection",
+          "type": "chapter",
+          "summary": "A set of views that allows users to explore the capabilities exposed by connected MCP servers. This abstraction lists available tools, displays their status (e.g., read-only, destructive), and provides detailed views of their input schemas and descriptions, effectively serving as an interactive API documentation browser.",
+          "contentPath": "04_tool_introspection.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcp/05_connection_lifecycle___recovery",
+          "label": "Connection Lifecycle & Recovery",
+          "type": "chapter",
+          "summary": "Utilities and components focused on maintaining the link between the client and MCP servers. This includes logic for attempting reconnections, handling authentication states, and providing user feedback on connection success or failure, ensuring the communication channel is robust and recoverable.",
+          "contentPath": "05_connection_lifecycle___recovery.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcp/06_configuration_diagnostics",
+          "label": "Configuration Diagnostics",
+          "type": "chapter",
+          "summary": "A diagnostic component that parses and displays errors or warnings related to MCP configuration files. It acts as a linter within the settings UI, identifying syntax errors or invalid setups across different configuration scopes to help users debug their environment.",
+          "contentPath": "06_configuration_diagnostics.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "mcp/01_mcp_settings_coordinator",
+          "target": "mcp/02_server_registry_view",
+          "label": "Renders registry"
+        },
+        {
+          "source": "mcp/01_mcp_settings_coordinator",
+          "target": "mcp/03_server_instance_controllers",
+          "label": "Manages server views"
+        },
+        {
+          "source": "mcp/01_mcp_settings_coordinator",
+          "target": "mcp/04_tool_introspection",
+          "label": "Renders tool details"
+        },
+        {
+          "source": "mcp/02_server_registry_view",
+          "target": "mcp/06_configuration_diagnostics",
+          "label": "Embeds warnings"
+        },
+        {
+          "source": "mcp/03_server_instance_controllers",
+          "target": "mcp/04_tool_introspection",
+          "label": "Displays capabilities"
+        },
+        {
+          "source": "mcp/03_server_instance_controllers",
+          "target": "mcp/05_connection_lifecycle___recovery",
+          "label": "Uses recovery logic"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "mcp/01_mcp_settings_coordinator",
+      "target": "mcp/02_server_registry_view",
+      "label": "Renders registry"
+    },
+    {
+      "source": "mcp/01_mcp_settings_coordinator",
+      "target": "mcp/03_server_instance_controllers",
+      "label": "Manages server views"
+    },
+    {
+      "source": "mcp/01_mcp_settings_coordinator",
+      "target": "mcp/04_tool_introspection",
+      "label": "Renders tool details"
+    },
+    {
+      "source": "mcp/02_server_registry_view",
+      "target": "mcp/06_configuration_diagnostics",
+      "label": "Embeds warnings"
+    },
+    {
+      "source": "mcp/03_server_instance_controllers",
+      "target": "mcp/04_tool_introspection",
+      "label": "Displays capabilities"
+    },
+    {
+      "source": "mcp/03_server_instance_controllers",
+      "target": "mcp/05_connection_lifecycle___recovery",
+      "label": "Uses recovery logic"
+    }
+  ],
+  "storyPath": [
+    "mcp/01_mcp_settings_coordinator",
+    "mcp/02_server_registry_view",
+    "mcp/03_server_instance_controllers",
+    "mcp/04_tool_introspection",
+    "mcp/05_connection_lifecycle___recovery",
+    "mcp/06_configuration_diagnostics"
+  ]
+}

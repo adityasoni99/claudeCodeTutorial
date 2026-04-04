@@ -1,0 +1,134 @@
+{
+  "projectName": "add-dir",
+  "nodes": [
+    {
+      "id": "add-dir",
+      "label": "add-dir",
+      "type": "module",
+      "summary": "The `add-dir` project implements a CLI command that safely grants the application access to new folders on your computer. It acts as a **security gatekeeper**, validating that the path exists and isn't already accessible, before updating the **internal permission state** to remember the new access rights for current and future sessions.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "add-dir/01_command_definition",
+          "label": "Command Definition",
+          "type": "chapter",
+          "summary": "Defines the entry point for the CLI command. It registers metadata like the command name (`add-dir`), description, and argument hints, and sets up lazy loading for the implementation.\nIt's like the menu entry in a restaurant that describes the dish and tells the kitchen which recipe to prepare when ordered.",
+          "contentPath": "01_command_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "add-dir/02_interactive_command_ui",
+          "label": "Interactive Command UI",
+          "type": "chapter",
+          "summary": "Implements the visual interface and execution flow of the command using React (Ink). It handles user input logic\u2014either processing a provided path argument or rendering an interactive form if no argument is given.\nIt acts as the \"Controller,\" managing the lifecycle from the initial user request to the final success or failure message.",
+          "contentPath": "02_interactive_command_ui.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "add-dir/03_directory_validation",
+          "label": "Directory Validation",
+          "type": "chapter",
+          "summary": "A logic layer ensuring that a requested path is valid before it's processed. It checks if the path exists on the filesystem, is actually a directory (not a file), and isn't already included in the current workspace.\nIt serves as a gatekeeper, preventing invalid paths or redundant permissions from entering the system.",
+          "contentPath": "03_directory_validation.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "add-dir/04_state___permission_management",
+          "label": "State & Permission Management",
+          "type": "chapter",
+          "summary": "The mechanism for updating the application's internal state to reflect the new directory. It handles updating the `ToolPermissionContext`, refreshing sandbox configurations, and optionally persisting changes to local settings.\nIt's like issuing a key card to a new employee; it updates the security system so the new access rights work immediately and persist for future visits.",
+          "contentPath": "04_state___permission_management.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "add-dir/05_error_feedback_system",
+          "label": "Error Feedback System",
+          "type": "chapter",
+          "summary": "Utilities designed to translate technical failures into user-friendly messages. It maps filesystem errors (like `ENOENT`) or validation states (like `notADirectory`) to specific help text, guiding the user to correct their input.\nIt's like a helpful guide who explains exactly why a door is locked and suggests the correct one to try.",
+          "contentPath": "05_error_feedback_system.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "add-dir/01_command_definition",
+          "target": "add-dir/02_interactive_command_ui",
+          "label": "Lazy loads"
+        },
+        {
+          "source": "add-dir/02_interactive_command_ui",
+          "target": "add-dir/03_directory_validation",
+          "label": "Validates input path"
+        },
+        {
+          "source": "add-dir/02_interactive_command_ui",
+          "target": "add-dir/04_state___permission_management",
+          "label": "Updates application state"
+        },
+        {
+          "source": "add-dir/02_interactive_command_ui",
+          "target": "add-dir/05_error_feedback_system",
+          "label": "Renders failure messages"
+        },
+        {
+          "source": "add-dir/03_directory_validation",
+          "target": "add-dir/04_state___permission_management",
+          "label": "Checks existing permissions"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "add-dir/01_command_definition",
+      "target": "add-dir/02_interactive_command_ui",
+      "label": "Lazy loads"
+    },
+    {
+      "source": "add-dir/02_interactive_command_ui",
+      "target": "add-dir/03_directory_validation",
+      "label": "Validates input path"
+    },
+    {
+      "source": "add-dir/02_interactive_command_ui",
+      "target": "add-dir/04_state___permission_management",
+      "label": "Updates application state"
+    },
+    {
+      "source": "add-dir/02_interactive_command_ui",
+      "target": "add-dir/05_error_feedback_system",
+      "label": "Renders failure messages"
+    },
+    {
+      "source": "add-dir/03_directory_validation",
+      "target": "add-dir/04_state___permission_management",
+      "label": "Checks existing permissions"
+    }
+  ],
+  "storyPath": [
+    "add-dir/01_command_definition",
+    "add-dir/02_interactive_command_ui",
+    "add-dir/03_directory_validation",
+    "add-dir/04_state___permission_management",
+    "add-dir/05_error_feedback_system"
+  ]
+}

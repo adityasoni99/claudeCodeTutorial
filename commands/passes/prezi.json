@@ -1,0 +1,124 @@
+{
+  "projectName": "passes",
+  "nodes": [
+    {
+      "id": "passes",
+      "label": "passes",
+      "type": "module",
+      "summary": "This project implements a **referral feature** (Passes) for a command-line tool, allowing users to share free access with friends via an interactive *terminal UI*. It optimizes startup performance by using **lazy loading** to fetch heavy code only when the command is selected, while a lightweight *visibility check* instantly determines if the feature should appear in the menu based on user eligibility.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "passes/01_command_definition_interface",
+          "label": "Command Definition Interface",
+          "type": "chapter",
+          "summary": "This is the blueprint or \"manifest\" for any tool available in the application. Think of it like a menu item in a restaurant: it lists the name of the dish (the command name), a description so the user knows what it is, and whether it is currently available to order (visibility).\n\nIn this system, the command definition acts as the entry point that the main application reads to register the feature without loading all the heavy code immediately.",
+          "contentPath": "01_command_definition_interface.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "passes/02_dynamic_feature_visibility",
+          "label": "Dynamic Feature Visibility",
+          "type": "chapter",
+          "summary": "This abstraction acts as a \"bouncer\" or gatekeeper for features. It determines whether a command should be visible to the user based on specific criteria, such as cached API data or eligibility rules.\n\nInstead of making a slow network call to check if the user is allowed to see the \"Passes\" feature every time the menu is rendered, it relies on cached data (`checkCachedPassesEligibility`) to make an instant decision, keeping the UI snappy.",
+          "contentPath": "02_dynamic_feature_visibility.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "passes/03_lazy_module_loading",
+          "label": "Lazy Module Loading",
+          "type": "chapter",
+          "summary": "This is a performance optimization technique. It's like keeping the lights off in a room until someone actually walks in.\n\nInstead of importing the heavy logic code (the `passes.tsx` file) immediately when the application starts, the `Command Definition` uses a `load` function. This ensures the application only spends resources loading the specific code for the \"Passes\" feature if and when the user decides to run it.",
+          "contentPath": "03_lazy_module_loading.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "passes/04_local_jsx_action_handler",
+          "label": "Local JSX Action Handler",
+          "type": "chapter",
+          "summary": "This acts as the \"chef\" that prepares the experience when a user actually selects the command. Unlike traditional CLI tools that just output text to a console, this abstraction allows the application to render rich, interactive UI components using React (JSX) directly in the terminal.\n\nThe `call` function is the specific implementation that runs the logic, logs analytics, updates state, and returns the visual component (`<Passes />`) to be rendered.",
+          "contentPath": "04_local_jsx_action_handler.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "passes/05_global_configuration_state",
+          "label": "Global Configuration State",
+          "type": "chapter",
+          "summary": "This represents the application's long-term memory. It allows the command to remember interactions across different sessions.\n\nFor example, it acts like a \"guest book\" that checks if a user has visited the \"Passes\" screen before. If they haven't (`!hasVisitedPasses`), it might trigger specific logic (like an onboarding animation or caching current values) and then update the record so the application treats them as a returning user next time.",
+          "contentPath": "05_global_configuration_state.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "passes/01_command_definition_interface",
+          "target": "passes/05_global_configuration_state",
+          "label": "Determines visibility using"
+        },
+        {
+          "source": "passes/01_command_definition_interface",
+          "target": "passes/03_lazy_module_loading",
+          "label": "Defines loading strategy via"
+        },
+        {
+          "source": "passes/03_lazy_module_loading",
+          "target": "passes/02_dynamic_feature_visibility",
+          "label": "Dynamically imports"
+        },
+        {
+          "source": "passes/02_dynamic_feature_visibility",
+          "target": "passes/04_local_jsx_action_handler",
+          "label": "Reads and updates"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "passes/01_command_definition_interface",
+      "target": "passes/05_global_configuration_state",
+      "label": "Determines visibility using"
+    },
+    {
+      "source": "passes/01_command_definition_interface",
+      "target": "passes/03_lazy_module_loading",
+      "label": "Defines loading strategy via"
+    },
+    {
+      "source": "passes/03_lazy_module_loading",
+      "target": "passes/02_dynamic_feature_visibility",
+      "label": "Dynamically imports"
+    },
+    {
+      "source": "passes/02_dynamic_feature_visibility",
+      "target": "passes/04_local_jsx_action_handler",
+      "label": "Reads and updates"
+    }
+  ],
+  "storyPath": [
+    "passes/01_command_definition_interface",
+    "passes/02_dynamic_feature_visibility",
+    "passes/03_lazy_module_loading",
+    "passes/04_local_jsx_action_handler",
+    "passes/05_global_configuration_state"
+  ]
+}

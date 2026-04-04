@@ -1,0 +1,134 @@
+{
+  "projectName": "remote",
+  "nodes": [
+    {
+      "id": "remote",
+      "label": "remote",
+      "type": "module",
+      "summary": "This project enables the **remote control** of an AI agent running in a separate environment (CCR) by bridging it to a local user interface. It manages a **resilient WebSocket connection** to stream chat events and synchronizes interactive states, such as **tool permission requests**, ensuring the remote agent behaves seamlessly like a local instance. The system handles protocol translation, authentication, and connection recovery automatically.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "remote/01_remote_session_orchestration",
+          "label": "Remote Session Orchestration",
+          "type": "chapter",
+          "summary": "The central coordinator for managing a remote AI session. It acts like a project manager, initializing the connection, routing incoming messages to the correct handlers (chat vs. system events), and managing the lifecycle of the session. It bridges the gap between the local user interface and the remote \"Computer Control Research\" (CCR) container, ensuring user inputs are sent via HTTP and agent updates are received via WebSocket.",
+          "contentPath": "01_remote_session_orchestration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "remote/02_remote_control_protocol",
+          "label": "Remote Control Protocol",
+          "type": "chapter",
+          "summary": "A specialized sub-protocol for handling interactive command-and-control flows, distinct from the standard chat stream. It manages synchronous operations where the remote agent must pause and wait for the user, such as asking for permission to execute a tool. It handles request/response pairing via IDs, cancellation signals, and interrupt commands, ensuring the agent and user stay in sync during sensitive operations.",
+          "contentPath": "02_remote_control_protocol.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "remote/03_synthetic_state_bridging",
+          "label": "Synthetic State Bridging",
+          "type": "chapter",
+          "summary": "A mechanism to simulate remote objects locally so existing UI components work without modification. Since the actual tool execution happens on a remote server, the local client lacks the context to render permission prompts naturally. This abstraction creates \"stubs\" or synthetic messages (like a fake assistant message requesting a tool) that trick the local UI into displaying standard confirmation dialogs for remote actions.",
+          "contentPath": "03_synthetic_state_bridging.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "remote/04_resilient_websocket_transport",
+          "label": "Resilient WebSocket Transport",
+          "type": "chapter",
+          "summary": "A robust networking layer responsible for maintaining the real-time data pipe to the remote server. It functions like a sophisticated telephone line that handles authentication, keeps the connection alive with \"heartbeat\" pings, and automatically attempts to reconnect using exponential backoff if the line drops. It abstracts away the raw socket complexity, providing a clean interface for sending and receiving data streams.",
+          "contentPath": "04_resilient_websocket_transport.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "remote/05_message_protocol_adapter",
+          "label": "Message Protocol Adapter",
+          "type": "chapter",
+          "summary": "A translation layer that converts raw data from the remote backend into a format the local application understands. The remote server speaks in \"SDK Messages\" (technical events), while the local UI expects \"Display Messages\" (chat bubbles). This adapter inspects incoming packets\u2014filtering out noise like heartbeats and reformatting complex events (like tool use or streaming text) into renderable updates for the user.",
+          "contentPath": "05_message_protocol_adapter.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "remote/01_remote_session_orchestration",
+          "target": "remote/02_remote_control_protocol",
+          "label": "Manages connection lifecycle"
+        },
+        {
+          "source": "remote/01_remote_session_orchestration",
+          "target": "remote/04_resilient_websocket_transport",
+          "label": "Handles control logic"
+        },
+        {
+          "source": "remote/02_remote_control_protocol",
+          "target": "remote/04_resilient_websocket_transport",
+          "label": "Transports control signals"
+        },
+        {
+          "source": "remote/03_synthetic_state_bridging",
+          "target": "remote/02_remote_control_protocol",
+          "label": "Translates stream data"
+        },
+        {
+          "source": "remote/05_message_protocol_adapter",
+          "target": "remote/04_resilient_websocket_transport",
+          "label": "Visualizes protocol requests"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "remote/01_remote_session_orchestration",
+      "target": "remote/02_remote_control_protocol",
+      "label": "Manages connection lifecycle"
+    },
+    {
+      "source": "remote/01_remote_session_orchestration",
+      "target": "remote/04_resilient_websocket_transport",
+      "label": "Handles control logic"
+    },
+    {
+      "source": "remote/02_remote_control_protocol",
+      "target": "remote/04_resilient_websocket_transport",
+      "label": "Transports control signals"
+    },
+    {
+      "source": "remote/03_synthetic_state_bridging",
+      "target": "remote/02_remote_control_protocol",
+      "label": "Translates stream data"
+    },
+    {
+      "source": "remote/05_message_protocol_adapter",
+      "target": "remote/04_resilient_websocket_transport",
+      "label": "Visualizes protocol requests"
+    }
+  ],
+  "storyPath": [
+    "remote/01_remote_session_orchestration",
+    "remote/02_remote_control_protocol",
+    "remote/03_synthetic_state_bridging",
+    "remote/04_resilient_websocket_transport",
+    "remote/05_message_protocol_adapter"
+  ]
+}

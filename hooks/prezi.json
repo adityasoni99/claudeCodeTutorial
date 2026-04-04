@@ -1,0 +1,134 @@
+{
+  "projectName": "hooks",
+  "nodes": [
+    {
+      "id": "hooks",
+      "label": "hooks",
+      "type": "module",
+      "summary": "This project is a sophisticated **terminal-based AI agent framework** that orchestrates complex user interactions and background processes. It features a robust **Permission Architecture** to secure tool usage, supports advanced *modal inputs* (like Vim and Voice), and manages **External Connectivity** to SSH sessions, IDEs, and the file system. A central **Command Execution Queue** ensures that user commands, AI thinking, and background task updates are processed in an orderly, race-condition-free manner.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "hooks/01_global_configuration___controls",
+          "label": "Global Configuration & Controls",
+          "type": "chapter",
+          "summary": "This represents the \"cockpit dashboard\" of the application. It centralizes the state that governs how the application behaves and responds to the user globally. This includes resolving which AI model to use (handling overrides and feature flags via `useMainLoopModel`), managing reactive application settings (like theme or verbosity via `useSettings`), and registering global keyboard shortcuts (via `useGlobalKeybindings`) that trigger major view changes (like toggling the transcript or todo list) regardless of where the focus currently lies.",
+          "contentPath": "01_global_configuration___controls.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "hooks/02_modal_input_processing",
+          "label": "Modal Input Processing",
+          "type": "chapter",
+          "summary": "This abstraction treats the user's input field not just as a simple text box, but as a sophisticated interpreter that changes behavior based on \"modes,\" similar to how a universal remote changes functions depending on which device you select. It handles complex input methods like Vim emulation (switching between Normal, Insert, and Visual modes to manipulate text via keystrokes) and Voice integration (handling push-to-talk recording, identifying hold gestures vs. taps, and inserting transcribed text). It intercepts raw keyboard events to manage state before the text ever reaches the prompt.",
+          "contentPath": "02_modal_input_processing.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "hooks/03_external_context___connectivity",
+          "label": "External Context & Connectivity",
+          "type": "chapter",
+          "summary": "These components act as \"diplomatic bridges\" connecting the internal REPL loop to the outside world. They manage the lifecycle of connections to external systems that exist independently of the React render cycle. This includes synchronizing with the file system to watch for task updates (`useTasksV2`), maintaining persistent SSH connections to remote servers (`useSSHSession`), and auto-connecting to IDEs like VS Code (`useIDEIntegration`) via the Model Context Protocol (MCP). They ensure the AI has a live line of communication to the user's environment.",
+          "contentPath": "03_external_context___connectivity.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "hooks/04_tool_permission_architecture",
+          "label": "Tool Permission Architecture",
+          "type": "chapter",
+          "summary": "This abstraction serves as the \"border control\" or \"security checkpoint\" for the AI agent. Before the AI is allowed to execute powerful actions (like running bash commands, editing files, or accessing SSH), it must pass through this layer. It creates a `PermissionContext` that encapsulates the tool being requested, the user's previous decisions, and the logic to prompt the user for confirmation. It handles the \"human-in-the-loop\" workflow, logging decisions (allow/deny) and persisting permissions so the user isn't pestered repeatedly for the same safe actions.",
+          "contentPath": "04_tool_permission_architecture.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "hooks/05_command_execution_queue",
+          "label": "Command Execution Queue",
+          "type": "chapter",
+          "summary": "This acts like the \"deli counter ticket system\" for the application. In a complex UI where the user might be typing, the AI might be thinking, and background tasks might be finishing simultaneously, this system ensures orderly conduct. It uses a `queryGuard` to prevent race conditions\u2014ensuring the application doesn't try to run a new user command while an existing query is still processing. It holds low-priority updates (like task notifications) until the \"counter\" is free, ensuring the main interaction loop remains stable and predictable.",
+          "contentPath": "05_command_execution_queue.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "hooks/03_external_context___connectivity",
+          "target": "hooks/01_global_configuration___controls",
+          "label": "Triggers permission requests"
+        },
+        {
+          "source": "hooks/03_external_context___connectivity",
+          "target": "hooks/05_command_execution_queue",
+          "label": "Reads app state"
+        },
+        {
+          "source": "hooks/01_global_configuration___controls",
+          "target": "hooks/05_command_execution_queue",
+          "label": "Persists permission updates"
+        },
+        {
+          "source": "hooks/02_modal_input_processing",
+          "target": "hooks/05_command_execution_queue",
+          "label": "Consumes keybinding configu..."
+        },
+        {
+          "source": "hooks/04_tool_permission_architecture",
+          "target": "hooks/05_command_execution_queue",
+          "label": "Observes global UI state"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "hooks/03_external_context___connectivity",
+      "target": "hooks/01_global_configuration___controls",
+      "label": "Triggers permission requests"
+    },
+    {
+      "source": "hooks/03_external_context___connectivity",
+      "target": "hooks/05_command_execution_queue",
+      "label": "Reads app state"
+    },
+    {
+      "source": "hooks/01_global_configuration___controls",
+      "target": "hooks/05_command_execution_queue",
+      "label": "Persists permission updates"
+    },
+    {
+      "source": "hooks/02_modal_input_processing",
+      "target": "hooks/05_command_execution_queue",
+      "label": "Consumes keybinding configuration"
+    },
+    {
+      "source": "hooks/04_tool_permission_architecture",
+      "target": "hooks/05_command_execution_queue",
+      "label": "Observes global UI state"
+    }
+  ],
+  "storyPath": [
+    "hooks/01_global_configuration___controls",
+    "hooks/02_modal_input_processing",
+    "hooks/03_external_context___connectivity",
+    "hooks/04_tool_permission_architecture",
+    "hooks/05_command_execution_queue"
+  ]
+}

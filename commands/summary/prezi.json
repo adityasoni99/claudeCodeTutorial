@@ -1,0 +1,58 @@
+{
+  "projectName": "summary",
+  "nodes": [
+    {
+      "id": "summary",
+      "label": "summary",
+      "type": "module",
+      "summary": "This project acts as a **placeholder** or \"stub\" for a software component that is not yet ready to be used. It establishes a structural contract that keeps the feature **inactive** and *hidden* by default, ensuring the surrounding system remains stable without running the disabled code.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "summary/01_component_stub_interface",
+          "label": "Component Stub Interface",
+          "type": "chapter",
+          "summary": "This abstraction defines a placeholder implementation for a module or feature within the system. It establishes a contract containing metadata (like `name`) and state indicators (`isEnabled`, `isHidden`) without containing actual business logic.\n\nThink of it like a \"mannequin\" in a store window or a prop on a movie set. It holds the place and shape of a real actor or feature so the surrounding system (the set) doesn't crash, but it is currently lifeless, hidden, and inactive.",
+          "contentPath": "01_component_stub_interface.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "summary/02_feature_visibility_control",
+          "label": "Feature Visibility Control",
+          "type": "chapter",
+          "summary": "This concept represents the mechanism used to toggle the availability of a specific feature. It uses functional checks (`isEnabled`) and static properties (`isHidden`) to determine if the code should run or render.\n\nIt is analogous to a circuit breaker or a fuse box for a specific room in a house. Even if the light fixtures (the code) exist in the room, this control panel ensures the power is cut off, keeping the feature dark and unusable until it is explicitly switched on.",
+          "contentPath": "02_feature_visibility_control.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "summary/01_component_stub_interface",
+          "target": "summary/02_feature_visibility_control",
+          "label": "Implements"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "summary/01_component_stub_interface",
+      "target": "summary/02_feature_visibility_control",
+      "label": "Implements"
+    }
+  ],
+  "storyPath": [
+    "summary/01_component_stub_interface",
+    "summary/02_feature_visibility_control"
+  ]
+}

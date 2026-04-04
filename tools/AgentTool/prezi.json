@@ -1,0 +1,178 @@
+{
+  "projectName": "AgentTool",
+  "nodes": [
+    {
+      "id": "agenttool",
+      "label": "AgentTool",
+      "type": "module",
+      "summary": "This project implements a robust **Agent Execution Runtime** that manages the full lifecycle of autonomous AI assistants. It creates a flexible environment where agents\u2014defined by specific **configurations** and **tools**\u2014can persist knowledge through *memory*, perform complex tasks via *context forking*, and interact with users through a unified presentation layer.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "agenttool/01_agent_definition___discovery",
+          "label": "Agent Definition & Discovery",
+          "type": "chapter",
+          "summary": "This abstraction defines what an agent \"is\" before it runs. It parses configuration from Markdown frontmatter, JSON, or built-in code to determine an agent's name, allowed tools, permissions, and source (User, Project, or Plugin).\n\nIt acts like a \"Character Sheet\" in a role-playing game. It lists the character's name, class (agent type), skills (tools), and alignment (permissions), but it doesn't describe the adventure itself\u2014just the stats required to play.",
+          "contentPath": "01_agent_definition___discovery.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agenttool/02_specialized_built_in_agents",
+          "label": "Specialized Built-in Agents",
+          "type": "chapter",
+          "summary": "These files define specific \"personas\" with hardcoded behaviors, restricted toolsets, and specialized prompts. They include the General Purpose agent, the Planning agent (read-only), and the Verification agent (tester).\n\nThink of these as specialized job roles on a construction site. You have the General Contractor (General Purpose), the Architect (Plan Agent) who draws blueprints but doesn't hammer nails, and the Building Inspector (Verification Agent) who checks safety but doesn't build.",
+          "contentPath": "02_specialized_built_in_agents.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agenttool/03_agent_execution_runtime",
+          "label": "Agent Execution Runtime",
+          "type": "chapter",
+          "summary": "This is the engine room of the system. It handles the lifecycle of an agent from startup to completion. It manages the conversation loop, executes tools, handles Model Context Protocol (MCP) server connections, and manages interruptions or background execution.\n\nThink of it like an Operating System's process manager. It spawns the process (agent), gives it resources (tools and context), handles its input/output (messages), and cleans up memory when the task is finished or paused.",
+          "contentPath": "03_agent_execution_runtime.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agenttool/04_dynamic_prompt_engineering",
+          "label": "Dynamic Prompt Engineering",
+          "type": "chapter",
+          "summary": "This logic constructs the actual text instructions sent to the LLM. It dynamically assembles the \"system prompt\" based on available tools, context, forking status, and the specific agent definition.\n\nThink of this as the \"Mission Briefing\" given to a secret agent before a mission. It tells them who they are, what equipment (tools) is in their bag, what the rules of engagement are, and what the objective is, tailored specifically to the current situation.",
+          "contentPath": "04_dynamic_prompt_engineering.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agenttool/05_persistent_agent_memory",
+          "label": "Persistent Agent Memory",
+          "type": "chapter",
+          "summary": "This system allows agents to store and retrieve information across different sessions. It handles scoping (User vs. Project vs. Local) and synchronization to ensure agents don't \"forget\" critical context when a specific task ends.\n\nImagine a contractor's physical notebook. Even though they visit different job sites (projects) or work on different days (sessions), they write down measurements and lessons in the notebook so they don't have to relearn the basics every time they show up.",
+          "contentPath": "05_persistent_agent_memory.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agenttool/06_context_forking_mechanism",
+          "label": "Context Forking Mechanism",
+          "type": "chapter",
+          "summary": "This feature allows an agent to split off a \"child\" process to handle a specific sub-task without losing the \"parent\" conversation context. It manages the creation of these sub-agents and prevents recursive loops.\n\nIt is analogous to biological mitosis or forking a repository. The child starts with an exact copy of the parent's knowledge (context/history) but becomes a separate entity that can do work independently in the background without cluttering the parent's main thought process.",
+          "contentPath": "06_context_forking_mechanism.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agenttool/07_agent_presentation_layer",
+          "label": "Agent Presentation Layer",
+          "type": "chapter",
+          "summary": "This abstraction handles how agents are displayed to the user in the CLI. It manages grouping agents by source (User, Plugin, Built-in), resolving naming conflicts/overrides, and assigning visual identifiers like colors.\n\nIt operates like a \"Roster\" or \"Contacts List\" on your phone. It sorts your contacts, merges duplicates (overrides), and assigns a specific ringtone or color to VIPs so you can instantly recognize who is calling.",
+          "contentPath": "07_agent_presentation_layer.md",
+          "x": -800.0,
+          "y": 450.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "agenttool/01_agent_definition___discovery",
+          "target": "agenttool/02_specialized_built_in_agents",
+          "label": "Instantiates and runs"
+        },
+        {
+          "source": "agenttool/02_specialized_built_in_agents",
+          "target": "agenttool/03_agent_execution_runtime",
+          "label": "Initializes storage scope"
+        },
+        {
+          "source": "agenttool/04_dynamic_prompt_engineering",
+          "target": "agenttool/01_agent_definition___discovery",
+          "label": "Generates system instructions"
+        },
+        {
+          "source": "agenttool/01_agent_definition___discovery",
+          "target": "agenttool/05_persistent_agent_memory",
+          "label": "Executes parallel processes"
+        },
+        {
+          "source": "agenttool/06_context_forking_mechanism",
+          "target": "agenttool/02_specialized_built_in_agents",
+          "label": "Implements definition inter..."
+        },
+        {
+          "source": "agenttool/07_agent_presentation_layer",
+          "target": "agenttool/02_specialized_built_in_agents",
+          "label": "Resolves and displays"
+        },
+        {
+          "source": "agenttool/04_dynamic_prompt_engineering",
+          "target": "agenttool/05_persistent_agent_memory",
+          "label": "Embeds usage rules"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "agenttool/01_agent_definition___discovery",
+      "target": "agenttool/02_specialized_built_in_agents",
+      "label": "Instantiates and runs"
+    },
+    {
+      "source": "agenttool/02_specialized_built_in_agents",
+      "target": "agenttool/03_agent_execution_runtime",
+      "label": "Initializes storage scope"
+    },
+    {
+      "source": "agenttool/04_dynamic_prompt_engineering",
+      "target": "agenttool/01_agent_definition___discovery",
+      "label": "Generates system instructions"
+    },
+    {
+      "source": "agenttool/01_agent_definition___discovery",
+      "target": "agenttool/05_persistent_agent_memory",
+      "label": "Executes parallel processes"
+    },
+    {
+      "source": "agenttool/06_context_forking_mechanism",
+      "target": "agenttool/02_specialized_built_in_agents",
+      "label": "Implements definition interface"
+    },
+    {
+      "source": "agenttool/07_agent_presentation_layer",
+      "target": "agenttool/02_specialized_built_in_agents",
+      "label": "Resolves and displays"
+    },
+    {
+      "source": "agenttool/04_dynamic_prompt_engineering",
+      "target": "agenttool/05_persistent_agent_memory",
+      "label": "Embeds usage rules"
+    }
+  ],
+  "storyPath": [
+    "agenttool/01_agent_definition___discovery",
+    "agenttool/02_specialized_built_in_agents",
+    "agenttool/03_agent_execution_runtime",
+    "agenttool/04_dynamic_prompt_engineering",
+    "agenttool/05_persistent_agent_memory",
+    "agenttool/06_context_forking_mechanism",
+    "agenttool/07_agent_presentation_layer"
+  ]
+}

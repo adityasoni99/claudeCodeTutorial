@@ -1,0 +1,176 @@
+{
+  "projectName": "commands",
+  "nodes": [
+    {
+      "id": "commands",
+      "label": "commands",
+      "type": "module",
+      "summary": "This project implements a sophisticated **AI coding assistant CLI** (Claude Code). It is built upon a modular **Command Architecture** where distinct features (like initialization, authentication, and context management) are encapsulated as commands. These commands leverage a React-based **Interactive TUI** to render rich user interfaces directly in the terminal. The system handles the AI's \"brain\" through **Context & Memory Management**, maintains secure **Authentication & Session State**, automates **Project Setup** (generating documentation and CI/CD workflows), and supports extensibility through **Plugin & MCP Integration**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "commands/01_command_architecture",
+          "label": "Command Architecture",
+          "type": "chapter",
+          "summary": "The fundamental unit of functionality in the application. Each feature (like committing code, initializing a project, or logging in) is encapsulated as a self-contained module exporting a `call` function or object. It's like a plugin system where each file acts as a distinct skill that the main application loads and executes when the user types a specific keyword (e.g., `/init`, `/login`).",
+          "contentPath": "01_command_architecture.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "commands/02_interactive_tui__text_user_interface_",
+          "label": "Interactive TUI (Text User Interface)",
+          "type": "chapter",
+          "summary": "Instead of simple text output, this abstraction uses React components to render rich, interactive interfaces directly in the terminal. It utilizes components like `Box`, `Text`, and `Dialog` to create menus, loading spinners, and forms. Think of it as building a web application, but the \"browser\" is the user's terminal window.",
+          "contentPath": "02_interactive_tui__text_user_interface_.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "commands/03_authentication___session_state",
+          "label": "Authentication & Session State",
+          "type": "chapter",
+          "summary": "Manages the user's identity and secure session lifecycle. This includes handling OAuth handshakes with external providers, storing credentials securely, and managing login/logout states. It acts as the digital bouncer and ID card issuer, ensuring only authorized users can access specific features or remote services.",
+          "contentPath": "03_authentication___session_state.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "commands/04_context___memory_management",
+          "label": "Context & Memory Management",
+          "type": "chapter",
+          "summary": "This abstraction manages the AI's \"brain,\" handling both immediate conversation history (context) and persistent project knowledge (memory). It ensures the model sees the right amount of information without exceeding token limits, similar to how a computer manages RAM (fast, temporary context) versus a Hard Drive (persistent `CLAUDE.md` memory files).",
+          "contentPath": "04_context___memory_management.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "commands/05_project_setup___intelligence",
+          "label": "Project Setup & Intelligence",
+          "type": "chapter",
+          "summary": "Logic designed to scan, understand, and configure a repository for the AI. This involves generating documentation (`CLAUDE.md`), analyzing the codebase structure, and setting up CI/CD integrations like GitHub Actions. It represents the \"onboarding\" process, preparing a briefing packet so the AI can work effectively within a specific project.",
+          "contentPath": "05_project_setup___intelligence.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "commands/06_plugin___mcp_integration",
+          "label": "Plugin & MCP Integration",
+          "type": "chapter",
+          "summary": "An abstraction for extending the AI's capabilities through external tools and the Model Context Protocol (MCP). It handles the configuration, discovery, and connection management for plugins. It's like an \"App Store\" for the AI, allowing it to install new skills or connect to external data sources.",
+          "contentPath": "06_plugin___mcp_integration.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "commands/01_command_architecture",
+          "target": "commands/02_interactive_tui__text_user_interface_",
+          "label": "Renders UI components"
+        },
+        {
+          "source": "commands/01_command_architecture",
+          "target": "commands/04_context___memory_management",
+          "label": "Triggers auth flows"
+        },
+        {
+          "source": "commands/01_command_architecture",
+          "target": "commands/05_project_setup___intelligence",
+          "label": "Executes setup logic"
+        },
+        {
+          "source": "commands/01_command_architecture",
+          "target": "commands/06_plugin___mcp_integration",
+          "label": "Manages extensions"
+        },
+        {
+          "source": "commands/01_command_architecture",
+          "target": "commands/03_authentication___session_state",
+          "label": "Visualizes and edits"
+        },
+        {
+          "source": "commands/04_context___memory_management",
+          "target": "commands/02_interactive_tui__text_user_interface_",
+          "label": "Displays login dialogs"
+        },
+        {
+          "source": "commands/05_project_setup___intelligence",
+          "target": "commands/03_authentication___session_state",
+          "label": "Generates memory files"
+        },
+        {
+          "source": "commands/06_plugin___mcp_integration",
+          "target": "commands/02_interactive_tui__text_user_interface_",
+          "label": "Shows configuration menus"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "commands/01_command_architecture",
+      "target": "commands/02_interactive_tui__text_user_interface_",
+      "label": "Renders UI components"
+    },
+    {
+      "source": "commands/01_command_architecture",
+      "target": "commands/04_context___memory_management",
+      "label": "Triggers auth flows"
+    },
+    {
+      "source": "commands/01_command_architecture",
+      "target": "commands/05_project_setup___intelligence",
+      "label": "Executes setup logic"
+    },
+    {
+      "source": "commands/01_command_architecture",
+      "target": "commands/06_plugin___mcp_integration",
+      "label": "Manages extensions"
+    },
+    {
+      "source": "commands/01_command_architecture",
+      "target": "commands/03_authentication___session_state",
+      "label": "Visualizes and edits"
+    },
+    {
+      "source": "commands/04_context___memory_management",
+      "target": "commands/02_interactive_tui__text_user_interface_",
+      "label": "Displays login dialogs"
+    },
+    {
+      "source": "commands/05_project_setup___intelligence",
+      "target": "commands/03_authentication___session_state",
+      "label": "Generates memory files"
+    },
+    {
+      "source": "commands/06_plugin___mcp_integration",
+      "target": "commands/02_interactive_tui__text_user_interface_",
+      "label": "Shows configuration menus"
+    }
+  ],
+  "storyPath": [
+    "commands/01_command_architecture",
+    "commands/02_interactive_tui__text_user_interface_",
+    "commands/03_authentication___session_state",
+    "commands/04_context___memory_management",
+    "commands/05_project_setup___intelligence",
+    "commands/06_plugin___mcp_integration"
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "projectName": "reset-limits",
+  "nodes": [
+    {
+      "id": "reset-limits",
+      "label": "reset-limits",
+      "type": "module",
+      "summary": "The `reset-limits` project currently acts as a **placeholder** or safety mechanism within the application. Instead of performing actual logic, it provides a *stub implementation* that tells the system the feature is currently **disabled** and **hidden**, ensuring the code compiles and runs smoothly without triggering unfinished or restricted operations.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "reset-limits/01_unified_interface_exports",
+          "label": "Unified Interface Exports",
+          "type": "chapter",
+          "summary": "The module uses a pattern of exporting the same object as both a `default` export and specific named exports. This ensures that regardless of how other files import this module (whether they want the whole package or specific functions), they receive the consistent stub object.\n\nIt acts like a universal adapter. Whether you plug in a round plug (default import) or a square plug (named import), the socket routes you to the same electricity source.",
+          "contentPath": "01_unified_interface_exports.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "reset-limits/02_feature_visibility_and_availability",
+          "label": "Feature Visibility and Availability",
+          "type": "chapter",
+          "summary": "The `isEnabled` method and `isHidden` property form an abstraction for feature flagging. They allow the consuming application to ask, \"Can I use this?\" or \"Should I show this in the menu?\" without crashing.\n\nThis is similar to a \"Closed\" sign in a store window. The store exists (the code is loaded), but the sign indicates to customers that they cannot enter or conduct business right now, preventing confusion before they even try the door.",
+          "contentPath": "02_feature_visibility_and_availability.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "reset-limits/03_stub_implementation",
+          "label": "Stub Implementation",
+          "type": "chapter",
+          "summary": "The central object in this file is a \"stub\" or \"No-Op\" (No Operation) implementation. It defines the structure expected by the rest of the application but contains no logic. It explicitly returns `false` when asked if it is enabled.\n\nIt is like a prop door on a movie set. It occupies the space where a door should be so the scene looks correct to the camera (the compiler or runtime), but you cannot actually open it or walk through it.",
+          "contentPath": "03_stub_implementation.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "reset-limits/04_operational_modes__interactive_vs__non_interactive_",
+          "label": "Operational Modes (Interactive vs. Non-Interactive)",
+          "type": "chapter",
+          "summary": "The exports `resetLimits` and `resetLimitsNonInteractive` suggest the system acts differently based on user presence. One is intended for manual user triggering (Interactive), and the other for automated scripts (Non-Interactive). In this file, both are mapped to the same stub.\n\nThink of a vending machine with two buttons: \"Dispense Now\" and \"Schedule Dispense.\" In this specific implementation, the machine is unplugged, so both buttons lead to the same result (nothing happens), but the design reserves space for these two distinct behaviors.",
+          "contentPath": "04_operational_modes__interactive_vs__non_interactive_.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "reset-limits/01_unified_interface_exports",
+          "target": "reset-limits/03_stub_implementation",
+          "label": "Defines properties for"
+        },
+        {
+          "source": "reset-limits/04_operational_modes__interactive_vs__non_interactive_",
+          "target": "reset-limits/01_unified_interface_exports",
+          "label": "Exposes"
+        },
+        {
+          "source": "reset-limits/02_feature_visibility_and_availability",
+          "target": "reset-limits/01_unified_interface_exports",
+          "label": "Resolves to"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "reset-limits/01_unified_interface_exports",
+      "target": "reset-limits/03_stub_implementation",
+      "label": "Defines properties for"
+    },
+    {
+      "source": "reset-limits/04_operational_modes__interactive_vs__non_interactive_",
+      "target": "reset-limits/01_unified_interface_exports",
+      "label": "Exposes"
+    },
+    {
+      "source": "reset-limits/02_feature_visibility_and_availability",
+      "target": "reset-limits/01_unified_interface_exports",
+      "label": "Resolves to"
+    }
+  ],
+  "storyPath": [
+    "reset-limits/01_unified_interface_exports",
+    "reset-limits/02_feature_visibility_and_availability",
+    "reset-limits/03_stub_implementation",
+    "reset-limits/04_operational_modes__interactive_vs__non_interactive_"
+  ]
+}

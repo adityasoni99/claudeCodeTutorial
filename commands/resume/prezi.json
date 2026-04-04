@@ -1,0 +1,134 @@
+{
+  "projectName": "resume",
+  "nodes": [
+    {
+      "id": "resume",
+      "label": "resume",
+      "type": "module",
+      "summary": "This project implements a **resume** command allowing users to continue previous CLI sessions. It features a \"dual-mode\" workflow: users can either provide a specific *session ID* or *search term* to resume immediately, or launch an **interactive UI** to browse and select from a history of conversation logs. The system also includes safety checks to ensure the **project context** matches the session before resuming.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "resume/01_command_definition",
+          "label": "Command Definition",
+          "type": "chapter",
+          "summary": "This abstraction defines the `resume` command's identity within the CLI. It specifies the command's name, description, aliases (like `continue`), and argument hints. It also handles lazy loading via a dynamic import function.\nThink of it as a menu item description in a restaurant; it tells you what the dish is and triggers the kitchen to start cooking (loading the code) only when you actually order it.",
+          "contentPath": "01_command_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "resume/02_command_execution_flow",
+          "label": "Command Execution Flow",
+          "type": "chapter",
+          "summary": "The `call` function serves as the main entry point logic. It acts as a traffic controller: if the user provides a specific Session ID or title, it attempts to validate and locate that specific session immediately. If no argument is provided, it redirects the flow to render the interactive picker UI. It handles the high-level decision-making of \"search vs. browse.\"",
+          "contentPath": "02_command_execution_flow.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "resume/03_interactive_session_ui",
+          "label": "Interactive Session UI",
+          "type": "chapter",
+          "summary": "The `ResumeCommand` React component constructs the visual interface for browsing history inside the terminal. It manages states for loading, displaying lists of logs, and handling user inputs.\nIt's like a file explorer window specifically for your conversation history, rendering a list that you can scroll through and select, rather than typing blind commands.",
+          "contentPath": "03_interactive_session_ui.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "resume/04_session_data_management",
+          "label": "Session Data Management",
+          "type": "chapter",
+          "summary": "This layer involves functions like `loadSameRepoMessageLogs`, `loadFullLog`, and `getLastSessionLog`. It is responsible for fetching conversation metadata and hydrating \"lite\" logs with full message history when needed.\nImagine a librarian who first looks up a book in the catalog (metadata/lite log) and then goes to the restricted archives to fetch the actual manuscript (full log) only when you decide to read it.",
+          "contentPath": "04_session_data_management.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "resume/05_cross_project_context_handling",
+          "label": "Cross-Project Context Handling",
+          "type": "chapter",
+          "summary": "This logic ensures a session is resumed in its original context. The `checkCrossProjectResume` utility determines if a selected conversation belongs to the current directory or a different project. If it's a different project, it generates a command to help the user switch directories instead of resuming immediately.\nIt acts like a gatekeeper that ensures you are in the correct building (directory) before allowing you to enter a specific room (session).",
+          "contentPath": "05_cross_project_context_handling.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "resume/01_command_definition",
+          "target": "resume/02_command_execution_flow",
+          "label": "Lazy loads execution logic"
+        },
+        {
+          "source": "resume/02_command_execution_flow",
+          "target": "resume/03_interactive_session_ui",
+          "label": "Renders interactive interface"
+        },
+        {
+          "source": "resume/02_command_execution_flow",
+          "target": "resume/04_session_data_management",
+          "label": "Queries session data"
+        },
+        {
+          "source": "resume/03_interactive_session_ui",
+          "target": "resume/04_session_data_management",
+          "label": "Fetches history logs"
+        },
+        {
+          "source": "resume/03_interactive_session_ui",
+          "target": "resume/05_cross_project_context_handling",
+          "label": "Validates project context"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "resume/01_command_definition",
+      "target": "resume/02_command_execution_flow",
+      "label": "Lazy loads execution logic"
+    },
+    {
+      "source": "resume/02_command_execution_flow",
+      "target": "resume/03_interactive_session_ui",
+      "label": "Renders interactive interface"
+    },
+    {
+      "source": "resume/02_command_execution_flow",
+      "target": "resume/04_session_data_management",
+      "label": "Queries session data"
+    },
+    {
+      "source": "resume/03_interactive_session_ui",
+      "target": "resume/04_session_data_management",
+      "label": "Fetches history logs"
+    },
+    {
+      "source": "resume/03_interactive_session_ui",
+      "target": "resume/05_cross_project_context_handling",
+      "label": "Validates project context"
+    }
+  ],
+  "storyPath": [
+    "resume/01_command_definition",
+    "resume/02_command_execution_flow",
+    "resume/03_interactive_session_ui",
+    "resume/04_session_data_management",
+    "resume/05_cross_project_context_handling"
+  ]
+}

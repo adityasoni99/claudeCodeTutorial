@@ -1,0 +1,156 @@
+{
+  "projectName": "telemetry",
+  "nodes": [
+    {
+      "id": "telemetry",
+      "label": "telemetry",
+      "type": "module",
+      "summary": "This project implements a comprehensive **telemetry and observability system** for an AI coding assistant. It orchestrates the collection of *distributed traces* (using OpenTelemetry), *discrete events*, and *performance profiles* (using Perfetto) to monitor user interactions, LLM requests, and tool executions. The system emphasizes **privacy-aware data handling** by hashing sensitive information and redacting PII before exporting data to various backends like BigQuery or OTLP endpoints.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "telemetry/01_telemetry_bootstrap___instrumentation",
+          "label": "Telemetry Bootstrap & Instrumentation",
+          "type": "chapter",
+          "summary": "This is the initialization layer that sets up the plumbing before the application starts doing real work. It detects the environment (OS, Architecture), configures the providers (Logger, Tracer, Meter), and decides where data should go (Console, OTLP endpoint, or BigQuery).\n\nThink of this as the sound check before a concert. It connects the microphones (sensors), sets the volume levels (configuration), and plugs in the speakers (exporters) so that when the band starts playing (the app runs), the music is actually recorded.",
+          "contentPath": "01_telemetry_bootstrap___instrumentation.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "telemetry/02_session_tracing___context_propagation",
+          "label": "Session Tracing & Context Propagation",
+          "type": "chapter",
+          "summary": "This is the core nervous system of the telemetry. It uses OpenTelemetry \"Spans\" to measure how long operations (like LLM requests or tool executions) take and whether they succeed. It relies on `AsyncLocalStorage` to ensure that when a child task starts, it knows who its parent task was.\n\nThink of it like a nesting doll of stopwatches: The outer shell is the user's interaction, inside that is an LLM request, and inside that might be a tool execution. This system ensures every stopwatch starts and stops at the right time and belongs to the correct doll.",
+          "contentPath": "02_session_tracing___context_propagation.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "telemetry/03_discrete_event_logging",
+          "label": "Discrete Event Logging",
+          "type": "chapter",
+          "summary": "Unlike spans (which measure duration) or metrics (which measure counts), events represent single points in time, such as \"a skill was loaded\" or \"a plugin failed.\" This abstraction handles sequencing, adding standard attributes (like timestamps), and emitting the log record.\n\nAnalogy: If spans are the \"video recording\" of an action, events are the \"photos\" taken at specific moments. This system ensures every photo has a timestamp and a label on the back so you can arrange them in a scrapbook later.",
+          "contentPath": "03_discrete_event_logging.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "telemetry/04_privacy_aware_metadata___hashing",
+          "label": "Privacy-Aware Metadata & Hashing",
+          "type": "chapter",
+          "summary": "This logic ensures sensitive user data is handled correctly before leaving the machine. It implements the \"twin-column\" pattern (sending a redacted safe name alongside a raw name for privileged columns) and handles hashing of large objects like system prompts or plugin IDs to track usage without storing raw text.\n\nThink of it as a redaction team for government documents. Before a document leaves the building, this system blacks out specific names, replaces them with generic codes (hashes), or puts the sensitive info in a sealed envelope that only specific people with clearance can open.",
+          "contentPath": "04_privacy_aware_metadata___hashing.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "telemetry/05_perfetto_performance_profiling",
+          "label": "Perfetto Performance Profiling",
+          "type": "chapter",
+          "summary": "A standalone tracing mechanism separate from OpenTelemetry, designed specifically for high-frequency, detailed performance visualization using the Chrome Trace format (Perfetto). It tracks granular events like \"time to first token\" and cache hit rates locally.\n\nAnalogy: While OpenTelemetry is like the ship's logbook (official, aggregated records sent to headquarters), Perfetto is like the engine room's oscilloscope\u2014a high-resolution, real-time diagnostic tool kept locally to debug exactly why the engine stuttered for a millisecond.",
+          "contentPath": "05_perfetto_performance_profiling.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "telemetry/06_custom_metrics_export_strategy",
+          "label": "Custom Metrics Export Strategy",
+          "type": "chapter",
+          "summary": "This abstraction handles the transmission of metric data to specific backends, specifically BigQuery. It transforms standard OpenTelemetry metric data points into a specific JSON payload format required by the analytics endpoint and manages the upload queue.\n\nThink of it as a specialized courier service. The application generates standard packages (metrics), but this exporter acts as a translator who repackages them into specific envelopes and fills out the exact customs forms required by the destination country (BigQuery/Data Warehouse).",
+          "contentPath": "06_custom_metrics_export_strategy.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "telemetry/02_session_tracing___context_propagation",
+          "target": "telemetry/01_telemetry_bootstrap___instrumentation",
+          "label": "Initializes and manages lif..."
+        },
+        {
+          "source": "telemetry/02_session_tracing___context_propagation",
+          "target": "telemetry/04_privacy_aware_metadata___hashing",
+          "label": "Registers exporter"
+        },
+        {
+          "source": "telemetry/02_session_tracing___context_propagation",
+          "target": "telemetry/03_discrete_event_logging",
+          "label": "Initializes profiling"
+        },
+        {
+          "source": "telemetry/01_telemetry_bootstrap___instrumentation",
+          "target": "telemetry/03_discrete_event_logging",
+          "label": "Mirrors traces locally"
+        },
+        {
+          "source": "telemetry/01_telemetry_bootstrap___instrumentation",
+          "target": "telemetry/05_perfetto_performance_profiling",
+          "label": "Logs side-channel events"
+        },
+        {
+          "source": "telemetry/06_custom_metrics_export_strategy",
+          "target": "telemetry/05_perfetto_performance_profiling",
+          "label": "Emits sanitized events"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "telemetry/02_session_tracing___context_propagation",
+      "target": "telemetry/01_telemetry_bootstrap___instrumentation",
+      "label": "Initializes and manages lifecycle"
+    },
+    {
+      "source": "telemetry/02_session_tracing___context_propagation",
+      "target": "telemetry/04_privacy_aware_metadata___hashing",
+      "label": "Registers exporter"
+    },
+    {
+      "source": "telemetry/02_session_tracing___context_propagation",
+      "target": "telemetry/03_discrete_event_logging",
+      "label": "Initializes profiling"
+    },
+    {
+      "source": "telemetry/01_telemetry_bootstrap___instrumentation",
+      "target": "telemetry/03_discrete_event_logging",
+      "label": "Mirrors traces locally"
+    },
+    {
+      "source": "telemetry/01_telemetry_bootstrap___instrumentation",
+      "target": "telemetry/05_perfetto_performance_profiling",
+      "label": "Logs side-channel events"
+    },
+    {
+      "source": "telemetry/06_custom_metrics_export_strategy",
+      "target": "telemetry/05_perfetto_performance_profiling",
+      "label": "Emits sanitized events"
+    }
+  ],
+  "storyPath": [
+    "telemetry/01_telemetry_bootstrap___instrumentation",
+    "telemetry/02_session_tracing___context_propagation",
+    "telemetry/03_discrete_event_logging",
+    "telemetry/04_privacy_aware_metadata___hashing",
+    "telemetry/05_perfetto_performance_profiling",
+    "telemetry/06_custom_metrics_export_strategy"
+  ]
+}

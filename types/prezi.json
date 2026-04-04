@@ -1,0 +1,156 @@
+{
+  "projectName": "types",
+  "nodes": [
+    {
+      "id": "types",
+      "label": "types",
+      "type": "module",
+      "summary": "This project defines the core **TypeScript type definitions** that structure the Claude Code CLI. It establishes the contracts for an *agentic workflow*, unifying **interactive commands**, **persistent session history**, and a granular **permission system** with an extensible architecture for **plugins and hooks**, ensuring type safety across the application's lifecycle and **telemetry** reporting.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "types/01_command_architecture",
+          "label": "Command Architecture",
+          "type": "chapter",
+          "summary": "Defines the fundamental units of action within the system. Commands aren't just text scripts; they can be interactive prompts, local functions, or complex React-based UI components (`LocalJSXCommand`).\n\nThink of this as a \"Skill Tree\" in a video game. Each command (like `/commit` or a custom skill) is a distinct ability with specific properties\u2014availability, arguments, execution logic, and how it renders results to the user. This abstraction unifies built-in tools, MCP servers, and user scripts into a single executable format.",
+          "contentPath": "01_command_architecture.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "types/02_session___transcript_persistence",
+          "label": "Session & Transcript Persistence",
+          "type": "chapter",
+          "summary": "Manages the agent's memory and history. This isn't a simple text log; it is a rich, serialized database of the entire interaction. It tracks message history, git branches, file snapshots, attribution (who wrote what), and even specific \"branded\" IDs for sessions and sub-agents.\n\nImagine a ship's logbook that doesn't just record \"we sailed north,\" but captures the exact weather, crew roster, cargo state, and map coordinates at every single hour. This allows the agent to \"resume\" exactly where it left off, context intact.",
+          "contentPath": "02_session___transcript_persistence.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "types/03_permission___safety_system",
+          "label": "Permission & Safety System",
+          "type": "chapter",
+          "summary": "The security layer that governs what the agent is allowed to do. It handles the logic for \"Allow,\" \"Deny,\" or \"Ask\" based on rules, modes (like \"acceptEdits\"), and automated classifiers.\n\nThink of this as a strict border control or a bouncer at a club. Before the agent executes a tool (like writing a file or running a shell command), it must present its \"passport\" to this system. The system checks the rules and either opens the gate, blocks entry, or asks a human supervisor for approval.",
+          "contentPath": "03_permission___safety_system.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "types/04_input_state_management",
+          "label": "Input State Management",
+          "type": "chapter",
+          "summary": "Handles the complexities of the user's text entry interface. It manages cursor position, history navigation, vim-mode bindings, ghost text (autocomplete suggestions), and rich content pasting (like images).\n\nThink of this as the cockpit controls of a plane. It's not just a steering wheel; it processes raw inputs, handles multiple modes of operation (standard vs. Vim), displays \"heads-up\" information (ghost text), and sanitizes complex inputs before passing them to the engine.",
+          "contentPath": "04_input_state_management.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "types/05_extensibility__plugins___hooks_",
+          "label": "Extensibility (Plugins & Hooks)",
+          "type": "chapter",
+          "summary": "The framework for expanding the agent's capabilities. \"Plugins\" define packages of functionality (manifests, repositories), while \"Hooks\" allow code to intercept and modify the agent's lifecycle events (like `PreToolUse` or `SessionStart`).\n\nIt operates like a web browser's extension system. Plugins are the \"extensions\" you install to add features, while Hooks are the specific event listeners (like `onClick`) that those extensions use to react when you interact with a webpage.",
+          "contentPath": "05_extensibility__plugins___hooks_.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "types/06_telemetry___event_contracts",
+          "label": "Telemetry & Event Contracts",
+          "type": "chapter",
+          "summary": "Strictly typed definitions for data sent to analytics and logging backends. These files (mostly generated from Protobufs) define exactly what structures strictly typed events\u2014like experiment data, internal errors, or authentication context\u2014must take.\n\nThis is the \"Black Box\" flight recorder. It defines a rigid, universal language for recording exactly what happened, ensuring that when the system reports \"An error occurred\" or \"A user logged in,\" the data structure is identical regardless of where the event originated.",
+          "contentPath": "06_telemetry___event_contracts.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "types/05_extensibility__plugins___hooks_",
+          "target": "types/02_session___transcript_persistence",
+          "label": "Routes input to"
+        },
+        {
+          "source": "types/05_extensibility__plugins___hooks_",
+          "target": "types/03_permission___safety_system",
+          "label": "Stores deferred"
+        },
+        {
+          "source": "types/01_command_architecture",
+          "target": "types/02_session___transcript_persistence",
+          "label": "Manipulates"
+        },
+        {
+          "source": "types/01_command_architecture",
+          "target": "types/04_input_state_management",
+          "label": "Links to"
+        },
+        {
+          "source": "types/04_input_state_management",
+          "target": "types/03_permission___safety_system",
+          "label": "Influences"
+        },
+        {
+          "source": "types/06_telemetry___event_contracts",
+          "target": "types/02_session___transcript_persistence",
+          "label": "Tracks"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "types/05_extensibility__plugins___hooks_",
+      "target": "types/02_session___transcript_persistence",
+      "label": "Routes input to"
+    },
+    {
+      "source": "types/05_extensibility__plugins___hooks_",
+      "target": "types/03_permission___safety_system",
+      "label": "Stores deferred"
+    },
+    {
+      "source": "types/01_command_architecture",
+      "target": "types/02_session___transcript_persistence",
+      "label": "Manipulates"
+    },
+    {
+      "source": "types/01_command_architecture",
+      "target": "types/04_input_state_management",
+      "label": "Links to"
+    },
+    {
+      "source": "types/04_input_state_management",
+      "target": "types/03_permission___safety_system",
+      "label": "Influences"
+    },
+    {
+      "source": "types/06_telemetry___event_contracts",
+      "target": "types/02_session___transcript_persistence",
+      "label": "Tracks"
+    }
+  ],
+  "storyPath": [
+    "types/01_command_architecture",
+    "types/02_session___transcript_persistence",
+    "types/03_permission___safety_system",
+    "types/04_input_state_management",
+    "types/05_extensibility__plugins___hooks_",
+    "types/06_telemetry___event_contracts"
+  ]
+}

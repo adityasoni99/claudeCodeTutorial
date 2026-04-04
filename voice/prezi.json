@@ -1,0 +1,124 @@
+{
+  "projectName": "voice",
+  "nodes": [
+    {
+      "id": "voice",
+      "label": "voice",
+      "type": "module",
+      "summary": "This project manages the activation logic for a **Voice Mode** feature within an AI application. It acts as a strict gatekeeper, combining *provider-specific authentication* checks with remote **feature flags** to safely determine if the voice interface should be enabled. To ensure speed and efficiency, it uses smart caching for security credentials and removes unused code during the build process.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "voice/01_composite_readiness_logic",
+          "label": "Composite Readiness Logic",
+          "type": "chapter",
+          "summary": "The master checklist that aggregates various system states to give a final \"Go/No-Go\" decision. Imagine a pilot's pre-flight check: they need both the ignition keys (Auth) and clearance from the tower (Feature Flags). `isVoiceModeEnabled` acts as this pilot, combining authentication status and remote configuration to determine if the Voice UI should be rendered or if the feature is legally usable in the current context.",
+          "contentPath": "01_composite_readiness_logic.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "voice/02_remote_feature_gating__growthbook_",
+          "label": "Remote Feature Gating (GrowthBook)",
+          "type": "chapter",
+          "summary": "Controls whether features are active based on remote flags. Think of this like a smart fuse box for your application. Even if the wiring (code) is installed, the fuse (flag) determines if electricity flows. In this file, the code checks a \"kill-switch\" (`tengu_amber_quartz_disabled`) to instantly disable Voice Mode in emergencies without needing to ship a new software update, ensuring application stability.",
+          "contentPath": "02_remote_feature_gating__growthbook_.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "voice/03_provider_specific_authentication",
+          "label": "Provider-Specific Authentication",
+          "type": "chapter",
+          "summary": "Validates if the user has the specific credentials required for a feature. It is like a VIP bouncer who only accepts a specific type of membership card. Voice Mode relies exclusively on `claude.ai`'s `voice_stream` endpoint. This abstraction ensures the user isn't trying to enter with a Bedrock or Vertex \"card,\" effectively filtering out incompatible API keys or auth providers before a connection is attempted.",
+          "contentPath": "03_provider_specific_authentication.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "voice/04_performance_aware_token_access",
+          "label": "Performance-Aware Token Access",
+          "type": "chapter",
+          "summary": "A strategy for reading sensitive credentials without slowing down the user interface. Accessing the system keychain (like opening a heavy, secure physical vault) takes time\u2014specifically spawning `security` on macOS. This abstraction relies on a cached approach (memoization), treating the vault as a \"check once, remember for an hour\" operation. This ensures that high-frequency checks like UI rendering don't suffer from performance stutters.",
+          "contentPath": "04_performance_aware_token_access.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "voice/05_build_time_code_elimination",
+          "label": "Build-Time Code Elimination",
+          "type": "chapter",
+          "summary": "A method to exclude unused code from the final software package, often called \"Tree Shaking.\" It is like packing a suitcase for a trip: if you know you aren't going to a cold climate, you leave the heavy coat at home to save weight. By utilizing the `feature('VOICE_MODE')` check, the compiler can completely remove Voice-related strings and logic from the final executable if the feature is disabled at build time.",
+          "contentPath": "05_build_time_code_elimination.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "voice/03_provider_specific_authentication",
+          "target": "voice/02_remote_feature_gating__growthbook_",
+          "label": "Aggregates status"
+        },
+        {
+          "source": "voice/03_provider_specific_authentication",
+          "target": "voice/01_composite_readiness_logic",
+          "label": "Checks kill-switch"
+        },
+        {
+          "source": "voice/02_remote_feature_gating__growthbook_",
+          "target": "voice/04_performance_aware_token_access",
+          "label": "Retrieves cached tokens"
+        },
+        {
+          "source": "voice/01_composite_readiness_logic",
+          "target": "voice/05_build_time_code_elimination",
+          "label": "Utilizes compilation guard"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "voice/03_provider_specific_authentication",
+      "target": "voice/02_remote_feature_gating__growthbook_",
+      "label": "Aggregates status"
+    },
+    {
+      "source": "voice/03_provider_specific_authentication",
+      "target": "voice/01_composite_readiness_logic",
+      "label": "Checks kill-switch"
+    },
+    {
+      "source": "voice/02_remote_feature_gating__growthbook_",
+      "target": "voice/04_performance_aware_token_access",
+      "label": "Retrieves cached tokens"
+    },
+    {
+      "source": "voice/01_composite_readiness_logic",
+      "target": "voice/05_build_time_code_elimination",
+      "label": "Utilizes compilation guard"
+    }
+  ],
+  "storyPath": [
+    "voice/01_composite_readiness_logic",
+    "voice/02_remote_feature_gating__growthbook_",
+    "voice/03_provider_specific_authentication",
+    "voice/04_performance_aware_token_access",
+    "voice/05_build_time_code_elimination"
+  ]
+}

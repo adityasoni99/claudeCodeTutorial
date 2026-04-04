@@ -1,0 +1,178 @@
+{
+  "projectName": "WebFetchTool",
+  "nodes": [
+    {
+      "id": "webfetchtool",
+      "label": "WebFetchTool",
+      "type": "module",
+      "summary": "The **WebFetchTool** acts as a secure \"smart browser\" that enables an AI to fetch and read content from the internet. Instead of just dumping raw code, it converts webpages into clean **Markdown** and uses a secondary, specialized AI model to *extract exactly what the user asked for*. The system includes strict security guardrails to block private or dangerous sites and uses an internal cache to speed up repeated requests.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "webfetchtool/01_webfetchtool_definition",
+          "label": "WebFetchTool Definition",
+          "type": "chapter",
+          "summary": "The central blueprint that defines the \"Fetch\" capability exposed to the AI. It acts as the orchestrator, defining the input schema (URL and prompt), output schema (content and metadata), and the execution flow. It coordinates permission checks, calls the fetching logic, and delegates content processing.\nIt's like the \"driver\" of the car, deciding where to go (URL) and how to handle the journey based on the rules.",
+          "contentPath": "01_webfetchtool_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "webfetchtool/02_content_fetching___conversion",
+          "label": "Content Fetching & Conversion",
+          "type": "chapter",
+          "summary": "The low-level engine responsible for making HTTP requests and transforming the raw response. It upgrades HTTP to HTTPS, safely handles redirects, and uses the `turndown` library to convert messy HTML into clean Markdown that the AI can easily read.\nIt's like a translator who goes to a foreign library, reads a book, and rewrites it into a simplified summary in your native language.",
+          "contentPath": "02_content_fetching___conversion.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "webfetchtool/03_ai_content_extraction",
+          "label": "AI Content Extraction",
+          "type": "chapter",
+          "summary": "A processing layer that uses a smaller, faster AI model (Claude Haiku) to analyze the fetched content. Instead of returning the entire webpage, it applies the user's specific prompt to extract only the relevant information.\nIt's like a research assistant who reads a 50-page document and highlights only the specific paragraph you asked about.",
+          "contentPath": "03_ai_content_extraction.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "webfetchtool/04_security___permission_guardrails",
+          "label": "Security & Permission Guardrails",
+          "type": "chapter",
+          "summary": "A multi-layered security system that decides if a URL is safe to access. It checks if a domain is on a \"VIP list\" (preapproved), blocks internal or private network addresses to prevent data exfiltration, and enforces user-defined allow/deny rules.\nIt's like a border control agent checking passports (URLs) against a list of allowed countries and banned individuals before letting them through.",
+          "contentPath": "04_security___permission_guardrails.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "webfetchtool/05_preapproved_domain_list",
+          "label": "Preapproved Domain List",
+          "type": "chapter",
+          "summary": "A static registry of trusted domains (mostly documentation and coding resources) that bypass strict permission prompts. This balances security with usability by allowing instant access to safe, high-frequency sites like GitHub or Python docs.\nIt's like a \"Pre-Check\" lane at the airport for known, low-risk travelers.",
+          "contentPath": "05_preapproved_domain_list.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "webfetchtool/06_response_caching",
+          "label": "Response Caching",
+          "type": "chapter",
+          "summary": "An optimization mechanism that stores fetched content and domain check results in memory for a short period (15 minutes). This prevents redundant network requests and speeds up repeated interactions with the same URL.\nIt's like keeping a sticky note on your monitor with a phone number so you don't have to look it up in the directory every time you need to call.",
+          "contentPath": "06_response_caching.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "webfetchtool/07_ui_feedback_components",
+          "label": "UI Feedback Components",
+          "type": "chapter",
+          "summary": "React components responsible for rendering the tool's activity in the terminal. They handle the display of progress indicators (\"Fetching...\") and format the final result summary (file size, status code) for the user.\nIt's like the dashboard of a car showing you the current speed and fuel level while you drive.",
+          "contentPath": "07_ui_feedback_components.md",
+          "x": -800.0,
+          "y": 450.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "webfetchtool/01_webfetchtool_definition",
+          "target": "webfetchtool/05_preapproved_domain_list",
+          "label": "Checks trusted allowlist"
+        },
+        {
+          "source": "webfetchtool/01_webfetchtool_definition",
+          "target": "webfetchtool/02_content_fetching___conversion",
+          "label": "Enforces access rules"
+        },
+        {
+          "source": "webfetchtool/01_webfetchtool_definition",
+          "target": "webfetchtool/03_ai_content_extraction",
+          "label": "Delegates retrieval"
+        },
+        {
+          "source": "webfetchtool/03_ai_content_extraction",
+          "target": "webfetchtool/02_content_fetching___conversion",
+          "label": "Validates domain safety"
+        },
+        {
+          "source": "webfetchtool/03_ai_content_extraction",
+          "target": "webfetchtool/06_response_caching",
+          "label": "Reads/Writes cache"
+        },
+        {
+          "source": "webfetchtool/01_webfetchtool_definition",
+          "target": "webfetchtool/04_security___permission_guardrails",
+          "label": "Refines raw content"
+        },
+        {
+          "source": "webfetchtool/01_webfetchtool_definition",
+          "target": "webfetchtool/07_ui_feedback_components",
+          "label": "Renders status"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "webfetchtool/01_webfetchtool_definition",
+      "target": "webfetchtool/05_preapproved_domain_list",
+      "label": "Checks trusted allowlist"
+    },
+    {
+      "source": "webfetchtool/01_webfetchtool_definition",
+      "target": "webfetchtool/02_content_fetching___conversion",
+      "label": "Enforces access rules"
+    },
+    {
+      "source": "webfetchtool/01_webfetchtool_definition",
+      "target": "webfetchtool/03_ai_content_extraction",
+      "label": "Delegates retrieval"
+    },
+    {
+      "source": "webfetchtool/03_ai_content_extraction",
+      "target": "webfetchtool/02_content_fetching___conversion",
+      "label": "Validates domain safety"
+    },
+    {
+      "source": "webfetchtool/03_ai_content_extraction",
+      "target": "webfetchtool/06_response_caching",
+      "label": "Reads/Writes cache"
+    },
+    {
+      "source": "webfetchtool/01_webfetchtool_definition",
+      "target": "webfetchtool/04_security___permission_guardrails",
+      "label": "Refines raw content"
+    },
+    {
+      "source": "webfetchtool/01_webfetchtool_definition",
+      "target": "webfetchtool/07_ui_feedback_components",
+      "label": "Renders status"
+    }
+  ],
+  "storyPath": [
+    "webfetchtool/01_webfetchtool_definition",
+    "webfetchtool/02_content_fetching___conversion",
+    "webfetchtool/03_ai_content_extraction",
+    "webfetchtool/04_security___permission_guardrails",
+    "webfetchtool/05_preapproved_domain_list",
+    "webfetchtool/06_response_caching",
+    "webfetchtool/07_ui_feedback_components"
+  ]
+}

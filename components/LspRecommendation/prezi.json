@@ -1,0 +1,134 @@
+{
+  "projectName": "LspRecommendation",
+  "nodes": [
+    {
+      "id": "lsprecommendation",
+      "label": "LspRecommendation",
+      "type": "module",
+      "summary": "This project implements a **terminal-based dialog** that suggests *LSP plugins* to the user based on the file type they are editing. It presents a menu with installation choices and features an **auto-dismiss timer** that automatically declines the recommendation if the user does not interact within 30 seconds to prevent blocking the workflow.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "lsprecommendation/01_lsprecommendationmenu_component",
+          "label": "LspRecommendationMenu Component",
+          "type": "chapter",
+          "summary": "The central React component responsible for presenting a Language Server Protocol (LSP) plugin recommendation to the user. It acts as a specific type of dialog that informs the user about a useful plugin based on the file extension they are working with and captures their installation preference.",
+          "contentPath": "01_lsprecommendationmenu_component.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "lsprecommendation/02_terminal_ui_layout",
+          "label": "Terminal UI Layout",
+          "type": "chapter",
+          "summary": "The structural composition of the interface using `ink` library components (`Box`, `Text`). It organizes information hierarchically\u2014showing context about the LSP, the specific plugin, and the triggering file type\u2014similar to how HTML divs structure a web page, but rendered specifically for a command-line environment.",
+          "contentPath": "02_terminal_ui_layout.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "lsprecommendation/03_menu_option_configuration",
+          "label": "Menu Option Configuration",
+          "type": "chapter",
+          "summary": "Defines the specific selection choices available to the user within the dialog. It structures the data for the `Select` component, mapping display labels (which may include rich text formatting like bolding) to internal value strings ('yes', 'no', 'never', 'disable') used by the response handler.",
+          "contentPath": "03_menu_option_configuration.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "lsprecommendation/04_user_response_handling",
+          "label": "User Response Handling",
+          "type": "chapter",
+          "summary": "The logic governing how user choices are captured and communicated back to the application. It uses a callback function (`onResponse`) to handle four distinct states: installing the plugin ('yes'), declining temporarily ('no'), declining permanently for this plugin ('never'), or disabling all recommendations ('disable'). It ensures the application acts immediately on the user's intent.",
+          "contentPath": "04_user_response_handling.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "lsprecommendation/05_auto_dismissal_timer",
+          "label": "Auto-Dismissal Timer",
+          "type": "chapter",
+          "summary": "A mechanism designed to prevent the recommendation dialog from blocking the interface indefinitely. It sets a 30-second timer upon mounting; if the user provides no input within this window, the dialog automatically resolves as a \"no\" response. This acts like a \"screen timeout\" to keep the terminal workflow uninterrupted if the user is away.",
+          "contentPath": "05_auto_dismissal_timer.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "lsprecommendation/01_lsprecommendationmenu_component",
+          "target": "lsprecommendation/05_auto_dismissal_timer",
+          "label": "Renders layout structure"
+        },
+        {
+          "source": "lsprecommendation/01_lsprecommendationmenu_component",
+          "target": "lsprecommendation/04_user_response_handling",
+          "label": "Defines selection choices"
+        },
+        {
+          "source": "lsprecommendation/01_lsprecommendationmenu_component",
+          "target": "lsprecommendation/03_menu_option_configuration",
+          "label": "Initializes lifecycle"
+        },
+        {
+          "source": "lsprecommendation/01_lsprecommendationmenu_component",
+          "target": "lsprecommendation/02_terminal_ui_layout",
+          "label": "Invokes on user input"
+        },
+        {
+          "source": "lsprecommendation/03_menu_option_configuration",
+          "target": "lsprecommendation/02_terminal_ui_layout",
+          "label": "Triggers default response"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "lsprecommendation/01_lsprecommendationmenu_component",
+      "target": "lsprecommendation/05_auto_dismissal_timer",
+      "label": "Renders layout structure"
+    },
+    {
+      "source": "lsprecommendation/01_lsprecommendationmenu_component",
+      "target": "lsprecommendation/04_user_response_handling",
+      "label": "Defines selection choices"
+    },
+    {
+      "source": "lsprecommendation/01_lsprecommendationmenu_component",
+      "target": "lsprecommendation/03_menu_option_configuration",
+      "label": "Initializes lifecycle"
+    },
+    {
+      "source": "lsprecommendation/01_lsprecommendationmenu_component",
+      "target": "lsprecommendation/02_terminal_ui_layout",
+      "label": "Invokes on user input"
+    },
+    {
+      "source": "lsprecommendation/03_menu_option_configuration",
+      "target": "lsprecommendation/02_terminal_ui_layout",
+      "label": "Triggers default response"
+    }
+  ],
+  "storyPath": [
+    "lsprecommendation/01_lsprecommendationmenu_component",
+    "lsprecommendation/02_terminal_ui_layout",
+    "lsprecommendation/03_menu_option_configuration",
+    "lsprecommendation/04_user_response_handling",
+    "lsprecommendation/05_auto_dismissal_timer"
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "projectName": "messages",
+  "nodes": [
+    {
+      "id": "messages",
+      "label": "messages",
+      "type": "module",
+      "summary": "This project controls how an AI assistant's conversation is displayed in a terminal interface. It manages a variety of message types, ranging from standard **chat** and **file attachments** to complex **tool executions** and **multi-agent interactions** (swarms). The system prioritizes user experience by **summarizing** dense data, visualizing the AI's **internal thinking**, and providing real-time **system status** updates without cluttering the main conversation flow.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "messages/01_user_message_routing",
+          "label": "User Message Routing",
+          "type": "chapter",
+          "summary": "Acts as the central dispatcher for all content originating from the user side of the interaction. Since a \"user message\" in this system can be a prompt, a file upload, a bash command output, or a plan, this abstraction inspects the content tags and delegates rendering to specific sub-components. It acts like a switchboard ensuring the right UI component handles specific input types like images, shell input/output, or local command results.",
+          "contentPath": "01_user_message_routing.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "messages/02_data_summarization___context",
+          "label": "Data Summarization & Context",
+          "type": "chapter",
+          "summary": "Handles the display of high-volume or dense information to prevent cluttering the chat interface. Instead of dumping raw file contents or massive search results, these components collapse and summarize the data (e.g., \"Read 5 files\", \"Searched for X\"). It acts as a \"compression layer\" for the chat stream, allowing users to expand details only when necessary.",
+          "contentPath": "02_data_summarization___context.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "messages/03_cognitive_visualization",
+          "label": "Cognitive Visualization",
+          "type": "chapter",
+          "summary": "Visualizes the AI's internal monologue or \"Chain of Thought\" (CoT). This abstraction separates the model's reasoning process from its final output. It handles the formatting of thinking blocks, including distinct styling for \"redacted\" or \"highlighted\" thoughts, helping users distinguish between the AI's internal processing and its public response.",
+          "contentPath": "03_cognitive_visualization.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "messages/04_tool_execution_lifecycle",
+          "label": "Tool Execution Lifecycle",
+          "type": "chapter",
+          "summary": "Manages the visualization of the Agent's \"Action\" and \"Observation\" loop. It separates the intent (Assistant using a tool) from the outcome (User returning the result). This abstraction handles the loading states, success messages, error reporting, and rejection scenarios, providing a unified UI for the diverse tools the AI can employ (like REPL, Bash, or file operations).",
+          "contentPath": "04_tool_execution_lifecycle.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "messages/05_system_observability",
+          "label": "System Observability",
+          "type": "chapter",
+          "summary": "Provides a feedback channel for the application's health and background state, distinct from the conversation itself. It renders meta-information such as API limits, network errors, turn durations, and the progress of internal hooks/middleware. This ensures users are aware of *system* constraints or activities without confusing them with *agent* activities.",
+          "contentPath": "05_system_observability.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "messages/06_agent_swarm_coordination",
+          "label": "Agent Swarm Coordination",
+          "type": "chapter",
+          "summary": "Provides the UI protocol for multi-agent interactions (\"Swarms\"). Unlike standard chat messages, these components render structured communication between the user and autonomous teammates. It handles lifecycle events like assigning tasks, approving plans, and negotiating shutdown, effectively visualizing the \"mailbox\" between the primary agent and its sub-agents.",
+          "contentPath": "06_agent_swarm_coordination.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "messages/01_user_message_routing",
+          "target": "messages/03_cognitive_visualization",
+          "label": "Renders teammate messages"
+        },
+        {
+          "source": "messages/01_user_message_routing",
+          "target": "messages/05_system_observability",
+          "label": "Formats prompt text"
+        },
+        {
+          "source": "messages/02_data_summarization___context",
+          "target": "messages/06_agent_swarm_coordination",
+          "label": "Shows hook progress"
+        },
+        {
+          "source": "messages/04_tool_execution_lifecycle",
+          "target": "messages/01_user_message_routing",
+          "label": "Embeds user messages"
+        },
+        {
+          "source": "messages/04_tool_execution_lifecycle",
+          "target": "messages/03_cognitive_visualization",
+          "label": "Renders mailbox messages"
+        },
+        {
+          "source": "messages/04_tool_execution_lifecycle",
+          "target": "messages/06_agent_swarm_coordination",
+          "label": "Displays rate limits"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "messages/01_user_message_routing",
+      "target": "messages/03_cognitive_visualization",
+      "label": "Renders teammate messages"
+    },
+    {
+      "source": "messages/01_user_message_routing",
+      "target": "messages/05_system_observability",
+      "label": "Formats prompt text"
+    },
+    {
+      "source": "messages/02_data_summarization___context",
+      "target": "messages/06_agent_swarm_coordination",
+      "label": "Shows hook progress"
+    },
+    {
+      "source": "messages/04_tool_execution_lifecycle",
+      "target": "messages/01_user_message_routing",
+      "label": "Embeds user messages"
+    },
+    {
+      "source": "messages/04_tool_execution_lifecycle",
+      "target": "messages/03_cognitive_visualization",
+      "label": "Renders mailbox messages"
+    },
+    {
+      "source": "messages/04_tool_execution_lifecycle",
+      "target": "messages/06_agent_swarm_coordination",
+      "label": "Displays rate limits"
+    }
+  ],
+  "storyPath": [
+    "messages/01_user_message_routing",
+    "messages/02_data_summarization___context",
+    "messages/03_cognitive_visualization",
+    "messages/04_tool_execution_lifecycle",
+    "messages/05_system_observability",
+    "messages/06_agent_swarm_coordination"
+  ]
+}

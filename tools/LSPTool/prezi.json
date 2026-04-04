@@ -1,0 +1,146 @@
+{
+  "projectName": "LSPTool",
+  "nodes": [
+    {
+      "id": "lsptool",
+      "label": "LSPTool",
+      "type": "module",
+      "summary": "This project implements a bridge between an AI model and **Language Server Protocol (LSP)** servers, enabling code intelligence features like *finding definitions*, *references*, and *symbols*. It orchestrates the entire workflow: validating user requests against strict schemas, querying the underlying LSP server, filtering out irrelevant (git-ignored) results, and converting complex technical responses into human-readable text and UI components.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "lsptool/01_lsp_tool_orchestration",
+          "label": "LSP Tool Orchestration",
+          "type": "chapter",
+          "summary": "The central engine that acts as the bridge between the AI model and the Language Server Protocol (LSP). It validates requests, manages file access permissions, ensures the LSP server is initialized, and routes specific operations (like `goToDefinition` or `findReferences`) to the underlying server manager. Think of it as a conductor who ensures the orchestra (LSP server) plays the specific notes (operations) the composer (User/AI) requested.",
+          "contentPath": "01_lsp_tool_orchestration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "lsptool/02_operation_schemas___validation",
+          "label": "Operation Schemas & Validation",
+          "type": "chapter",
+          "summary": "Defines the strict rules for what constitutes a valid request using Zod. It creates a \"discriminated union\" where the structure of the input changes based on the `operation` name (e.g., `hover` vs `workspaceSymbol`). It's like a customs officer checking your paperwork; depending on your destination (operation), you need to provide specific documents (line numbers, character offsets, or file paths) before you are allowed through.",
+          "contentPath": "02_operation_schemas___validation.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "lsptool/03_user_interface__ui__components",
+          "label": "User Interface (UI) Components",
+          "type": "chapter",
+          "summary": "Manages how the tool's actions and results are visually presented to the user in the React-based console interface. It controls the \"Tool Use\" message (showing what is being looked up) and the \"Tool Result\" message (displaying the findings). It includes logic to collapse large result sets to prevent screen clutter. It's the dashboard that ensures the user sees a clean summary rather than a raw database dump.",
+          "contentPath": "03_user_interface__ui__components.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "lsptool/04_context_extraction",
+          "label": "Context Extraction",
+          "type": "chapter",
+          "summary": "A utility focused on identifying exactly what symbol or word exists at a specific coordinate (line and character) within a file. It performs synchronous file reads to extract this data instantly during rendering. Think of it as a magnifying glass that looks at a map coordinate and tells the UI, \"There is a function named 'init' right here,\" providing necessary context for the user.",
+          "contentPath": "04_context_extraction.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "lsptool/05_response_formatting",
+          "label": "Response Formatting",
+          "type": "chapter",
+          "summary": "A dedicated layer responsible for translating raw, technical JSON data returned by the LSP server into human-readable text. It handles tasks like converting complex URI paths into relative file paths, rendering hierarchical tree structures for document symbols, and formatting lists of references. It acts like a translator who takes a raw technical manual and rewrites it into a friendly summary.",
+          "contentPath": "05_response_formatting.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "lsptool/06_git_aware_filtering",
+          "label": "Git-Aware Filtering",
+          "type": "chapter",
+          "summary": "A specific logic flow embedded within the tool execution to keep results relevant. It filters out search results (like references or definitions) that reside in files ignored by Git (e.g., `node_modules` or build artifacts). It acts like a quality control filter, removing noise so the user only sees code that is actually part of their source project.",
+          "contentPath": "06_git_aware_filtering.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "lsptool/01_lsp_tool_orchestration",
+          "target": "lsptool/02_operation_schemas___validation",
+          "label": "Validates inputs using"
+        },
+        {
+          "source": "lsptool/01_lsp_tool_orchestration",
+          "target": "lsptool/06_git_aware_filtering",
+          "label": "Filters results with"
+        },
+        {
+          "source": "lsptool/01_lsp_tool_orchestration",
+          "target": "lsptool/03_user_interface__ui__components",
+          "label": "Formats output using"
+        },
+        {
+          "source": "lsptool/01_lsp_tool_orchestration",
+          "target": "lsptool/04_context_extraction",
+          "label": "Renders display via"
+        },
+        {
+          "source": "lsptool/04_context_extraction",
+          "target": "lsptool/05_response_formatting",
+          "label": "Retrieves symbol context via"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "lsptool/01_lsp_tool_orchestration",
+      "target": "lsptool/02_operation_schemas___validation",
+      "label": "Validates inputs using"
+    },
+    {
+      "source": "lsptool/01_lsp_tool_orchestration",
+      "target": "lsptool/06_git_aware_filtering",
+      "label": "Filters results with"
+    },
+    {
+      "source": "lsptool/01_lsp_tool_orchestration",
+      "target": "lsptool/03_user_interface__ui__components",
+      "label": "Formats output using"
+    },
+    {
+      "source": "lsptool/01_lsp_tool_orchestration",
+      "target": "lsptool/04_context_extraction",
+      "label": "Renders display via"
+    },
+    {
+      "source": "lsptool/04_context_extraction",
+      "target": "lsptool/05_response_formatting",
+      "label": "Retrieves symbol context via"
+    }
+  ],
+  "storyPath": [
+    "lsptool/01_lsp_tool_orchestration",
+    "lsptool/02_operation_schemas___validation",
+    "lsptool/03_user_interface__ui__components",
+    "lsptool/04_context_extraction",
+    "lsptool/05_response_formatting",
+    "lsptool/06_git_aware_filtering"
+  ]
+}

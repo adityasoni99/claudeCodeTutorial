@@ -1,0 +1,134 @@
+{
+  "projectName": "model",
+  "nodes": [
+    {
+      "id": "model",
+      "label": "model",
+      "type": "module",
+      "summary": "This project implements a **CLI command** that allows users to view and configure the active AI model. It utilizes an interactive **React-based interface** to handle user inputs, verifies selections against **governance rules** (such as organization allowlists), persists changes to the **global application state**, and tracks usage via **analytics**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "model/01_command_definition",
+          "label": "Command Definition",
+          "type": "chapter",
+          "summary": "Defines the metadata and entry point for a CLI command. It acts like a manifest or a menu entry, specifying the command's name, description, argument hints, and how to lazy-load the actual implementation logic. This structure allows the main application to discover and register commands dynamically.",
+          "contentPath": "01_command_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "model/02_react_based_command_implementation",
+          "label": "React-based Command Implementation",
+          "type": "chapter",
+          "summary": "Uses React components to define the execution logic and user interface of a terminal command. Instead of a linear script, the command is built as a component tree (e.g., `ModelPickerWrapper`, `SetModelAndClose`), allowing for interactive state, lifecycle management, and dynamic rendering within the terminal console.",
+          "contentPath": "02_react_based_command_implementation.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "model/03_model_governance___validation",
+          "label": "Model Governance & Validation",
+          "type": "chapter",
+          "summary": "A layer of logic responsible for verifying if a specific AI model can be used. It acts like a gatekeeper, handling checks for organization allowlists, account-specific features (like 1M context windows), and resolving model aliases before applying changes to the system configuration.",
+          "contentPath": "03_model_governance___validation.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "model/04_application_state_management",
+          "label": "Application State Management",
+          "type": "chapter",
+          "summary": "A centralized system for reading and updating global configuration. Accessed via hooks like `useAppState` and `useSetAppState`, it serves as the application's \"brain,\" persisting settings (like the selected AI model or \"Fast Mode\" status) across different command executions and sessions.",
+          "contentPath": "04_application_state_management.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "model/05_analytics___telemetry",
+          "label": "Analytics & Telemetry",
+          "type": "chapter",
+          "summary": "A cross-cutting concern for tracking user behavior within the CLI. Using functions like `logEvent`, it records actions such as command invocations, menu selections, and cancellations. This provides visibility into how users interact with specific features like model switching.",
+          "contentPath": "05_analytics___telemetry.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "model/01_command_definition",
+          "target": "model/02_react_based_command_implementation",
+          "label": "Lazy-loads logic"
+        },
+        {
+          "source": "model/01_command_definition",
+          "target": "model/04_application_state_management",
+          "label": "Fetches current model info"
+        },
+        {
+          "source": "model/02_react_based_command_implementation",
+          "target": "model/03_model_governance___validation",
+          "label": "Reads and updates config"
+        },
+        {
+          "source": "model/02_react_based_command_implementation",
+          "target": "model/04_application_state_management",
+          "label": "Validates selections via"
+        },
+        {
+          "source": "model/02_react_based_command_implementation",
+          "target": "model/05_analytics___telemetry",
+          "label": "Logs events to"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "model/01_command_definition",
+      "target": "model/02_react_based_command_implementation",
+      "label": "Lazy-loads logic"
+    },
+    {
+      "source": "model/01_command_definition",
+      "target": "model/04_application_state_management",
+      "label": "Fetches current model info"
+    },
+    {
+      "source": "model/02_react_based_command_implementation",
+      "target": "model/03_model_governance___validation",
+      "label": "Reads and updates config"
+    },
+    {
+      "source": "model/02_react_based_command_implementation",
+      "target": "model/04_application_state_management",
+      "label": "Validates selections via"
+    },
+    {
+      "source": "model/02_react_based_command_implementation",
+      "target": "model/05_analytics___telemetry",
+      "label": "Logs events to"
+    }
+  ],
+  "storyPath": [
+    "model/01_command_definition",
+    "model/02_react_based_command_implementation",
+    "model/03_model_governance___validation",
+    "model/04_application_state_management",
+    "model/05_analytics___telemetry"
+  ]
+}

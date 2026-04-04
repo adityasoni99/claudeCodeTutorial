@@ -1,0 +1,124 @@
+{
+  "projectName": "grove",
+  "nodes": [
+    {
+      "id": "grove",
+      "label": "grove",
+      "type": "module",
+      "summary": "This project implements a **CLI-based** user interface for managing updates to **Consumer Terms** and **Privacy Policies**. It features a \"gatekeeper\" dialog that adapts its messaging based on whether the policy is in a *grace period* or effectively active, alongside a dedicated control panel for users to toggle data privacy settings like \"Help improve Claude\" directly from the terminal.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "grove/01_grove_policy_dialog",
+          "label": "Grove Policy Dialog",
+          "type": "chapter",
+          "summary": "The central component responsible for interrupting the user flow to present updated Consumer Terms and Privacy Policies. It acts as a gatekeeper: it fetches configuration to determine if the user needs to consent, decides whether to show a mandatory or optional (\"grace period\") notice, and handles the resulting user decision (accepting with or without data opt-in, or deferring).",
+          "contentPath": "01_grove_policy_dialog.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "grove/02_policy_phase_content_strategies",
+          "label": "Policy Phase Content Strategies",
+          "type": "chapter",
+          "summary": "Specialized rendering logic that changes the displayed text based on the rollout phase of the policies. It distinguishes between a \"Grace Period\" (where the tone is informative and acceptance is optional) and the active enforcement phase (where the tone is declarative). It acts like a dynamic billboard that updates its message based on the current date relative to the policy deadline.",
+          "contentPath": "02_policy_phase_content_strategies.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "grove/03_consent_decision_logic",
+          "label": "Consent Decision Logic",
+          "type": "chapter",
+          "summary": "The state machine governing user choices regarding the new terms. It maps specific user actions (selecting \"Accept opt-in\", \"Accept opt-out\", \"Defer\", or \"Escape\") to corresponding backend updates and analytics events. It ensures that the user's choice is correctly recorded before dismissing the dialog or allowing the user to proceed.",
+          "contentPath": "03_consent_decision_logic.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "grove/04_privacy_settings_interface",
+          "label": "Privacy Settings Interface",
+          "type": "chapter",
+          "summary": "A dedicated dialog component that allows users to toggle specific data privacy settings, specifically the \"Help improve Claude\" option. It serves as a control panel switch, managing the visual state (true/false) and persisting the user's preference to the backend via API calls, independent of the mandatory terms flow.",
+          "contentPath": "04_privacy_settings_interface.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "grove/05_cli_interaction_layer",
+          "label": "CLI Interaction Layer",
+          "type": "chapter",
+          "summary": "Integrates with the `ink` library to provide a React-based UI for command-line interfaces. It abstracts low-level terminal input handling (like detecting specific key presses such as Enter, Tab, or Escape) into high-level React hooks (`useInput`) and visual components (`Dialog`, `KeyboardShortcutHint`), making terminal interactivity feel like standard web component development.",
+          "contentPath": "05_cli_interaction_layer.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "grove/01_grove_policy_dialog",
+          "target": "grove/03_consent_decision_logic",
+          "label": "Renders phase-specific content"
+        },
+        {
+          "source": "grove/01_grove_policy_dialog",
+          "target": "grove/04_privacy_settings_interface",
+          "label": "Triggers decision workflow"
+        },
+        {
+          "source": "grove/01_grove_policy_dialog",
+          "target": "grove/05_cli_interaction_layer",
+          "label": "Uses UI components"
+        },
+        {
+          "source": "grove/02_policy_phase_content_strategies",
+          "target": "grove/05_cli_interaction_layer",
+          "label": "Uses UI components"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "grove/01_grove_policy_dialog",
+      "target": "grove/03_consent_decision_logic",
+      "label": "Renders phase-specific content"
+    },
+    {
+      "source": "grove/01_grove_policy_dialog",
+      "target": "grove/04_privacy_settings_interface",
+      "label": "Triggers decision workflow"
+    },
+    {
+      "source": "grove/01_grove_policy_dialog",
+      "target": "grove/05_cli_interaction_layer",
+      "label": "Uses UI components"
+    },
+    {
+      "source": "grove/02_policy_phase_content_strategies",
+      "target": "grove/05_cli_interaction_layer",
+      "label": "Uses UI components"
+    }
+  ],
+  "storyPath": [
+    "grove/01_grove_policy_dialog",
+    "grove/02_policy_phase_content_strategies",
+    "grove/03_consent_decision_logic",
+    "grove/04_privacy_settings_interface",
+    "grove/05_cli_interaction_layer"
+  ]
+}

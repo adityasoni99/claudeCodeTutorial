@@ -1,0 +1,124 @@
+{
+  "projectName": "install-github-app",
+  "nodes": [
+    {
+      "id": "install-github-app",
+      "label": "install-github-app",
+      "type": "module",
+      "summary": "This project implements an **interactive CLI wizard** that sets up Claude's integration with GitHub repositories. It orchestrates a step-by-step process to authenticate the user, select a repository, and automatically configure the necessary **GitHub Actions workflows** and **secrets**, abstracting away the complex infrastructure setup.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "install-github-app/01_wizard_orchestrator",
+          "label": "Wizard Orchestrator",
+          "type": "chapter",
+          "summary": "The central control unit for the installation CLI. It acts as a state machine, managing the current step of the wizard (e.g., checking requirements, choosing a repo, setting up keys) and transitioning between them based on user input and system checks. Think of it as the game master who decides which scene to show next based on the player's actions.",
+          "contentPath": "01_wizard_orchestrator.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "install-github-app/02_interactive_wizard_steps",
+          "label": "Interactive Wizard Steps",
+          "type": "chapter",
+          "summary": "Modular React components representing individual screens in the CLI workflow. Each step focuses on a single task\u2014such as selecting a repository, confirming installation, or showing progress\u2014and handles its own specific user input or display logic. They are like individual pages in a setup assistant that guide the user one specific action at a time.",
+          "contentPath": "02_interactive_wizard_steps.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "install-github-app/03_github_infrastructure_logic",
+          "label": "GitHub Infrastructure Logic",
+          "type": "chapter",
+          "summary": "A service layer abstraction that encapsulates the business logic for modifying GitHub repositories. Instead of the UI components executing raw commands, this layer handles the complex sequences of `gh` CLI operations needed to creating branches, committing workflow files, and setting secrets. It functions like a specialized contractor who knows exactly how to build the requested infrastructure.",
+          "contentPath": "03_github_infrastructure_logic.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "install-github-app/04_authentication_strategies",
+          "label": "Authentication Strategies",
+          "type": "chapter",
+          "summary": "Core components dedicated to handling user identity and access. This abstraction manages different authentication flows\u2014either manually entering an API key or performing an OAuth handshake via a browser\u2014to ensure the tool has the necessary permissions to act on the user's behalf. It's similar to a login portal that offers multiple ways to sign in, such as a password or Single Sign-On.",
+          "contentPath": "04_authentication_strategies.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "install-github-app/05_error___warning_management",
+          "label": "Error & Warning Management",
+          "type": "chapter",
+          "summary": "Dedicated components for handling and displaying exceptions, missing permissions, or configuration conflicts. This abstraction ensures that when things go wrong (e.g., repository not found, missing scopes), the user is presented with clear, actionable information on how to resolve the issue or bypass it. It serves as the safety system, alerting the user to hazards while providing a manual override.",
+          "contentPath": "05_error___warning_management.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "install-github-app/01_wizard_orchestrator",
+          "target": "install-github-app/02_interactive_wizard_steps",
+          "label": "Controls navigation and state"
+        },
+        {
+          "source": "install-github-app/01_wizard_orchestrator",
+          "target": "install-github-app/04_authentication_strategies",
+          "label": "Manages user login flows"
+        },
+        {
+          "source": "install-github-app/01_wizard_orchestrator",
+          "target": "install-github-app/03_github_infrastructure_logic",
+          "label": "Invokes setup operations"
+        },
+        {
+          "source": "install-github-app/01_wizard_orchestrator",
+          "target": "install-github-app/05_error___warning_management",
+          "label": "Displays alerts and errors"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "install-github-app/01_wizard_orchestrator",
+      "target": "install-github-app/02_interactive_wizard_steps",
+      "label": "Controls navigation and state"
+    },
+    {
+      "source": "install-github-app/01_wizard_orchestrator",
+      "target": "install-github-app/04_authentication_strategies",
+      "label": "Manages user login flows"
+    },
+    {
+      "source": "install-github-app/01_wizard_orchestrator",
+      "target": "install-github-app/03_github_infrastructure_logic",
+      "label": "Invokes setup operations"
+    },
+    {
+      "source": "install-github-app/01_wizard_orchestrator",
+      "target": "install-github-app/05_error___warning_management",
+      "label": "Displays alerts and errors"
+    }
+  ],
+  "storyPath": [
+    "install-github-app/01_wizard_orchestrator",
+    "install-github-app/02_interactive_wizard_steps",
+    "install-github-app/03_github_infrastructure_logic",
+    "install-github-app/04_authentication_strategies",
+    "install-github-app/05_error___warning_management"
+  ]
+}

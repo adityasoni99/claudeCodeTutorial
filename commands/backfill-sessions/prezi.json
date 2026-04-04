@@ -1,0 +1,124 @@
+{
+  "projectName": "backfill-sessions",
+  "nodes": [
+    {
+      "id": "backfill-sessions",
+      "label": "backfill-sessions",
+      "type": "module",
+      "summary": "This project establishes a standardized structure for modules, specifically demonstrating **Feature Stubbing** for components that are currently placeholders. It relies on a strict *Configuration Contract* that groups together **Module Identity**, **Visibility State**, and **Activation Control**, ensuring that incomplete features can be safely identified, hidden, and disabled within the system.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "backfill-sessions/01_configuration_contract",
+          "label": "Configuration Contract",
+          "type": "chapter",
+          "summary": "This represents the standardized shape of a module export. By exporting a default object with specific keys (`isEnabled`, `isHidden`, `name`), it enforces an implicit interface or contract that consumers of this module expect.\nIt is like a standardized tax form. Every person must fill out the same specific boxes in the same layout. This ensures that the processing agency (the consuming application) knows exactly where to look for specific data, regardless of the content.",
+          "contentPath": "01_configuration_contract.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "backfill-sessions/02_module_identity",
+          "label": "Module Identity",
+          "type": "chapter",
+          "summary": "This abstraction provides a unique identifier for the component through the `name` property (e.g., 'stub'). This allows the broader system to reference, log, or manage the component programmatically by name.\nIt is similar to a standardized ID badge worn by employees. Regardless of their role or current status (active or inactive), the badge provides a consistent name that security or management can use to identify exactly who they are dealing with.",
+          "contentPath": "02_module_identity.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "backfill-sessions/03_activation_control__feature_flagging_",
+          "label": "Activation Control (Feature Flagging)",
+          "type": "chapter",
+          "summary": "This concept encapsulates the logic for determining whether a specific module is active via the `isEnabled` method. It allows the system to include code that is strictly turned off at runtime.\nThink of it as a master switch on a fuse box. Even though the wiring (the code) exists and is connected to the house, the electricity won't flow to power the device unless this specific switch is flipped to the \"On\" position.",
+          "contentPath": "03_activation_control__feature_flagging_.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "backfill-sessions/04_visibility_state_management",
+          "label": "Visibility State Management",
+          "type": "chapter",
+          "summary": "This abstraction defines whether a component should be exposed to the user interface, managed here by the `isHidden` property. It separates the existence of a feature from its visual presentation.\nIt acts like a curtain in a theater. The actors and sets (the code features) might be on the stage ready to go, but if the curtain is down (isHidden is true), the audience cannot see or interact with them.",
+          "contentPath": "04_visibility_state_management.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "backfill-sessions/05_feature_stubbing",
+          "label": "Feature Stubbing",
+          "type": "chapter",
+          "summary": "This abstraction serves as a placeholder for functionality that is either in development, deprecated, or intentionally left blank. It ensures that the application structure remains intact without executing complex logic.\nIt is like a \"Under Construction\" sign or a prop door on a movie set. It occupies the necessary space and looks like a functional part of the building, but currently, it is just a facade that doesn't open or perform any action.",
+          "contentPath": "05_feature_stubbing.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "backfill-sessions/01_configuration_contract",
+          "target": "backfill-sessions/05_feature_stubbing",
+          "label": "Implements"
+        },
+        {
+          "source": "backfill-sessions/05_feature_stubbing",
+          "target": "backfill-sessions/04_visibility_state_management",
+          "label": "Exposes"
+        },
+        {
+          "source": "backfill-sessions/05_feature_stubbing",
+          "target": "backfill-sessions/02_module_identity",
+          "label": "Exposes"
+        },
+        {
+          "source": "backfill-sessions/05_feature_stubbing",
+          "target": "backfill-sessions/03_activation_control__feature_flagging_",
+          "label": "Exposes"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "backfill-sessions/01_configuration_contract",
+      "target": "backfill-sessions/05_feature_stubbing",
+      "label": "Implements"
+    },
+    {
+      "source": "backfill-sessions/05_feature_stubbing",
+      "target": "backfill-sessions/04_visibility_state_management",
+      "label": "Exposes"
+    },
+    {
+      "source": "backfill-sessions/05_feature_stubbing",
+      "target": "backfill-sessions/02_module_identity",
+      "label": "Exposes"
+    },
+    {
+      "source": "backfill-sessions/05_feature_stubbing",
+      "target": "backfill-sessions/03_activation_control__feature_flagging_",
+      "label": "Exposes"
+    }
+  ],
+  "storyPath": [
+    "backfill-sessions/01_configuration_contract",
+    "backfill-sessions/02_module_identity",
+    "backfill-sessions/03_activation_control__feature_flagging_",
+    "backfill-sessions/04_visibility_state_management",
+    "backfill-sessions/05_feature_stubbing"
+  ]
+}

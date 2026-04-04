@@ -1,0 +1,124 @@
+{
+  "projectName": "exit",
+  "nodes": [
+    {
+      "id": "exit",
+      "label": "exit",
+      "type": "module",
+      "summary": "This project module implements a smart **exit** command for a CLI application. It utilizes a **Command Configuration** to define keywords like `exit` or `quit` and lazily loads the execution logic. When invoked, the handler intelligently decides whether to simply **detach** from a *persistent background session*, prompt the user about *unsaved work*, or proceed with a safe and **Graceful Shutdown**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "exit/01_command_configuration",
+          "label": "Command Configuration",
+          "type": "chapter",
+          "summary": "This abstraction defines the metadata and structure for a CLI command. It tells the system how to recognize the command (e.g., `exit` or `quit`), provides a description, and lazily loads the actual execution logic.\n\nThink of it like a menu item in a restaurant: it lists the name of the dish and points to the kitchen recipe, but the chef doesn't start cooking until you actually order it.",
+          "contentPath": "01_command_configuration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "exit/02_local_jsx_command_handler",
+          "label": "Local JSX Command Handler",
+          "type": "chapter",
+          "summary": "This is the core logic function (`call`) that executes when the command is triggered. Unlike standard CLI commands that just output text, this returns a `ReactNode`.\n\nIt acts as a dynamic controller that decides what UI to render in the terminal. Depending on the state (like having open work), it can either show an interactive component (like a dialog box) or perform an invisible action immediately.",
+          "contentPath": "02_local_jsx_command_handler.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "exit/03_background_session_persistence",
+          "label": "Background Session Persistence",
+          "type": "chapter",
+          "summary": "This abstraction manages the distinction between a standard terminal session and a persistent background session (powered by `tmux`).\n\nIt's like the difference between turning off your TV (standard exit) versus just putting it to sleep while the movie keeps playing (background detach). If the user is in a background session, this logic ensures the process detaches rather than killing the application entirely.",
+          "contentPath": "03_background_session_persistence.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "exit/04_worktree_session_state",
+          "label": "Worktree Session State",
+          "type": "chapter",
+          "summary": "This represents the current working context of the user. The code checks if a \"Worktree Session\" is active before exiting.\n\nImagine this as checking for \"Unsaved Changes\" in a word processor. If a worktree is active, the system interrupts the immediate exit to show a specific UI (`ExitFlow`), ensuring the user handles their active environment correctly before leaving.",
+          "contentPath": "04_worktree_session_state.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "exit/05_graceful_shutdown",
+          "label": "Graceful Shutdown",
+          "type": "chapter",
+          "summary": "This mechanism handles the final cleanup and termination of the process. It ensures the application closes safely with a specific exit code.\n\nIt serves as the formal \"closing time\" procedure for the application, ensuring that any necessary signals are sent and the program stops cleanly, rather than just pulling the power plug (crashing).",
+          "contentPath": "05_graceful_shutdown.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "exit/01_command_configuration",
+          "target": "exit/02_local_jsx_command_handler",
+          "label": "Loads implementation"
+        },
+        {
+          "source": "exit/02_local_jsx_command_handler",
+          "target": "exit/03_background_session_persistence",
+          "label": "Checks session mode"
+        },
+        {
+          "source": "exit/02_local_jsx_command_handler",
+          "target": "exit/04_worktree_session_state",
+          "label": "Validates active work"
+        },
+        {
+          "source": "exit/02_local_jsx_command_handler",
+          "target": "exit/05_graceful_shutdown",
+          "label": "Executes termination"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "exit/01_command_configuration",
+      "target": "exit/02_local_jsx_command_handler",
+      "label": "Loads implementation"
+    },
+    {
+      "source": "exit/02_local_jsx_command_handler",
+      "target": "exit/03_background_session_persistence",
+      "label": "Checks session mode"
+    },
+    {
+      "source": "exit/02_local_jsx_command_handler",
+      "target": "exit/04_worktree_session_state",
+      "label": "Validates active work"
+    },
+    {
+      "source": "exit/02_local_jsx_command_handler",
+      "target": "exit/05_graceful_shutdown",
+      "label": "Executes termination"
+    }
+  ],
+  "storyPath": [
+    "exit/01_command_configuration",
+    "exit/02_local_jsx_command_handler",
+    "exit/03_background_session_persistence",
+    "exit/04_worktree_session_state",
+    "exit/05_graceful_shutdown"
+  ]
+}

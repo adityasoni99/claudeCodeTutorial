@@ -1,0 +1,146 @@
+{
+  "projectName": "AgentSummary",
+  "nodes": [
+    {
+      "id": "agentsummary",
+      "label": "AgentSummary",
+      "type": "module",
+      "summary": "The **AgentSummary** project implements a \"background reporter\" for AI tasks. It silently watches the main agent's conversation and periodically creates a *forked process* (a temporary copy) to generate a 1-2 sentence progress update. This system ensures the user sees real-time status changes on the UI without **interrupting** the main agent's work or corrupting its memory.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "agentsummary/01_background_lifecycle_management",
+          "label": "Background Lifecycle Management",
+          "type": "chapter",
+          "summary": "The logic that controls the heartbeat of the summarization process. It manages timers (`setTimeout`) to run periodically and `AbortControllers` to cancel operations if the agent stops or a new cycle begins.\n\nImagine a security guard making rounds every 30 minutes. If the building closes (agent stops), the guard is radioed to stop immediately. If the guard takes too long and the next shift starts, the old shift is cancelled to prevent two guards from checking the same door at once.",
+          "contentPath": "01_background_lifecycle_management.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agentsummary/02_forked_agent_execution",
+          "label": "Forked Agent Execution",
+          "type": "chapter",
+          "summary": "This is the core mechanism allowing the system to perform \"side tasks\" without interrupting the main conversation. It creates a temporary parallel process to analyze context.\n\nThink of it like a chef (the main agent) cooking a complex meal. Occasionally, a sous-chef (the forked agent) steps in to taste the sauce and write a quick note about its flavor, then disappears. The sous-chef uses the same ingredients but doesn't change the recipe or distract the head chef.",
+          "contentPath": "02_forked_agent_execution.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agentsummary/03_transcript_sanitization",
+          "label": "Transcript Sanitization",
+          "type": "chapter",
+          "summary": "The process of preparing the agent's memory for the summarizer. It retrieves the conversation history and filters out \"messy\" data, such as incomplete tool calls or pending states, to ensure the summarizer sees a clean snapshot.\n\nThink of it as tidying a room before taking a photograph. You don't want to capture the blurry motion of a hand midway through picking up a cup; you wait for the action to complete or remove the blurred elements so the photo (summary) is crisp and accurate.",
+          "contentPath": "03_transcript_sanitization.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agentsummary/04_tool_governance__denial_",
+          "label": "Tool Governance (Denial)",
+          "type": "chapter",
+          "summary": "The mechanism that prevents the background summarizer from actually modifying files or running commands. While the summarizer \"sees\" the tools to maintain cache consistency, it is strictly forbidden from using them via a callback.\n\nIt resembles a museum exhibit. You can see all the ancient weapons (tools) through the glass to understand the context, but there is a strict rule (the `canUseTool` callback) that prevents you from actually picking them up and swinging them around.",
+          "contentPath": "04_tool_governance__denial_.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agentsummary/05_prompt_cache_optimization",
+          "label": "Prompt Cache Optimization",
+          "type": "chapter",
+          "summary": "A critical performance strategy that ensures the \"forked\" agent looks identical to the main agent in terms of configuration (model, tools, system prompt). This allows the LLM provider to reuse processed tokens (cache) rather than reprocessing the entire history.\n\nIt's like having a shared library card. Even though the summarizer is a different person, they present the exact same ID card as the main agent so the librarian doesn't have to fill out new paperwork, saving massive amounts of time and cost.",
+          "contentPath": "05_prompt_cache_optimization.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agentsummary/06_task_state_integration",
+          "label": "Task State Integration",
+          "type": "chapter",
+          "summary": "The bridge between the background logic and the User Interface. Once a summary is generated, this abstraction updates the global application state so the user sees the progress bar change in real-time.\n\nIt acts like a news ticker at the bottom of a TV screen. The background reporters (summarizers) do the work, but this mechanism is the specific system that pushes the text onto the screen so the viewer (user) knows what is happening without having to ask.",
+          "contentPath": "06_task_state_integration.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "agentsummary/03_transcript_sanitization",
+          "target": "agentsummary/05_prompt_cache_optimization",
+          "label": "Prepares clean history"
+        },
+        {
+          "source": "agentsummary/03_transcript_sanitization",
+          "target": "agentsummary/04_tool_governance__denial_",
+          "label": "Configures tool restrictions"
+        },
+        {
+          "source": "agentsummary/03_transcript_sanitization",
+          "target": "agentsummary/01_background_lifecycle_management",
+          "label": "Invokes sub-process"
+        },
+        {
+          "source": "agentsummary/01_background_lifecycle_management",
+          "target": "agentsummary/02_forked_agent_execution",
+          "label": "Leverages shared context"
+        },
+        {
+          "source": "agentsummary/03_transcript_sanitization",
+          "target": "agentsummary/06_task_state_integration",
+          "label": "Broadcasts summary to UI"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "agentsummary/03_transcript_sanitization",
+      "target": "agentsummary/05_prompt_cache_optimization",
+      "label": "Prepares clean history"
+    },
+    {
+      "source": "agentsummary/03_transcript_sanitization",
+      "target": "agentsummary/04_tool_governance__denial_",
+      "label": "Configures tool restrictions"
+    },
+    {
+      "source": "agentsummary/03_transcript_sanitization",
+      "target": "agentsummary/01_background_lifecycle_management",
+      "label": "Invokes sub-process"
+    },
+    {
+      "source": "agentsummary/01_background_lifecycle_management",
+      "target": "agentsummary/02_forked_agent_execution",
+      "label": "Leverages shared context"
+    },
+    {
+      "source": "agentsummary/03_transcript_sanitization",
+      "target": "agentsummary/06_task_state_integration",
+      "label": "Broadcasts summary to UI"
+    }
+  ],
+  "storyPath": [
+    "agentsummary/01_background_lifecycle_management",
+    "agentsummary/02_forked_agent_execution",
+    "agentsummary/03_transcript_sanitization",
+    "agentsummary/04_tool_governance__denial_",
+    "agentsummary/05_prompt_cache_optimization",
+    "agentsummary/06_task_state_integration"
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "projectName": "Passes",
+  "nodes": [
+    {
+      "id": "passes",
+      "label": "Passes",
+      "type": "module",
+      "summary": "This project implements a **CLI-based user interface** for managing guest passes and referrals. It features a reactive terminal dashboard that displays **eligibility status** and redemption statistics using ASCII visualizations. The system orchestrates **keyboard shortcuts** for navigation and clipboard actions, while tracking user engagement through a dedicated **analytics service**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "passes/01_referral_api_service",
+          "label": "Referral API Service",
+          "type": "chapter",
+          "summary": "A dedicated service layer for managing guest pass logic. It acts as a data broker, handling the fetching of eligibility status, campaign details, and redemption counts from the backend, effectively decoupling the UI from raw API calls and caching logic.",
+          "contentPath": "01_referral_api_service.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "passes/02_design_system__pane_",
+          "label": "Design System (Pane)",
+          "type": "chapter",
+          "summary": "Standardized layout components used to wrap screens or distinct content areas. It functions like a template or container, ensuring that different views within the CLI tool maintain consistent spacing, boundaries, and visual structure.",
+          "contentPath": "02_design_system__pane_.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "passes/03_cli_ui_components",
+          "label": "CLI UI Components",
+          "type": "chapter",
+          "summary": "A set of React components (like `Box`, `Text`, `Link`) used to build user interfaces in the terminal. It acts like a UI toolkit similar to HTML/CSS but for command-line applications, allowing developers to structure layout and style text.",
+          "contentPath": "03_cli_ui_components.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "passes/04_keybinding_management",
+          "label": "Keybinding Management",
+          "type": "chapter",
+          "summary": "Hooks that manage keyboard interactions and global shortcuts. It serves as a controller that listens for specific keystrokes (like `Enter` to copy or `Esc` to cancel) and maps them to functions, while also handling standard exit signals (Ctrl+C/D).",
+          "contentPath": "04_keybinding_management.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "passes/05_analytics_service",
+          "label": "Analytics Service",
+          "type": "chapter",
+          "summary": "A utility for capturing user interactions and system events. It acts like a flight recorder, logging specific actions (such as `tengu_guest_passes_link_copied`) to provide telemetry on how features are utilized.",
+          "contentPath": "05_analytics_service.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "passes/01_referral_api_service",
+          "target": "passes/03_cli_ui_components",
+          "label": "Fetches referral data"
+        },
+        {
+          "source": "passes/01_referral_api_service",
+          "target": "passes/05_analytics_service",
+          "label": "Logs user interactions"
+        },
+        {
+          "source": "passes/01_referral_api_service",
+          "target": "passes/02_design_system__pane_",
+          "label": "Binds navigation shortcuts"
+        },
+        {
+          "source": "passes/04_keybinding_management",
+          "target": "passes/01_referral_api_service",
+          "label": "Wraps UI content"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "passes/01_referral_api_service",
+      "target": "passes/03_cli_ui_components",
+      "label": "Fetches referral data"
+    },
+    {
+      "source": "passes/01_referral_api_service",
+      "target": "passes/05_analytics_service",
+      "label": "Logs user interactions"
+    },
+    {
+      "source": "passes/01_referral_api_service",
+      "target": "passes/02_design_system__pane_",
+      "label": "Binds navigation shortcuts"
+    },
+    {
+      "source": "passes/04_keybinding_management",
+      "target": "passes/01_referral_api_service",
+      "label": "Wraps UI content"
+    }
+  ],
+  "storyPath": [
+    "passes/01_referral_api_service",
+    "passes/02_design_system__pane_",
+    "passes/03_cli_ui_components",
+    "passes/04_keybinding_management",
+    "passes/05_analytics_service"
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "projectName": "effort",
+  "nodes": [
+    {
+      "id": "effort",
+      "label": "effort",
+      "type": "module",
+      "summary": "This project implements a CLI command that allows users to adjust the **effort level** of an AI model (e.g., *low*, *high*, *max*), controlling the depth of reasoning used. It utilizes a **React-based** lifecycle to process commands, resolves conflicts between environment variables and user inputs, and ensures preferences are synchronized between runtime state and persistent storage.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "effort/01_command_module_registration",
+          "label": "Command Module Registration",
+          "type": "chapter",
+          "summary": "This is the entry point that plugs the feature into the broader CLI application. It acts like a manifest, defining the command's identity (name, description), its arguments, and how to lazy-load its implementation. It tells the system \"I am the 'effort' command, and here is how to run me.\"",
+          "contentPath": "01_command_module_registration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "effort/02_react_based_command_lifecycle",
+          "label": "React-based Command Lifecycle",
+          "type": "chapter",
+          "summary": "Instead of a simple procedural script, the CLI uses React components to manage command execution. Components like `ApplyEffortAndClose` and `ShowCurrentEffort` handle the command's lifecycle. They perform side effects (updating state), manage asynchronous operations, and render the final output message via the `onDone` callback, similar to how a web modal might handle a form submission.",
+          "contentPath": "02_react_based_command_lifecycle.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "effort/03_effort_level_controller",
+          "label": "Effort Level Controller",
+          "type": "chapter",
+          "summary": "This abstraction encapsulates the domain logic for the \"effort\" feature. It handles parsing user input (e.g., \"low\", \"max\", \"auto\"), validating it against allowed levels, and mapping these string values to concrete descriptions of AI behavior (e.g., \"Comprehensive implementation with extensive testing\"). It serves as the brain deciding what a specific effort level means.",
+          "contentPath": "03_effort_level_controller.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "effort/04_configuration_priority_system",
+          "label": "Configuration Priority System",
+          "type": "chapter",
+          "summary": "This logic resolves conflicts between different configuration sources. It enforces a hierarchy where Environment Variables (`CLAUDE_CODE_EFFORT_LEVEL`) override session commands, which in turn override persistent settings. It includes specific logic to warn the user if the command they just ran is being ignored because a higher-priority environment variable is set.",
+          "contentPath": "04_configuration_priority_system.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "effort/05_state_and_persistence_bridge",
+          "label": "State and Persistence Bridge",
+          "type": "chapter",
+          "summary": "This abstraction manages the synchronization between the application's runtime state and permanent storage. It uses `useAppState` to update the immediate session environment and `updateSettingsForSource` to write changes to a user settings file. This ensures that when a user sets their effort level, it applies instantly to the current session and remembers the preference for future runs.",
+          "contentPath": "05_state_and_persistence_bridge.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "effort/01_command_module_registration",
+          "target": "effort/02_react_based_command_lifecycle",
+          "label": "Loads implementation"
+        },
+        {
+          "source": "effort/02_react_based_command_lifecycle",
+          "target": "effort/03_effort_level_controller",
+          "label": "Delegates logic to"
+        },
+        {
+          "source": "effort/02_react_based_command_lifecycle",
+          "target": "effort/05_state_and_persistence_bridge",
+          "label": "Updates runtime state"
+        },
+        {
+          "source": "effort/03_effort_level_controller",
+          "target": "effort/04_configuration_priority_system",
+          "label": "Checks overrides"
+        },
+        {
+          "source": "effort/03_effort_level_controller",
+          "target": "effort/05_state_and_persistence_bridge",
+          "label": "Persists settings"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "effort/01_command_module_registration",
+      "target": "effort/02_react_based_command_lifecycle",
+      "label": "Loads implementation"
+    },
+    {
+      "source": "effort/02_react_based_command_lifecycle",
+      "target": "effort/03_effort_level_controller",
+      "label": "Delegates logic to"
+    },
+    {
+      "source": "effort/02_react_based_command_lifecycle",
+      "target": "effort/05_state_and_persistence_bridge",
+      "label": "Updates runtime state"
+    },
+    {
+      "source": "effort/03_effort_level_controller",
+      "target": "effort/04_configuration_priority_system",
+      "label": "Checks overrides"
+    },
+    {
+      "source": "effort/03_effort_level_controller",
+      "target": "effort/05_state_and_persistence_bridge",
+      "label": "Persists settings"
+    }
+  ],
+  "storyPath": [
+    "effort/01_command_module_registration",
+    "effort/02_react_based_command_lifecycle",
+    "effort/03_effort_level_controller",
+    "effort/04_configuration_priority_system",
+    "effort/05_state_and_persistence_bridge"
+  ]
+}

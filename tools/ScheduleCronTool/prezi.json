@@ -1,0 +1,134 @@
+{
+  "projectName": "ScheduleCronTool",
+  "nodes": [
+    {
+      "id": "schedulecrontool",
+      "label": "ScheduleCronTool",
+      "type": "module",
+      "summary": "This project provides a **scheduling capability** for an AI agent, enabling it to create, list, and delete time-based tasks using standard *cron syntax*. It intelligently distinguishes between **session-only** tasks (in-memory) and **durable** tasks (persisted to disk), dynamically adjusting its behavior, prompts, and UI feedback based on feature flags and environment configuration.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "schedulecrontool/01_cron_tool_suite",
+          "label": "Cron Tool Suite",
+          "type": "chapter",
+          "summary": "The core implementation of the three capabilities exposed to the AI agent: creating, deleting, and listing scheduled tasks. Each file defines a `ToolDef` object containing input/output schemas (Zod), validation logic, and the execution handler. Think of these as the specific \"skills\" installed into the agent's brain to handle time-based requests.",
+          "contentPath": "01_cron_tool_suite.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "schedulecrontool/02_dynamic_prompt_construction",
+          "label": "Dynamic Prompt Construction",
+          "type": "chapter",
+          "summary": "A system for generating the text instructions and descriptions fed to the AI. These are not static strings; they are built dynamically based on the current configuration (specifically, whether \"durable\" storage is enabled). This ensures the AI accurately explains to the user whether their scheduled task will survive a system restart or vanish when the session ends.",
+          "contentPath": "02_dynamic_prompt_construction.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "schedulecrontool/03_durability___persistence_logic",
+          "label": "Durability & Persistence Logic",
+          "type": "chapter",
+          "summary": "The conceptual abstraction distinguishing between \"session-only\" tasks (in-memory) and \"durable\" tasks (persisted to disk). This logic is threaded through the schemas and prompts, controlling whether a task is written to `.claude/scheduled_tasks.json`. It's the difference between a temporary \"timer\" and a permanent \"calendar event.\"",
+          "contentPath": "03_durability___persistence_logic.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "schedulecrontool/04_tool_ui_rendering",
+          "label": "Tool UI Rendering",
+          "type": "chapter",
+          "summary": "A dedicated presentation layer using React components to display the results of tool interactions in the chat interface. It handles formatting how a \"Scheduled Job\" or \"Cancelled Job\" message looks to the user, separating the visual style from the backend logic. It ensures the user sees clean, human-readable summaries of complex scheduling actions.",
+          "contentPath": "04_tool_ui_rendering.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "schedulecrontool/05_feature_gating___configuration",
+          "label": "Feature Gating & Configuration",
+          "type": "chapter",
+          "summary": "A centralized logic gate that determines if the scheduling system is active and what mode it runs in. It combines build-time flags, runtime GrowthBook feature flags, and environment variables to safely enable or disable functionality. It acts like a master circuit breaker that ensures the feature is only live when the environment supports it.",
+          "contentPath": "05_feature_gating___configuration.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "schedulecrontool/01_cron_tool_suite",
+          "target": "schedulecrontool/02_dynamic_prompt_construction",
+          "label": "Checks feature availability"
+        },
+        {
+          "source": "schedulecrontool/01_cron_tool_suite",
+          "target": "schedulecrontool/03_durability___persistence_logic",
+          "label": "Retrieves context-aware pro..."
+        },
+        {
+          "source": "schedulecrontool/01_cron_tool_suite",
+          "target": "schedulecrontool/04_tool_ui_rendering",
+          "label": "Delegates output display"
+        },
+        {
+          "source": "schedulecrontool/01_cron_tool_suite",
+          "target": "schedulecrontool/05_feature_gating___configuration",
+          "label": "Enforces storage strategy"
+        },
+        {
+          "source": "schedulecrontool/03_durability___persistence_logic",
+          "target": "schedulecrontool/05_feature_gating___configuration",
+          "label": "Explains storage behavior"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "schedulecrontool/01_cron_tool_suite",
+      "target": "schedulecrontool/02_dynamic_prompt_construction",
+      "label": "Checks feature availability"
+    },
+    {
+      "source": "schedulecrontool/01_cron_tool_suite",
+      "target": "schedulecrontool/03_durability___persistence_logic",
+      "label": "Retrieves context-aware prompts"
+    },
+    {
+      "source": "schedulecrontool/01_cron_tool_suite",
+      "target": "schedulecrontool/04_tool_ui_rendering",
+      "label": "Delegates output display"
+    },
+    {
+      "source": "schedulecrontool/01_cron_tool_suite",
+      "target": "schedulecrontool/05_feature_gating___configuration",
+      "label": "Enforces storage strategy"
+    },
+    {
+      "source": "schedulecrontool/03_durability___persistence_logic",
+      "target": "schedulecrontool/05_feature_gating___configuration",
+      "label": "Explains storage behavior"
+    }
+  ],
+  "storyPath": [
+    "schedulecrontool/01_cron_tool_suite",
+    "schedulecrontool/02_dynamic_prompt_construction",
+    "schedulecrontool/03_durability___persistence_logic",
+    "schedulecrontool/04_tool_ui_rendering",
+    "schedulecrontool/05_feature_gating___configuration"
+  ]
+}

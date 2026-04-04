@@ -1,0 +1,166 @@
+{
+  "projectName": "claudeInChrome",
+  "nodes": [
+    {
+      "id": "claudeinchrome",
+      "label": "claudeInChrome",
+      "type": "module",
+      "summary": "This project acts as a secure **bridge** between the Claude AI model and a local **Chrome browser**. It utilizes the *Model Context Protocol (MCP)* and a **Native Messaging Host** to allow the AI to perform web automation tasks\u2014such as navigating URLs, clicking elements, and managing tabs\u2014directly from the command line, while handling cross-platform complexities and security permissions.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "claudeinchrome/01_mcp_server_context",
+          "label": "MCP Server Context",
+          "type": "chapter",
+          "summary": "This is the \"brain\" of the integration. It initializes the Model Context Protocol (MCP) server, which acts as the bridge between the Claude AI model and the Chrome browser. It manages the context (state), logging, and the secure socket connection used to transmit instructions.\n\nThink of it as the **Air Traffic Control tower**. It organizes communication, tracks the status of the connection (the bridge), and ensures that commands from the pilot (Claude) are properly routed to the destination (Chrome).",
+          "contentPath": "01_mcp_server_context.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudeinchrome/02_ai_system_instructions",
+          "label": "AI System Instructions",
+          "type": "chapter",
+          "summary": "This defines the \"personality\" and rules of engagement for the browser agent. It contains the system prompts that tell the LLM how to behave\u2014for example, instructing it to use specific tools for GIF recording or warning it not to trigger blocking alerts.\n\nThink of it as the **Standard Operating Procedures (SOP) manual** given to a new employee. It explicitly lists what they should do, what they should avoid (like getting stuck in loops), and how to report their progress to the manager (the user).",
+          "contentPath": "02_ai_system_instructions.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudeinchrome/03_native_messaging_host",
+          "label": "Native Messaging Host",
+          "type": "chapter",
+          "summary": "This abstraction implements the low-level communication protocol required by Chrome. Browsers cannot talk directly to arbitrary local processes for security reasons; they use \"Native Messaging\" (sending JSON via standard input/output). This module reads raw bytes, buffers them, and parses messages.\n\nThink of it as a **translator in a soundproof booth**. The browser slides a note under the glass (Standard Input), this host reads it, translates it into a format the MCP server understands, and passes it along via a socket.",
+          "contentPath": "03_native_messaging_host.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudeinchrome/04_installation___manifest_registration",
+          "label": "Installation & Manifest Registration",
+          "type": "chapter",
+          "summary": "For Chrome to allow an external program to talk to it, a specific JSON \"manifest\" file must be written to a specific directory on the user's computer. This abstraction handles the logic of creating that file and registering the application with the OS/Browser.\n\nThink of it as **issuing a security badge**. You cannot enter the secure facility (the Browser) to do work until you have gone to the security office and had your ID (Manifest file) printed and filed in the registry.",
+          "contentPath": "04_installation___manifest_registration.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudeinchrome/05_browser_discovery___configuration",
+          "label": "Browser Discovery & Configuration",
+          "type": "chapter",
+          "summary": "This layer handles the cross-platform complexity of finding where web browsers interact with the file system. It contains definitions for file paths, registry keys (on Windows), and binary names for various Chromium-based browsers (Chrome, Brave, Edge, Arc).\n\nThink of it as a **Universal Travel Adapter**. Whether the user is on macOS, Windows, or Linux, and whether they use Chrome or Brave, this abstraction adjusts the \"pins\" so the application can plug in and connect successfully.",
+          "contentPath": "05_browser_discovery___configuration.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudeinchrome/06_tool_ui_rendering",
+          "label": "Tool UI Rendering",
+          "type": "chapter",
+          "summary": "This component handles how the browser interactions are visually presented to the user in the CLI. It formats the input and output of tools (like `navigate`, `click`, or `find`) into human-readable text or React components.\n\nThink of it as the **car dashboard**. While the engine (the code) does the heavy lifting of driving the browser, this view shows the driver (the user) the speedometer and status lights so they know exactly what action is happening (e.g., \"Navigation completed\").",
+          "contentPath": "06_tool_ui_rendering.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "claudeinchrome/04_installation___manifest_registration",
+          "target": "claudeinchrome/03_native_messaging_host",
+          "label": "Queries browser paths"
+        },
+        {
+          "source": "claudeinchrome/04_installation___manifest_registration",
+          "target": "claudeinchrome/05_browser_discovery___configuration",
+          "label": "Retrieves system prompt"
+        },
+        {
+          "source": "claudeinchrome/04_installation___manifest_registration",
+          "target": "claudeinchrome/02_ai_system_instructions",
+          "label": "Installs manifest for"
+        },
+        {
+          "source": "claudeinchrome/04_installation___manifest_registration",
+          "target": "claudeinchrome/01_mcp_server_context",
+          "label": "Configures execution of"
+        },
+        {
+          "source": "claudeinchrome/01_mcp_server_context",
+          "target": "claudeinchrome/03_native_messaging_host",
+          "label": "Uses socket paths"
+        },
+        {
+          "source": "claudeinchrome/02_ai_system_instructions",
+          "target": "claudeinchrome/03_native_messaging_host",
+          "label": "Uses socket paths"
+        },
+        {
+          "source": "claudeinchrome/06_tool_ui_rendering",
+          "target": "claudeinchrome/03_native_messaging_host",
+          "label": "Tracks tab state"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "claudeinchrome/04_installation___manifest_registration",
+      "target": "claudeinchrome/03_native_messaging_host",
+      "label": "Queries browser paths"
+    },
+    {
+      "source": "claudeinchrome/04_installation___manifest_registration",
+      "target": "claudeinchrome/05_browser_discovery___configuration",
+      "label": "Retrieves system prompt"
+    },
+    {
+      "source": "claudeinchrome/04_installation___manifest_registration",
+      "target": "claudeinchrome/02_ai_system_instructions",
+      "label": "Installs manifest for"
+    },
+    {
+      "source": "claudeinchrome/04_installation___manifest_registration",
+      "target": "claudeinchrome/01_mcp_server_context",
+      "label": "Configures execution of"
+    },
+    {
+      "source": "claudeinchrome/01_mcp_server_context",
+      "target": "claudeinchrome/03_native_messaging_host",
+      "label": "Uses socket paths"
+    },
+    {
+      "source": "claudeinchrome/02_ai_system_instructions",
+      "target": "claudeinchrome/03_native_messaging_host",
+      "label": "Uses socket paths"
+    },
+    {
+      "source": "claudeinchrome/06_tool_ui_rendering",
+      "target": "claudeinchrome/03_native_messaging_host",
+      "label": "Tracks tab state"
+    }
+  ],
+  "storyPath": [
+    "claudeinchrome/01_mcp_server_context",
+    "claudeinchrome/02_ai_system_instructions",
+    "claudeinchrome/03_native_messaging_host",
+    "claudeinchrome/04_installation___manifest_registration",
+    "claudeinchrome/05_browser_discovery___configuration",
+    "claudeinchrome/06_tool_ui_rendering"
+  ]
+}

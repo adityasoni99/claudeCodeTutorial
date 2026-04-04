@@ -1,0 +1,156 @@
+{
+  "projectName": "SendMessageTool",
+  "nodes": [
+    {
+      "id": "sendmessagetool",
+      "label": "SendMessageTool",
+      "type": "module",
+      "summary": "The `SendMessageTool` serves as the communication backbone for the AI agent, enabling it to exchange messages with **teammates**, the **team lead**, or even **remote sessions**. It intelligently handles routing\u2014distinguishing between local file-based *swarm mailboxes* and network-based *cross-boundary transport*\u2014and enforces strict **coordination protocols** for high-stakes actions like shutting down agents or approving plans.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "sendmessagetool/01_tool_definition___interface",
+          "label": "Tool Definition & Interface",
+          "type": "chapter",
+          "summary": "This is the foundational setup that defines the `SendMessage` tool for the AI model. It establishes the input schema (what parameters are required, like `to` and `message`), permissions, and the documentation provided to the LLM.\n\nThink of it as the \"API Endpoint\" definition or a formal application form. It tells the user (the AI) exactly which fields must be filled out to send a letter, ensuring the system understands the request before processing starts.",
+          "contentPath": "01_tool_definition___interface.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sendmessagetool/02_swarm_communication__teammates_",
+          "label": "Swarm Communication (Teammates)",
+          "type": "chapter",
+          "summary": "The implementation of the \"Swarm\" protocol where agents communicate via file-based mailboxes. This abstraction handles writing JSON blobs to specific files that represent other agents' inboxes, supporting both direct messages and broadcasts.\n\nIt acts like an inter-office mail system where everyone has a physical inbox tray on their desk. To talk to \"Researcher,\" you physically walk over and drop a note in their tray. If you want to broadcast, you photocopy the note and drop it in everyone's tray.",
+          "contentPath": "02_swarm_communication__teammates_.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sendmessagetool/03_structured_coordination_protocols",
+          "label": "Structured Coordination Protocols",
+          "type": "chapter",
+          "summary": "A set of strict schemas and handlers for high-stakes operations, specifically `shutdown` requests and `plan` approvals. Unlike plain text chat, these are formal control signals that trigger specific lifecycle events (like killing a process).\n\nThink of this as the difference between a casual email and a formal legal contract. While you can write anything in an email, a \"Shutdown Request\" is a specific legal form that requires a signature (approval) and triggers immediate, binding consequences (shutting down the worker).",
+          "contentPath": "03_structured_coordination_protocols.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sendmessagetool/04_message_routing_logic",
+          "label": "Message Routing Logic",
+          "type": "chapter",
+          "summary": "The central intelligence of the tool that decides *how* to deliver a message based on the recipient's address. It distinguishes between routing to a local teammate (via file system), a sub-agent process (in-memory), or a remote session (via sockets).\n\nImagine a post office sorting facility. Whether a package is going to a neighbor down the street, a specific department within the same building, or a different country, the sorting logic looks at the address label and throws the package onto the correct conveyor belt (mailbox, queue, or socket).",
+          "contentPath": "04_message_routing_logic.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sendmessagetool/05_cross_boundary_transport__bridge_uds_",
+          "label": "Cross-Boundary Transport (Bridge/UDS)",
+          "type": "chapter",
+          "summary": "The mechanism for sending messages outside the current agent's immediate session context, either to another process on the same machine (UDS) or a completely different machine via a relay (Bridge).\n\nIt's like making a long-distance telephone call or using a fax machine. While standard teammates are in the same building (session), these messages travel over \"wires\" (sockets) to reach recipients in completely different buildings, requiring special handling to ensure the connection exists before dialing.",
+          "contentPath": "05_cross_boundary_transport__bridge_uds_.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sendmessagetool/06_user_interface_presentation",
+          "label": "User Interface Presentation",
+          "type": "chapter",
+          "summary": "Handles how tool inputs and outputs are displayed to the human user in the CLI. It filters out raw protocol noise (like request IDs or routing debug info) to show clean, human-readable summaries.\n\nThink of this as the \"Front of House\" in a restaurant. The kitchen (backend) deals with messy tickets, order codes, and ingredients, but the waiter (UI) presents the customer with a clean, plated dish and a simple check, hiding the chaotic logistics behind the scenes.",
+          "contentPath": "06_user_interface_presentation.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "sendmessagetool/01_tool_definition___interface",
+          "target": "sendmessagetool/02_swarm_communication__teammates_",
+          "label": "Delegates delivery execution"
+        },
+        {
+          "source": "sendmessagetool/01_tool_definition___interface",
+          "target": "sendmessagetool/06_user_interface_presentation",
+          "label": "Formats output for user"
+        },
+        {
+          "source": "sendmessagetool/01_tool_definition___interface",
+          "target": "sendmessagetool/04_message_routing_logic",
+          "label": "Validates typed requests"
+        },
+        {
+          "source": "sendmessagetool/02_swarm_communication__teammates_",
+          "target": "sendmessagetool/03_structured_coordination_protocols",
+          "label": "Writes to local mailboxes"
+        },
+        {
+          "source": "sendmessagetool/02_swarm_communication__teammates_",
+          "target": "sendmessagetool/05_cross_boundary_transport__bridge_uds_",
+          "label": "Dispatches over sockets"
+        },
+        {
+          "source": "sendmessagetool/04_message_routing_logic",
+          "target": "sendmessagetool/03_structured_coordination_protocols",
+          "label": "Transmits control signals"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "sendmessagetool/01_tool_definition___interface",
+      "target": "sendmessagetool/02_swarm_communication__teammates_",
+      "label": "Delegates delivery execution"
+    },
+    {
+      "source": "sendmessagetool/01_tool_definition___interface",
+      "target": "sendmessagetool/06_user_interface_presentation",
+      "label": "Formats output for user"
+    },
+    {
+      "source": "sendmessagetool/01_tool_definition___interface",
+      "target": "sendmessagetool/04_message_routing_logic",
+      "label": "Validates typed requests"
+    },
+    {
+      "source": "sendmessagetool/02_swarm_communication__teammates_",
+      "target": "sendmessagetool/03_structured_coordination_protocols",
+      "label": "Writes to local mailboxes"
+    },
+    {
+      "source": "sendmessagetool/02_swarm_communication__teammates_",
+      "target": "sendmessagetool/05_cross_boundary_transport__bridge_uds_",
+      "label": "Dispatches over sockets"
+    },
+    {
+      "source": "sendmessagetool/04_message_routing_logic",
+      "target": "sendmessagetool/03_structured_coordination_protocols",
+      "label": "Transmits control signals"
+    }
+  ],
+  "storyPath": [
+    "sendmessagetool/01_tool_definition___interface",
+    "sendmessagetool/02_swarm_communication__teammates_",
+    "sendmessagetool/03_structured_coordination_protocols",
+    "sendmessagetool/04_message_routing_logic",
+    "sendmessagetool/05_cross_boundary_transport__bridge_uds_",
+    "sendmessagetool/06_user_interface_presentation"
+  ]
+}

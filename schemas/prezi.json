@@ -1,0 +1,134 @@
+{
+  "projectName": "schemas",
+  "nodes": [
+    {
+      "id": "schemas",
+      "label": "schemas",
+      "type": "module",
+      "summary": "This project defines a flexible schema for a **reactive hook system** that allows an automated agent to trigger actions based on lifecycle events. It uses a **polymorphic configuration** to support diverse tasks like executing **shell commands**, consulting *AI models*, or making HTTP requests, all governed by strict **conditional permission rules**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "schemas/01_event_based_configuration_registry",
+          "label": "Event-Based Configuration Registry",
+          "type": "chapter",
+          "summary": "The top-level structure (`HooksSchema`) that maps system lifecycle events (like `HOOK_EVENTS`) to specific configurations. It organizes matchers and their associated hooks into a structured lookup table.\nIt is similar to an automated dispatcher's rulebook: \"When Event X happens, check if it matches Pattern Y; if so, dispatch Unit Z.\" It orchestrates the reactive behavior of the application.",
+          "contentPath": "01_event_based_configuration_registry.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "schemas/02_polymorphic_hook_definitions",
+          "label": "Polymorphic Hook Definitions",
+          "type": "chapter",
+          "summary": "Defines the diverse set of actions (hooks) the system can perform, such as executing shell commands, querying an LLM, verifying with an agent, or making HTTP requests. It uses a discriminated union to handle these distinct types uniformly.\nIt's like a universal adapter kit where you can plug in a drill (command), a sensor (http), or a camera (prompt), and the system knows how to operate each based on its type label.",
+          "contentPath": "02_polymorphic_hook_definitions.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "schemas/03_shell___system_integration",
+          "label": "Shell & System Integration",
+          "type": "chapter",
+          "summary": "Defines the configuration for interacting with the underlying operating system (`BashCommandHook`). It handles details like selecting the shell interpreter (Bash vs. PowerShell), setting timeouts, and managing background execution (`async`, `asyncRewake`).\nIt serves as the bridge between the high-level application and the raw OS terminal, ensuring commands are executed in the correct environment with safety limits, much like setting the rules of engagement before sending a soldier into the field.",
+          "contentPath": "03_shell___system_integration.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "schemas/04_ai_verification___interaction",
+          "label": "AI Verification & Interaction",
+          "type": "chapter",
+          "summary": "Represents the specific capabilities (`PromptHook`, `AgentHook`) to invoke Large Language Models (LLMs) as part of a hook chain. These schemas define how to construct prompts, select models, and verify outcomes.\nIt's like having a supervisor or a consultant on speed dial. Instead of just performing a task, the system can pause to ask, \"Does this look right?\" or \"Generate a summary of this,\" integrating intelligence into the automation pipeline.",
+          "contentPath": "04_ai_verification___interaction.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "schemas/05_conditional_execution_logic",
+          "label": "Conditional Execution Logic",
+          "type": "chapter",
+          "summary": "Encapsulates the logic for deciding *when* a specific hook should run using the `if` field. It uses a permission rule syntax (e.g., `Bash(git *)`) to filter execution against runtime context like tool names or inputs.\nIt acts like a gatekeeper or a smart filter: even if the \"door\" (event) opens, this logic checks the visitor's ID (context) to ensure they meet specific criteria before letting them proceed.",
+          "contentPath": "05_conditional_execution_logic.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "schemas/03_shell___system_integration",
+          "target": "schemas/01_event_based_configuration_registry",
+          "label": "Organizes"
+        },
+        {
+          "source": "schemas/01_event_based_configuration_registry",
+          "target": "schemas/05_conditional_execution_logic",
+          "label": "Includes"
+        },
+        {
+          "source": "schemas/01_event_based_configuration_registry",
+          "target": "schemas/04_ai_verification___interaction",
+          "label": "Includes"
+        },
+        {
+          "source": "schemas/05_conditional_execution_logic",
+          "target": "schemas/02_polymorphic_hook_definitions",
+          "label": "Uses"
+        },
+        {
+          "source": "schemas/04_ai_verification___interaction",
+          "target": "schemas/02_polymorphic_hook_definitions",
+          "label": "Uses"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "schemas/03_shell___system_integration",
+      "target": "schemas/01_event_based_configuration_registry",
+      "label": "Organizes"
+    },
+    {
+      "source": "schemas/01_event_based_configuration_registry",
+      "target": "schemas/05_conditional_execution_logic",
+      "label": "Includes"
+    },
+    {
+      "source": "schemas/01_event_based_configuration_registry",
+      "target": "schemas/04_ai_verification___interaction",
+      "label": "Includes"
+    },
+    {
+      "source": "schemas/05_conditional_execution_logic",
+      "target": "schemas/02_polymorphic_hook_definitions",
+      "label": "Uses"
+    },
+    {
+      "source": "schemas/04_ai_verification___interaction",
+      "target": "schemas/02_polymorphic_hook_definitions",
+      "label": "Uses"
+    }
+  ],
+  "storyPath": [
+    "schemas/01_event_based_configuration_registry",
+    "schemas/02_polymorphic_hook_definitions",
+    "schemas/03_shell___system_integration",
+    "schemas/04_ai_verification___interaction",
+    "schemas/05_conditional_execution_logic"
+  ]
+}

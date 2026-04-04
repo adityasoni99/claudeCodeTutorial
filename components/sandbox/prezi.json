@@ -1,0 +1,154 @@
+{
+  "projectName": "sandbox",
+  "nodes": [
+    {
+      "id": "sandbox",
+      "label": "sandbox",
+      "type": "module",
+      "summary": "This project implements a **secure sandboxing system** designed to isolate the execution of external commands and tools. It features a central settings interface that allows users to configure *operational modes* (such as strict or auto-allow), audit active **filesystem and network security rules**, and verify that necessary **system dependencies** are installed and healthy.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "sandbox/01_sandbox_settings_orchestrator",
+          "label": "Sandbox Settings Orchestrator",
+          "type": "chapter",
+          "summary": "The central control panel for the sandbox feature. Think of it like the \"Settings\" app on a smartphone; it doesn't perform the low-level tasks itself but organizes different functional areas (Mode, Overrides, Diagnostics) into navigational tabs. It manages the high-level state, such as whether the sandbox is in \"Auto-allow\", \"Regular\", or \"Disabled\" mode, and coordinates the display of sub-components based on system health.",
+          "contentPath": "01_sandbox_settings_orchestrator.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sandbox/02_security_configuration_inspector",
+          "label": "Security Configuration Inspector",
+          "type": "chapter",
+          "summary": "A visualization layer for the active security rules. It acts like a firewall status dashboard, converting complex configuration objects into human-readable lists. It displays exactly what the sandbox allows or denies regarding filesystem access (read/write paths) and network connectivity (allowed/denied hosts), allowing users to audit the effective security policy at a glance.",
+          "contentPath": "02_security_configuration_inspector.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sandbox/03_fallback_policy_manager",
+          "label": "Fallback Policy Manager",
+          "type": "chapter",
+          "summary": "Manages the \"escape hatch\" mechanisms for the sandbox. It functions like a safety override switch. This component controls whether the system enforces \"Strict Mode\" (fail if sandboxing fails) or allows \"Unsandboxed Fallback\" (retry without protection), giving users control over the trade-off between strict security and operational flexibility when errors occur.",
+          "contentPath": "03_fallback_policy_manager.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sandbox/04_environment_health_diagnostics",
+          "label": "Environment Health Diagnostics",
+          "type": "chapter",
+          "summary": "This abstraction acts as the system's mechanic or pre-flight checklist. It queries the underlying system to ensure that the host OS supports sandboxing and that specific required external tools (dependencies like `bubblewrap`, `socat`, and `ripgrep`) are installed. It handles the logic for detecting missing components and presenting actionable installation instructions or warnings to the user.",
+          "contentPath": "04_environment_health_diagnostics.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sandbox/05_sandbox_data_adapter",
+          "label": "Sandbox Data Adapter",
+          "type": "chapter",
+          "summary": "The `SandboxManager` serves as the bridge (Adapter pattern) between the React-based UI and the underlying OS-level sandbox logic. Although the implementation is external, it is the primary data source used across all UI components. It abstracts away the complexity of checking file permissions, reading JSON configs, and executing system checks, providing a clean API (`isSandboxingEnabled`, `checkDependencies`, `getFsReadConfig`) for the frontend to consume.",
+          "contentPath": "05_sandbox_data_adapter.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "sandbox/01_sandbox_settings_orchestrator",
+          "target": "sandbox/05_sandbox_data_adapter",
+          "label": "Reads and updates settings"
+        },
+        {
+          "source": "sandbox/01_sandbox_settings_orchestrator",
+          "target": "sandbox/02_security_configuration_inspector",
+          "label": "Renders diagnostics tab"
+        },
+        {
+          "source": "sandbox/01_sandbox_settings_orchestrator",
+          "target": "sandbox/03_fallback_policy_manager",
+          "label": "Renders configuration inspe..."
+        },
+        {
+          "source": "sandbox/01_sandbox_settings_orchestrator",
+          "target": "sandbox/04_environment_health_diagnostics",
+          "label": "Renders overrides manager"
+        },
+        {
+          "source": "sandbox/02_security_configuration_inspector",
+          "target": "sandbox/05_sandbox_data_adapter",
+          "label": "Checks system dependencies"
+        },
+        {
+          "source": "sandbox/03_fallback_policy_manager",
+          "target": "sandbox/05_sandbox_data_adapter",
+          "label": "Retrieves active security p..."
+        },
+        {
+          "source": "sandbox/04_environment_health_diagnostics",
+          "target": "sandbox/05_sandbox_data_adapter",
+          "label": "Modifies fallback permissions"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "sandbox/01_sandbox_settings_orchestrator",
+      "target": "sandbox/05_sandbox_data_adapter",
+      "label": "Reads and updates settings"
+    },
+    {
+      "source": "sandbox/01_sandbox_settings_orchestrator",
+      "target": "sandbox/02_security_configuration_inspector",
+      "label": "Renders diagnostics tab"
+    },
+    {
+      "source": "sandbox/01_sandbox_settings_orchestrator",
+      "target": "sandbox/03_fallback_policy_manager",
+      "label": "Renders configuration inspector"
+    },
+    {
+      "source": "sandbox/01_sandbox_settings_orchestrator",
+      "target": "sandbox/04_environment_health_diagnostics",
+      "label": "Renders overrides manager"
+    },
+    {
+      "source": "sandbox/02_security_configuration_inspector",
+      "target": "sandbox/05_sandbox_data_adapter",
+      "label": "Checks system dependencies"
+    },
+    {
+      "source": "sandbox/03_fallback_policy_manager",
+      "target": "sandbox/05_sandbox_data_adapter",
+      "label": "Retrieves active security policies"
+    },
+    {
+      "source": "sandbox/04_environment_health_diagnostics",
+      "target": "sandbox/05_sandbox_data_adapter",
+      "label": "Modifies fallback permissions"
+    }
+  ],
+  "storyPath": [
+    "sandbox/01_sandbox_settings_orchestrator",
+    "sandbox/02_security_configuration_inspector",
+    "sandbox/03_fallback_policy_manager",
+    "sandbox/04_environment_health_diagnostics",
+    "sandbox/05_sandbox_data_adapter"
+  ]
+}

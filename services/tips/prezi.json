@@ -1,0 +1,134 @@
+{
+  "projectName": "tips",
+  "nodes": [
+    {
+      "id": "tips",
+      "label": "tips",
+      "type": "module",
+      "summary": "The project implements a smart suggestion system that displays **context-aware tips** on the application's loading spinner. It maintains a **Tip Registry** and uses a **Contextual Relevance Engine** to filter content based on the user's environment (e.g., OS, active plugins). A **Priority Scheduler** leverages **Session History Tracking** to cycle through advice, prioritizing tips not seen recently, while supporting **Custom Tip Overrides** for user-defined messaging.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "tips/01_tip_registry",
+          "label": "Tip Registry",
+          "type": "chapter",
+          "summary": "This is the central catalog containing the actual content of every tip the system can show. Instead of simple strings, each tip is an object that defines the message text (often dynamic based on theme) and specific configuration metadata like a unique ID and cooldown periods.\n\nThink of this as a recipe book. It lists every possible dish (tip) the application can serve, along with the ingredients (text) and cooking instructions (configuration) for each one.",
+          "contentPath": "01_tip_registry.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tips/02_custom_tip_overrides",
+          "label": "Custom Tip Overrides",
+          "type": "chapter",
+          "summary": "This mechanism allows the default behavior to be bypassed via user configuration. It checks for a `spinnerTipsOverride` setting, allowing users or administrators to inject custom messages or disable default tips entirely.\n\nIt's similar to a \"Chef's Special\" menu insert. If present, it can replace or supplement the standard menu items, allowing the kitchen to serve something specific regardless of what the standard recipe book suggests.",
+          "contentPath": "02_custom_tip_overrides.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tips/03_contextual_relevance_engine",
+          "label": "Contextual Relevance Engine",
+          "type": "chapter",
+          "summary": "A logic layer that determines if a specific tip applies to the user's current environment. It checks various \"signals\" such as the operating system, installed plugins, specific CLI tools, or whether the user is an employee (ANT). It ensures Mac users don't see Windows tips and advanced users don't see beginner tutorials.\n\nIt acts like a bouncer at a club, checking credentials (environment variables, file existence, user settings) before letting a tip \"enter\" the list of candidates to be shown.",
+          "contentPath": "03_contextual_relevance_engine.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tips/04_session_history_tracking",
+          "label": "Session History Tracking",
+          "type": "chapter",
+          "summary": "This persistence layer tracks how often the application has been started (`numStartups`) and records the last time specific tips were displayed. It uses this data to calculate how many sessions have passed since a user last saw a specific message.\n\nImagine a librarian who stamps a card every time you visit. They use this record to ensure they don't recommend the same book to you twice in a row, enforcing a \"cooldown\" period for each recommendation.",
+          "contentPath": "04_session_history_tracking.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tips/05_priority_scheduler",
+          "label": "Priority Scheduler",
+          "type": "chapter",
+          "summary": "Once the system filters out irrelevant tips, this abstraction decides exactly which single tip to display. It sorts the eligible tips based on \"staleness\"\u2014prioritizing the tip that hasn't been shown for the longest time (or ever). It handles the final selection logic.\n\nIt operates like a playlist shuffler that prefers songs you haven't heard in a while. It looks at all the songs that fit the current mood (relevant tips) and picks the one played least recently.",
+          "contentPath": "05_priority_scheduler.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "tips/04_session_history_tracking",
+          "target": "tips/01_tip_registry",
+          "label": "Fetches candidate tips"
+        },
+        {
+          "source": "tips/01_tip_registry",
+          "target": "tips/02_custom_tip_overrides",
+          "label": "Validates applicability"
+        },
+        {
+          "source": "tips/01_tip_registry",
+          "target": "tips/05_priority_scheduler",
+          "label": "Injects custom messages"
+        },
+        {
+          "source": "tips/01_tip_registry",
+          "target": "tips/03_contextual_relevance_engine",
+          "label": "Checks cooldowns"
+        },
+        {
+          "source": "tips/04_session_history_tracking",
+          "target": "tips/03_contextual_relevance_engine",
+          "label": "Sorts by staleness"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "tips/04_session_history_tracking",
+      "target": "tips/01_tip_registry",
+      "label": "Fetches candidate tips"
+    },
+    {
+      "source": "tips/01_tip_registry",
+      "target": "tips/02_custom_tip_overrides",
+      "label": "Validates applicability"
+    },
+    {
+      "source": "tips/01_tip_registry",
+      "target": "tips/05_priority_scheduler",
+      "label": "Injects custom messages"
+    },
+    {
+      "source": "tips/01_tip_registry",
+      "target": "tips/03_contextual_relevance_engine",
+      "label": "Checks cooldowns"
+    },
+    {
+      "source": "tips/04_session_history_tracking",
+      "target": "tips/03_contextual_relevance_engine",
+      "label": "Sorts by staleness"
+    }
+  ],
+  "storyPath": [
+    "tips/01_tip_registry",
+    "tips/02_custom_tip_overrides",
+    "tips/03_contextual_relevance_engine",
+    "tips/04_session_history_tracking",
+    "tips/05_priority_scheduler"
+  ]
+}

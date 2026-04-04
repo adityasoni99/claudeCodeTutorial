@@ -1,0 +1,176 @@
+{
+  "projectName": "hooks",
+  "nodes": [
+    {
+      "id": "hooks",
+      "label": "hooks",
+      "type": "module",
+      "summary": "The **Hooks** project provides a terminal-based interface for browsing and inspecting configured lifecycle hooks. The central **Hooks Config Menu** acts as a read-only file explorer, allowing users to drill down through *Events* (like `PreToolUse`), *Matchers* (specific tools), and individual *Hooks* to view their details. It also includes a standalone **Prompt Dialog** component used at runtime to handle user interactions for prompt-based hooks.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "hooks/01_hooks_config_menu",
+          "label": "Hooks Config Menu",
+          "type": "chapter",
+          "summary": "The central controller for the hooks configuration interface. Think of it as the \"File Explorer\" window for your hooks. It manages the state of your navigation, tracking which folder (Event) or sub-folder (Matcher) you are currently viewing. It handles the routing logic to switch between different views and aggregates global statistics, such as the total number of hooks or policy restrictions, providing a high-level container for the entire browsing experience.",
+          "contentPath": "01_hooks_config_menu.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "hooks/02_event_selection_mode",
+          "label": "Event Selection Mode",
+          "type": "chapter",
+          "summary": "The top-level category view for browsing hooks. Think of this as the \"Drive Selection\" screen where you choose a broad category of operations, such as \"PreToolUse\" (before a tool runs) or \"PostToolExecution\" (after a tool runs). It lists these lifecycle events and shows a summary count of how many hooks exist in each, allowing you to start your drill-down search from the highest level of organization.",
+          "contentPath": "02_event_selection_mode.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "hooks/03_matcher_selection_mode",
+          "label": "Matcher Selection Mode",
+          "type": "chapter",
+          "summary": "The filtering layer of the browser. Once you've opened an \"Event\" folder, this view organizes the contents by specific triggers, or \"matchers\" (usually specific tool names). Think of it like a filtered view that groups related items together\u2014instead of seeing a raw list of every hook, you see them bundled by what they apply to (e.g., all hooks for the \"git\" tool), helping you narrow down your search.",
+          "contentPath": "03_matcher_selection_mode.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "hooks/04_hook_selection_mode",
+          "label": "Hook Selection Mode",
+          "type": "chapter",
+          "summary": "The granular list view for individual hook instances. After selecting a specific Event and Matcher, this component displays the actual items defined for that context. Think of this as the file list inside a specific folder. It shows the individual hook definitions (like a \"Command\" hook or a \"Prompt\" hook) and their origins (e.g., from a plugin or a local config file), allowing you to pick a specific one to inspect.",
+          "contentPath": "04_hook_selection_mode.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "hooks/05_hook_detail_view",
+          "label": "Hook Detail View",
+          "type": "chapter",
+          "summary": "A read-only inspector for a specific hook's configuration. Think of this as the \"Properties\" window that pops up when you inspect a file. It displays the raw details\u2014such as the exact command script to run or the API URL to hit\u2014and explains that because the menu is read-only, any changes must be made by editing the underlying configuration files directly.",
+          "contentPath": "05_hook_detail_view.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "hooks/06_prompt_dialog",
+          "label": "Prompt Dialog",
+          "type": "chapter",
+          "summary": "A standalone interaction component for active decision-making. Unlike the configuration browser, which is for looking at settings, this component is like a pop-up dialog box that interrupts the application to ask a question. It is likely used during runtime to present the user with a list of options (supplied by a hook) and capture their response or cancellation.",
+          "contentPath": "06_prompt_dialog.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "hooks/01_hooks_config_menu",
+          "target": "hooks/02_event_selection_mode",
+          "label": "Renders and passes metadata"
+        },
+        {
+          "source": "hooks/02_event_selection_mode",
+          "target": "hooks/01_hooks_config_menu",
+          "label": "Triggers event selection"
+        },
+        {
+          "source": "hooks/01_hooks_config_menu",
+          "target": "hooks/03_matcher_selection_mode",
+          "label": "Renders with matcher data"
+        },
+        {
+          "source": "hooks/03_matcher_selection_mode",
+          "target": "hooks/01_hooks_config_menu",
+          "label": "Triggers matcher selection"
+        },
+        {
+          "source": "hooks/01_hooks_config_menu",
+          "target": "hooks/04_hook_selection_mode",
+          "label": "Renders with hook list"
+        },
+        {
+          "source": "hooks/04_hook_selection_mode",
+          "target": "hooks/01_hooks_config_menu",
+          "label": "Triggers hook selection"
+        },
+        {
+          "source": "hooks/01_hooks_config_menu",
+          "target": "hooks/05_hook_detail_view",
+          "label": "Renders hook details"
+        },
+        {
+          "source": "hooks/05_hook_detail_view",
+          "target": "hooks/01_hooks_config_menu",
+          "label": "Triggers navigation back"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "hooks/01_hooks_config_menu",
+      "target": "hooks/02_event_selection_mode",
+      "label": "Renders and passes metadata"
+    },
+    {
+      "source": "hooks/02_event_selection_mode",
+      "target": "hooks/01_hooks_config_menu",
+      "label": "Triggers event selection"
+    },
+    {
+      "source": "hooks/01_hooks_config_menu",
+      "target": "hooks/03_matcher_selection_mode",
+      "label": "Renders with matcher data"
+    },
+    {
+      "source": "hooks/03_matcher_selection_mode",
+      "target": "hooks/01_hooks_config_menu",
+      "label": "Triggers matcher selection"
+    },
+    {
+      "source": "hooks/01_hooks_config_menu",
+      "target": "hooks/04_hook_selection_mode",
+      "label": "Renders with hook list"
+    },
+    {
+      "source": "hooks/04_hook_selection_mode",
+      "target": "hooks/01_hooks_config_menu",
+      "label": "Triggers hook selection"
+    },
+    {
+      "source": "hooks/01_hooks_config_menu",
+      "target": "hooks/05_hook_detail_view",
+      "label": "Renders hook details"
+    },
+    {
+      "source": "hooks/05_hook_detail_view",
+      "target": "hooks/01_hooks_config_menu",
+      "label": "Triggers navigation back"
+    }
+  ],
+  "storyPath": [
+    "hooks/01_hooks_config_menu",
+    "hooks/02_event_selection_mode",
+    "hooks/03_matcher_selection_mode",
+    "hooks/04_hook_selection_mode",
+    "hooks/05_hook_detail_view",
+    "hooks/06_prompt_dialog"
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "projectName": "pr_comments",
+  "nodes": [
+    {
+      "id": "pr_comments",
+      "label": "pr_comments",
+      "type": "module",
+      "summary": "This project serves as a **modular plugin** designed to fetch and display review comments from a *GitHub Pull Request*. Instead of using traditional hard-coded logic, it acts as a bridge that generates a **natural language prompt**, instructing an AI assistant to retrieve raw data using the `gh` CLI tool and present it in a readable, **formatted Markdown** conversation thread.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "pr_comments/01_plugin_migration_wrapper",
+          "label": "Plugin Migration Wrapper",
+          "type": "chapter",
+          "summary": "This abstraction wraps the command logic to facilitate moving functionality into a modular plugin architecture.\nIt acts like a standard shipping container for code; instead of building the command directly into the main system, the code is packaged inside `createMovedToPluginCommand`. This ensures the feature (`pr-comments`) can be easily transported, loaded, or effectively managed as a standalone extension within the larger application ecosystem without tight coupling.",
+          "contentPath": "01_plugin_migration_wrapper.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "pr_comments/02_command_configuration",
+          "label": "Command Configuration",
+          "type": "chapter",
+          "summary": "Defines the identity and metadata of the tool within the CLI.\nThink of this as the \"ID card\" or profile for the feature. It specifies the unique `name` ('pr-comments'), the human-readable `description`, and the `progressMessage` displayed to the user while it runs. This configuration object tells the system exactly how to register the command and what to display in the help menu or status bar before any logic is actually executed.",
+          "contentPath": "02_command_configuration.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "pr_comments/03_ai_prompt_generation",
+          "label": "AI Prompt Generation",
+          "type": "chapter",
+          "summary": "Instead of writing imperative code to fetch data, this abstraction constructs a natural language script for an AI to execute.\nIt is like writing a detailed recipe for a chef (the AI) rather than cooking the meal yourself. The function `getPromptWhileMarketplaceIsPrivate` generates a specific set of textual instructions, delegating the complex task of understanding API relationships and formatting rules to the AI agent, which processes the instructions dynamically.",
+          "contentPath": "03_ai_prompt_generation.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "pr_comments/04_github_data_retrieval_strategy",
+          "label": "GitHub Data Retrieval Strategy",
+          "type": "chapter",
+          "summary": "A specific sequence of GitHub CLI (`gh`) commands defined within the prompt to extract pull request data.\nThis acts as a \"flight plan\" for the AI. It outlines the exact steps required\u2014retrieving the PR number, fetching issue comments, and acquiring review comments\u2014using specific API endpoints. It directs the AI to use the `gh` tool as a remote control to pull raw data from GitHub's servers before processing it.",
+          "contentPath": "04_github_data_retrieval_strategy.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "pr_comments/05_output_formatting_specification",
+          "label": "Output Formatting Specification",
+          "type": "chapter",
+          "summary": "A set of strict rules embedded in the prompt defining how the resulting data should be presented to the user.\nIt serves as a \"style guide\" for the AI. By specifying that comments must include the author, file path, line number, and diff hunk in a specific Markdown format, this abstraction ensures the raw JSON data fetched from GitHub is transformed into a clean, readable conversation thread that developers can easily review.",
+          "contentPath": "05_output_formatting_specification.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "pr_comments/01_plugin_migration_wrapper",
+          "target": "pr_comments/02_command_configuration",
+          "label": "Registers"
+        },
+        {
+          "source": "pr_comments/02_command_configuration",
+          "target": "pr_comments/03_ai_prompt_generation",
+          "label": "Defines behavior"
+        },
+        {
+          "source": "pr_comments/03_ai_prompt_generation",
+          "target": "pr_comments/04_github_data_retrieval_strategy",
+          "label": "Instructs data fetching"
+        },
+        {
+          "source": "pr_comments/03_ai_prompt_generation",
+          "target": "pr_comments/05_output_formatting_specification",
+          "label": "Instructs formatting"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "pr_comments/01_plugin_migration_wrapper",
+      "target": "pr_comments/02_command_configuration",
+      "label": "Registers"
+    },
+    {
+      "source": "pr_comments/02_command_configuration",
+      "target": "pr_comments/03_ai_prompt_generation",
+      "label": "Defines behavior"
+    },
+    {
+      "source": "pr_comments/03_ai_prompt_generation",
+      "target": "pr_comments/04_github_data_retrieval_strategy",
+      "label": "Instructs data fetching"
+    },
+    {
+      "source": "pr_comments/03_ai_prompt_generation",
+      "target": "pr_comments/05_output_formatting_specification",
+      "label": "Instructs formatting"
+    }
+  ],
+  "storyPath": [
+    "pr_comments/01_plugin_migration_wrapper",
+    "pr_comments/02_command_configuration",
+    "pr_comments/03_ai_prompt_generation",
+    "pr_comments/04_github_data_retrieval_strategy",
+    "pr_comments/05_output_formatting_specification"
+  ]
+}

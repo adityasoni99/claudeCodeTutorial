@@ -1,0 +1,134 @@
+{
+  "projectName": "model",
+  "nodes": [
+    {
+      "id": "model",
+      "label": "model",
+      "type": "module",
+      "summary": "This project serves as a sophisticated **model orchestration layer** that acts as a universal translator between user intent and cloud provider technicalities. It manages **Multi-Provider Configuration** to map abstract aliases (like \"Opus\") to specific IDs across AWS, Google, and Anthropic, while dynamically tailoring **User Options** based on subscription tiers. Additionally, it handles **Agent Context** to ensure sub-agents inherit the correct region and model settings, strictly enforcing **Gatekeeping & Validation** to prevent the use of unauthorized or deprecated models.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "model/01_user_options_strategy",
+          "label": "User Options Strategy",
+          "type": "chapter",
+          "summary": "This logic determines exactly which model choices are presented to the user in the configuration menu. It dynamically filters options based on the user's subscription tier (Free, Pro, Enterprise, or Internal \"Ant\") and context availability.\n\nIt operates like a digital restaurant menu that changes based on your membership card. If you are a VIP (Pro user), you see the \"Chef's Specials\" (Opus/1M Context); if you are a standard guest, you see the standard menu.",
+          "contentPath": "01_user_options_strategy.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "model/02_gatekeeping___validation",
+          "label": "Gatekeeping & Validation",
+          "type": "chapter",
+          "summary": "This layer ensures that a requested model is actually safe, valid, and permitted before any resources are used. It checks enterprise allowlists, validates model strings against the API, and warns about retired models.\n\nThink of this as airport security. Before you can board the plane (send a request), it checks your ticket (validates the model string exists) and checks the no-fly list (ensures the model isn't blocked by enterprise policy or deprecation).",
+          "contentPath": "02_gatekeeping___validation.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "model/03_model_resolution___aliasing",
+          "label": "Model Resolution & Aliasing",
+          "type": "chapter",
+          "summary": "This abstraction acts as the system's interpreter. Users often use short nicknames (aliases) like \"opus\", \"best\", or \"haiku\", but the API requires precise version strings (e.g., `claude-3-opus-20240229`). \n\nThink of this as a DNS service or a contact list on your phone. You type \"Mom\" (the alias), and the system resolves it to the actual phone number `+1-555-0199` (the canonical model ID) so the call can actually connect.",
+          "contentPath": "03_model_resolution___aliasing.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "model/04_multi_provider_configuration___the_rosetta_stone__",
+          "label": "Multi-Provider Configuration (\"The Rosetta Stone\")",
+          "type": "chapter",
+          "summary": "This is the central dictionary that translates abstract model concepts (like \"Sonnet 3.5\") into specific technical identifiers for different cloud providers (Anthropic API, AWS Bedrock, Google Vertex, etc.). \n\nThink of it like a universal travel adapter. You simply plug in \"Sonnet\", and this abstraction automatically selects the correct pin configuration (model ID string) depending on whether you are \"plugged in\" to AWS, Google, or Anthropic directly.",
+          "contentPath": "04_multi_provider_configuration___the_rosetta_stone__.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "model/05_agent_context___inheritance",
+          "label": "Agent Context & Inheritance",
+          "type": "chapter",
+          "summary": "This defines how AI \"sub-agents\" select their brains. When the main AI spawns a helper to do a specific task, that helper needs to know which model to use. It usually \"inherits\" the model from the parent, but must handle complex rules like region consistency (keeping data in the same country).\n\nImagine a master artisan (the parent agent) hiring an apprentice (the sub-agent). The apprentice generally uses the same tools as the master (`inherit`), but sometimes requires specific instructions to use a lighter hammer (a faster model) for simple tasks.",
+          "contentPath": "05_agent_context___inheritance.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "model/01_user_options_strategy",
+          "target": "model/04_multi_provider_configuration___the_rosetta_stone__",
+          "label": "Fetches Bedrock profiles"
+        },
+        {
+          "source": "model/02_gatekeeping___validation",
+          "target": "model/01_user_options_strategy",
+          "label": "Retrieves provider IDs"
+        },
+        {
+          "source": "model/03_model_resolution___aliasing",
+          "target": "model/05_agent_context___inheritance",
+          "label": "Filters restricted models"
+        },
+        {
+          "source": "model/04_multi_provider_configuration___the_rosetta_stone__",
+          "target": "model/02_gatekeeping___validation",
+          "label": "Resolves inherited models"
+        },
+        {
+          "source": "model/05_agent_context___inheritance",
+          "target": "model/02_gatekeeping___validation",
+          "label": "Normalizes names for checks"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "model/01_user_options_strategy",
+      "target": "model/04_multi_provider_configuration___the_rosetta_stone__",
+      "label": "Fetches Bedrock profiles"
+    },
+    {
+      "source": "model/02_gatekeeping___validation",
+      "target": "model/01_user_options_strategy",
+      "label": "Retrieves provider IDs"
+    },
+    {
+      "source": "model/03_model_resolution___aliasing",
+      "target": "model/05_agent_context___inheritance",
+      "label": "Filters restricted models"
+    },
+    {
+      "source": "model/04_multi_provider_configuration___the_rosetta_stone__",
+      "target": "model/02_gatekeeping___validation",
+      "label": "Resolves inherited models"
+    },
+    {
+      "source": "model/05_agent_context___inheritance",
+      "target": "model/02_gatekeeping___validation",
+      "label": "Normalizes names for checks"
+    }
+  ],
+  "storyPath": [
+    "model/01_user_options_strategy",
+    "model/02_gatekeeping___validation",
+    "model/03_model_resolution___aliasing",
+    "model/04_multi_provider_configuration___the_rosetta_stone__",
+    "model/05_agent_context___inheritance"
+  ]
+}

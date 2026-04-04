@@ -1,0 +1,134 @@
+{
+  "projectName": "stats",
+  "nodes": [
+    {
+      "id": "stats",
+      "label": "stats",
+      "type": "module",
+      "summary": "This project defines a **CLI command** called \"stats\" designed to show the user's *usage statistics* and activity. It utilizes a **lazy loading** strategy to optimize performance by only importing the logic when the command is run, at which point it renders a specific **React component** to handle the visual display and program lifecycle.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "stats/01_command_configuration",
+          "label": "Command Configuration",
+          "type": "chapter",
+          "summary": "Defines the identity and metadata of a CLI feature. It acts like a registry entry or a menu item, specifying the command's name, description, and type (e.g., `local-jsx`) so the application knows it exists.",
+          "contentPath": "01_command_configuration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "stats/02_lazy_loading_mechanism",
+          "label": "Lazy Loading Mechanism",
+          "type": "chapter",
+          "summary": "A performance pattern that defers loading the command's implementation until it is actually invoked. By using a dynamic `import` in the `load` function, it keeps the initial startup lightweight, similar to fetching a specific tool only when the job starts.",
+          "contentPath": "02_lazy_loading_mechanism.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "stats/03_local_jsx_command_handler",
+          "label": "Local JSX Command Handler",
+          "type": "chapter",
+          "summary": "The execution interface for commands that render a UI locally. Defined by the `LocalJSXCommandCall` type, it serves as the bridge between the CLI's logic and the React rendering engine, expecting a React element in return.",
+          "contentPath": "03_local_jsx_command_handler.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "stats/04_component_integration",
+          "label": "Component Integration",
+          "type": "chapter",
+          "summary": "The architectural pattern of separating the command entry point from the UI logic. The command handler simply instantiates a specific React component (like `<Stats />`), delegating all visual rendering and state management to it.",
+          "contentPath": "04_component_integration.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "stats/05_lifecycle_control__ondone_",
+          "label": "Lifecycle Control (onDone)",
+          "type": "chapter",
+          "summary": "A callback mechanism used to signal when a UI interaction is complete. Passed as `onDone` to the component, it functions like a \"Close\" signal, informing the parent CLI process that the user has finished so it can resume or exit.",
+          "contentPath": "05_lifecycle_control__ondone_.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "stats/01_command_configuration",
+          "target": "stats/02_lazy_loading_mechanism",
+          "label": "Uses loading strategy"
+        },
+        {
+          "source": "stats/02_lazy_loading_mechanism",
+          "target": "stats/03_local_jsx_command_handler",
+          "label": "Imports handler"
+        },
+        {
+          "source": "stats/03_local_jsx_command_handler",
+          "target": "stats/04_component_integration",
+          "label": "Receives callback"
+        },
+        {
+          "source": "stats/03_local_jsx_command_handler",
+          "target": "stats/05_lifecycle_control__ondone_",
+          "label": "Renders component"
+        },
+        {
+          "source": "stats/05_lifecycle_control__ondone_",
+          "target": "stats/04_component_integration",
+          "label": "Triggers completion"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "stats/01_command_configuration",
+      "target": "stats/02_lazy_loading_mechanism",
+      "label": "Uses loading strategy"
+    },
+    {
+      "source": "stats/02_lazy_loading_mechanism",
+      "target": "stats/03_local_jsx_command_handler",
+      "label": "Imports handler"
+    },
+    {
+      "source": "stats/03_local_jsx_command_handler",
+      "target": "stats/04_component_integration",
+      "label": "Receives callback"
+    },
+    {
+      "source": "stats/03_local_jsx_command_handler",
+      "target": "stats/05_lifecycle_control__ondone_",
+      "label": "Renders component"
+    },
+    {
+      "source": "stats/05_lifecycle_control__ondone_",
+      "target": "stats/04_component_integration",
+      "label": "Triggers completion"
+    }
+  ],
+  "storyPath": [
+    "stats/01_command_configuration",
+    "stats/02_lazy_loading_mechanism",
+    "stats/03_local_jsx_command_handler",
+    "stats/04_component_integration",
+    "stats/05_lifecycle_control__ondone_"
+  ]
+}

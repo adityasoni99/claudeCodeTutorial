@@ -1,0 +1,124 @@
+{
+  "projectName": "assistant",
+  "nodes": [
+    {
+      "id": "assistant",
+      "label": "assistant",
+      "type": "module",
+      "summary": "This project serves as a robust backend utility for managing **chat session history**. It acts as a specialized librarian that securely organizes *authentication credentials* and retrieves conversation events from an external API. The system supports seamless scrolling by allowing the application to fetch messages in **reverse chronological order** or instantly jump to the **latest updates**, all while protecting the app from network crashes and converting raw data into a clean, usable format.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "assistant/01_latest_event_anchoring",
+          "label": "Latest Event Anchoring",
+          "type": "chapter",
+          "summary": "A specialized retrieval mode designed to fetch the most recent slice of conversation history without needing a specific cursor ID. It utilizes a flag (`anchor_to_latest`) to tell the API to look at the very end of the stream.\n\nIt acts like the \"Live\" button on a video player. Regardless of where you were in the timeline previously, this abstraction resets your view to the \"now,\" ensuring that the initial load of the session always presents the most current context to the user.",
+          "contentPath": "01_latest_event_anchoring.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "assistant/02_reverse_pagination_strategy",
+          "label": "Reverse Pagination Strategy",
+          "type": "chapter",
+          "summary": "The logic used to traverse data backwards in time, which is essential for chat history interfaces where users scroll up to see past messages. It uses a cursor system (`before_id`) to fetch the next batch of older events.\n\nThink of this like reading a long scroll from the bottom up. You read the most recent paragraph, then use the first word of that paragraph as a bookmark to ask the librarian for the section immediately preceding it, ensuring a seamless flow of history.",
+          "contentPath": "02_reverse_pagination_strategy.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "assistant/03_defensive_api_wrapper",
+          "label": "Defensive API Wrapper",
+          "type": "chapter",
+          "summary": "An abstraction (implemented in `fetchPage`) that encapsulates the raw network client (`axios`). It standardizes request headers, timeouts, and most importantly, error handling.\n\nIt acts like a specialized courier service. Instead of the application driving to the warehouse itself and risking a breakdown (an unhandled exception), it hands the order to the courier. If the road is blocked or the warehouse is empty (HTTP errors), the courier simply returns empty-handed (returns `null`) rather than crashing the vehicle, keeping the app stable.",
+          "contentPath": "03_defensive_api_wrapper.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "assistant/04_session_authorization_context",
+          "label": "Session Authorization Context",
+          "type": "chapter",
+          "summary": "A mechanism to prepare and store authentication credentials (like Access Tokens and Organization UUIDs) and the base API URL once, so they can be reused across multiple requests.\n\nIt acts like a \"security badge\" issued at the front desk. Instead of verifying your identity and searching for the office address every time you want to enter a room, you generate this context once and flash the badge to quickly gain access to specific API endpoints (like fetching events) efficiently.",
+          "contentPath": "04_session_authorization_context.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "assistant/05_data_normalization_layer",
+          "label": "Data Normalization Layer",
+          "type": "chapter",
+          "summary": "The process of transforming raw data received from the external API (often in snake_case like `first_id`) into the application's internal, type-safe structures (camelCase like `firstId`).\n\nIt is similar to a currency exchange booth at an airport. The external world (the API) trades in one currency, but your local economy (the UI and business logic) uses another. This abstraction handles the conversion immediately upon arrival, so the rest of the application never has to worry about foreign exchange rates or incompatible formats.",
+          "contentPath": "05_data_normalization_layer.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "assistant/02_reverse_pagination_strategy",
+          "target": "assistant/04_session_authorization_context",
+          "label": "Delegates request to"
+        },
+        {
+          "source": "assistant/03_defensive_api_wrapper",
+          "target": "assistant/04_session_authorization_context",
+          "label": "Delegates request to"
+        },
+        {
+          "source": "assistant/04_session_authorization_context",
+          "target": "assistant/01_latest_event_anchoring",
+          "label": "Consumes credentials from"
+        },
+        {
+          "source": "assistant/04_session_authorization_context",
+          "target": "assistant/05_data_normalization_layer",
+          "label": "Applies"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "assistant/02_reverse_pagination_strategy",
+      "target": "assistant/04_session_authorization_context",
+      "label": "Delegates request to"
+    },
+    {
+      "source": "assistant/03_defensive_api_wrapper",
+      "target": "assistant/04_session_authorization_context",
+      "label": "Delegates request to"
+    },
+    {
+      "source": "assistant/04_session_authorization_context",
+      "target": "assistant/01_latest_event_anchoring",
+      "label": "Consumes credentials from"
+    },
+    {
+      "source": "assistant/04_session_authorization_context",
+      "target": "assistant/05_data_normalization_layer",
+      "label": "Applies"
+    }
+  ],
+  "storyPath": [
+    "assistant/01_latest_event_anchoring",
+    "assistant/02_reverse_pagination_strategy",
+    "assistant/03_defensive_api_wrapper",
+    "assistant/04_session_authorization_context",
+    "assistant/05_data_normalization_layer"
+  ]
+}

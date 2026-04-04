@@ -1,0 +1,144 @@
+{
+  "projectName": "compact",
+  "nodes": [
+    {
+      "id": "compact",
+      "label": "compact",
+      "type": "module",
+      "summary": "This project implements a smart **conversation summarization tool** for a CLI application, triggered via the `/compact` command. It manages the AI's context window by compressing message history using various strategies\u2014like *Session Memory* or *Reactive Compaction*\u2014ensuring the application maintains memory efficiency without losing critical information, supported by robust **lifecycle management** and data assembly.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "compact/01_command_definition",
+          "label": "Command Definition",
+          "type": "chapter",
+          "summary": "Defines the metadata and entry point for the `/compact` command within the CLI application.\nIt acts like a plugin manifest, specifying the command's name, description, availability (via environment variables), and lazy-loading logic, ensuring the heavy logic is only imported when the user actually runs the command.",
+          "contentPath": "01_command_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "compact/02_compaction_orchestration",
+          "label": "Compaction Orchestration",
+          "type": "chapter",
+          "summary": "The central control logic that decides *how* to summarize the conversation.\nIt operates like a triage system: it first attempts a lightweight \"Session Memory\" compaction. If that's not applicable (e.g., custom instructions exist), it checks for advanced \"Reactive\" modes, and finally falls back to standard summarization. This ensures the most efficient method is always used.",
+          "contentPath": "02_compaction_orchestration.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "compact/03_reactive_compaction_integration",
+          "label": "Reactive Compaction Integration",
+          "type": "chapter",
+          "summary": "A specialized wrapper for handling the \"Reactive Compact\" feature.\nIt functions as an adapter for a more complex, interactive summarization process. It manages the specific parameters required by the reactive engine, translates internal status codes (like `too_few_groups` or `aborted`) into standard user errors, and handles progress reporting.",
+          "contentPath": "03_reactive_compaction_integration.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "compact/04_context_assembly",
+          "label": "Context Assembly",
+          "type": "chapter",
+          "summary": "The mechanism for gathering the necessary environment data before compaction occurs.\nIt's like preparing a briefing dossier for the AI model. It aggregates the system prompt, tool definitions, user context, and system context so the model understands the full \"world state\" and constraints while summarizing the message history.",
+          "contentPath": "04_context_assembly.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "compact/05_lifecycle_hooks",
+          "label": "Lifecycle Hooks",
+          "type": "chapter",
+          "summary": "A system of \"setup\" and \"teardown\" operations surrounding the main compaction task.\nSimilar to event listeners, these hooks execute pre-compaction logic (like merging custom instructions) and post-compaction cleanup (like clearing caches, resetting warnings, and notifying other services), ensuring the application state remains consistent.",
+          "contentPath": "05_lifecycle_hooks.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "compact/01_command_definition",
+          "target": "compact/02_compaction_orchestration",
+          "label": "Loads and executes"
+        },
+        {
+          "source": "compact/02_compaction_orchestration",
+          "target": "compact/03_reactive_compaction_integration",
+          "label": "Delegates execution to"
+        },
+        {
+          "source": "compact/02_compaction_orchestration",
+          "target": "compact/04_context_assembly",
+          "label": "Prepares data using"
+        },
+        {
+          "source": "compact/02_compaction_orchestration",
+          "target": "compact/05_lifecycle_hooks",
+          "label": "Triggers cleanup via"
+        },
+        {
+          "source": "compact/03_reactive_compaction_integration",
+          "target": "compact/04_context_assembly",
+          "label": "Prepares data using"
+        },
+        {
+          "source": "compact/03_reactive_compaction_integration",
+          "target": "compact/05_lifecycle_hooks",
+          "label": "Executes hooks via"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "compact/01_command_definition",
+      "target": "compact/02_compaction_orchestration",
+      "label": "Loads and executes"
+    },
+    {
+      "source": "compact/02_compaction_orchestration",
+      "target": "compact/03_reactive_compaction_integration",
+      "label": "Delegates execution to"
+    },
+    {
+      "source": "compact/02_compaction_orchestration",
+      "target": "compact/04_context_assembly",
+      "label": "Prepares data using"
+    },
+    {
+      "source": "compact/02_compaction_orchestration",
+      "target": "compact/05_lifecycle_hooks",
+      "label": "Triggers cleanup via"
+    },
+    {
+      "source": "compact/03_reactive_compaction_integration",
+      "target": "compact/04_context_assembly",
+      "label": "Prepares data using"
+    },
+    {
+      "source": "compact/03_reactive_compaction_integration",
+      "target": "compact/05_lifecycle_hooks",
+      "label": "Executes hooks via"
+    }
+  ],
+  "storyPath": [
+    "compact/01_command_definition",
+    "compact/02_compaction_orchestration",
+    "compact/03_reactive_compaction_integration",
+    "compact/04_context_assembly",
+    "compact/05_lifecycle_hooks"
+  ]
+}

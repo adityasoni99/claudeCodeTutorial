@@ -1,0 +1,134 @@
+{
+  "projectName": "coordinator",
+  "nodes": [
+    {
+      "id": "coordinator",
+      "label": "coordinator",
+      "type": "module",
+      "summary": "This project transforms the AI into a **Coordinator**, a high-level manager that orchestrates software tasks by delegating them to independent, asynchronous *workers* instead of executing them directly. It handles the complete **lifecycle** of these sub-agents (spawning, messaging, stopping) and interprets their results through a structured **XML notification protocol**, while dynamically managing the environment and tool availability based on the session's state.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "coordinator/01_coordinator_role",
+          "label": "Coordinator Role",
+          "type": "chapter",
+          "summary": "The central abstraction where the AI acts as an orchestrator (project manager) rather than a direct executor. Instead of writing code immediately, it breaks down goals, delegates tasks to \"worker\" sub-agents using specific tools, and synthesizes their outputs for the user. It prioritizes parallel execution and high-level planning.",
+          "contentPath": "01_coordinator_role.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "coordinator/02_worker_lifecycle_management",
+          "label": "Worker Lifecycle Management",
+          "type": "chapter",
+          "summary": "The mechanism for controlling independent sub-agents (\"workers\"). Through tools like `AgentTool` (spawn), `SendMessageTool` (continue), and `TaskStopTool` (halt), the coordinator manages a fleet of async agents. It's analogous to a manager assigning tickets to developers, reviewing their work, and re-assigning if necessary.",
+          "contentPath": "02_worker_lifecycle_management.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "coordinator/03_task_notification_protocol",
+          "label": "Task Notification Protocol",
+          "type": "chapter",
+          "summary": "A structured communication interface used by workers to report back to the coordinator. Results arrive as user-role messages formatted in XML (`<task-notification>`). This acts like an asynchronous message queue or callback system, allowing the coordinator to distinguish between user chat and automated agent status updates.",
+          "contentPath": "03_task_notification_protocol.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "coordinator/04_dynamic_context_injection",
+          "label": "Dynamic Context Injection",
+          "type": "chapter",
+          "summary": "Logic that dynamically assembles the available toolset and environment details for the coordinator and its workers. It conditionally enables access to MCP servers, file system scratchpads, or simplified toolsets based on feature flags (`isCoordinatorMode`) and environment variables, serving as the dependency injection layer for agent capabilities.",
+          "contentPath": "04_dynamic_context_injection.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "coordinator/05_session_state_synchronization",
+          "label": "Session State Synchronization",
+          "type": "chapter",
+          "summary": "A reconciliation mechanism (`matchSessionMode`) that ensures the runtime environment aligns with the persistent state of a resumed session. If a session was started in \"coordinator\" mode, this logic forces the current process to adopt that mode, preventing behavioral inconsistencies when reloading old conversations.",
+          "contentPath": "05_session_state_synchronization.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "coordinator/01_coordinator_role",
+          "target": "coordinator/02_worker_lifecycle_management",
+          "label": "Delegates tasks via"
+        },
+        {
+          "source": "coordinator/02_worker_lifecycle_management",
+          "target": "coordinator/03_task_notification_protocol",
+          "label": "Reports status using"
+        },
+        {
+          "source": "coordinator/03_task_notification_protocol",
+          "target": "coordinator/01_coordinator_role",
+          "label": "Delivers updates to"
+        },
+        {
+          "source": "coordinator/04_dynamic_context_injection",
+          "target": "coordinator/01_coordinator_role",
+          "label": "Supplies tool context to"
+        },
+        {
+          "source": "coordinator/05_session_state_synchronization",
+          "target": "coordinator/04_dynamic_context_injection",
+          "label": "Determines active mode for"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "coordinator/01_coordinator_role",
+      "target": "coordinator/02_worker_lifecycle_management",
+      "label": "Delegates tasks via"
+    },
+    {
+      "source": "coordinator/02_worker_lifecycle_management",
+      "target": "coordinator/03_task_notification_protocol",
+      "label": "Reports status using"
+    },
+    {
+      "source": "coordinator/03_task_notification_protocol",
+      "target": "coordinator/01_coordinator_role",
+      "label": "Delivers updates to"
+    },
+    {
+      "source": "coordinator/04_dynamic_context_injection",
+      "target": "coordinator/01_coordinator_role",
+      "label": "Supplies tool context to"
+    },
+    {
+      "source": "coordinator/05_session_state_synchronization",
+      "target": "coordinator/04_dynamic_context_injection",
+      "label": "Determines active mode for"
+    }
+  ],
+  "storyPath": [
+    "coordinator/01_coordinator_role",
+    "coordinator/02_worker_lifecycle_management",
+    "coordinator/03_task_notification_protocol",
+    "coordinator/04_dynamic_context_injection",
+    "coordinator/05_session_state_synchronization"
+  ]
+}

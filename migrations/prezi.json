@@ -1,0 +1,134 @@
+{
+  "projectName": "migrations",
+  "nodes": [
+    {
+      "id": "migrations",
+      "label": "migrations",
+      "type": "module",
+      "summary": "This project functions as an **automated maintenance system** that ensures the application's configuration evolves smoothly over time without breaking user customization. It executes a series of **idempotent migration scripts** during startup to update deprecated data formats, move settings between **global and local scopes**, and standardize **model aliases** (like updating \"Sonnet\" to its latest version). By strictly gating these changes based on **user segmentation** (such as subscription tier), it guarantees that upgrades are applied safely and only to the eligible users.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "migrations/01_configuration_scope_hierarchy",
+          "label": "Configuration Scope Hierarchy",
+          "type": "chapter",
+          "summary": "The codebase distinguishes between different \"scopes\" of configuration: `GlobalConfig` (machine-wide, stored in `~/.claude.json`), `userSettings` (user-specific preferences), and `localSettings` or `projectConfig` (context-specific). Several migrations are dedicated specifically to moving data from the broad Global scope to more granular scopes (User or Local) to better respect user intent and allow for project-specific overrides.\nImagine a hierarchy of rules: \"Global\" is federal law, \"User\" is state law, and \"Local/Project\" is municipal law. These migrations often move regulations from the federal level down to the local level so they can be customized more flexibly.",
+          "contentPath": "01_configuration_scope_hierarchy.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "migrations/02_state_migration_and_evolution",
+          "label": "State Migration and Evolution",
+          "type": "chapter",
+          "summary": "This is the core functional pattern of the codebase context. These functions represent intended side effects that run during application startup to evolve the user's persisted state. As the application matures, configuration keys are renamed, data structures change, or defaults shift. These migrations ensure backward compatibility by automatically transforming legacy data formats into current ones without user intervention.\nIt's like a digital moving crew that automatically repacks your old, disorganized boxes into new, labeled shelving units when you renovate your house, ensuring you don't lose your belongings during the remodel.",
+          "contentPath": "02_state_migration_and_evolution.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "migrations/03_user_segmentation_and_gating",
+          "label": "User Segmentation and Gating",
+          "type": "chapter",
+          "summary": "Not all migrations apply to all users. This abstraction involves checking the user's identity, subscription tier (Pro, Max, Team), or API provider (First Party vs. Third Party) before applying changes. This ensures that internal features (like \"fennec\" models) don't leak to public users, and premium features (like 1M context windows) are only configured for eligible accounts.\nIt acts like a bouncer at a club entrance. It checks your ID and ticket type (Subscriber status, API Provider) before deciding which room (configuration set) you are allowed to enter or be upgraded to.",
+          "contentPath": "03_user_segmentation_and_gating.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "migrations/04_model_alias_resolution",
+          "label": "Model Alias Resolution",
+          "type": "chapter",
+          "summary": "A significant portion of the migrations manages the complexity of Large Language Model (LLM) versioning. Since model IDs (like `claude-3-5-sonnet...`) change frequently, the application uses stable aliases (like `opus` or `sonnet`). These abstractions handle the mapping between these friendly aliases and the explicit, pinned versions in the user's settings. They ensure that when a new model version drops, users are either automatically upgraded or kept on their specific pinned version based on their subscription tier (Pro, Team, etc.).\nThink of it as a mail forwarding service. The user sends a letter to \"The Manager\" (the alias), and this system checks the roster to see who the current manager is and delivers it to the correct specific desk.",
+          "contentPath": "04_model_alias_resolution.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "migrations/05_idempotent_execution_guards",
+          "label": "Idempotent Execution Guards",
+          "type": "chapter",
+          "summary": "Since migrations run on application startup, they must be \"idempotent\"\u2014safe to run multiple times without causing unintended side effects. These abstractions implement \"guards\" that check if a migration has already happened. This is done either by checking for a specific completion timestamp/flag in the global config or by inspecting the current value of a setting to see if it already matches the target state.\nIt works like a checklist on a daily medication dispenser. Before taking a pill (running the code), the system checks the \"Monday\" slot. If it's empty (migration not done), it acts; if it's empty, it knows the task is already complete and does nothing.",
+          "contentPath": "05_idempotent_execution_guards.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "migrations/01_configuration_scope_hierarchy",
+          "target": "migrations/05_idempotent_execution_guards",
+          "label": "Validates eligibility via"
+        },
+        {
+          "source": "migrations/01_configuration_scope_hierarchy",
+          "target": "migrations/04_model_alias_resolution",
+          "label": "Checks completion status via"
+        },
+        {
+          "source": "migrations/01_configuration_scope_hierarchy",
+          "target": "migrations/02_state_migration_and_evolution",
+          "label": "Remaps deprecated IDs to"
+        },
+        {
+          "source": "migrations/01_configuration_scope_hierarchy",
+          "target": "migrations/03_user_segmentation_and_gating",
+          "label": "Persists updates to"
+        },
+        {
+          "source": "migrations/03_user_segmentation_and_gating",
+          "target": "migrations/04_model_alias_resolution",
+          "label": "Stores completion flags for"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "migrations/01_configuration_scope_hierarchy",
+      "target": "migrations/05_idempotent_execution_guards",
+      "label": "Validates eligibility via"
+    },
+    {
+      "source": "migrations/01_configuration_scope_hierarchy",
+      "target": "migrations/04_model_alias_resolution",
+      "label": "Checks completion status via"
+    },
+    {
+      "source": "migrations/01_configuration_scope_hierarchy",
+      "target": "migrations/02_state_migration_and_evolution",
+      "label": "Remaps deprecated IDs to"
+    },
+    {
+      "source": "migrations/01_configuration_scope_hierarchy",
+      "target": "migrations/03_user_segmentation_and_gating",
+      "label": "Persists updates to"
+    },
+    {
+      "source": "migrations/03_user_segmentation_and_gating",
+      "target": "migrations/04_model_alias_resolution",
+      "label": "Stores completion flags for"
+    }
+  ],
+  "storyPath": [
+    "migrations/01_configuration_scope_hierarchy",
+    "migrations/02_state_migration_and_evolution",
+    "migrations/03_user_segmentation_and_gating",
+    "migrations/04_model_alias_resolution",
+    "migrations/05_idempotent_execution_guards"
+  ]
+}

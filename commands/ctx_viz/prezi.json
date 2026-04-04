@@ -1,0 +1,102 @@
+{
+  "projectName": "ctx_viz",
+  "nodes": [
+    {
+      "id": "ctx_viz",
+      "label": "ctx_viz",
+      "type": "module",
+      "summary": "This project defines a **placeholder module** that acts as a structural \"stub\" for a feature that is not yet active. It establishes a standard interface for the application but relies on specific settings to remain **disabled** and *hidden* from the user view, effectively reserving a spot in the system without executing any logic.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "ctx_viz/01_stub_module_definition",
+          "label": "Stub Module Definition",
+          "type": "chapter",
+          "summary": "This is the primary abstraction representing the module itself. It exports a default object acting as a placeholder or a \"stub\" for a feature that is present but currently inactive.\n\nThink of it like a \"Coming Soon\" or \"Under Construction\" sign in a store window. The space is reserved and the framework is there, but the actual functional content is deliberately empty or turned off.",
+          "contentPath": "01_stub_module_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ctx_viz/02_component_identity",
+          "label": "Component Identity",
+          "type": "chapter",
+          "summary": "Defined by the `name` property, this provides a distinct string identifier for the module.\n\nIt serves as a nametag or a label. Even if the module is disabled and hidden, it requires a name (in this case, 'stub') so the system can internally reference, log, or categorize it alongside other active modules.",
+          "contentPath": "02_component_identity.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ctx_viz/03_feature_flagging_strategy",
+          "label": "Feature Flagging Strategy",
+          "type": "chapter",
+          "summary": "This abstraction is represented by the `isEnabled` function. It defines the contract for determining if this specific module should be executed or processed by the application.\n\nIt operates like a master switch or a fuse in a fuse box. In this specific context, the switch is permanently taped to the \"Off\" position (returning `false`), ensuring that whatever machinery lies behind this module does not run.",
+          "contentPath": "03_feature_flagging_strategy.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ctx_viz/04_visibility_control",
+          "label": "Visibility Control",
+          "type": "chapter",
+          "summary": "Managed by the `isHidden` property, this abstraction dictates the presence of this module within user interfaces or lists.\n\nIt is analogous to a \"stealth mode\" or a magician's trapdoor. Even though the object exists in the code, this boolean flag tells the system to keep it invisible to the end-user, much like a hidden file on your computer desktop.",
+          "contentPath": "04_visibility_control.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "ctx_viz/01_stub_module_definition",
+          "target": "ctx_viz/02_component_identity",
+          "label": "Defines activation logic"
+        },
+        {
+          "source": "ctx_viz/01_stub_module_definition",
+          "target": "ctx_viz/03_feature_flagging_strategy",
+          "label": "Configures presentation"
+        },
+        {
+          "source": "ctx_viz/01_stub_module_definition",
+          "target": "ctx_viz/04_visibility_control",
+          "label": "Establishes identity"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "ctx_viz/01_stub_module_definition",
+      "target": "ctx_viz/02_component_identity",
+      "label": "Defines activation logic"
+    },
+    {
+      "source": "ctx_viz/01_stub_module_definition",
+      "target": "ctx_viz/03_feature_flagging_strategy",
+      "label": "Configures presentation"
+    },
+    {
+      "source": "ctx_viz/01_stub_module_definition",
+      "target": "ctx_viz/04_visibility_control",
+      "label": "Establishes identity"
+    }
+  ],
+  "storyPath": [
+    "ctx_viz/01_stub_module_definition",
+    "ctx_viz/02_component_identity",
+    "ctx_viz/03_feature_flagging_strategy",
+    "ctx_viz/04_visibility_control"
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "projectName": "bridge",
+  "nodes": [
+    {
+      "id": "bridge",
+      "label": "bridge",
+      "type": "module",
+      "summary": "This project implements a **remote control** feature that bridges a local terminal CLI with a web interface. It manages the connection lifecycle by verifying **prerequisites**, toggling global *application state* to trigger networking logic, and providing an interactive **dialog** for users to control or disconnect active sessions.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "bridge/01_cli_command_registration",
+          "label": "CLI Command Registration",
+          "type": "chapter",
+          "summary": "Defines the entry point for the `remote-control` feature in the terminal. It acts as the interface between the CLI framework and the bridge logic, specifying command metadata like the name (`remote-control`), aliases (`rc`), and visibility based on feature flags. It lazily loads the heavy implementation logic only when the command is invoked.",
+          "contentPath": "01_cli_command_registration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bridge/02_bridge_state_controller",
+          "label": "Bridge State Controller",
+          "type": "chapter",
+          "summary": "The `BridgeToggle` component serves as the central logic hub for the command. It acts like a switchboard operator: it checks the current global state to see if a session is already active. If active, it routes the user to the management dialog; if inactive, it initiates the connection sequence and updates the global application state to enable the bridge.",
+          "contentPath": "02_bridge_state_controller.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bridge/03_prerequisite_verification",
+          "label": "Prerequisite Verification",
+          "type": "chapter",
+          "summary": "The `checkBridgePrerequisites` function acts as a security and compatibility gatekeeper. Before a connection is attempted, it performs a \"pre-flight check\" to ensure the user is authenticated, organization policies allow remote control, and software versions are compatible. This prevents invalid connection attempts and provides clear error messages to the user.",
+          "contentPath": "03_prerequisite_verification.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bridge/04_global_state_integration",
+          "label": "Global State Integration",
+          "type": "chapter",
+          "summary": "The bridge relies on a global `AppState` (via `useAppState` and `useSetAppState`) to coordinate with the wider application. Instead of managing the WebSocket connection directly, this abstraction sets flags (like `replBridgeEnabled`) that signal the main REPL loop to establish and maintain the actual network bridge, decoupling the UI command from the underlying networking logic.",
+          "contentPath": "04_global_state_integration.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bridge/05_interactive_session_dialog",
+          "label": "Interactive Session Dialog",
+          "type": "chapter",
+          "summary": "The `BridgeDisconnectDialog` component manages the user interface for an active remote session. It provides a menu (rendered in the terminal) that allows users to disconnect, generate a QR code for mobile pairing, or simply continue their session. It handles keyboard navigation and input to control the session lifecycle.",
+          "contentPath": "05_interactive_session_dialog.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "bridge/01_cli_command_registration",
+          "target": "bridge/02_bridge_state_controller",
+          "label": "Lazily loads and executes"
+        },
+        {
+          "source": "bridge/02_bridge_state_controller",
+          "target": "bridge/03_prerequisite_verification",
+          "label": "Verifies requirements via"
+        },
+        {
+          "source": "bridge/02_bridge_state_controller",
+          "target": "bridge/05_interactive_session_dialog",
+          "label": "Updates connection flags"
+        },
+        {
+          "source": "bridge/02_bridge_state_controller",
+          "target": "bridge/04_global_state_integration",
+          "label": "Renders management menu"
+        },
+        {
+          "source": "bridge/04_global_state_integration",
+          "target": "bridge/05_interactive_session_dialog",
+          "label": "Resets connection flags"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "bridge/01_cli_command_registration",
+      "target": "bridge/02_bridge_state_controller",
+      "label": "Lazily loads and executes"
+    },
+    {
+      "source": "bridge/02_bridge_state_controller",
+      "target": "bridge/03_prerequisite_verification",
+      "label": "Verifies requirements via"
+    },
+    {
+      "source": "bridge/02_bridge_state_controller",
+      "target": "bridge/05_interactive_session_dialog",
+      "label": "Updates connection flags"
+    },
+    {
+      "source": "bridge/02_bridge_state_controller",
+      "target": "bridge/04_global_state_integration",
+      "label": "Renders management menu"
+    },
+    {
+      "source": "bridge/04_global_state_integration",
+      "target": "bridge/05_interactive_session_dialog",
+      "label": "Resets connection flags"
+    }
+  ],
+  "storyPath": [
+    "bridge/01_cli_command_registration",
+    "bridge/02_bridge_state_controller",
+    "bridge/03_prerequisite_verification",
+    "bridge/04_global_state_integration",
+    "bridge/05_interactive_session_dialog"
+  ]
+}

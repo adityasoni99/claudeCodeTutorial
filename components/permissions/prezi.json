@@ -1,0 +1,208 @@
+{
+  "projectName": "permissions",
+  "nodes": [
+    {
+      "id": "permissions",
+      "label": "permissions",
+      "type": "module",
+      "summary": "This project implements a comprehensive **permission management system** for a CLI tool. A **Central Request Dispatcher** intercepts sensitive actions\u2014such as **Shell Commands** or **File Operations**\u2014and routes them to specific handlers. These handlers present a consistent **Unified Dialog Interface** where an **Interactive Decision Prompt** allows users to approve or reject actions, often supported by a **Permission Explainer** for context and a **Rule Persistence Manager** for saving long-term preferences.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "permissions/01_central_request_dispatcher",
+          "label": "Central Request Dispatcher",
+          "type": "chapter",
+          "summary": "The entry point for all permission requests. It inspects the tool being used (e.g., Bash, FileEdit, WebFetch) and routes the request to the specific React component designed to handle that tool's confirmation UI.\nIt acts like a receptionist in a large building who identifies the nature of your visit and directs you to the correct department (e.g., Legal, IT, Facilities) to get your paperwork signed.",
+          "contentPath": "01_central_request_dispatcher.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "permissions/02_unified_dialog_interface",
+          "label": "Unified Dialog Interface",
+          "type": "chapter",
+          "summary": "A shared visual shell used by all permission requests to maintain a consistent look and feel. It handles the structural layout, borders, titles, and common visual elements regardless of the specific tool being approved.\nThink of it as the standard company letterhead or form template. Whether you are filling out a vacation request or an expense report, the header, footer, and margins remain consistent.",
+          "contentPath": "02_unified_dialog_interface.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "permissions/03_interactive_decision_prompt",
+          "label": "Interactive Decision Prompt",
+          "type": "chapter",
+          "summary": "The component responsible for capturing the user's final decision. It renders the list of options (Yes, No, Always Allow), manages keyboard navigation, and handles feedback input.\nIt acts like the signature block and checkboxes at the bottom of a contract. After reading the details, this is where you explicitly check \"I Agree\" or \"Decline\" and sign your name.",
+          "contentPath": "03_interactive_decision_prompt.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "permissions/04_file_operations_subsystem",
+          "label": "File Operations Subsystem",
+          "type": "chapter",
+          "summary": "A specialized abstraction layer for handling filesystem permissions. It includes logic for displaying diffs, detecting symlinks, handling read vs. write operations, and integrating with IDEs.\nIt's like a dedicated Records Department. Unlike general approvals, document changes require specific protocols\u2014comparing the old vs. new version and verifying file paths\u2014before they are stamped for approval.",
+          "contentPath": "04_file_operations_subsystem.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "permissions/05_shell_command_governance",
+          "label": "Shell Command Governance",
+          "type": "chapter",
+          "summary": "Logic dedicated to managing permissions for CLI commands (Bash, PowerShell). It includes safety checks for destructive commands, classifiers to auto-approve safe commands, and helpers to format command lists.\nThis acts as a security checkpoint for heavy machinery. Before the \"execute\" button is pressed, safety guards check if the machine is safe to run and if the operator has the necessary clearance.",
+          "contentPath": "05_shell_command_governance.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "permissions/06_permission_explainer___debugging",
+          "label": "Permission Explainer & Debugging",
+          "type": "chapter",
+          "summary": "A system for providing context on *why* a permission is being requested or why a specific decision was reached. It includes AI-generated explanations and debug views for permission rules.\nSimilar to a legal advisor standing by your side. If you are unsure about signing a document, they translate the technical jargon into plain English and point out exactly which clause triggered the review.",
+          "contentPath": "06_permission_explainer___debugging.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "permissions/07_rule_persistence_manager",
+          "label": "Rule Persistence Manager",
+          "type": "chapter",
+          "summary": "Components that allow users to define and save permanent permission rules (e.g., \"Always allow npm test\"). It manages the UI for creating rules and selecting where they are saved (local vs. global settings).\nThis is like setting up a \"Standing Order\" or pre-approval pass. Instead of getting a manager's signature for every single routine task, you get a permanent pass for specific activities.",
+          "contentPath": "07_rule_persistence_manager.md",
+          "x": -800.0,
+          "y": 450.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "permissions/01_central_request_dispatcher",
+          "target": "permissions/04_file_operations_subsystem",
+          "label": "Routes requests to"
+        },
+        {
+          "source": "permissions/01_central_request_dispatcher",
+          "target": "permissions/05_shell_command_governance",
+          "label": "Routes requests to"
+        },
+        {
+          "source": "permissions/01_central_request_dispatcher",
+          "target": "permissions/02_unified_dialog_interface",
+          "label": "Uses interface (Fallback)"
+        },
+        {
+          "source": "permissions/04_file_operations_subsystem",
+          "target": "permissions/02_unified_dialog_interface",
+          "label": "Renders within"
+        },
+        {
+          "source": "permissions/05_shell_command_governance",
+          "target": "permissions/02_unified_dialog_interface",
+          "label": "Renders within"
+        },
+        {
+          "source": "permissions/04_file_operations_subsystem",
+          "target": "permissions/03_interactive_decision_prompt",
+          "label": "Captures user input"
+        },
+        {
+          "source": "permissions/05_shell_command_governance",
+          "target": "permissions/03_interactive_decision_prompt",
+          "label": "Captures user input"
+        },
+        {
+          "source": "permissions/05_shell_command_governance",
+          "target": "permissions/06_permission_explainer___debugging",
+          "label": "Integrates context"
+        },
+        {
+          "source": "permissions/07_rule_persistence_manager",
+          "target": "permissions/03_interactive_decision_prompt",
+          "label": "Uses for selection"
+        },
+        {
+          "source": "permissions/01_central_request_dispatcher",
+          "target": "permissions/03_interactive_decision_prompt",
+          "label": "Captures user input (Fallback)"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "permissions/01_central_request_dispatcher",
+      "target": "permissions/04_file_operations_subsystem",
+      "label": "Routes requests to"
+    },
+    {
+      "source": "permissions/01_central_request_dispatcher",
+      "target": "permissions/05_shell_command_governance",
+      "label": "Routes requests to"
+    },
+    {
+      "source": "permissions/01_central_request_dispatcher",
+      "target": "permissions/02_unified_dialog_interface",
+      "label": "Uses interface (Fallback)"
+    },
+    {
+      "source": "permissions/04_file_operations_subsystem",
+      "target": "permissions/02_unified_dialog_interface",
+      "label": "Renders within"
+    },
+    {
+      "source": "permissions/05_shell_command_governance",
+      "target": "permissions/02_unified_dialog_interface",
+      "label": "Renders within"
+    },
+    {
+      "source": "permissions/04_file_operations_subsystem",
+      "target": "permissions/03_interactive_decision_prompt",
+      "label": "Captures user input"
+    },
+    {
+      "source": "permissions/05_shell_command_governance",
+      "target": "permissions/03_interactive_decision_prompt",
+      "label": "Captures user input"
+    },
+    {
+      "source": "permissions/05_shell_command_governance",
+      "target": "permissions/06_permission_explainer___debugging",
+      "label": "Integrates context"
+    },
+    {
+      "source": "permissions/07_rule_persistence_manager",
+      "target": "permissions/03_interactive_decision_prompt",
+      "label": "Uses for selection"
+    },
+    {
+      "source": "permissions/01_central_request_dispatcher",
+      "target": "permissions/03_interactive_decision_prompt",
+      "label": "Captures user input (Fallback)"
+    }
+  ],
+  "storyPath": [
+    "permissions/01_central_request_dispatcher",
+    "permissions/02_unified_dialog_interface",
+    "permissions/03_interactive_decision_prompt",
+    "permissions/04_file_operations_subsystem",
+    "permissions/05_shell_command_governance",
+    "permissions/06_permission_explainer___debugging",
+    "permissions/07_rule_persistence_manager"
+  ]
+}

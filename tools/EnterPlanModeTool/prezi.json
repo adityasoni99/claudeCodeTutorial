@@ -1,0 +1,124 @@
+{
+  "projectName": "EnterPlanModeTool",
+  "nodes": [
+    {
+      "id": "enterplanmodetool",
+      "label": "EnterPlanModeTool",
+      "type": "module",
+      "summary": "The **EnterPlanModeTool** acts as a bridge that transitions the AI agent into a dedicated *planning phase* for complex tasks. It orchestrates this process by validating availability through **Feature Gating**, updating the global **Permission State** to enforce exploration rules, and delivering context-aware instructions via **Dynamic Prompt Generation**, while keeping the user informed with formatted **User Interface** feedback.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "enterplanmodetool/01_tool_definition",
+          "label": "Tool Definition",
+          "type": "chapter",
+          "summary": "Defines the `EnterPlanMode` tool's structure, including its inputs, outputs, and core execution logic. It acts as the contract between the AI model and the application, specifying that this tool takes no parameters but triggers a specific workflow. Think of it as the blueprint for a specific command the AI can invoke.",
+          "contentPath": "01_tool_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "enterplanmodetool/02_feature_gating",
+          "label": "Feature Gating",
+          "type": "chapter",
+          "summary": "Controls the availability of the tool based on environment configuration and feature flags (e.g., `KAIROS`, `KAIROS_CHANNELS`). It acts as a safety switch, ensuring the tool is disabled in environments (like specific channels) where the corresponding \"Exit\" functionality might not be available, preventing the AI from getting stuck.",
+          "contentPath": "02_feature_gating.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "enterplanmodetool/03_permission_state_management",
+          "label": "Permission State Management",
+          "type": "chapter",
+          "summary": "Handles the transition of the application's global state into \"Plan Mode.\" Just like switching a car's gear, this logic updates the `toolPermissionContext` within the application state. This ensures subsequent actions are governed by planning-specific rules (often read-only or exploration-focused) rather than implementation rules.",
+          "contentPath": "03_permission_state_management.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "enterplanmodetool/04_dynamic_prompt_generation",
+          "label": "Dynamic Prompt Generation",
+          "type": "chapter",
+          "summary": "Constructs the detailed instructions (system prompt) provided to the AI about how and when to use this tool. It acts like a dynamic scriptwriter, adjusting the instructions based on whether the user is an internal employee (\"Ant\") or an external user, and whether specific \"interview phases\" are active.",
+          "contentPath": "04_dynamic_prompt_generation.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "enterplanmodetool/05_user_interface_rendering",
+          "label": "User Interface Rendering",
+          "type": "chapter",
+          "summary": "Manages the visual feedback displayed to the user in the command-line interface using React-based components (via Ink). It renders distinct messages for successful entry into plan mode or rejection, providing a polished, formatted output similar to a frontend view in a web app.",
+          "contentPath": "05_user_interface_rendering.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "enterplanmodetool/01_tool_definition",
+          "target": "enterplanmodetool/02_feature_gating",
+          "label": "Updates global state"
+        },
+        {
+          "source": "enterplanmodetool/01_tool_definition",
+          "target": "enterplanmodetool/03_permission_state_management",
+          "label": "Fetches system instructions"
+        },
+        {
+          "source": "enterplanmodetool/01_tool_definition",
+          "target": "enterplanmodetool/04_dynamic_prompt_generation",
+          "label": "Renders status messages"
+        },
+        {
+          "source": "enterplanmodetool/01_tool_definition",
+          "target": "enterplanmodetool/05_user_interface_rendering",
+          "label": "Checks feature flags"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "enterplanmodetool/01_tool_definition",
+      "target": "enterplanmodetool/02_feature_gating",
+      "label": "Updates global state"
+    },
+    {
+      "source": "enterplanmodetool/01_tool_definition",
+      "target": "enterplanmodetool/03_permission_state_management",
+      "label": "Fetches system instructions"
+    },
+    {
+      "source": "enterplanmodetool/01_tool_definition",
+      "target": "enterplanmodetool/04_dynamic_prompt_generation",
+      "label": "Renders status messages"
+    },
+    {
+      "source": "enterplanmodetool/01_tool_definition",
+      "target": "enterplanmodetool/05_user_interface_rendering",
+      "label": "Checks feature flags"
+    }
+  ],
+  "storyPath": [
+    "enterplanmodetool/01_tool_definition",
+    "enterplanmodetool/02_feature_gating",
+    "enterplanmodetool/03_permission_state_management",
+    "enterplanmodetool/04_dynamic_prompt_generation",
+    "enterplanmodetool/05_user_interface_rendering"
+  ]
+}

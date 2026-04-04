@@ -1,0 +1,80 @@
+{
+  "projectName": "perf-issue",
+  "nodes": [
+    {
+      "id": "perf-issue",
+      "label": "perf-issue",
+      "type": "module",
+      "summary": "This project defines a **Feature Definition Stub**, which acts as a safe, placeholder object for application modules that are not yet implemented or active. It utilizes a **Feature Toggling Interface** to ensure the logic is currently *disabled* and applies **Visibility Configuration** to keep the feature **hidden** from the user interface, preventing system crashes or unintended interactions.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "perf-issue/01_feature_definition_stub",
+          "label": "Feature Definition Stub",
+          "type": "chapter",
+          "summary": "This abstraction represents the default or placeholder state of a module within the application. It exports a standard object structure that defines the contract for features (status, visibility, identity). Think of it like a \"prop\" on a movie set\u2014it fills the space and responds to basic interactions (like \"what is your name?\"), ensuring the system doesn't crash when the real implementation is missing, disabled, or mocked for testing.",
+          "contentPath": "01_feature_definition_stub.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "perf-issue/02_feature_toggling_interface",
+          "label": "Feature Toggling Interface",
+          "type": "chapter",
+          "summary": "Encapsulated by the `isEnabled` method, this concept allows the application to dynamically check if a piece of logic should run. In this specific context, it is hardcoded to return `false`, effectively acting as a \"kill switch\" or a safety fuse that ensures this specific feature is completely deactivated and no code paths associated with it are executed.",
+          "contentPath": "02_feature_toggling_interface.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "perf-issue/03_visibility_configuration",
+          "label": "Visibility Configuration",
+          "type": "chapter",
+          "summary": "Represented by the `isHidden` property, this abstraction separates the logic of a feature from its visual presentation to the user. It allows the system to load the module but keep it hidden from menus or UI lists. It acts like a \"staff only\" door\u2014the room exists behind it, but it is not advertised to the general public.",
+          "contentPath": "03_visibility_configuration.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "perf-issue/01_feature_definition_stub",
+          "target": "perf-issue/02_feature_toggling_interface",
+          "label": "Exposes behavior"
+        },
+        {
+          "source": "perf-issue/01_feature_definition_stub",
+          "target": "perf-issue/03_visibility_configuration",
+          "label": "Configures visibility"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "perf-issue/01_feature_definition_stub",
+      "target": "perf-issue/02_feature_toggling_interface",
+      "label": "Exposes behavior"
+    },
+    {
+      "source": "perf-issue/01_feature_definition_stub",
+      "target": "perf-issue/03_visibility_configuration",
+      "label": "Configures visibility"
+    }
+  ],
+  "storyPath": [
+    "perf-issue/01_feature_definition_stub",
+    "perf-issue/02_feature_toggling_interface",
+    "perf-issue/03_visibility_configuration"
+  ]
+}

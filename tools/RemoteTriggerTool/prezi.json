@@ -1,0 +1,124 @@
+{
+  "projectName": "RemoteTriggerTool",
+  "nodes": [
+    {
+      "id": "remotetriggertool",
+      "label": "RemoteTriggerTool",
+      "type": "module",
+      "summary": "This project creates a specialized utility allowing the AI to **manage remote code agents** (triggers) on the Claude platform. It acts as a secure bridge that automatically handles sensitive *authentication tokens* behind the scenes, ensuring they are never exposed to the user. The tool strictly validates commands to ensure reliability and presents the results in a friendly, **readable format**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "remotetriggertool/01_tool_construction",
+          "label": "Tool Construction",
+          "type": "chapter",
+          "summary": "This abstraction binds the metadata, logic, and interface of the tool together. It uses the `buildTool` helper to define the tool's name, description, prompt, and execution behavior in a single object.\n\nThink of it as the chassis of a vehicle; it connects the engine (logic), the steering (input schemas), and the dashboard (UI) into a single, usable unit that the AI system can drive.",
+          "contentPath": "01_tool_construction.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "remotetriggertool/02_schema_validation",
+          "label": "Schema Validation",
+          "type": "chapter",
+          "summary": "This layer defines the strict structure of data the tool accepts (Input) and returns (Output) using Zod schemas. It ensures that the AI invokes the tool with the correct parameters (like `trigger_id` or `action`) before any code executes.\n\nIt acts like a strict form validator or a bouncer at a club, checking that every request meets the requirements (ID card, dress code) before allowing it to proceed to the inner logic.",
+          "contentPath": "02_schema_validation.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "remotetriggertool/03_ui_presentation",
+          "label": "UI Presentation",
+          "type": "chapter",
+          "summary": "This abstraction defines how the tool's activity appears to the human user in the terminal. It uses React components to render a friendly representation of the input (what command is running) and the output (HTTP status and response size).\n\nIt is like the graphical display on a calculator. While the internal processor does the math, this layer formats the numbers nicely on the screen so you can read the result easily.",
+          "contentPath": "03_ui_presentation.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "remotetriggertool/04_api_action_dispatcher",
+          "label": "API Action Dispatcher",
+          "type": "chapter",
+          "summary": "Located within the `call` method, this logic acts as a router. It takes the abstract `action` requested by the user (like 'list', 'create', or 'run') and translates it into specific HTTP methods (GET, POST) and URL endpoints.\n\nIt is analogous to a switchboard operator who listens to your request (\"I want to speak to billing\") and physically connects the wire to the correct department's phone line.",
+          "contentPath": "04_api_action_dispatcher.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "remotetriggertool/05_secure_context_injection",
+          "label": "Secure Context Injection",
+          "type": "chapter",
+          "summary": "This logic handles sensitive authentication details automatically. Instead of asking the user to provide API keys, the tool retrieves OAuth tokens and Organization UUIDs from the internal environment and injects them into the HTTP headers.\n\nIt operates like an automatic secure pass system in a building; you walk through the doors, and the system automatically scans your badge to grant access without you needing to type a password every time.",
+          "contentPath": "05_secure_context_injection.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "remotetriggertool/01_tool_construction",
+          "target": "remotetriggertool/02_schema_validation",
+          "label": "Enforces input structure"
+        },
+        {
+          "source": "remotetriggertool/01_tool_construction",
+          "target": "remotetriggertool/03_ui_presentation",
+          "label": "Executes command logic"
+        },
+        {
+          "source": "remotetriggertool/01_tool_construction",
+          "target": "remotetriggertool/05_secure_context_injection",
+          "label": "Configures visual output"
+        },
+        {
+          "source": "remotetriggertool/03_ui_presentation",
+          "target": "remotetriggertool/04_api_action_dispatcher",
+          "label": "Requires authentication tokens"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "remotetriggertool/01_tool_construction",
+      "target": "remotetriggertool/02_schema_validation",
+      "label": "Enforces input structure"
+    },
+    {
+      "source": "remotetriggertool/01_tool_construction",
+      "target": "remotetriggertool/03_ui_presentation",
+      "label": "Executes command logic"
+    },
+    {
+      "source": "remotetriggertool/01_tool_construction",
+      "target": "remotetriggertool/05_secure_context_injection",
+      "label": "Configures visual output"
+    },
+    {
+      "source": "remotetriggertool/03_ui_presentation",
+      "target": "remotetriggertool/04_api_action_dispatcher",
+      "label": "Requires authentication tokens"
+    }
+  ],
+  "storyPath": [
+    "remotetriggertool/01_tool_construction",
+    "remotetriggertool/02_schema_validation",
+    "remotetriggertool/03_ui_presentation",
+    "remotetriggertool/04_api_action_dispatcher",
+    "remotetriggertool/05_secure_context_injection"
+  ]
+}

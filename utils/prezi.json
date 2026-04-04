@@ -1,0 +1,166 @@
+{
+  "projectName": "utils",
+  "nodes": [
+    {
+      "id": "utils",
+      "label": "utils",
+      "type": "module",
+      "summary": "This project acts as the **central nervous system** for an AI agent, managing its *configuration hierarchy* and *security context* across different environments. It provides the agent with the **hands** to interact with the operating system, file system, and **Git repositories**, while orchestrating the *session lifecycle* and determining the optimal **model strategy** based on user preferences and token limits.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "utils/01_configuration___settings_hierarchy",
+          "label": "Configuration & Settings Hierarchy",
+          "type": "chapter",
+          "summary": "Acts as the application's central nervous system for preferences. It detects the running environment (OS, terminal, CI), loads configuration from multiple layers (global files, project-specific settings, environment variables), and merges them to determine how the tool should behave. Think of it like a layered preferences menu where local rules can override global defaults.",
+          "contentPath": "01_configuration___settings_hierarchy.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "utils/02_authentication___permissions",
+          "label": "Authentication & Permissions",
+          "type": "chapter",
+          "summary": "The security guard ensuring safe operation. It manages user identity (via OAuth or API keys), securely stores credentials, and enforces a strict permission system. Before the agent runs a tool, this layer checks if the action is allowed by policy, user approval, or current mode (e.g., auto-approve vs. ask).",
+          "contentPath": "02_authentication___permissions.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "utils/03_model_context___strategy",
+          "label": "Model Context & Strategy",
+          "type": "chapter",
+          "summary": "Manages the interface with the AI \"brain\". It handles selecting the appropriate model (e.g., Claude 3.5 Sonnet vs. Opus), constructing the system prompt that defines the agent's persona, and calculating token budgets to ensure conversations fit within the model's memory limits (context window).",
+          "contentPath": "03_model_context___strategy.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "utils/04_git_integration",
+          "label": "Git Integration",
+          "type": "chapter",
+          "summary": "The version control wrapper. It abstracts git commands into programmable functions, allowing the system to detect repository roots, check status, read diffs, and manage branches without the rest of the app needing to construct raw git command strings.",
+          "contentPath": "04_git_integration.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "utils/05_operating_system_interface__shell___fs_",
+          "label": "Operating System Interface (Shell & FS)",
+          "type": "chapter",
+          "summary": "The \"hands\" of the codebase that interact with the computer. This abstraction wraps raw system calls\u2014like executing shell commands, reading files, and parsing bash scripts\u2014providing a safe and consistent API. It handles cross-platform differences and acts as the execution layer for the agent's actions.",
+          "contentPath": "05_operating_system_interface__shell___fs_.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "utils/06_session_lifecycle_management",
+          "label": "Session Lifecycle Management",
+          "type": "chapter",
+          "summary": "Tracks the heartbeat of the application. It maintains the current state of the session (idle, running, or waiting for input), manages startup and setup hooks, and handles event logging. This ensures the application flows logically from initialization to active work and eventual shutdown.",
+          "contentPath": "06_session_lifecycle_management.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "utils/01_configuration___settings_hierarchy",
+          "target": "utils/02_authentication___permissions",
+          "label": "Reads settings files via"
+        },
+        {
+          "source": "utils/01_configuration___settings_hierarchy",
+          "target": "utils/06_session_lifecycle_management",
+          "label": "Identifies project root via"
+        },
+        {
+          "source": "utils/03_model_context___strategy",
+          "target": "utils/01_configuration___settings_hierarchy",
+          "label": "Retrieves API keys from"
+        },
+        {
+          "source": "utils/04_git_integration",
+          "target": "utils/01_configuration___settings_hierarchy",
+          "label": "Gets model preferences from"
+        },
+        {
+          "source": "utils/04_git_integration",
+          "target": "utils/03_model_context___strategy",
+          "label": "Checks subscription tier via"
+        },
+        {
+          "source": "utils/05_operating_system_interface__shell___fs_",
+          "target": "utils/01_configuration___settings_hierarchy",
+          "label": "Loads hooks from"
+        },
+        {
+          "source": "utils/06_session_lifecycle_management",
+          "target": "utils/02_authentication___permissions",
+          "label": "Executes commands via"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "utils/01_configuration___settings_hierarchy",
+      "target": "utils/02_authentication___permissions",
+      "label": "Reads settings files via"
+    },
+    {
+      "source": "utils/01_configuration___settings_hierarchy",
+      "target": "utils/06_session_lifecycle_management",
+      "label": "Identifies project root via"
+    },
+    {
+      "source": "utils/03_model_context___strategy",
+      "target": "utils/01_configuration___settings_hierarchy",
+      "label": "Retrieves API keys from"
+    },
+    {
+      "source": "utils/04_git_integration",
+      "target": "utils/01_configuration___settings_hierarchy",
+      "label": "Gets model preferences from"
+    },
+    {
+      "source": "utils/04_git_integration",
+      "target": "utils/03_model_context___strategy",
+      "label": "Checks subscription tier via"
+    },
+    {
+      "source": "utils/05_operating_system_interface__shell___fs_",
+      "target": "utils/01_configuration___settings_hierarchy",
+      "label": "Loads hooks from"
+    },
+    {
+      "source": "utils/06_session_lifecycle_management",
+      "target": "utils/02_authentication___permissions",
+      "label": "Executes commands via"
+    }
+  ],
+  "storyPath": [
+    "utils/01_configuration___settings_hierarchy",
+    "utils/02_authentication___permissions",
+    "utils/03_model_context___strategy",
+    "utils/04_git_integration",
+    "utils/05_operating_system_interface__shell___fs_",
+    "utils/06_session_lifecycle_management"
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "projectName": "TeamCreateTool",
+  "nodes": [
+    {
+      "id": "teamcreatetool",
+      "label": "TeamCreateTool",
+      "type": "module",
+      "summary": "The **TeamCreate Tool** acts as the \"Start Button\" for launching a multi-agent *swarm*, allowing an AI to take charge as a **Team Lead**. It sets up the necessary infrastructure by creating a private **Task List** for the group and saving a \"Team Roster\" file so agents can find each other. Additionally, it equips the leader with a handbook of **Swarm Workflow Guidelines** to ensure smooth coordination and task delegation.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "teamcreatetool/01_teamcreate_tool_definition",
+          "label": "TeamCreate Tool Definition",
+          "type": "chapter",
+          "summary": "The main implementation of the tool that allows the AI to create a new team. It handles input validation, schema definition, and the execution flow.\nThink of it as the \"Start Button\" or entry point that orchestrates the setup of a new multi-agent swarm.",
+          "contentPath": "01_teamcreate_tool_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teamcreatetool/02_lead_agent_identity",
+          "label": "Lead Agent Identity",
+          "type": "chapter",
+          "summary": "The logic that transforms the current active session into the \"Team Lead.\" It generates a deterministic ID (e.g., `team-lead@project-name`) and updates the application state to reflect this leadership role.\nIt's akin to the user putting on the \"Captain's Armband,\" granting them authority to spawn sub-agents while preventing them from leading multiple teams simultaneously.",
+          "contentPath": "02_lead_agent_identity.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teamcreatetool/03_team_task_context_binding",
+          "label": "Team-Task Context Binding",
+          "type": "chapter",
+          "summary": "The logic that enforces a 1:1 relationship between a \"Team\" and a \"Task List\". When a team is created, the system ensures a dedicated directory (`~/.claude/tasks/{team-name}`) exists for their work.\nIt's like assigning a specific, private conference room with a blank whiteboard to the team so their work doesn't mix with others.",
+          "contentPath": "03_team_task_context_binding.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teamcreatetool/04_swarm_workflow_guidelines",
+          "label": "Swarm Workflow Guidelines",
+          "type": "chapter",
+          "summary": "A comprehensive set of instructions (prompt) that teaches the AI how to manage a team. It defines rules for choosing agent types, assigning tasks, handling idle states, and communicating.\nIt acts like the \"Standard Operating Procedures\" or \"Employee Handbook\" that the AI reads to understand its role as a manager.",
+          "contentPath": "04_swarm_workflow_guidelines.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teamcreatetool/05_team_state_persistence",
+          "label": "Team State Persistence",
+          "type": "chapter",
+          "summary": "The mechanism for saving the team's configuration to the file system. It writes a JSON file containing the team's name, description, and member list to `~/.claude/teams/`.\nThis serves as the \"Team Roster\" or \"Incorporation Papers,\" ensuring the team's structure is preserved and discoverable by other agents.",
+          "contentPath": "05_team_state_persistence.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "teamcreatetool/01_teamcreate_tool_definition",
+          "target": "teamcreatetool/02_lead_agent_identity",
+          "label": "Retrieves instructions"
+        },
+        {
+          "source": "teamcreatetool/01_teamcreate_tool_definition",
+          "target": "teamcreatetool/03_team_task_context_binding",
+          "label": "Initializes context"
+        },
+        {
+          "source": "teamcreatetool/01_teamcreate_tool_definition",
+          "target": "teamcreatetool/04_swarm_workflow_guidelines",
+          "label": "Saves configuration"
+        },
+        {
+          "source": "teamcreatetool/01_teamcreate_tool_definition",
+          "target": "teamcreatetool/05_team_state_persistence",
+          "label": "Assigns leadership"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "teamcreatetool/01_teamcreate_tool_definition",
+      "target": "teamcreatetool/02_lead_agent_identity",
+      "label": "Retrieves instructions"
+    },
+    {
+      "source": "teamcreatetool/01_teamcreate_tool_definition",
+      "target": "teamcreatetool/03_team_task_context_binding",
+      "label": "Initializes context"
+    },
+    {
+      "source": "teamcreatetool/01_teamcreate_tool_definition",
+      "target": "teamcreatetool/04_swarm_workflow_guidelines",
+      "label": "Saves configuration"
+    },
+    {
+      "source": "teamcreatetool/01_teamcreate_tool_definition",
+      "target": "teamcreatetool/05_team_state_persistence",
+      "label": "Assigns leadership"
+    }
+  ],
+  "storyPath": [
+    "teamcreatetool/01_teamcreate_tool_definition",
+    "teamcreatetool/02_lead_agent_identity",
+    "teamcreatetool/03_team_task_context_binding",
+    "teamcreatetool/04_swarm_workflow_guidelines",
+    "teamcreatetool/05_team_state_persistence"
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "projectName": "stickers",
+  "nodes": [
+    {
+      "id": "stickers",
+      "label": "stickers",
+      "type": "module",
+      "summary": "This project implements a **CLI command** designed to help users order *Claude Code stickers*. It uses a modular structure where the command's **metadata** (name, description) is defined separately from its logic, allowing the system to **lazily load** the functionality to open the web browser only when the user actually runs the command.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "stickers/01_command_metadata___registration",
+          "label": "Command Metadata & Registration",
+          "type": "chapter",
+          "summary": "This abstraction defines the \"identity card\" for a CLI command. Instead of writing all the logic in one place, this pattern separates the configuration (name, description, type) from the execution logic.\n\nThink of it like a menu in a restaurant. This file is the menu item that describes the dish (\"Order Claude Code stickers\") and tells the kitchen where to find the recipe, but it isn't the food itself. This structure allows the application to list all available commands without loading the heavy code required to run them.",
+          "contentPath": "01_command_metadata___registration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "stickers/02_lazy_module_loading",
+          "label": "Lazy Module Loading",
+          "type": "chapter",
+          "summary": "This pattern is used to optimize performance by deferring the importation of code until it is strictly necessary. The `load` property uses a dynamic import function rather than a static top-level import.\n\nImagine a library where books are kept in a separate warehouse and only retrieved when a patron specifically asks for one. This keeps the main library (the application's startup memory) uncrowded and fast, as the system doesn't need to hold the code for the `stickers` logic until the user actually runs that specific command.",
+          "contentPath": "02_lazy_module_loading.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "stickers/03_command_execution_logic",
+          "label": "Command Execution Logic",
+          "type": "chapter",
+          "summary": "This represents the \"engine room\" of a command. While the registration file handles the definition, this abstraction contains the actual `call` function that performs the work when a user invokes the command.\n\nIt is analogous to the chef actually cooking the meal defined on the menu. It handles the specific steps required\u2014in this case, defining a URL and attempting to open it\u2014and determines whether the operation was a success or a failure before reporting back.",
+          "contentPath": "03_command_execution_logic.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "stickers/04_standardized_command_output",
+          "label": "Standardized Command Output",
+          "type": "chapter",
+          "summary": "This abstraction relies on the `LocalCommandResult` type to ensure consistent communication between individual commands and the core system. The function returns an object with specific keys like `type` and `value`.\n\nIt's like a standardized shipping manifest used by a logistics company. No matter what item (text, error, or data) is inside the package, the label always looks the same so the delivery system knows exactly how to handle and display the result to the user without needing to understand the internal logic of how it was generated.",
+          "contentPath": "04_standardized_command_output.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "stickers/05_system_integration_utilities",
+          "label": "System Integration Utilities",
+          "type": "chapter",
+          "summary": "This abstraction encapsulates interaction with the host operating system, such as opening a web browser. By importing `openBrowser` from a utils folder, the command logic remains clean and focused.\n\nThink of this like using a universal remote control. Instead of walking over to the TV and manually fiddling with wires to change the channel (writing complex OS-specific code inside the command), you simply press a button on the remote (call the utility function), and the tool handles the complex signal transmission for you.",
+          "contentPath": "05_system_integration_utilities.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "stickers/01_command_metadata___registration",
+          "target": "stickers/03_command_execution_logic",
+          "label": "Configures deferred import"
+        },
+        {
+          "source": "stickers/03_command_execution_logic",
+          "target": "stickers/02_lazy_module_loading",
+          "label": "Dynamically imports"
+        },
+        {
+          "source": "stickers/02_lazy_module_loading",
+          "target": "stickers/05_system_integration_utilities",
+          "label": "Calls browser utility"
+        },
+        {
+          "source": "stickers/02_lazy_module_loading",
+          "target": "stickers/04_standardized_command_output",
+          "label": "Returns structured result"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "stickers/01_command_metadata___registration",
+      "target": "stickers/03_command_execution_logic",
+      "label": "Configures deferred import"
+    },
+    {
+      "source": "stickers/03_command_execution_logic",
+      "target": "stickers/02_lazy_module_loading",
+      "label": "Dynamically imports"
+    },
+    {
+      "source": "stickers/02_lazy_module_loading",
+      "target": "stickers/05_system_integration_utilities",
+      "label": "Calls browser utility"
+    },
+    {
+      "source": "stickers/02_lazy_module_loading",
+      "target": "stickers/04_standardized_command_output",
+      "label": "Returns structured result"
+    }
+  ],
+  "storyPath": [
+    "stickers/01_command_metadata___registration",
+    "stickers/02_lazy_module_loading",
+    "stickers/03_command_execution_logic",
+    "stickers/04_standardized_command_output",
+    "stickers/05_system_integration_utilities"
+  ]
+}

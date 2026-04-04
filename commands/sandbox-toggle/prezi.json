@@ -1,0 +1,134 @@
+{
+  "projectName": "sandbox-toggle",
+  "nodes": [
+    {
+      "id": "sandbox-toggle",
+      "label": "sandbox-toggle",
+      "type": "module",
+      "summary": "This project implements a CLI command that manages a **security sandbox** for executing code safely. It serves as a control panel, allowing users to verify platform compatibility, interactively toggle the sandbox via a *UI component*, or configure **exclusion rules** to whitelist specific commands from the sandbox restrictions.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "sandbox-toggle/01_sandbox_manager_interface",
+          "label": "Sandbox Manager Interface",
+          "type": "chapter",
+          "summary": "A central static class (`SandboxManager`) used throughout the code to interact with the underlying sandboxing system. It serves as the \"source of truth,\" providing methods to check if sandboxing is enabled, verify dependencies, enforce enterprise policies (locking settings), and validate platform compatibility.",
+          "contentPath": "01_sandbox_manager_interface.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sandbox-toggle/02_cli_command_definition",
+          "label": "CLI Command Definition",
+          "type": "chapter",
+          "summary": "Defines the metadata and behavior of the `sandbox` command within the CLI application. It acts like a dynamic menu entry that not only registers the command name but also calculates its description on the fly to show the current status (enabled/disabled, warnings) and determines if the command should be hidden based on platform support.",
+          "contentPath": "02_cli_command_definition.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sandbox-toggle/03_sandbox_controller",
+          "label": "Sandbox Controller",
+          "type": "chapter",
+          "summary": "The main execution logic for the command, encapsulated in the `call` function. It acts as a traffic controller: it performs pre-flight checks (platform validation, dependency checks), determines if the user wants to perform a specific action (like excluding a command) via arguments, or decides to render the interactive UI if no arguments are provided.",
+          "contentPath": "03_sandbox_controller.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sandbox-toggle/04_interactive_configuration_flow",
+          "label": "Interactive Configuration Flow",
+          "type": "chapter",
+          "summary": "Represents the user experience when running the command without arguments. Instead of executing a task immediately, it delegates control to a React component (`<SandboxSettings />`) that renders a terminal-based UI. This allows users to visually toggle settings and fix dependency issues interactively.",
+          "contentPath": "04_interactive_configuration_flow.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sandbox-toggle/05_command_exclusion_logic",
+          "label": "Command Exclusion Logic",
+          "type": "chapter",
+          "summary": "Specific logic handling the `exclude` subcommand. It allows users to whitelist specific command patterns (e.g., `npm run test`) so they run outside the sandbox. This abstraction handles parsing the argument, cleaning inputs, and persisting the configuration to the local settings file relative to the current working directory.",
+          "contentPath": "05_command_exclusion_logic.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "sandbox-toggle/01_sandbox_manager_interface",
+          "target": "sandbox-toggle/03_sandbox_controller",
+          "label": "Queries status from"
+        },
+        {
+          "source": "sandbox-toggle/01_sandbox_manager_interface",
+          "target": "sandbox-toggle/02_cli_command_definition",
+          "label": "Loads execution logic"
+        },
+        {
+          "source": "sandbox-toggle/02_cli_command_definition",
+          "target": "sandbox-toggle/03_sandbox_controller",
+          "label": "Validates environment via"
+        },
+        {
+          "source": "sandbox-toggle/02_cli_command_definition",
+          "target": "sandbox-toggle/04_interactive_configuration_flow",
+          "label": "Renders UI"
+        },
+        {
+          "source": "sandbox-toggle/02_cli_command_definition",
+          "target": "sandbox-toggle/05_command_exclusion_logic",
+          "label": "Executes subcommand"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "sandbox-toggle/01_sandbox_manager_interface",
+      "target": "sandbox-toggle/03_sandbox_controller",
+      "label": "Queries status from"
+    },
+    {
+      "source": "sandbox-toggle/01_sandbox_manager_interface",
+      "target": "sandbox-toggle/02_cli_command_definition",
+      "label": "Loads execution logic"
+    },
+    {
+      "source": "sandbox-toggle/02_cli_command_definition",
+      "target": "sandbox-toggle/03_sandbox_controller",
+      "label": "Validates environment via"
+    },
+    {
+      "source": "sandbox-toggle/02_cli_command_definition",
+      "target": "sandbox-toggle/04_interactive_configuration_flow",
+      "label": "Renders UI"
+    },
+    {
+      "source": "sandbox-toggle/02_cli_command_definition",
+      "target": "sandbox-toggle/05_command_exclusion_logic",
+      "label": "Executes subcommand"
+    }
+  ],
+  "storyPath": [
+    "sandbox-toggle/01_sandbox_manager_interface",
+    "sandbox-toggle/02_cli_command_definition",
+    "sandbox-toggle/03_sandbox_controller",
+    "sandbox-toggle/04_interactive_configuration_flow",
+    "sandbox-toggle/05_command_exclusion_logic"
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "projectName": "FileReadTool",
+  "nodes": [
+    {
+      "id": "filereadtool",
+      "label": "FileReadTool",
+      "type": "module",
+      "summary": "The **FileReadTool** acts as a versatile bridge between the local filesystem and the AI, allowing it to *safely* read and interpret various file formats. It intelligently switches between different processing modes to handle **text**, **PDFs**, **Jupyter Notebooks**, and **images**, while strictly enforcing **resource limits** to ensure system stability and cost control.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "filereadtool/01_tool_definition___interface",
+          "label": "Tool Definition & Interface",
+          "type": "chapter",
+          "summary": "This is the structural foundation of the `FileReadTool`. It uses the `buildTool` helper to define the tool's identity, input/output Zod schemas, and permissions. It acts as the contract between the application and the LLM, determining how the AI calls the tool and what data format it expects back.\nThink of it as the API specification or the \"Instruction Manual\" provided to the AI, telling it exactly how to request file reads and what parameters (like offsets or page ranges) are allowed.",
+          "contentPath": "01_tool_definition___interface.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "filereadtool/02_resource_governance___limits",
+          "label": "Resource Governance & Limits",
+          "type": "chapter",
+          "summary": "This abstraction manages the constraints designed to keep the system stable and cost-effective. It defines maximum file sizes (bytes) and token counts to prevent the LLM from trying to read gigabytes of data or crashing the context window. It handles hierarchy logic, respecting environment variables first, then feature flags, and finally hardcoded defaults.\nThink of this as the \"Bouncer\" or \"Safety Valve\" of the system. It checks every read request against a set of strict rules before letting the data through, ensuring the request is safe to process.",
+          "contentPath": "02_resource_governance___limits.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "filereadtool/03_content_type_dispatcher",
+          "label": "Content Type Dispatcher",
+          "type": "chapter",
+          "summary": "Located within the tool's execution logic, this mechanism determines how to handle a file based on its extension. Instead of treating everything as text, it routes requests to specialized handlers: PDF extractors, Jupyter Notebook parsers, image processors, or the standard text reader.\nIt acts like a central mail sorting room. Incoming packages (files) are inspected; if it's an image, it goes to the visual department; if it's a PDF, it goes to the document scanner; if it's code, it goes to the text reader.",
+          "contentPath": "03_content_type_dispatcher.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "filereadtool/04_media_processing_engine",
+          "label": "Media Processing Engine",
+          "type": "chapter",
+          "summary": "This layer handles the complex task of manipulating binary image data. It abstracts the underlying dependencies (checking for a bundled native processor or falling back to the `sharp` library). It handles resizing, formatting, and compression to ensure images fit within the AI's token budget.\nIt functions like a \"Universal Adapter\" for images. Regardless of whether the input is a massive PNG or a raw photo, this layer standardizes it, shrinks it if necessary, and converts it into a format the AI can visually analyze.",
+          "contentPath": "04_media_processing_engine.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "filereadtool/05_user_interface_presentation",
+          "label": "User Interface Presentation",
+          "type": "chapter",
+          "summary": "This abstraction separates what the AI sees (raw file content, base64 strings) from what the human user sees in the chat interface. It uses React components to render concise summaries (e.g., \"Read 50 lines\", \"Read image (42KB)\") rather than flooding the user's screen with the actual file contents.\nIt acts as the \"Dashboard\" or \"View Layer.\" While the engine (the AI) processes the raw fuel (data), the driver (the user) sees clean gauges and status indicators confirming that the action was successful without needing to see the internal mechanics.",
+          "contentPath": "05_user_interface_presentation.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "filereadtool/01_tool_definition___interface",
+          "target": "filereadtool/03_content_type_dispatcher",
+          "label": "Enforces limits from"
+        },
+        {
+          "source": "filereadtool/01_tool_definition___interface",
+          "target": "filereadtool/02_resource_governance___limits",
+          "label": "Delegates execution to"
+        },
+        {
+          "source": "filereadtool/02_resource_governance___limits",
+          "target": "filereadtool/04_media_processing_engine",
+          "label": "Processes images using"
+        },
+        {
+          "source": "filereadtool/05_user_interface_presentation",
+          "target": "filereadtool/01_tool_definition___interface",
+          "label": "Visualizes output of"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "filereadtool/01_tool_definition___interface",
+      "target": "filereadtool/03_content_type_dispatcher",
+      "label": "Enforces limits from"
+    },
+    {
+      "source": "filereadtool/01_tool_definition___interface",
+      "target": "filereadtool/02_resource_governance___limits",
+      "label": "Delegates execution to"
+    },
+    {
+      "source": "filereadtool/02_resource_governance___limits",
+      "target": "filereadtool/04_media_processing_engine",
+      "label": "Processes images using"
+    },
+    {
+      "source": "filereadtool/05_user_interface_presentation",
+      "target": "filereadtool/01_tool_definition___interface",
+      "label": "Visualizes output of"
+    }
+  ],
+  "storyPath": [
+    "filereadtool/01_tool_definition___interface",
+    "filereadtool/02_resource_governance___limits",
+    "filereadtool/03_content_type_dispatcher",
+    "filereadtool/04_media_processing_engine",
+    "filereadtool/05_user_interface_presentation"
+  ]
+}

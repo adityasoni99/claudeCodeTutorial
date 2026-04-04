@@ -1,0 +1,124 @@
+{
+  "projectName": "plan",
+  "nodes": [
+    {
+      "id": "plan",
+      "label": "plan",
+      "type": "module",
+      "summary": "This module implements a **CLI command** called `plan` that allows users to view or edit a high-level session plan. It orchestrates switching the application's *state* into \"plan mode,\" automatically adjusting security **permissions**, and renders a rich terminal interface using **React components** or hands off editing tasks to an **external text editor**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "plan/01_command_architecture",
+          "label": "Command Architecture",
+          "type": "chapter",
+          "summary": "The structural framework for defining and loading CLI commands. It separates the command's metadata (name, description, args) from its execution logic. The entry point defines the interface and lazy-loads the implementation module.\nIt's like a restaurant menu: the menu lists the available dishes and their descriptions (index.ts), but the actual cooking only happens in the kitchen (plan.tsx) when a specific item is ordered.",
+          "contentPath": "01_command_architecture.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plan/02_session_state___mode_management",
+          "label": "Session State & Mode Management",
+          "type": "chapter",
+          "summary": "Manages the global application state and the concept of specific \"modes\" (e.g., 'plan' mode). It handles the logic for transitioning between these modes and updating the global store to reflect the current operational context.\nIt's similar to the different driving modes in a modern car (e.g., Eco, Sport, Off-road). Switching modes changes how the underlying engine and systems behave to suit the driver's current intent.",
+          "contentPath": "02_session_state___mode_management.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plan/03_react_ink_ui_rendering",
+          "label": "React-Ink UI Rendering",
+          "type": "chapter",
+          "summary": "Uses React components combined with the `Ink` library to build rich terminal user interfaces. Instead of just printing strings, the UI is composed of declarative components like `Box` and `Text` to handle layout and styling.\nThink of it as building a webpage using HTML tags (like `<div>` and `<span>`), but instead of a browser, the output is rendered specifically for a text-based terminal window.",
+          "contentPath": "03_react_ink_ui_rendering.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plan/04_external_editor_integration",
+          "label": "External Editor Integration",
+          "type": "chapter",
+          "summary": "Utilities that bridge the gap between the CLI tool and the user's preferred text editor or IDE. It handles the complexity of identifying the user's editor, opening files, and waiting for the edit session to complete.\nIt acts like a contractor sub-letting work. When a job requires specialized tools (complex text editing), the CLI delegates the task to a specialist (VS Code, Vim) and waits for the work to be finished before resuming.",
+          "contentPath": "04_external_editor_integration.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plan/05_permission_system",
+          "label": "Permission System",
+          "type": "chapter",
+          "summary": "A security layer that governs what tools and actions are permissible within the current session context. When the application state changes (like entering 'plan' mode), permissions are recalculated and applied to ensure safe execution.\nImagine a smart keycard system in a secure facility. As you move into a restricted zone (change mode), your keycard is automatically updated to grant access to local equipment while restricting access to others.",
+          "contentPath": "05_permission_system.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "plan/01_command_architecture",
+          "target": "plan/03_react_ink_ui_rendering",
+          "label": "Transitions session mode"
+        },
+        {
+          "source": "plan/01_command_architecture",
+          "target": "plan/04_external_editor_integration",
+          "label": "Applies security updates"
+        },
+        {
+          "source": "plan/01_command_architecture",
+          "target": "plan/05_permission_system",
+          "label": "Delegates file editing"
+        },
+        {
+          "source": "plan/01_command_architecture",
+          "target": "plan/02_session_state___mode_management",
+          "label": "Renders output via"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "plan/01_command_architecture",
+      "target": "plan/03_react_ink_ui_rendering",
+      "label": "Transitions session mode"
+    },
+    {
+      "source": "plan/01_command_architecture",
+      "target": "plan/04_external_editor_integration",
+      "label": "Applies security updates"
+    },
+    {
+      "source": "plan/01_command_architecture",
+      "target": "plan/05_permission_system",
+      "label": "Delegates file editing"
+    },
+    {
+      "source": "plan/01_command_architecture",
+      "target": "plan/02_session_state___mode_management",
+      "label": "Renders output via"
+    }
+  ],
+  "storyPath": [
+    "plan/01_command_architecture",
+    "plan/02_session_state___mode_management",
+    "plan/03_react_ink_ui_rendering",
+    "plan/04_external_editor_integration",
+    "plan/05_permission_system"
+  ]
+}

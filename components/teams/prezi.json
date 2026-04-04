@@ -1,0 +1,124 @@
+{
+  "projectName": "teams",
+  "nodes": [
+    {
+      "id": "teams",
+      "label": "teams",
+      "type": "module",
+      "summary": "This project functions as a **command center** for managing a team of *AI agents* operating as independent processes. It allows a team lead to visualize the roster, monitor **assigned tasks**, cycle through *security permission levels*, and control the underlying terminal lifecycles (such as killing or focusing specific agent windows).",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "teams/01_teammate_entity___discovery",
+          "label": "Teammate Entity & Discovery",
+          "type": "chapter",
+          "summary": "Represents the individual AI agents (teammates) operating within the system. It acts like a dynamic roster, tracking identity details (name, agentId), current operational state (idle vs. active), and their associated process identifiers (tmux pane IDs). This abstraction bridges the gap between the UI representation of a team and the underlying discovered processes.",
+          "contentPath": "01_teammate_entity___discovery.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teams/02_task_assignment",
+          "label": "Task Assignment",
+          "type": "chapter",
+          "summary": "Connects agents to specific units of work. It serves as a project management view, querying the system to find which tasks are assigned to a specific agent (by name or ID) and handling the necessary cleanup (unassigning tasks) if an agent is terminated or removed from the team.",
+          "contentPath": "02_task_assignment.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teams/03_permission_mode_control",
+          "label": "Permission Mode Control",
+          "type": "chapter",
+          "summary": "A security governance layer that manages what actions specific teammates are allowed to perform. Similar to security clearance levels, this abstraction handles the logic for defining modes (e.g., default, bypass), cycling through them via user input, and visualizing these states with specific colors and symbols in the UI.",
+          "contentPath": "03_permission_mode_control.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teams/04_agent_communication__mailbox_protocol_",
+          "label": "Agent Communication (Mailbox Protocol)",
+          "type": "chapter",
+          "summary": "The asynchronous messaging infrastructure used to send commands from the team lead to independent agent processes. It functions like an internal memo system; when the UI requests a change (like a permission update or graceful shutdown), a structured JSON message is written to the target teammate's \"mailbox\" for them to process asynchronously.",
+          "contentPath": "04_agent_communication__mailbox_protocol_.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teams/05_process_backend_interface",
+          "label": "Process Backend Interface",
+          "type": "chapter",
+          "summary": "An abstraction over the specific terminal multiplexer technology (like tmux or iTerm2) hosting the agents. It allows the high-level application to perform low-level operations\u2014such as killing a process, focusing a specific window, or hiding a pane\u2014without needing to know the implementation details of the underlying terminal environment.",
+          "contentPath": "05_process_backend_interface.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "teams/01_teammate_entity___discovery",
+          "target": "teams/02_task_assignment",
+          "label": "Maintains current mode"
+        },
+        {
+          "source": "teams/01_teammate_entity___discovery",
+          "target": "teams/03_permission_mode_control",
+          "label": "Maps to backend process"
+        },
+        {
+          "source": "teams/01_teammate_entity___discovery",
+          "target": "teams/05_process_backend_interface",
+          "label": "Owns assigned items"
+        },
+        {
+          "source": "teams/02_task_assignment",
+          "target": "teams/04_agent_communication__mailbox_protocol_",
+          "label": "Syncs state via protocol"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "teams/01_teammate_entity___discovery",
+      "target": "teams/02_task_assignment",
+      "label": "Maintains current mode"
+    },
+    {
+      "source": "teams/01_teammate_entity___discovery",
+      "target": "teams/03_permission_mode_control",
+      "label": "Maps to backend process"
+    },
+    {
+      "source": "teams/01_teammate_entity___discovery",
+      "target": "teams/05_process_backend_interface",
+      "label": "Owns assigned items"
+    },
+    {
+      "source": "teams/02_task_assignment",
+      "target": "teams/04_agent_communication__mailbox_protocol_",
+      "label": "Syncs state via protocol"
+    }
+  ],
+  "storyPath": [
+    "teams/01_teammate_entity___discovery",
+    "teams/02_task_assignment",
+    "teams/03_permission_mode_control",
+    "teams/04_agent_communication__mailbox_protocol_",
+    "teams/05_process_backend_interface"
+  ]
+}

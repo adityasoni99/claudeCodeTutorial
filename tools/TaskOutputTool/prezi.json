@@ -1,0 +1,102 @@
+{
+  "projectName": "TaskOutputTool",
+  "nodes": [
+    {
+      "id": "taskoutputtool",
+      "label": "TaskOutputTool",
+      "type": "module",
+      "summary": "The **TaskOutputTool** enables an AI agent to retrieve logs and results from background operations, such as shell commands or sub-agents. It employs a **unified normalization layer** to standardize data across different task types and features a **polling mechanism** to optionally wait for a task to complete before reporting back.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "taskoutputtool/01_taskoutputtool_definition",
+          "label": "TaskOutputTool Definition",
+          "type": "chapter",
+          "summary": "The central definition of the tool provided to the AI agent. It acts as the interface layer, defining the input schema (task ID, block, timeout), metadata (name, description), and the execution flow.\nThink of it as the \"API Endpoint\" definition that tells the agent how to ask for task logs and handles the request lifecycle.",
+          "contentPath": "01_taskoutputtool_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "taskoutputtool/02_task_completion_polling",
+          "label": "Task Completion Polling",
+          "type": "chapter",
+          "summary": "The mechanism responsible for the `block=true` behavior. It continuously checks the global application state to see if a specific task has finished running, respecting a timeout duration.\nIt's similar to waiting for a coffee order; you stand at the counter checking the status repeatedly until it's ready or you decide to leave (timeout).",
+          "contentPath": "02_task_completion_polling.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "taskoutputtool/03_unified_task_data_normalization",
+          "label": "Unified Task Data Normalization",
+          "type": "chapter",
+          "summary": "Logic that standardizes outputs from different task types (local shell commands, local agents, remote agents) into a single `TaskOutput` structure. It abstracts away the differences in how logs or results are stored for each type.\nIt's like a \"Universal Translator\" that takes messy, specific reports from different departments (Shell, Agent, Remote) and fills out a standardized form so the rest of the system can read it easily.",
+          "contentPath": "03_unified_task_data_normalization.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "taskoutputtool/04_result_visualization",
+          "label": "Result Visualization",
+          "type": "chapter",
+          "summary": "A React component (`TaskOutputResultDisplay`) responsible for rendering the retrieved task data to the human user. It handles different presentation styles based on the task type (e.g., showing terminal output for bash, prompt/response for agents).\nThink of it as the \"Dashboard Widget\" that takes raw data and formats it into a readable card, adding colors, collapsible sections, and status indicators for the user.",
+          "contentPath": "04_result_visualization.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "taskoutputtool/01_taskoutputtool_definition",
+          "target": "taskoutputtool/02_task_completion_polling",
+          "label": "Normalizes raw task data"
+        },
+        {
+          "source": "taskoutputtool/01_taskoutputtool_definition",
+          "target": "taskoutputtool/03_unified_task_data_normalization",
+          "label": "Waits for task completion"
+        },
+        {
+          "source": "taskoutputtool/01_taskoutputtool_definition",
+          "target": "taskoutputtool/04_result_visualization",
+          "label": "Renders tool result"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "taskoutputtool/01_taskoutputtool_definition",
+      "target": "taskoutputtool/02_task_completion_polling",
+      "label": "Normalizes raw task data"
+    },
+    {
+      "source": "taskoutputtool/01_taskoutputtool_definition",
+      "target": "taskoutputtool/03_unified_task_data_normalization",
+      "label": "Waits for task completion"
+    },
+    {
+      "source": "taskoutputtool/01_taskoutputtool_definition",
+      "target": "taskoutputtool/04_result_visualization",
+      "label": "Renders tool result"
+    }
+  ],
+  "storyPath": [
+    "taskoutputtool/01_taskoutputtool_definition",
+    "taskoutputtool/02_task_completion_polling",
+    "taskoutputtool/03_unified_task_data_normalization",
+    "taskoutputtool/04_result_visualization"
+  ]
+}

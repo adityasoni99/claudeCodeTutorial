@@ -1,0 +1,144 @@
+{
+  "projectName": "voice",
+  "nodes": [
+    {
+      "id": "voice",
+      "label": "voice",
+      "type": "module",
+      "summary": "This project implements a **voice mode** for a CLI application, allowing users to toggle dictation features. It handles the complete lifecycle of the feature, including **environment validation** (checking microphone and dependencies), **settings persistence**, and **feature gating** via remote flags to ensure a stable and secure user experience.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "voice/01_command_definition_pattern",
+          "label": "Command Definition Pattern",
+          "type": "chapter",
+          "summary": "This abstraction acts as the registration card for a CLI feature. It defines the command's metadata (name, description), its visibility rules, and uses lazy loading to import the actual logic only when needed.\n\nThink of it like a menu item in a restaurant: it lists the dish's name and description so you can order it, but the kitchen (the implementation logic) doesn't start cooking until you actually place the order.",
+          "contentPath": "01_command_definition_pattern.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "voice/02_settings_persistence___change_detection",
+          "label": "Settings Persistence & Change Detection",
+          "type": "chapter",
+          "summary": "This abstraction handles the reading and writing of user configuration. When a user toggles voice mode, the code updates the persistent JSON settings and immediately notifies the rest of the application via a change detector.\n\nImagine a smart home light switch. When you flip it, it not only physically turns on the light but also updates the central home database to say \"Living Room: ON,\" ensuring all other control panels in the house reflect the new status immediately.",
+          "contentPath": "02_settings_persistence___change_detection.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "voice/03_environment_pre_flight_validation",
+          "label": "Environment Pre-flight Validation",
+          "type": "chapter",
+          "summary": "Before enabling voice mode, the system performs a series of rigorous checks to ensure the hardware and software environment is ready. It verifies microphone access, checks for required external tools (like SoX), and ensures authentication is present.\n\nIt works like a pilot's pre-flight checklist. Before the plane (voice mode) can take off, the pilot ensures there is fuel, the controls work, and the weather is clear. If a check fails (e.g., no microphone), the system aborts and guides the user on how to fix it.",
+          "contentPath": "03_environment_pre_flight_validation.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "voice/04_voice_configuration_feedback",
+          "label": "Voice Configuration Feedback",
+          "type": "chapter",
+          "summary": "This logic manages the user experience regarding language selection. It calculates whether to show \"hints\" about the current dictation language based on how often the user has seen them or if they recently changed languages.\n\nThink of it like a car's dashboard display. If you recently changed your driving mode, the dashboard briefly highlights the change. After you've driven in that mode for a while, it stops pestering you with the notification, assuming you now know how it works.",
+          "contentPath": "04_voice_configuration_feedback.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "voice/05_feature_availability_gating",
+          "label": "Feature Availability Gating",
+          "type": "chapter",
+          "summary": "This logic determines if the voice feature should be accessible to the user at all. It relies on remote feature flags (GrowthBook), kill-switches, and authentication status to hide or disable the command.\n\nIt acts like a security guard at a club. Even if you know where the door is (the command exists), the guard checks your ID and the club's current capacity rules (feature flags) before letting you enter. If the \"kill-switch\" is active, the door remains locked.",
+          "contentPath": "05_feature_availability_gating.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "voice/01_command_definition_pattern",
+          "target": "voice/04_voice_configuration_feedback",
+          "label": "Determines visibility via"
+        },
+        {
+          "source": "voice/01_command_definition_pattern",
+          "target": "voice/02_settings_persistence___change_detection",
+          "label": "Triggers validation on exec..."
+        },
+        {
+          "source": "voice/02_settings_persistence___change_detection",
+          "target": "voice/04_voice_configuration_feedback",
+          "label": "Enforces kill-switch check"
+        },
+        {
+          "source": "voice/03_environment_pre_flight_validation",
+          "target": "voice/02_settings_persistence___change_detection",
+          "label": "Current state dictates checks"
+        },
+        {
+          "source": "voice/02_settings_persistence___change_detection",
+          "target": "voice/03_environment_pre_flight_validation",
+          "label": "Persists state after success"
+        },
+        {
+          "source": "voice/03_environment_pre_flight_validation",
+          "target": "voice/05_feature_availability_gating",
+          "label": "Update triggers user guidance"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "voice/01_command_definition_pattern",
+      "target": "voice/04_voice_configuration_feedback",
+      "label": "Determines visibility via"
+    },
+    {
+      "source": "voice/01_command_definition_pattern",
+      "target": "voice/02_settings_persistence___change_detection",
+      "label": "Triggers validation on execution"
+    },
+    {
+      "source": "voice/02_settings_persistence___change_detection",
+      "target": "voice/04_voice_configuration_feedback",
+      "label": "Enforces kill-switch check"
+    },
+    {
+      "source": "voice/03_environment_pre_flight_validation",
+      "target": "voice/02_settings_persistence___change_detection",
+      "label": "Current state dictates checks"
+    },
+    {
+      "source": "voice/02_settings_persistence___change_detection",
+      "target": "voice/03_environment_pre_flight_validation",
+      "label": "Persists state after success"
+    },
+    {
+      "source": "voice/03_environment_pre_flight_validation",
+      "target": "voice/05_feature_availability_gating",
+      "label": "Update triggers user guidance"
+    }
+  ],
+  "storyPath": [
+    "voice/01_command_definition_pattern",
+    "voice/02_settings_persistence___change_detection",
+    "voice/03_environment_pre_flight_validation",
+    "voice/04_voice_configuration_feedback",
+    "voice/05_feature_availability_gating"
+  ]
+}

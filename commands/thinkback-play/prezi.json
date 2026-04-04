@@ -1,0 +1,124 @@
+{
+  "projectName": "thinkback-play",
+  "nodes": [
+    {
+      "id": "thinkback-play",
+      "label": "thinkback-play",
+      "type": "module",
+      "summary": "This project manages a **CLI command** (`thinkback-play`) designed to play a specific *animation* for the user. It employs a modular architecture that checks **remote feature gates** for access permissions and uses **context-aware logic** to dynamically locate the correct **plugin assets** on the user's machine, ensuring the feature is loaded efficiently only when needed.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "thinkback-play/01_local_command_registration",
+          "label": "Local Command Registration",
+          "type": "chapter",
+          "summary": "This abstraction defines how a new CLI command is introduced to the system. Instead of being a monolithic script, a command is an object that defines its metadata (name, description, visibility) and creates a contract for how it should be loaded.\n\nThink of it like a menu item in a restaurant. The `index.ts` file describes what the dish is called and when it can be ordered (the menu description), while the implementation file is the recipe the chef actually follows when the order is placed.",
+          "contentPath": "01_local_command_registration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "thinkback-play/02_feature_gating__statsig_",
+          "label": "Feature Gating (Statsig)",
+          "type": "chapter",
+          "summary": "This abstraction controls the availability of commands based on remote configuration or user segments. The code uses `checkStatsigFeatureGate` to determine if the `thinkback-play` command should be enabled or accessible.\n\nImagine a secure building with keycard access. Even if the room (the code) exists, the door won't open unless the central security system (Statsig) confirms your keycard has the specific permissions (`tengu_thinkback`) to enter that area at this time.",
+          "contentPath": "02_feature_gating__statsig_.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "thinkback-play/03_lazy_loading",
+          "label": "Lazy Loading",
+          "type": "chapter",
+          "summary": "This performance abstraction ensures that heavy code is only imported when absolutely necessary. In `index.ts`, the `load` property uses a dynamic `import()` statement rather than a top-level import.\n\nThink of this like a \"Just-in-Time\" delivery system for a factory. Instead of storing all parts (code modules) on the assembly line floor and cluttering the space, the factory calls for specific parts to be delivered only the exact moment they are needed to build the product.",
+          "contentPath": "03_lazy_loading.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "thinkback-play/04_context_aware_configuration",
+          "label": "Context-Aware Configuration",
+          "type": "chapter",
+          "summary": "This pattern adapts the application's behavior based on the runtime environment, specifically determining which \"Marketplace\" to use. The code checks `process.env.USER_TYPE` to switch between internal (employee) and official (public) plugin identifiers.\n\nIt is similar to an ID badge scanner at a corporate cafeteria. If the scanner detects an \"employee\" badge, it applies the employee discount code (Internal Marketplace); otherwise, it applies standard pricing (Official Marketplace), ensuring the correct resources are accessed for that specific user.",
+          "contentPath": "04_context_aware_configuration.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "thinkback-play/05_plugin_asset_discovery",
+          "label": "Plugin Asset Discovery",
+          "type": "chapter",
+          "summary": "This system locates the physical path of installed extensions on the user's machine. The code doesn't assume files are in a relative static folder; instead, it queries a central registry (`loadInstalledPluginsV2`) to find where a specific plugin version was installed.\n\nIt operates like a library's card catalog system. You don't wander the aisles looking for the \"thinkback\" book randomly; you look up its unique ID in the catalog to get the exact shelf and row number (the file path) to retrieve it.",
+          "contentPath": "05_plugin_asset_discovery.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "thinkback-play/01_local_command_registration",
+          "target": "thinkback-play/03_lazy_loading",
+          "label": "Checks access permissions"
+        },
+        {
+          "source": "thinkback-play/01_local_command_registration",
+          "target": "thinkback-play/05_plugin_asset_discovery",
+          "label": "Defines import strategy"
+        },
+        {
+          "source": "thinkback-play/05_plugin_asset_discovery",
+          "target": "thinkback-play/04_context_aware_configuration",
+          "label": "Loads code implementing"
+        },
+        {
+          "source": "thinkback-play/04_context_aware_configuration",
+          "target": "thinkback-play/02_feature_gating__statsig_",
+          "label": "Generates lookup ID for"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "thinkback-play/01_local_command_registration",
+      "target": "thinkback-play/03_lazy_loading",
+      "label": "Checks access permissions"
+    },
+    {
+      "source": "thinkback-play/01_local_command_registration",
+      "target": "thinkback-play/05_plugin_asset_discovery",
+      "label": "Defines import strategy"
+    },
+    {
+      "source": "thinkback-play/05_plugin_asset_discovery",
+      "target": "thinkback-play/04_context_aware_configuration",
+      "label": "Loads code implementing"
+    },
+    {
+      "source": "thinkback-play/04_context_aware_configuration",
+      "target": "thinkback-play/02_feature_gating__statsig_",
+      "label": "Generates lookup ID for"
+    }
+  ],
+  "storyPath": [
+    "thinkback-play/01_local_command_registration",
+    "thinkback-play/02_feature_gating__statsig_",
+    "thinkback-play/03_lazy_loading",
+    "thinkback-play/04_context_aware_configuration",
+    "thinkback-play/05_plugin_asset_discovery"
+  ]
+}

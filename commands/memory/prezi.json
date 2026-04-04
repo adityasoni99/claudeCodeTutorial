@@ -1,0 +1,124 @@
+{
+  "projectName": "memory",
+  "nodes": [
+    {
+      "id": "memory",
+      "label": "memory",
+      "type": "module",
+      "summary": "This tool provides a **CLI command** for managing and editing *Claude's memory files*. It features an interactive terminal UI that handles the **lifecycle** of selecting files, ensures necessary directories and files exist via **provisioning**, and seamlessly integrates with the user's default **external editor**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "memory/01_command_module_definition",
+          "label": "Command Module Definition",
+          "type": "chapter",
+          "summary": "Defines the entry point for a CLI command. It specifies metadata like the command name, description, and type (`local-jsx`), and uses lazy loading (`load`) to import the actual implementation only when needed. This acts like a registry entry that tells the main application how to find and execute the command.",
+          "contentPath": "01_command_module_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "memory/02_async_command_lifecycle",
+          "label": "Async Command Lifecycle",
+          "type": "chapter",
+          "summary": "The `call` function serves as the execution bridge. It performs necessary setup tasks\u2014such as clearing caches (`clearMemoryFileCaches`) and pre-fetching data (`getMemoryFiles`)\u2014before rendering the React UI. This ensures the application state is fresh and ready immediately when the interface appears, preventing visual flashes or stale data.",
+          "contentPath": "02_async_command_lifecycle.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "memory/03_interactive_cli_component",
+          "label": "Interactive CLI Component",
+          "type": "chapter",
+          "summary": "A React component (`MemoryCommand`) built with Ink that renders the user interface in the terminal. It manages the visual flow, including displaying a dialog, handling user cancellations, and rendering sub-components like `MemoryFileSelector` to let users interactively choose files. Think of it as the \"View\" and \"Controller\" for the command's interactive session.",
+          "contentPath": "03_interactive_cli_component.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "memory/04_memory_file_provisioning",
+          "label": "Memory File Provisioning",
+          "type": "chapter",
+          "summary": "Logic responsible for ensuring the necessary file system structure exists before an operation occurs. Within `handleSelectMemoryFile`, it idempotently creates directories and empty files if they are missing, ensuring the user has a valid target to edit without encountering \"file not found\" errors. It's like a prep chef ensuring all ingredients are on the counter before cooking begins.",
+          "contentPath": "04_memory_file_provisioning.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "memory/05_external_editor_integration",
+          "label": "External Editor Integration",
+          "type": "chapter",
+          "summary": "Handles the hand-off between the CLI tool and the user's preferred system text editor (e.g., Vim, Nano, VS Code). It invokes the editor via `editFileInEditor` and checks environment variables (`$VISUAL`, `$EDITOR`) to provide helpful context or hints to the user about which editor was used.",
+          "contentPath": "05_external_editor_integration.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "memory/01_command_module_definition",
+          "target": "memory/05_external_editor_integration",
+          "label": "Loads implementation"
+        },
+        {
+          "source": "memory/05_external_editor_integration",
+          "target": "memory/02_async_command_lifecycle",
+          "label": "Renders"
+        },
+        {
+          "source": "memory/02_async_command_lifecycle",
+          "target": "memory/03_interactive_cli_component",
+          "label": "Invokes on selection"
+        },
+        {
+          "source": "memory/03_interactive_cli_component",
+          "target": "memory/04_memory_file_provisioning",
+          "label": "Prepares file for"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "memory/01_command_module_definition",
+      "target": "memory/05_external_editor_integration",
+      "label": "Loads implementation"
+    },
+    {
+      "source": "memory/05_external_editor_integration",
+      "target": "memory/02_async_command_lifecycle",
+      "label": "Renders"
+    },
+    {
+      "source": "memory/02_async_command_lifecycle",
+      "target": "memory/03_interactive_cli_component",
+      "label": "Invokes on selection"
+    },
+    {
+      "source": "memory/03_interactive_cli_component",
+      "target": "memory/04_memory_file_provisioning",
+      "label": "Prepares file for"
+    }
+  ],
+  "storyPath": [
+    "memory/01_command_module_definition",
+    "memory/02_async_command_lifecycle",
+    "memory/03_interactive_cli_component",
+    "memory/04_memory_file_provisioning",
+    "memory/05_external_editor_integration"
+  ]
+}

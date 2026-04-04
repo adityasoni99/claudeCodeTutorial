@@ -1,0 +1,58 @@
+{
+  "projectName": "env",
+  "nodes": [
+    {
+      "id": "env",
+      "label": "env",
+      "type": "module",
+      "summary": "This project serves as a **placeholder** or \"dummy\" component for an environment system. It exports a *stub module* that satisfies the required structure but remains **disabled** and **hidden**, ensuring the application doesn't crash if a real environment isn't loaded.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "env/01_module_configuration_interface",
+          "label": "Module Configuration Interface",
+          "type": "chapter",
+          "summary": "This defines the standard structure that environment modules are expected to export. It includes properties for identity (`name`), visibility (`isHidden`), and activation logic (`isEnabled`).\n\nThink of it like a standard ID badge required for entry into a building. Regardless of who the person is (or if they are a dummy), they must present the badge with a name and valid status indicators to be processed by security.",
+          "contentPath": "01_module_configuration_interface.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "env/02_stub_implementation",
+          "label": "Stub Implementation",
+          "type": "chapter",
+          "summary": "This abstraction represents a placeholder or \"no-operation\" version of an environment module. It exists to satisfy system requirements without providing actual functionality.\n\nIt acts like a \"prop\" in a movie set\u2014it looks like the real object on the surface so the scene (the application) doesn't break, but it doesn't function like the real thing (it is explicitly disabled and hidden).",
+          "contentPath": "02_stub_implementation.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "env/01_module_configuration_interface",
+          "target": "env/02_stub_implementation",
+          "label": "Implements"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "env/01_module_configuration_interface",
+      "target": "env/02_stub_implementation",
+      "label": "Implements"
+    }
+  ],
+  "storyPath": [
+    "env/01_module_configuration_interface",
+    "env/02_stub_implementation"
+  ]
+}

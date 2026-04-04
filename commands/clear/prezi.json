@@ -1,0 +1,134 @@
+{
+  "projectName": "clear",
+  "nodes": [
+    {
+      "id": "clear",
+      "label": "clear",
+      "type": "module",
+      "summary": "This project implements a **smart reset mechanism** for an AI assistant's conversation session. It uses a central *orchestrator* to wipe chat history, reset application state, and scrub internal caches, while intelligently identifying and preserving **background tasks** so long-running processes continue uninterrupted.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "clear/01_command_definition___routing",
+          "label": "Command Definition & Routing",
+          "type": "chapter",
+          "summary": "The interface layer that exposes the \"clear\" functionality to the CLI framework.\nIt serves as the menu item on a restaurant menu; it defines the command's name, aliases (like \"reset\"), and metadata, and uses lazy-loading to ensure the heavy lifting code is only imported when the user actually orders it.",
+          "contentPath": "01_command_definition___routing.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "clear/02_conversation_clearing_orchestrator",
+          "label": "Conversation Clearing Orchestrator",
+          "type": "chapter",
+          "summary": "The central coordinator that manages the lifecycle of resetting a user session.\nIt acts like a factory manager shutting down the production line to retool. It ensures that running processes are handled correctly, hooks are fired, caches are cleared, and a fresh session ID is generated, ensuring a clean slate without crashing the application.",
+          "contentPath": "02_conversation_clearing_orchestrator.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "clear/03_background_task_preservation",
+          "label": "Background Task Preservation",
+          "type": "chapter",
+          "summary": "Logic that determines which processes survive a session reset and which are terminated.\nIt functions like a lifeboat selection process: \"foreground\" tasks (active interactions) are terminated to clear the stage, while \"background\" tasks (long-running agents) are identified and preserved so they can continue working seamlessly across the session boundary.",
+          "contentPath": "03_background_task_preservation.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "clear/04_app_state_reset",
+          "label": "App State Reset",
+          "type": "chapter",
+          "summary": "The state manipulation logic that physically updates the application's React-like state tree.\nIt operates like formatting a hard drive but keeping the operating system installed; it removes message history, resets file pointers, and clears metadata, while carefully retaining necessary configuration for preserved background tasks.",
+          "contentPath": "04_app_state_reset.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "clear/05_global_cache_eviction",
+          "label": "Global Cache Eviction",
+          "type": "chapter",
+          "summary": "A dedicated utility for wiping internal memory caches to prevent stale data leakage.\nThink of it as a deep cleaning crew that scrubs every surface\u2014wiping Git status, LSP diagnostics, skill caches, and tool definitions\u2014so the new session doesn't \"remember\" irrelevant context from the previous conversation.",
+          "contentPath": "05_global_cache_eviction.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "clear/05_global_cache_eviction",
+          "target": "clear/01_command_definition___routing",
+          "label": "Invokes"
+        },
+        {
+          "source": "clear/01_command_definition___routing",
+          "target": "clear/03_background_task_preservation",
+          "label": "Identifies surviving tasks"
+        },
+        {
+          "source": "clear/01_command_definition___routing",
+          "target": "clear/04_app_state_reset",
+          "label": "Resets state tree"
+        },
+        {
+          "source": "clear/01_command_definition___routing",
+          "target": "clear/02_conversation_clearing_orchestrator",
+          "label": "Triggers cleanup"
+        },
+        {
+          "source": "clear/03_background_task_preservation",
+          "target": "clear/02_conversation_clearing_orchestrator",
+          "label": "Exempts active agents"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "clear/05_global_cache_eviction",
+      "target": "clear/01_command_definition___routing",
+      "label": "Invokes"
+    },
+    {
+      "source": "clear/01_command_definition___routing",
+      "target": "clear/03_background_task_preservation",
+      "label": "Identifies surviving tasks"
+    },
+    {
+      "source": "clear/01_command_definition___routing",
+      "target": "clear/04_app_state_reset",
+      "label": "Resets state tree"
+    },
+    {
+      "source": "clear/01_command_definition___routing",
+      "target": "clear/02_conversation_clearing_orchestrator",
+      "label": "Triggers cleanup"
+    },
+    {
+      "source": "clear/03_background_task_preservation",
+      "target": "clear/02_conversation_clearing_orchestrator",
+      "label": "Exempts active agents"
+    }
+  ],
+  "storyPath": [
+    "clear/01_command_definition___routing",
+    "clear/02_conversation_clearing_orchestrator",
+    "clear/03_background_task_preservation",
+    "clear/04_app_state_reset",
+    "clear/05_global_cache_eviction"
+  ]
+}

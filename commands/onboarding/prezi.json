@@ -1,0 +1,124 @@
+{
+  "projectName": "onboarding",
+  "nodes": [
+    {
+      "id": "onboarding",
+      "label": "onboarding",
+      "type": "module",
+      "summary": "This project outlines a structural framework for managing **feature toggles** within an application. It utilizes a **Stub Pattern** to safely introduce new modules that are present in the system but currently *invisible* and *inactive*, acting as secure placeholders for future development.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "onboarding/01_feature_definition",
+          "label": "Feature Definition",
+          "type": "chapter",
+          "summary": "This is the fundamental unit of the project structure. The `index.js` file exports a single object that encapsulates all metadata and behavior rules for a specific feature or module.\n\nThink of it like a \"User Profile\" for a piece of code. Just as a profile tells a social network your name and settings, this object tells the main application what this feature is called (`name`) and how it should behave (enabled/hidden), serving as a contract between the module and the core system.",
+          "contentPath": "01_feature_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "onboarding/02_module_identity",
+          "label": "Module Identity",
+          "type": "chapter",
+          "summary": "Represented by the `name` property (currently set to `'stub'`), this provides a string-based identifier for the feature.\n\nIt acts like a Nametag or an ID Badge. It allows the central system to reference this specific module in logs, debugging tools, or configuration lists. naming it 'stub' explicitly signals to other developers that this file is currently a placeholder and does not yet contain business logic.",
+          "contentPath": "02_module_identity.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "onboarding/03_activation_logic",
+          "label": "Activation Logic",
+          "type": "chapter",
+          "summary": "Represented by the `isEnabled` function, this abstraction acts as the gatekeeper for the feature's logic. \n\nIt is like a Master Power Switch. Even if the device is plugged in (the code exists), it won't operate unless this switch is flipped on. In this specific \"stub\" context, the switch is permanently taped to the \"Off\" position (`() => false`), ensuring the placeholder code never accidentally executes or affects the live application until a developer explicitly changes it.",
+          "contentPath": "03_activation_logic.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "onboarding/04_visibility_control",
+          "label": "Visibility Control",
+          "type": "chapter",
+          "summary": "Represented by the `isHidden` property, this controls the user-facing aspect of the feature separate from its logic.\n\nImagine a theater stage: just because an actor (the feature) is in the building doesn't mean they are on stage. `isHidden: true` keeps the feature \"backstage\" so users cannot see it in menus or UI elements, allowing developers to safely deploy code that acts as a placeholder or is currently under construction without confusing the end-user.",
+          "contentPath": "04_visibility_control.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "onboarding/05_stub_pattern",
+          "label": "Stub Pattern",
+          "type": "chapter",
+          "summary": "The entire file represents a \"Stub\" abstraction. This is a development pattern where a file is created to satisfy system requirements (like valid imports) without performing actual work.\n\nIt is similar to a \"Reserved\" sign on a restaurant table. The table exists and takes up space in the floor plan, preventing others from putting things there, but no one is eating yet. This allows the architecture to be built out and linked together before the specific implementation details are written.",
+          "contentPath": "05_stub_pattern.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "onboarding/01_feature_definition",
+          "target": "onboarding/04_visibility_control",
+          "label": "Identifies via"
+        },
+        {
+          "source": "onboarding/01_feature_definition",
+          "target": "onboarding/02_module_identity",
+          "label": "Configures state"
+        },
+        {
+          "source": "onboarding/01_feature_definition",
+          "target": "onboarding/03_activation_logic",
+          "label": "Controls display"
+        },
+        {
+          "source": "onboarding/01_feature_definition",
+          "target": "onboarding/05_stub_pattern",
+          "label": "Implements"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "onboarding/01_feature_definition",
+      "target": "onboarding/04_visibility_control",
+      "label": "Identifies via"
+    },
+    {
+      "source": "onboarding/01_feature_definition",
+      "target": "onboarding/02_module_identity",
+      "label": "Configures state"
+    },
+    {
+      "source": "onboarding/01_feature_definition",
+      "target": "onboarding/03_activation_logic",
+      "label": "Controls display"
+    },
+    {
+      "source": "onboarding/01_feature_definition",
+      "target": "onboarding/05_stub_pattern",
+      "label": "Implements"
+    }
+  ],
+  "storyPath": [
+    "onboarding/01_feature_definition",
+    "onboarding/02_module_identity",
+    "onboarding/03_activation_logic",
+    "onboarding/04_visibility_control",
+    "onboarding/05_stub_pattern"
+  ]
+}

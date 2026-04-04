@@ -1,0 +1,124 @@
+{
+  "projectName": "export",
+  "nodes": [
+    {
+      "id": "export",
+      "label": "export",
+      "type": "module",
+      "summary": "This project implements an **export command** that allows users to save their current conversation history to a local text file. It features a versatile workflow that can either write directly to a specified path or automatically generate a *context-aware default filename* and present an **interactive dialog** for user confirmation if no filename is provided.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "export/01_command_configuration",
+          "label": "Command Configuration",
+          "type": "chapter",
+          "summary": "This abstraction defines the identity of the `export` tool within the system. It acts like a menu entry in a restaurant, specifying the command's name, description, expected arguments, and a lazy-loading mechanism to fetch the actual execution logic only when requested.",
+          "contentPath": "01_command_configuration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "export/02_export_execution_flow",
+          "label": "Export Execution Flow",
+          "type": "chapter",
+          "summary": "The central controller for the export process. Like a project manager, it coordinates the steps: fetching the conversation, deciding whether to save immediately (if a filename is given) or prompt the user, and handling success or failure notifications.",
+          "contentPath": "02_export_execution_flow.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "export/03_content_serialization",
+          "label": "Content Serialization",
+          "type": "chapter",
+          "summary": "The logic responsible for converting internal conversation data into a readable format. It acts like a translator, taking the structured messages and tool outputs from the application context and rendering them into a single plain text string suitable for file storage.",
+          "contentPath": "03_content_serialization.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "export/04_contextual_filename_generation",
+          "label": "Contextual Filename Generation",
+          "type": "chapter",
+          "summary": "A set of utility functions that determine a meaningful default name for the export file. It behaves like an intelligent filing assistant, scanning the first user prompt to create a descriptive title (sanitized for file systems) or falling back to a timestamp if no context is found.",
+          "contentPath": "04_contextual_filename_generation.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "export/05_interactive_export_fallback",
+          "label": "Interactive Export Fallback",
+          "type": "chapter",
+          "summary": "The user interface mechanism invoked when no filename is provided via arguments. It mimics a \"Save As\" dialog in a standard desktop application, presenting the generated content and default filename to the user for review and confirmation before saving.",
+          "contentPath": "05_interactive_export_fallback.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "export/01_command_configuration",
+          "target": "export/02_export_execution_flow",
+          "label": "Lazily loads"
+        },
+        {
+          "source": "export/02_export_execution_flow",
+          "target": "export/03_content_serialization",
+          "label": "Serializes conversation"
+        },
+        {
+          "source": "export/02_export_execution_flow",
+          "target": "export/04_contextual_filename_generation",
+          "label": "Generates default filename"
+        },
+        {
+          "source": "export/02_export_execution_flow",
+          "target": "export/05_interactive_export_fallback",
+          "label": "Renders interactive dialog"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "export/01_command_configuration",
+      "target": "export/02_export_execution_flow",
+      "label": "Lazily loads"
+    },
+    {
+      "source": "export/02_export_execution_flow",
+      "target": "export/03_content_serialization",
+      "label": "Serializes conversation"
+    },
+    {
+      "source": "export/02_export_execution_flow",
+      "target": "export/04_contextual_filename_generation",
+      "label": "Generates default filename"
+    },
+    {
+      "source": "export/02_export_execution_flow",
+      "target": "export/05_interactive_export_fallback",
+      "label": "Renders interactive dialog"
+    }
+  ],
+  "storyPath": [
+    "export/01_command_configuration",
+    "export/02_export_execution_flow",
+    "export/03_content_serialization",
+    "export/04_contextual_filename_generation",
+    "export/05_interactive_export_fallback"
+  ]
+}

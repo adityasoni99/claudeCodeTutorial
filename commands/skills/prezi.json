@@ -1,0 +1,124 @@
+{
+  "projectName": "skills",
+  "nodes": [
+    {
+      "id": "skills",
+      "label": "skills",
+      "type": "module",
+      "summary": "This project defines a **modular command** called \"skills\" for a command-line interface. It uses a *lazy loading* strategy to only fetch the necessary code when the user actually requests it, keeping the application fast. Once loaded, it launches an interactive **React-based menu** in the terminal, managing data flow and proper cleanup when the user exits.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "skills/01_command_registration_pattern",
+          "label": "Command Registration Pattern",
+          "type": "chapter",
+          "summary": "This abstraction defines how new features (skills) are introduced to the system. Found in `index.ts`, it exports a configuration object that satisfies the `Command` interface.\n\nThink of this like a menu item in a restaurant. The menu lists the name (\"skills\") and a brief description so the customer knows what it is. However, the menu doesn't contain the actual food; it just contains the instructions for the waiter on how to fetch the meal (the `load` function) when it is ordered. This separates metadata from implementation.",
+          "contentPath": "01_command_registration_pattern.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skills/02_lazy_module_loading",
+          "label": "Lazy Module Loading",
+          "type": "chapter",
+          "summary": "Implemented via the `load` function in `index.ts`, this pattern uses dynamic imports (`import()`) to fetch code only when needed.\n\nImagine a massive library where books are kept in a deep underground vault. If you carried every book to the front desk every morning, it would take forever to open the library. Instead, the librarian (the system) waits until a reader asks for a specific book (the command), and only *then* runs to the vault to retrieve it. This keeps the application startup fast and memory usage low.",
+          "contentPath": "02_lazy_module_loading.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skills/03_local_jsx_execution_interface",
+          "label": "Local JSX Execution Interface",
+          "type": "chapter",
+          "summary": "The `call` function in `skills.tsx` acts as the entry point for UI-based commands (`local-jsx`). It bridges the gap between the command line runner and the React-based user interface.\n\nIt acts like a stage director. When the curtain rises (the command is invoked), this function takes charge. It receives the script and props (the `context`) and instructions on when to close the curtain (the `onDone` callback). It then decides exactly what scene (the `<SkillsMenu />`) to present to the audience.",
+          "contentPath": "03_local_jsx_execution_interface.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skills/04_context_dependency_injection",
+          "label": "Context Dependency Injection",
+          "type": "chapter",
+          "summary": "In `skills.tsx`, the `context` parameter provides necessary data\u2014specifically `options.commands`\u2014to the command at runtime.\n\nThis is similar to a contractor arriving at a worksite. Instead of bringing their own heavy machinery or guessing what tools are available, the site manager hands them a specific toolbox (`context`) containing exactly what they need to do the job. Here, the `skills` command needs a list of *other* available commands to display, and the context delivers that list securely without global variables.",
+          "contentPath": "04_context_dependency_injection.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skills/05_lifecycle_flow_control",
+          "label": "Lifecycle Flow Control",
+          "type": "chapter",
+          "summary": "The `onDone` callback in `skills.tsx` (passed as `onExit` to the component) manages the termination of the interactive command.\n\nThink of this as a relay race baton pass. The main application passes control to the `skills` menu. The application waits while the user navigates the menu. When the user is finished, the menu triggers `onDone`, effectively passing the baton back to the main application to resume normal operations. It ensures the CLI doesn't hang or exit prematurely while the user is interacting with the UI.",
+          "contentPath": "05_lifecycle_flow_control.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "skills/01_command_registration_pattern",
+          "target": "skills/02_lazy_module_loading",
+          "label": "Defines loading strategy"
+        },
+        {
+          "source": "skills/02_lazy_module_loading",
+          "target": "skills/03_local_jsx_execution_interface",
+          "label": "Imports module containing"
+        },
+        {
+          "source": "skills/03_local_jsx_execution_interface",
+          "target": "skills/04_context_dependency_injection",
+          "label": "Consumes runtime context"
+        },
+        {
+          "source": "skills/03_local_jsx_execution_interface",
+          "target": "skills/05_lifecycle_flow_control",
+          "label": "Orchestrates termination"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "skills/01_command_registration_pattern",
+      "target": "skills/02_lazy_module_loading",
+      "label": "Defines loading strategy"
+    },
+    {
+      "source": "skills/02_lazy_module_loading",
+      "target": "skills/03_local_jsx_execution_interface",
+      "label": "Imports module containing"
+    },
+    {
+      "source": "skills/03_local_jsx_execution_interface",
+      "target": "skills/04_context_dependency_injection",
+      "label": "Consumes runtime context"
+    },
+    {
+      "source": "skills/03_local_jsx_execution_interface",
+      "target": "skills/05_lifecycle_flow_control",
+      "label": "Orchestrates termination"
+    }
+  ],
+  "storyPath": [
+    "skills/01_command_registration_pattern",
+    "skills/02_lazy_module_loading",
+    "skills/03_local_jsx_execution_interface",
+    "skills/04_context_dependency_injection",
+    "skills/05_lifecycle_flow_control"
+  ]
+}

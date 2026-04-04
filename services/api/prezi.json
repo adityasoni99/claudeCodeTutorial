@@ -1,0 +1,168 @@
+{
+  "projectName": "api",
+  "nodes": [
+    {
+      "id": "api",
+      "label": "api",
+      "type": "module",
+      "summary": "A **unified interface** for interacting with LLM providers like Anthropic, AWS Bedrock, and Google Vertex. It features a **resilient request executor** that manages retries, rate limits, and errors to ensure reliability across different backends. The system also includes modules for **session state synchronization**, **file asset management**, and deep **observability** to track usage, prompt caching efficiency, and user entitlements.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "api/01_unified_client_factory",
+          "label": "Unified Client Factory",
+          "type": "chapter",
+          "summary": "The central entry point for initializing the Anthropic SDK. It acts like a universal adapter, abstracting away the differences between various providers (Direct API, AWS Bedrock, Google Vertex, Azure Foundry). It automatically handles authentication strategies (API keys, OAuth, Cloud credentials), sets standard headers (user-agent, session IDs), and configures environment-specific overrides like timeouts or base URLs.",
+          "contentPath": "01_unified_client_factory.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "api/02_resilient_request_executor",
+          "label": "Resilient Request Executor",
+          "type": "chapter",
+          "summary": "A robust wrapper around API calls that ensures reliability. Think of it as a smart autopilot that handles turbulence: it manages retries with exponential backoff, detects specific error types (like rate limits or overloaded servers), and intelligently falls back to slower models or different modes when necessary. It also standardizes raw API errors into user-friendly messages.",
+          "contentPath": "02_resilient_request_executor.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "api/03_account___entitlements",
+          "label": "Account & Entitlements",
+          "type": "chapter",
+          "summary": "A collection of services that govern what features a user can access. Like a concierge checking a membership card, these modules fetch and cache user-specific quotas, rate limits, referral eligibility, admin permissions, and feature flags (like \"Grove\" privacy settings) to dynamically enable or disable functionality in the application.",
+          "contentPath": "03_account___entitlements.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "api/04_file_asset_manager",
+          "label": "File Asset Manager",
+          "type": "chapter",
+          "summary": "Handles the movement of binary assets between the local environment and the API. It provides utilities to upload files for analysis (handling size limits and retries) and download generated attachments, abstracting the specific endpoints and authentication required for the Files API.",
+          "contentPath": "04_file_asset_manager.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "api/05_session_state_sync",
+          "label": "Session State Sync",
+          "type": "chapter",
+          "summary": "Manages the persistence and transport of conversation history. It acts as the bridge between the local CLI session and the backend storage. It handles uploading execution logs (ingress) and retrieving them (\"teleporting\") to hydrate session state across different machines or web views, ensuring sequential consistency and handling conflicts.",
+          "contentPath": "05_session_state_sync.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "api/06_prompt_cache_monitor",
+          "label": "Prompt Cache Monitor",
+          "type": "chapter",
+          "summary": "An intelligent observer designed to optimize costs and latency. It tracks the state of the prompt (system messages, tools, headers) sent to the API and calculates diffs between requests. If the server-side prompt cache \"breaks\" (resulting in a cache miss), this abstraction determines exactly why (e.g., a tool schema changed or a header was added), aiding in performance debugging.",
+          "contentPath": "06_prompt_cache_monitor.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "api/07_telemetry___observability",
+          "label": "Telemetry & Observability",
+          "type": "chapter",
+          "summary": "The nervous system of the application, responsible for tracking health and usage. It captures detailed metrics about API requests (latency, token usage, cost), logs success/failure events for analytics, and provides debugging tools like dumping raw prompts to disk for inspection, all while respecting user opt-out settings.",
+          "contentPath": "07_telemetry___observability.md",
+          "x": -800.0,
+          "y": 450.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "api/02_resilient_request_executor",
+          "target": "api/01_unified_client_factory",
+          "label": "Instantiates API client"
+        },
+        {
+          "source": "api/02_resilient_request_executor",
+          "target": "api/06_prompt_cache_monitor",
+          "label": "Logs execution metrics"
+        },
+        {
+          "source": "api/03_account___entitlements",
+          "target": "api/06_prompt_cache_monitor",
+          "label": "Reports cache breaks"
+        },
+        {
+          "source": "api/07_telemetry___observability",
+          "target": "api/06_prompt_cache_monitor",
+          "label": "Tracks file operations"
+        },
+        {
+          "source": "api/05_session_state_sync",
+          "target": "api/06_prompt_cache_monitor",
+          "label": "Logs feature usage"
+        },
+        {
+          "source": "api/04_file_asset_manager",
+          "target": "api/06_prompt_cache_monitor",
+          "label": "Logs diagnostics"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "api/02_resilient_request_executor",
+      "target": "api/01_unified_client_factory",
+      "label": "Instantiates API client"
+    },
+    {
+      "source": "api/02_resilient_request_executor",
+      "target": "api/06_prompt_cache_monitor",
+      "label": "Logs execution metrics"
+    },
+    {
+      "source": "api/03_account___entitlements",
+      "target": "api/06_prompt_cache_monitor",
+      "label": "Reports cache breaks"
+    },
+    {
+      "source": "api/07_telemetry___observability",
+      "target": "api/06_prompt_cache_monitor",
+      "label": "Tracks file operations"
+    },
+    {
+      "source": "api/05_session_state_sync",
+      "target": "api/06_prompt_cache_monitor",
+      "label": "Logs feature usage"
+    },
+    {
+      "source": "api/04_file_asset_manager",
+      "target": "api/06_prompt_cache_monitor",
+      "label": "Logs diagnostics"
+    }
+  ],
+  "storyPath": [
+    "api/01_unified_client_factory",
+    "api/02_resilient_request_executor",
+    "api/03_account___entitlements",
+    "api/04_file_asset_manager",
+    "api/05_session_state_sync",
+    "api/06_prompt_cache_monitor",
+    "api/07_telemetry___observability"
+  ]
+}

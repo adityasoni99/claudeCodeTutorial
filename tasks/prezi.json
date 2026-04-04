@@ -1,0 +1,146 @@
+{
+  "projectName": "tasks",
+  "nodes": [
+    {
+      "id": "tasks",
+      "label": "tasks",
+      "type": "module",
+      "summary": "This project functions as a unified **task management system** that orchestrates diverse background activities, from simple *shell commands* to complex, autonomous **AI agents**. It standardizes these different processes into a single **polymorphic state**, enabling centralized lifecycle control (stopping/killing tasks) and providing a concise **visual summary** of ongoing work to the user.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "tasks/01_task_state_polymorphism",
+          "label": "Task State Polymorphism",
+          "type": "chapter",
+          "summary": "This is the foundational data structure that allows the system to treat different activities uniformly. Whether running a bash command, an AI agent, or a \"dream\" process, the system views them all as a `TaskState`.\n\nThink of it like a universal adapter for power outlets. Regardless of whether you plug in a lamp (Shell), a computer (Agent), or a toaster (Dream), the wall socket (the Application State) interacts with them using the same interface to check if they are \"on\" (running) or \"off\" (completed).",
+          "contentPath": "01_task_state_polymorphism.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tasks/02_local_shell_execution",
+          "label": "Local Shell Execution",
+          "type": "chapter",
+          "summary": "This abstraction manages executing raw operating system commands. It handles spawning processes, capturing output streams, and detecting if a command has stalled waiting for user input (like a `y/n` prompt).\n\nImagine an invisible typist working in a separate room. You slide a note under the door with a command (`git push`), and they type it into the terminal for you. If the terminal asks a question and the typist gets stuck, they ring a bell (notification) to get your attention; otherwise, they just do the work quietly.",
+          "contentPath": "02_local_shell_execution.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tasks/03_background_agent_execution",
+          "label": "Background Agent Execution",
+          "type": "chapter",
+          "summary": "This powers the AI \"workers\" that run asynchronously. It manages the lifecycle of an LLM agent, tracking its token usage, tool activities (like reading files), and conversation history while it works independently of the user's main input.\n\nThink of this like hiring a contractor. You give them a job description (the prompt) and send them off to the job site. They use their own tools, track their own expenses (tokens), and only come back to report when the job is done or if they hit a snag, allowing you to focus on other things in the meantime.",
+          "contentPath": "03_background_agent_execution.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tasks/04_in_process_teammates",
+          "label": "In-Process Teammates",
+          "type": "chapter",
+          "summary": "Unlike generic agents, \"Teammates\" are specialized tasks with persistent identities, specific roles, and shared process memory. They support complex coordination flows like \"plan mode\" where they request approval before executing.\n\nImagine a co-pilot sitting in the cockpit with you. Unlike ground control (a remote agent), the co-pilot shares your immediate context and instruments. You can hand off controls to them, watch exactly what they are doing in real-time, and they require your explicit nod (approval) before making major course corrections.",
+          "contentPath": "04_in_process_teammates.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tasks/05_task_visibility___summarization",
+          "label": "Task Visibility & Summarization",
+          "type": "chapter",
+          "summary": "This logic determines how the user perceives the swarm of running tasks. It decides what counts as a \"background\" task and compresses complex state lists into a single, readable string (the \"Pill\") for the UI footer.\n\nIt acts like a car's dashboard. The engine has hundreds of moving parts (active tasks, monitors, shells), but the driver doesn't need to see them all. This abstraction aggregates that data into a simple \"Check Engine\" light or a \"Cruising\" status, letting the user know at a glance if the system is busy or idle.",
+          "contentPath": "05_task_visibility___summarization.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tasks/06_lifecycle___termination",
+          "label": "Lifecycle & Termination",
+          "type": "chapter",
+          "summary": "This abstraction standardizes how tasks are stopped, killed, or cleaned up. It handles the nuances of different task types\u2014like sending a `SIGKILL` to a shell process versus sending an abort signal to an AI agent's HTTP request.\n\nThink of it as the facility manager for a building. When a tenant (task) leaves or gets evicted, the manager ensures the lights are turned off, the keys are returned, and the room is cleaned (files/resources freed) so the building doesn't become cluttered with \"zombie\" tenants.",
+          "contentPath": "06_lifecycle___termination.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "tasks/02_local_shell_execution",
+          "target": "tasks/01_task_state_polymorphism",
+          "label": "Implements interface"
+        },
+        {
+          "source": "tasks/03_background_agent_execution",
+          "target": "tasks/01_task_state_polymorphism",
+          "label": "Implements interface"
+        },
+        {
+          "source": "tasks/04_in_process_teammates",
+          "target": "tasks/01_task_state_polymorphism",
+          "label": "Implements interface"
+        },
+        {
+          "source": "tasks/05_task_visibility___summarization",
+          "target": "tasks/01_task_state_polymorphism",
+          "label": "Aggregates status"
+        },
+        {
+          "source": "tasks/06_lifecycle___termination",
+          "target": "tasks/02_local_shell_execution",
+          "label": "Terminates process"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "tasks/02_local_shell_execution",
+      "target": "tasks/01_task_state_polymorphism",
+      "label": "Implements interface"
+    },
+    {
+      "source": "tasks/03_background_agent_execution",
+      "target": "tasks/01_task_state_polymorphism",
+      "label": "Implements interface"
+    },
+    {
+      "source": "tasks/04_in_process_teammates",
+      "target": "tasks/01_task_state_polymorphism",
+      "label": "Implements interface"
+    },
+    {
+      "source": "tasks/05_task_visibility___summarization",
+      "target": "tasks/01_task_state_polymorphism",
+      "label": "Aggregates status"
+    },
+    {
+      "source": "tasks/06_lifecycle___termination",
+      "target": "tasks/02_local_shell_execution",
+      "label": "Terminates process"
+    }
+  ],
+  "storyPath": [
+    "tasks/01_task_state_polymorphism",
+    "tasks/02_local_shell_execution",
+    "tasks/03_background_agent_execution",
+    "tasks/04_in_process_teammates",
+    "tasks/05_task_visibility___summarization",
+    "tasks/06_lifecycle___termination"
+  ]
+}

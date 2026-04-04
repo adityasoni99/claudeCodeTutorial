@@ -1,0 +1,124 @@
+{
+  "projectName": "feedback",
+  "nodes": [
+    {
+      "id": "feedback",
+      "label": "feedback",
+      "type": "module",
+      "summary": "This project implements a **feedback** command for a command-line interface, allowing users to submit bug reports or general comments. It features *smart guardrails* to ensure the command is only enabled in specific, allowed environments (checking policies and user types). To keep the application fast, it uses **dynamic loading** to fetch the complex React-based user interface only when the command is actually run, rather than at startup.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "feedback/01_command_definition",
+          "label": "Command Definition",
+          "type": "chapter",
+          "summary": "This abstraction defines the identity and metadata of a specific CLI command (in this case, `feedback`). It acts like a \"manifest\" or a menu listing, telling the main application what the command is named (`feedback`), its aliases (`bug`), and how to describe it to the user. It serves as the contract between this specific feature and the broader command dispatching system.",
+          "contentPath": "01_command_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "feedback/02_availability_guardrails",
+          "label": "Availability Guardrails",
+          "type": "chapter",
+          "summary": "Located within the command definition, this abstraction determines whether the command should be accessible to the user. It acts like a \"bouncer\" at a club, checking various IDs (Environment Variables, Policy settings, User Types) before allowing entry. It ensures that feedback is disabled in specific enterprise environments (Bedrock, Vertex, Foundry) or if explicitly turned off via flags.",
+          "contentPath": "02_availability_guardrails.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "feedback/03_dynamic_command_loading",
+          "label": "Dynamic Command Loading",
+          "type": "chapter",
+          "summary": "This pattern optimizes application startup time by only loading the heavy logic when it is actually needed. Instead of importing the entire feedback UI immediately, the `load` property uses a dynamic `import()` statement. It's like keeping the heavy tools in the shed and only fetching them when you actually plan to start the repair job, rather than carrying them around in your pocket all day.",
+          "contentPath": "03_dynamic_command_loading.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "feedback/04_localjsx_execution_entry_point",
+          "label": "LocalJSX Execution Entry Point",
+          "type": "chapter",
+          "summary": "The `call` function serves as the \"Controller\" for the command. It is the first function executed when the user runs the command. It bridges the gap between the raw text input from the CLI and the rich React UI. It unpacks the context (like abort signals and previous messages), processes arguments (the initial description), and initiates the rendering process.",
+          "contentPath": "04_localjsx_execution_entry_point.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "feedback/05_react_terminal_rendering_adapter",
+          "label": "React-Terminal Rendering Adapter",
+          "type": "chapter",
+          "summary": "The `renderFeedbackComponent` function acts as an adapter that allows standard React components to run within a terminal environment. It prepares the properties\u2014such as background tasks, message history, and callback functions (`onDone`)\u2014needed by the visual `<Feedback />` component. It transforms the terminal state into React props, enabling a rich, interactive UI inside a command-line interface.",
+          "contentPath": "05_react_terminal_rendering_adapter.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "feedback/01_command_definition",
+          "target": "feedback/02_availability_guardrails",
+          "label": "Checks availability via"
+        },
+        {
+          "source": "feedback/01_command_definition",
+          "target": "feedback/03_dynamic_command_loading",
+          "label": "Configures lazy loading"
+        },
+        {
+          "source": "feedback/03_dynamic_command_loading",
+          "target": "feedback/04_localjsx_execution_entry_point",
+          "label": "Loads module containing"
+        },
+        {
+          "source": "feedback/04_localjsx_execution_entry_point",
+          "target": "feedback/05_react_terminal_rendering_adapter",
+          "label": "Invokes rendering"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "feedback/01_command_definition",
+      "target": "feedback/02_availability_guardrails",
+      "label": "Checks availability via"
+    },
+    {
+      "source": "feedback/01_command_definition",
+      "target": "feedback/03_dynamic_command_loading",
+      "label": "Configures lazy loading"
+    },
+    {
+      "source": "feedback/03_dynamic_command_loading",
+      "target": "feedback/04_localjsx_execution_entry_point",
+      "label": "Loads module containing"
+    },
+    {
+      "source": "feedback/04_localjsx_execution_entry_point",
+      "target": "feedback/05_react_terminal_rendering_adapter",
+      "label": "Invokes rendering"
+    }
+  ],
+  "storyPath": [
+    "feedback/01_command_definition",
+    "feedback/02_availability_guardrails",
+    "feedback/03_dynamic_command_loading",
+    "feedback/04_localjsx_execution_entry_point",
+    "feedback/05_react_terminal_rendering_adapter"
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "projectName": "TaskUpdateTool",
+  "nodes": [
+    {
+      "id": "taskupdatetool",
+      "label": "TaskUpdateTool",
+      "type": "module",
+      "summary": "The **TaskUpdateTool** acts as a rigorous project manager for AI agents, allowing them to modify the state of work items within a system. It ensures that every update\u2014whether completing a task, changing an owner, or adding dependencies\u2014adheres to a strict **Task Lifecycle Workflow** and *validates* data structure before saving changes. Beyond simple edits, it orchestrates collaboration by automatically triggering notifications and hooks to keep the entire agent team synchronized.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "taskupdatetool/01_tool_definition_wrapper",
+          "label": "Tool Definition Wrapper",
+          "type": "chapter",
+          "summary": "This is the foundational structure that packages the feature as a callable tool for the AI agent. It encapsulates the tool's identity (name, description), its interface (input/output schemas), and its execution logic.\nThink of it as a \"Skill Cartridge\" for a video game character. The game system loads this cartridge to give the character the specific ability to \"Update Tasks,\" complete with instructions on how to use that ability and what inputs are required to activate it.",
+          "contentPath": "01_tool_definition_wrapper.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "taskupdatetool/02_task_lifecycle_workflow",
+          "label": "Task Lifecycle Workflow",
+          "type": "chapter",
+          "summary": "Defines the valid states a task can inhabit and the rules for transitioning between them. The workflow enforces a progression from `pending` to `in_progress` to `completed`, with a separate path for `deleted`.\nIt acts like a manufacturing assembly line. An item starts in the queue (pending), moves to the workstation (in_progress), and finally to the shipping crate (completed). If an item is defective, it is removed entirely (deleted). You cannot simply teleport items; you must follow the process state by state.",
+          "contentPath": "02_task_lifecycle_workflow.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "taskupdatetool/03_lazy_schema_validation",
+          "label": "Lazy Schema Validation",
+          "type": "chapter",
+          "summary": "A pattern used to define the structure of input and output data using Zod, wrapped in a lazy evaluator. This ensures that the schema definitions\u2014which might be computationally expensive or have circular dependencies\u2014are only compiled when actually needed.\nImagine a secure building with a guard at the door. Instead of the guard memorizing the face of every possible visitor at the start of the day (eager loading), the guard only looks up the specific credentials for a visitor in the manual the moment that person arrives (lazy loading).",
+          "contentPath": "03_lazy_schema_validation.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "taskupdatetool/04_task_dependency_management",
+          "label": "Task Dependency Management",
+          "type": "chapter",
+          "summary": "Mechanisms to link tasks together based on prerequisites. This abstraction allows a task to declare that it blocks others (`addBlocks`) or is blocked by others (`addBlockedBy`), updating the underlying task graph.\nThink of a construction project schedule. You cannot paint the walls (Task B) until you have built the walls (Task A). This abstraction manages those \"Finish A before Start B\" links, ensuring the agent doesn't try to paint thin air.",
+          "contentPath": "04_task_dependency_management.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "taskupdatetool/05_agent_collaboration___hooks",
+          "label": "Agent Collaboration & Hooks",
+          "type": "chapter",
+          "summary": "A layer of logic that handles the side effects of task updates in a multi-agent environment. This includes assigning task ownership, notifying teammates via a \"mailbox,\" and running verification checks (nudges) when tasks are completed.\nIt serves as the office manager. When you finish a job, the manager updates the board, emails the next person in line (\"Mailbox\"), and occasionally reminds you to double-check your work (\"Verification Nudge\") before you clock out.",
+          "contentPath": "05_agent_collaboration___hooks.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "taskupdatetool/01_tool_definition_wrapper",
+          "target": "taskupdatetool/03_lazy_schema_validation",
+          "label": "Validates inputs using"
+        },
+        {
+          "source": "taskupdatetool/03_lazy_schema_validation",
+          "target": "taskupdatetool/02_task_lifecycle_workflow",
+          "label": "Enforces valid states from"
+        },
+        {
+          "source": "taskupdatetool/01_tool_definition_wrapper",
+          "target": "taskupdatetool/02_task_lifecycle_workflow",
+          "label": "Executes transitions define..."
+        },
+        {
+          "source": "taskupdatetool/01_tool_definition_wrapper",
+          "target": "taskupdatetool/04_task_dependency_management",
+          "label": "Updates task graph via"
+        },
+        {
+          "source": "taskupdatetool/01_tool_definition_wrapper",
+          "target": "taskupdatetool/05_agent_collaboration___hooks",
+          "label": "Triggers side effects via"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "taskupdatetool/01_tool_definition_wrapper",
+      "target": "taskupdatetool/03_lazy_schema_validation",
+      "label": "Validates inputs using"
+    },
+    {
+      "source": "taskupdatetool/03_lazy_schema_validation",
+      "target": "taskupdatetool/02_task_lifecycle_workflow",
+      "label": "Enforces valid states from"
+    },
+    {
+      "source": "taskupdatetool/01_tool_definition_wrapper",
+      "target": "taskupdatetool/02_task_lifecycle_workflow",
+      "label": "Executes transitions defined by"
+    },
+    {
+      "source": "taskupdatetool/01_tool_definition_wrapper",
+      "target": "taskupdatetool/04_task_dependency_management",
+      "label": "Updates task graph via"
+    },
+    {
+      "source": "taskupdatetool/01_tool_definition_wrapper",
+      "target": "taskupdatetool/05_agent_collaboration___hooks",
+      "label": "Triggers side effects via"
+    }
+  ],
+  "storyPath": [
+    "taskupdatetool/01_tool_definition_wrapper",
+    "taskupdatetool/02_task_lifecycle_workflow",
+    "taskupdatetool/03_lazy_schema_validation",
+    "taskupdatetool/04_task_dependency_management",
+    "taskupdatetool/05_agent_collaboration___hooks"
+  ]
+}

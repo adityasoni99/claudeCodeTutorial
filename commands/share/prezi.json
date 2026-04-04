@@ -1,0 +1,80 @@
+{
+  "projectName": "share",
+  "nodes": [
+    {
+      "id": "share",
+      "label": "share",
+      "type": "module",
+      "summary": "This project component acts as a **placeholder** or \"stub\" for a specific feature (likely related to sharing). It is intentionally configured to be *inactive* and *invisible* within the user interface, serving as a safe default state that allows the application to function without the actual implementation present.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "share/01_feature_stub",
+          "label": "Feature Stub",
+          "type": "chapter",
+          "summary": "Represents a placeholder or a default \"empty\" state for a feature within the application.\n\nIt acts like a prop in a theater play; it holds the place of a real object (like a specific functional module) and adheres to the script (the interface), but currently does nothing and affects nothing. This allows the system to load without crashing even if the actual feature logic isn't present.",
+          "contentPath": "01_feature_stub.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "share/02_activation_logic",
+          "label": "Activation Logic",
+          "type": "chapter",
+          "summary": "The mechanism that determines if a feature is functionally active or \"live\" within the system.\n\nThink of this as a master power switch or a circuit breaker. In this specific context, the switch is permanently taped to the \"Off\" position (`isEnabled: () => false`), ensuring that no matter what happens, this specific code path will not execute any logic.",
+          "contentPath": "02_activation_logic.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "share/03_presentation_state",
+          "label": "Presentation State",
+          "type": "chapter",
+          "summary": "Controls the visibility of the component in the user interface, separate from whether the logic is active.\n\nIt is similar to a curtain on a stage. Even if actors are behind it, if the curtain is down (`isHidden: true`), the audience cannot see them. This abstraction ensures that the 'stub' feature remains invisible to the end-user.",
+          "contentPath": "03_presentation_state.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "share/01_feature_stub",
+          "target": "share/02_activation_logic",
+          "label": "Defines activation"
+        },
+        {
+          "source": "share/01_feature_stub",
+          "target": "share/03_presentation_state",
+          "label": "Controls visibility"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "share/01_feature_stub",
+      "target": "share/02_activation_logic",
+      "label": "Defines activation"
+    },
+    {
+      "source": "share/01_feature_stub",
+      "target": "share/03_presentation_state",
+      "label": "Controls visibility"
+    }
+  ],
+  "storyPath": [
+    "share/01_feature_stub",
+    "share/02_activation_logic",
+    "share/03_presentation_state"
+  ]
+}

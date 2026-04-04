@@ -1,0 +1,124 @@
+{
+  "projectName": "branch",
+  "nodes": [
+    {
+      "id": "branch",
+      "label": "branch",
+      "type": "module",
+      "summary": "This project enables users to **branch** an active chat session into a new, divergent timeline. It allows for *risk-free experimentation* by duplicating the conversation history and internal state (such as tool outputs) into a separate file, ensuring the **original session** remains untouched while the user explores a new direction in the copy.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "branch/01_cli_command_registration",
+          "label": "CLI Command Registration",
+          "type": "chapter",
+          "summary": "This abstraction defines how new capabilities are exposed to the user within the application. In `index.ts`, the `branch` object implements a `Command` interface, specifying the command's name, description, usage hints, and conditional aliases (like `fork`). It uses lazy loading (`load: () => import(...)`) to keep the application startup fast. Think of this like a menu system in a restaurant: it lists what is available (the commands) and points the kitchen to the right recipe (the implementation) only when a customer actually orders that dish.",
+          "contentPath": "01_cli_command_registration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "branch/02_conversation_forking_logic",
+          "label": "Conversation Forking Logic",
+          "type": "chapter",
+          "summary": "The core logic responsible for creating a divergent timeline from an existing chat. The `createFork` function in `branch.ts` reads the current transcript, generates a new `sessionId`, and writes a copy of the history to a new file. It also stamps the new session with lineage information (`forkedFrom`). This is similar to creating a branch in Git or \"Save As\" in a text editor; it allows the user to experiment in a new direction without altering or losing the original context and history of the main conversation.",
+          "contentPath": "02_conversation_forking_logic.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "branch/03_transcript_persistence_model",
+          "label": "Transcript Persistence Model",
+          "type": "chapter",
+          "summary": "Represents the way conversation history is structured and stored on disk. The system uses a JSON Lines (JSONL) format where each line represents a discrete event, such as a user message, assistant response, or tool output. The code in `branch.ts` interacts with types like `TranscriptMessage`, `SerializedMessage`, and `Entry`. It's analogous to a ship's logbook or a \"save file\" in a video game; it captures the exact sequence of events and states so that the session can be paused, reloaded, or in this case, duplicated, with perfect fidelity.",
+          "contentPath": "03_transcript_persistence_model.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "branch/04_state___metadata_preservation",
+          "label": "State & Metadata Preservation",
+          "type": "chapter",
+          "summary": "Ensures that critical context beyond just raw text is preserved when branching. The code specifically manages `content-replacement` records, which track where large tool outputs were abbreviated or \"frozen\" to save space. Without copying these records, the new session would lose the \"memory\" of these interactions, forcing the AI to re-process data. It\u2019s like moving to a new office: you don't just move the files (messages), you also need to move the filing system index (metadata) so you know where everything is without having to read every paper again.",
+          "contentPath": "04_state___metadata_preservation.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "branch/05_dynamic_session_naming",
+          "label": "Dynamic Session Naming",
+          "type": "chapter",
+          "summary": "A utility abstraction for generating unique, readable titles for new branches. Functions like `deriveFirstPrompt` and `getUniqueForkName` analyze the conversation start and existing session titles to generate names like \"Topic (Branch 2)\". It automatically handles name collisions by checking the storage and incrementing a counter. This is comparable to how an operating system names duplicate files (e.g., \"Image (1).png\"), ensuring that every session has a distinct identity without requiring the user to manually invent a name every time they branch.",
+          "contentPath": "05_dynamic_session_naming.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "branch/01_cli_command_registration",
+          "target": "branch/03_transcript_persistence_model",
+          "label": "Invokes"
+        },
+        {
+          "source": "branch/01_cli_command_registration",
+          "target": "branch/05_dynamic_session_naming",
+          "label": "Generates title via"
+        },
+        {
+          "source": "branch/03_transcript_persistence_model",
+          "target": "branch/02_conversation_forking_logic",
+          "label": "Duplicates"
+        },
+        {
+          "source": "branch/03_transcript_persistence_model",
+          "target": "branch/04_state___metadata_preservation",
+          "label": "Transfers"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "branch/01_cli_command_registration",
+      "target": "branch/03_transcript_persistence_model",
+      "label": "Invokes"
+    },
+    {
+      "source": "branch/01_cli_command_registration",
+      "target": "branch/05_dynamic_session_naming",
+      "label": "Generates title via"
+    },
+    {
+      "source": "branch/03_transcript_persistence_model",
+      "target": "branch/02_conversation_forking_logic",
+      "label": "Duplicates"
+    },
+    {
+      "source": "branch/03_transcript_persistence_model",
+      "target": "branch/04_state___metadata_preservation",
+      "label": "Transfers"
+    }
+  ],
+  "storyPath": [
+    "branch/01_cli_command_registration",
+    "branch/02_conversation_forking_logic",
+    "branch/03_transcript_persistence_model",
+    "branch/04_state___metadata_preservation",
+    "branch/05_dynamic_session_naming"
+  ]
+}

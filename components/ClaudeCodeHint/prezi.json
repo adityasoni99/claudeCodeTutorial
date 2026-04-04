@@ -1,0 +1,124 @@
+{
+  "projectName": "ClaudeCodeHint",
+  "nodes": [
+    {
+      "id": "claudecodehint",
+      "label": "ClaudeCodeHint",
+      "type": "module",
+      "summary": "The project implements a **Command Line Interface (CLI)** utility for recommending and installing plugins. It features a *smart hint system* that presents **interactive prompts** to the user, managing permissions and keyboard selection while ensuring the workflow remains non-blocking through **automatic timeouts**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "claudecodehint/01_plugin_hint_system",
+          "label": "Plugin Hint System",
+          "type": "chapter",
+          "summary": "A specific workflow designed to recommend extensions to the user. When a user runs a command (`sourceCommand`) that could be enhanced by a plugin, this abstraction presents the `PluginHintMenu` with details like the plugin name and marketplace.\nIt's like a smart assistant noticing you are trying to open a specific file type and suggesting, \"Would you like to install a viewer for this file?\"",
+          "contentPath": "01_plugin_hint_system.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecodehint/02_ink_ui_components",
+          "label": "Ink UI Components",
+          "type": "chapter",
+          "summary": "The fundamental building blocks for the Command Line Interface (CLI). The code uses React components like `Box` (layout) and `Text` (typography) imported from a wrapper around the Ink library.\nIt's like using HTML `<div>` and `<span>` tags, but specifically designed to render layouts inside a terminal window instead of a web browser.",
+          "contentPath": "02_ink_ui_components.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecodehint/03_permission_dialog_wrapper",
+          "label": "Permission Dialog Wrapper",
+          "type": "chapter",
+          "summary": "A standardized container component (`PermissionDialog`) used to frame requests that require user approval. It ensures that all security or installation prompts look consistent across the application.\nIt's like the system pop-up on your phone asking, \"Allow this app to send notifications?\", providing a consistent frame for specific questions.",
+          "contentPath": "03_permission_dialog_wrapper.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecodehint/04_custom_selection_input",
+          "label": "Custom Selection Input",
+          "type": "chapter",
+          "summary": "The `Select` component abstracts the complexity of handling keyboard input (up/down arrows, enter) for choosing options in a CLI.\nIt's like a standard HTML `<select>` dropdown menu, but built to work entirely with keyboard navigation in a text-based environment.",
+          "contentPath": "04_custom_selection_input.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecodehint/05_time_limited_interactions",
+          "label": "Time-Limited Interactions",
+          "type": "chapter",
+          "summary": "Logic that handles UI elements which expire automatically. The code uses `useEffect` and `setTimeout` (defined by `AUTO_DISMISS_MS`) to default the answer to \"no\" if the user ignores the prompt.\nIt's like a \"toast\" notification or a game countdown that makes a default decision for you if you don't press a button before the timer runs out.",
+          "contentPath": "05_time_limited_interactions.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "claudecodehint/03_permission_dialog_wrapper",
+          "target": "claudecodehint/01_plugin_hint_system",
+          "label": "Builds layout using"
+        },
+        {
+          "source": "claudecodehint/03_permission_dialog_wrapper",
+          "target": "claudecodehint/02_ink_ui_components",
+          "label": "Encapsulates UI within"
+        },
+        {
+          "source": "claudecodehint/03_permission_dialog_wrapper",
+          "target": "claudecodehint/04_custom_selection_input",
+          "label": "Captures input via"
+        },
+        {
+          "source": "claudecodehint/03_permission_dialog_wrapper",
+          "target": "claudecodehint/05_time_limited_interactions",
+          "label": "Applies timeout behavior"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "claudecodehint/03_permission_dialog_wrapper",
+      "target": "claudecodehint/01_plugin_hint_system",
+      "label": "Builds layout using"
+    },
+    {
+      "source": "claudecodehint/03_permission_dialog_wrapper",
+      "target": "claudecodehint/02_ink_ui_components",
+      "label": "Encapsulates UI within"
+    },
+    {
+      "source": "claudecodehint/03_permission_dialog_wrapper",
+      "target": "claudecodehint/04_custom_selection_input",
+      "label": "Captures input via"
+    },
+    {
+      "source": "claudecodehint/03_permission_dialog_wrapper",
+      "target": "claudecodehint/05_time_limited_interactions",
+      "label": "Applies timeout behavior"
+    }
+  ],
+  "storyPath": [
+    "claudecodehint/01_plugin_hint_system",
+    "claudecodehint/02_ink_ui_components",
+    "claudecodehint/03_permission_dialog_wrapper",
+    "claudecodehint/04_custom_selection_input",
+    "claudecodehint/05_time_limited_interactions"
+  ]
+}

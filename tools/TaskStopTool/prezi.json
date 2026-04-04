@@ -1,0 +1,124 @@
+{
+  "projectName": "TaskStopTool",
+  "nodes": [
+    {
+      "id": "taskstoptool",
+      "label": "TaskStopTool",
+      "type": "module",
+      "summary": "The **TaskStopTool** acts as a control mechanism allowing an AI agent to safely terminate running background processes. It functions as a central hub that uses strict **Data Validation Schemas** to verify request integrity, triggers **Task Execution Logic** to stop the targeted process, and employs **UI Rendering** to display concise status updates to the user.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "taskstoptool/01_tool_metadata___prompting",
+          "label": "Tool Metadata & Prompting",
+          "type": "chapter",
+          "summary": "Provides the textual descriptions and constants that allow the AI model to understand the tool's purpose. This includes the tool's name and a detailed description of when to use it.\nIt serves as the \"instruction manual\" for the AI, explaining that this tool is specifically for terminating background tasks, ensuring the AI knows precisely when to reach for this tool in its toolbox.",
+          "contentPath": "01_tool_metadata___prompting.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "taskstoptool/02_data_validation_schemas",
+          "label": "Data Validation Schemas",
+          "type": "chapter",
+          "summary": "Defines the strict contracts for data entering and leaving the tool using Zod schemas. This ensures that the tool receives valid parameters (like `task_id`) and returns structured data that the system can rely on.\nIt acts like a gatekeeper or a form validator, ensuring that \"garbage in, garbage out\" doesn't happen by rejecting malformed requests before they reach the execution logic.",
+          "contentPath": "02_data_validation_schemas.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "taskstoptool/03_tool_definition",
+          "label": "Tool Definition",
+          "type": "chapter",
+          "summary": "The central configuration object that defines the tool's identity and behavior within the system. Constructed using `buildTool`, it bundles input validation, execution logic, and metadata together.\nThink of it as a \"plugin manifest\" or a \"driver\" that tells the main application exactly how to interact with this specific capability, managing everything from its name to how it handles concurrency.",
+          "contentPath": "03_tool_definition.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "taskstoptool/04_task_execution_logic",
+          "label": "Task Execution Logic",
+          "type": "chapter",
+          "summary": "The operational core that interfaces with the application's state to perform the actual work. It handles the retrieval of task state, verifies if a task is running, and executes the stop command.\nIt functions like the engine room of the tool, taking the validated \"stop\" order, checking the machinery (application state) to ensure the target exists, and then pulling the plug.",
+          "contentPath": "04_task_execution_logic.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "taskstoptool/05_ui_rendering",
+          "label": "UI Rendering",
+          "type": "chapter",
+          "summary": "Controls how the tool's actions and results are visually presented to the human user. It includes logic for truncating long command strings and formatting status messages to keep the interface clean.\nIt's like the dashboard display of a car; it takes raw sensor data (the tool's output) and formats it into a readable, user-friendly indicator (e.g., \"stopped\" status) without overwhelming the driver with technical details.",
+          "contentPath": "05_ui_rendering.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "taskstoptool/01_tool_metadata___prompting",
+          "target": "taskstoptool/02_data_validation_schemas",
+          "label": "Validates input using"
+        },
+        {
+          "source": "taskstoptool/01_tool_metadata___prompting",
+          "target": "taskstoptool/03_tool_definition",
+          "label": "Invokes core logic"
+        },
+        {
+          "source": "taskstoptool/01_tool_metadata___prompting",
+          "target": "taskstoptool/04_task_execution_logic",
+          "label": "Formats output using"
+        },
+        {
+          "source": "taskstoptool/01_tool_metadata___prompting",
+          "target": "taskstoptool/05_ui_rendering",
+          "label": "Retrieves description from"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "taskstoptool/01_tool_metadata___prompting",
+      "target": "taskstoptool/02_data_validation_schemas",
+      "label": "Validates input using"
+    },
+    {
+      "source": "taskstoptool/01_tool_metadata___prompting",
+      "target": "taskstoptool/03_tool_definition",
+      "label": "Invokes core logic"
+    },
+    {
+      "source": "taskstoptool/01_tool_metadata___prompting",
+      "target": "taskstoptool/04_task_execution_logic",
+      "label": "Formats output using"
+    },
+    {
+      "source": "taskstoptool/01_tool_metadata___prompting",
+      "target": "taskstoptool/05_ui_rendering",
+      "label": "Retrieves description from"
+    }
+  ],
+  "storyPath": [
+    "taskstoptool/01_tool_metadata___prompting",
+    "taskstoptool/02_data_validation_schemas",
+    "taskstoptool/03_tool_definition",
+    "taskstoptool/04_task_execution_logic",
+    "taskstoptool/05_ui_rendering"
+  ]
+}

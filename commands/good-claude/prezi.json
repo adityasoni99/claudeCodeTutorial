@@ -1,0 +1,46 @@
+{
+  "projectName": "good-claude",
+  "nodes": [
+    {
+      "id": "good-claude",
+      "label": "good-claude",
+      "type": "module",
+      "summary": "This project appears to be a **modular framework** (likely an extension named *Good Claude*) designed to manage various functional components. It utilizes a **Feature Configuration Stub** to establish a standard interface for these components, ensuring they act as **placeholders** (hidden and disabled) by default until they are fully implemented and activated.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "good-claude/01_feature_configuration_stub",
+          "label": "Feature Configuration Stub",
+          "type": "chapter",
+          "summary": "This abstraction represents the basic interface for a feature, module, or plugin within the system. It defines core properties required for the system to recognize a component: its identity (`name`), its visibility in the UI (`isHidden`), and its logic for whether it is active (`isEnabled`).\n\nThink of it as a \"Coming Soon\" storefront in a shopping mall. The framework exists (it has a location and a name tag), but the store is currently closed (disabled) and covered up (hidden) so customers cannot enter or see inside yet. It serves as a placeholder or a default state.",
+          "contentPath": "01_feature_configuration_stub.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "good-claude/01_feature_configuration_stub",
+          "target": "good-claude/01_feature_configuration_stub",
+          "label": "Defines default state"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "good-claude/01_feature_configuration_stub",
+      "target": "good-claude/01_feature_configuration_stub",
+      "label": "Defines default state"
+    }
+  ],
+  "storyPath": [
+    "good-claude/01_feature_configuration_stub"
+  ]
+}

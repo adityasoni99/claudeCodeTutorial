@@ -1,0 +1,146 @@
+{
+  "projectName": "memdir",
+  "nodes": [
+    {
+      "id": "memdir",
+      "label": "memdir",
+      "type": "module",
+      "summary": "This project implements a **persistent, file-based memory system** that allows an AI assistant to recall user preferences and project context across sessions. It uses a **Two-Tier Architecture**\u2014keeping a lightweight index (`MEMORY.md`) in context while retrieving detailed topic files on demand\u2014to manage token limits efficiently. The system enforces strict **security sandboxing** and distinguishes between *Private* (user-specific) and *Team* (shared) scopes, ensuring the AI respects boundaries while maintaining **temporal freshness** to avoid citing outdated code.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "memdir/01_structured_memory_taxonomy",
+          "label": "Structured Memory Taxonomy",
+          "type": "chapter",
+          "summary": "To prevent the AI from saving useless noise (like code that changes often), the system enforces a strict taxonomy. Think of this as a filing cabinet with four specific, labeled drawers: `User` (preferences), `Feedback` (corrections), `Project` (deadlines/goals), and `Reference` (external links). The system explicitly forbids saving things that can be derived from the current state (like code patterns or git history). This abstraction defines the XML structures and rules that teach the AI how to categorize its thoughts, ensuring memories remain high-level and strategic rather than low-level and transient.",
+          "contentPath": "01_structured_memory_taxonomy.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "memdir/02_scoped_persistence__private_vs__team_",
+          "label": "Scoped Persistence (Private vs. Team)",
+          "type": "chapter",
+          "summary": "The codebase distinguishes between memories relevant only to the current user and those relevant to the entire team. It's analogous to a personal notebook versus a whiteboard in a shared conference room. \"Private\" (Auto) memory lives in a local, user-specific directory, while \"Team\" memory lives in a shared directory synced via version control. The logic handles the complexity of merging these two contexts into a single prompt, allowing the AI to respect personal preferences (like \"don't explain React to me\") while adhering to team rules (like \"always use these linting standards\").",
+          "contentPath": "02_scoped_persistence__private_vs__team_.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "memdir/03_two_tier_storage_architecture__index_vs__detail_",
+          "label": "Two-Tier Storage Architecture (Index vs. Detail)",
+          "type": "chapter",
+          "summary": "The system organizes memory into two distinct layers to manage context window limits efficiently. Think of it like a library: `MEMORY.md` acts as the card catalog\u2014a lightweight index loaded into every conversation containing one-line summaries of available topics. The actual \"books\" are individual Markdown files (e.g., `user_preferences.md`) containing the detailed content. The system truncates the index if it gets too large but allows the AI to \"read\" specific detailed files on demand based on the index pointers, ensuring the AI has a map of what it knows without carrying the weight of every detail simultaneously.",
+          "contentPath": "03_two_tier_storage_architecture__index_vs__detail_.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "memdir/04_contextual_recall_mechanism",
+          "label": "Contextual Recall Mechanism",
+          "type": "chapter",
+          "summary": "This is the retrieval engine that decides *which* memories to load for a specific user query. It functions like a reference librarian who listens to your question, scans the titles and descriptions of available books (the memory manifest), and selects only the 3-5 most relevant ones to place on your desk. Instead of using vector embeddings, it uses a lightweight \"side query\" to a fast LLM (Sonnet) to pick the relevant files based on the conversation context, filtering out noise and ensuring the main model isn't distracted by irrelevant history.",
+          "contentPath": "04_contextual_recall_mechanism.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "memdir/05_temporal_freshness___verification",
+          "label": "Temporal Freshness & Verification",
+          "type": "chapter",
+          "summary": "This abstraction handles the problem of \"memory drift\"\u2014the fact that code changes faster than memories do. It treats memories as perishable goods with expiration dates. The system calculates the age of every memory file and injects warnings for older entries. If a memory is stale (e.g., >1 day old), the system instructs the AI to treat it as a \"point-in-time observation\" rather than a current fact, forcing the model to verify the claim (e.g., by grepping the code) before acting on it. This prevents the AI from confidently asserting facts about code that was refactored weeks ago.",
+          "contentPath": "05_temporal_freshness___verification.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "memdir/06_path_security_and_sandboxing",
+          "label": "Path Security and Sandboxing",
+          "type": "chapter",
+          "summary": "Because the system writes files based on AI or user input, strict boundaries are required to prevent it from overwriting sensitive system files. This abstraction acts as the security guard for the filesystem. It uses rigorous validation to ensure that all memory operations stay strictly within the designated directories. It handles complex edge cases like symlink attacks (where a link inside the memory folder points to `/etc/passwd`) and path traversal attempts (like `../../`), ensuring that the \"memory\" capability cannot be exploited to escape its sandbox.",
+          "contentPath": "06_path_security_and_sandboxing.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "memdir/04_contextual_recall_mechanism",
+          "target": "memdir/01_structured_memory_taxonomy",
+          "label": "Locates storage for"
+        },
+        {
+          "source": "memdir/03_two_tier_storage_architecture__index_vs__detail_",
+          "target": "memdir/01_structured_memory_taxonomy",
+          "label": "Defines content format for"
+        },
+        {
+          "source": "memdir/01_structured_memory_taxonomy",
+          "target": "memdir/02_scoped_persistence__private_vs__team_",
+          "label": "Supplies file manifest to"
+        },
+        {
+          "source": "memdir/06_path_security_and_sandboxing",
+          "target": "memdir/02_scoped_persistence__private_vs__team_",
+          "label": "Flags stale data during"
+        },
+        {
+          "source": "memdir/05_temporal_freshness___verification",
+          "target": "memdir/04_contextual_recall_mechanism",
+          "label": "Enforces boundaries on"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "memdir/04_contextual_recall_mechanism",
+      "target": "memdir/01_structured_memory_taxonomy",
+      "label": "Locates storage for"
+    },
+    {
+      "source": "memdir/03_two_tier_storage_architecture__index_vs__detail_",
+      "target": "memdir/01_structured_memory_taxonomy",
+      "label": "Defines content format for"
+    },
+    {
+      "source": "memdir/01_structured_memory_taxonomy",
+      "target": "memdir/02_scoped_persistence__private_vs__team_",
+      "label": "Supplies file manifest to"
+    },
+    {
+      "source": "memdir/06_path_security_and_sandboxing",
+      "target": "memdir/02_scoped_persistence__private_vs__team_",
+      "label": "Flags stale data during"
+    },
+    {
+      "source": "memdir/05_temporal_freshness___verification",
+      "target": "memdir/04_contextual_recall_mechanism",
+      "label": "Enforces boundaries on"
+    }
+  ],
+  "storyPath": [
+    "memdir/01_structured_memory_taxonomy",
+    "memdir/02_scoped_persistence__private_vs__team_",
+    "memdir/03_two_tier_storage_architecture__index_vs__detail_",
+    "memdir/04_contextual_recall_mechanism",
+    "memdir/05_temporal_freshness___verification",
+    "memdir/06_path_security_and_sandboxing"
+  ]
+}

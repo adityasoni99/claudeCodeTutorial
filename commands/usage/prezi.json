@@ -1,0 +1,134 @@
+{
+  "projectName": "usage",
+  "nodes": [
+    {
+      "id": "usage",
+      "label": "usage",
+      "type": "module",
+      "summary": "This project implements a specific **command** named `usage` designed for the *claude-ai* environment. Its purpose is to allow users to quickly check their plan limits by launching a pre-configured **Settings** interface. To ensure the application remains fast, it employs a *lazy loading* technique, meaning the code for the visual interface is only loaded into memory when the user explicitly triggers the command.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "usage/01_type_driven_contract",
+          "label": "Type-Driven Contract",
+          "type": "chapter",
+          "summary": "The code utilizes TypeScript interfaces (specifically `LocalJSXCommandCall` and `Command`) to ensure the implementation strictly adheres to the framework's expectations. This ensures that the command receives the correct arguments and returns the expected React element.\n\nIt is like a strict building code or electrical standard. The \"plug\" (your command code) must be shaped exactly like the \"socket\" (the `LocalJSXCommandCall` type) defines. If the shapes match, electricity flows safely; if not, the builder (compiler) stops you before you can even finish construction.",
+          "contentPath": "01_type_driven_contract.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "usage/02_command_registration",
+          "label": "Command Registration",
+          "type": "chapter",
+          "summary": "This abstraction acts as the manifesto for a specific feature within the application. It defines the identity of the command, including its name (`usage`), description, and specific availability constraints (e.g., only available for `claude-ai`).\n\nThink of it like a menu item in a restaurant. The menu lists the name and a brief description of the dish so you know it exists and whether you can order it, but it doesn't contain the actual ingredients or the chef until you actually place the order.",
+          "contentPath": "02_command_registration.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "usage/03_lazy_loading___dynamic_import",
+          "label": "Lazy Loading / Dynamic Import",
+          "type": "chapter",
+          "summary": "This pattern ensures that the heavy code for the command is only loaded into memory when it is actually needed. The `load` function returns a dynamic import of the implementation file rather than importing it at the top level.\n\nIt is similar to a library archive service. Instead of keeping every single book on the front desk (which would clutter the space and slow things down), the librarian only retrieves a specific book from the basement vault when a patron specifically asks to read it.",
+          "contentPath": "03_lazy_loading___dynamic_import.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "usage/04_jsx_command_handler",
+          "label": "JSX Command Handler",
+          "type": "chapter",
+          "summary": "This abstraction represents the entry point for commands that render a Graphical User Interface (GUI) rather than just text. The `call` function is the execution logic that the system invokes. It receives lifecycle callbacks like `onDone` and environment data via `context`.\n\nImagine a stage director calling \"Action!\". This handler is the script that the actor follows immediately after that call, instructing them on how to interact with the other actors (context) and when to exit the stage (onDone).",
+          "contentPath": "04_jsx_command_handler.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "usage/05_view_delegation___ui_configuration",
+          "label": "View Delegation / UI Configuration",
+          "type": "chapter",
+          "summary": "Instead of building the usage interface from scratch, this pattern reuses a core component. The command simply renders a shared `Settings` component but configures it specifically for this context by passing `defaultTab=\"Usage\"`.\n\nThis is like a universal remote control. The remote (the `Settings` component) creates the interface, but this specific command acts like a preset button that automatically turns the TV on and switches specifically to the News channel (the \"Usage\" tab) without having to manually navigate there.",
+          "contentPath": "05_view_delegation___ui_configuration.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "usage/01_type_driven_contract",
+          "target": "usage/02_command_registration",
+          "label": "Utilizes"
+        },
+        {
+          "source": "usage/02_command_registration",
+          "target": "usage/03_lazy_loading___dynamic_import",
+          "label": "Dynamically imports"
+        },
+        {
+          "source": "usage/03_lazy_loading___dynamic_import",
+          "target": "usage/04_jsx_command_handler",
+          "label": "Renders"
+        },
+        {
+          "source": "usage/05_view_delegation___ui_configuration",
+          "target": "usage/01_type_driven_contract",
+          "label": "Enforces structure on"
+        },
+        {
+          "source": "usage/05_view_delegation___ui_configuration",
+          "target": "usage/03_lazy_loading___dynamic_import",
+          "label": "Defines signature for"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "usage/01_type_driven_contract",
+      "target": "usage/02_command_registration",
+      "label": "Utilizes"
+    },
+    {
+      "source": "usage/02_command_registration",
+      "target": "usage/03_lazy_loading___dynamic_import",
+      "label": "Dynamically imports"
+    },
+    {
+      "source": "usage/03_lazy_loading___dynamic_import",
+      "target": "usage/04_jsx_command_handler",
+      "label": "Renders"
+    },
+    {
+      "source": "usage/05_view_delegation___ui_configuration",
+      "target": "usage/01_type_driven_contract",
+      "label": "Enforces structure on"
+    },
+    {
+      "source": "usage/05_view_delegation___ui_configuration",
+      "target": "usage/03_lazy_loading___dynamic_import",
+      "label": "Defines signature for"
+    }
+  ],
+  "storyPath": [
+    "usage/01_type_driven_contract",
+    "usage/02_command_registration",
+    "usage/03_lazy_loading___dynamic_import",
+    "usage/04_jsx_command_handler",
+    "usage/05_view_delegation___ui_configuration"
+  ]
+}

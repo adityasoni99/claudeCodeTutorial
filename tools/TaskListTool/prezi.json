@@ -1,0 +1,134 @@
+{
+  "projectName": "TaskListTool",
+  "nodes": [
+    {
+      "id": "tasklisttool",
+      "label": "TaskListTool",
+      "type": "module",
+      "summary": "This project creates a **TaskList** tool that allows an AI agent to search and view the status of project tasks. It features *dynamic prompt engineering* to adjust instructions based on whether the agent is working alone or in a **swarm**, and uses strict **data schemas** to validate inputs and outputs. The tool also includes logic to filter blocked tasks and translates raw data into a readable text summary for the AI.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "tasklisttool/01_data_schema___validation",
+          "label": "Data Schema & Validation",
+          "type": "chapter",
+          "summary": "Uses Zod to define strict structures for inputs (what the AI sends) and outputs (what the tool returns). This ensures type safety and predictable data formats, specifically defining fields like `id`, `status`, `owner`, and `blockedBy`.\n\nIt's like a standardized order form. The kitchen (the code) won't accept a request unless it's written on the official ticket with all the necessary checkboxes filled out correctly.",
+          "contentPath": "01_data_schema___validation.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tasklisttool/02_tool_definition___configuration",
+          "label": "Tool Definition & Configuration",
+          "type": "chapter",
+          "summary": "This is the structural backbone of the feature. It uses the `buildTool` utility to package the task list functionality into a standardized object that the AI agent can recognize and execute. It defines metadata like the tool's name, search hints, and concurrency safety.\n\nIt's like filling out a detailed ID card or registration form for a new employee (the tool), telling the company (the system) exactly who they are and what permissions they have.",
+          "contentPath": "02_tool_definition___configuration.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tasklisttool/03_dynamic_prompt_engineering",
+          "label": "Dynamic Prompt Engineering",
+          "type": "chapter",
+          "summary": "Defines the instructions given to the AI on how to use this tool. Notably, this logic is dynamic: it checks if \"Agent Swarms\" are enabled to inject specific instructions about teamwork and workflow hierarchies.\n\nIt's like a briefing document that changes based on whether the worker is operating solo or as part of a larger team. If they are on a team, the document adds extra rules about coordination and task ownership.",
+          "contentPath": "03_dynamic_prompt_engineering.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tasklisttool/04_task_execution___logic",
+          "label": "Task Execution & Logic",
+          "type": "chapter",
+          "summary": "Encapsulated within the `call()` method, this logic performs the actual work. It fetches the raw list of tasks, filters out internal metadata, and importantly, calculates dependency status (checking if blocking tasks are completed) to present a clean state to the user.\n\nIt's like a librarian who doesn't just hand you a list of all books, but first checks the shelves to cross off the ones that are currently checked out or restricted, ensuring you only see what's actually available.",
+          "contentPath": "04_task_execution___logic.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tasklisttool/05_llm_response_formatting",
+          "label": "LLM Response Formatting",
+          "type": "chapter",
+          "summary": "Handled by `mapToolResultToToolResultBlockParam`, this translates the structured JSON data into a concise text format (e.g., `#1 [pending] Fix bug`) that represents the tool's output in the chat history.\n\nIt's like a translator that takes complex database spreadsheets and summarizes them into a short, readable memo so the manager (the AI) can quickly understand the status without parsing raw code.",
+          "contentPath": "05_llm_response_formatting.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "tasklisttool/01_data_schema___validation",
+          "target": "tasklisttool/02_tool_definition___configuration",
+          "label": "Retrieves prompt"
+        },
+        {
+          "source": "tasklisttool/01_data_schema___validation",
+          "target": "tasklisttool/04_task_execution___logic",
+          "label": "Enforces validation"
+        },
+        {
+          "source": "tasklisttool/01_data_schema___validation",
+          "target": "tasklisttool/03_dynamic_prompt_engineering",
+          "label": "Executes functionality"
+        },
+        {
+          "source": "tasklisttool/01_data_schema___validation",
+          "target": "tasklisttool/05_llm_response_formatting",
+          "label": "Formats output"
+        },
+        {
+          "source": "tasklisttool/05_llm_response_formatting",
+          "target": "tasklisttool/04_task_execution___logic",
+          "label": "Uses data types"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "tasklisttool/01_data_schema___validation",
+      "target": "tasklisttool/02_tool_definition___configuration",
+      "label": "Retrieves prompt"
+    },
+    {
+      "source": "tasklisttool/01_data_schema___validation",
+      "target": "tasklisttool/04_task_execution___logic",
+      "label": "Enforces validation"
+    },
+    {
+      "source": "tasklisttool/01_data_schema___validation",
+      "target": "tasklisttool/03_dynamic_prompt_engineering",
+      "label": "Executes functionality"
+    },
+    {
+      "source": "tasklisttool/01_data_schema___validation",
+      "target": "tasklisttool/05_llm_response_formatting",
+      "label": "Formats output"
+    },
+    {
+      "source": "tasklisttool/05_llm_response_formatting",
+      "target": "tasklisttool/04_task_execution___logic",
+      "label": "Uses data types"
+    }
+  ],
+  "storyPath": [
+    "tasklisttool/01_data_schema___validation",
+    "tasklisttool/02_tool_definition___configuration",
+    "tasklisttool/03_dynamic_prompt_engineering",
+    "tasklisttool/04_task_execution___logic",
+    "tasklisttool/05_llm_response_formatting"
+  ]
+}

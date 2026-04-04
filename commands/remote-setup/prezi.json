@@ -1,0 +1,134 @@
+{
+  "projectName": "remote-setup",
+  "nodes": [
+    {
+      "id": "remote-setup",
+      "label": "remote-setup",
+      "type": "module",
+      "summary": "This project facilitates connecting a local development environment to the **Claude** web platform by securely synchronizing GitHub credentials. It uses an interactive terminal interface to verify the local **GitHub CLI** status, wraps sensitive tokens in a secure *redacted* envelope, and transmits them to the backend to provision a cloud coding workspace.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "remote-setup/01_command_registration___gating",
+          "label": "Command Registration & Gating",
+          "type": "chapter",
+          "summary": "This abstraction defines the command's identity, including its name (`web-setup`), description, and loading logic. It acts as a gatekeeper, using feature flags (`tengu_cobalt_lantern`) and policy checks (`allow_remote_sessions`) to determine if the functionality should be visible or enabled for the user. It ensures that features are only accessible when appropriate configuration conditions are met.",
+          "contentPath": "01_command_registration___gating.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "remote-setup/02_interactive_setup_ui",
+          "label": "Interactive Setup UI",
+          "type": "chapter",
+          "summary": "A React-based terminal interface that manages the user's setup journey. It implements a state machine to transition through phases like 'checking', 'confirm', and 'uploading'. This abstraction provides feedback via loading spinners, error messages, and confirmation dialogs, acting as a friendly guide that walks the user through the process of connecting their local GitHub account to the web environment.",
+          "contentPath": "02_interactive_setup_ui.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "remote-setup/03_github_cli_integration",
+          "label": "GitHub CLI Integration",
+          "type": "chapter",
+          "summary": "Handles interactions with the local GitHub CLI (`gh`). It validates if the tool is installed and authenticated, and securely retrieves the OAuth token from the local environment. It serves as a bridge between the user's local development tools and the application, ensuring the necessary credentials exist before attempting to connect to the backend.",
+          "contentPath": "03_github_cli_integration.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "remote-setup/04_redacted_token_security",
+          "label": "Redacted Token Security",
+          "type": "chapter",
+          "summary": "A security wrapper class (`RedactedGithubToken`) designed to hold sensitive GitHub tokens. It overrides standard string conversion methods to display `[REDACTED:gh-token]` instead of the actual value. This ensures that sensitive credentials are never accidentally exposed in logs, error messages, or UI rendering, acting like a sealed envelope that is only opened at the exact moment of transmission.",
+          "contentPath": "04_redacted_token_security.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "remote-setup/05_backend_api_client",
+          "label": "Backend API Client",
+          "type": "chapter",
+          "summary": "Encapsulates the logic for communicating with the Claude backend services. It manages authentication headers, error handling, and specific endpoints for tasks like importing GitHub tokens (`importGithubToken`) and initializing cloud environments (`createDefaultEnvironment`). It functions as the dedicated messenger responsible for securely delivering user credentials and configuration requests to the server.",
+          "contentPath": "05_backend_api_client.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "remote-setup/01_command_registration___gating",
+          "target": "remote-setup/05_backend_api_client",
+          "label": "Loads and executes"
+        },
+        {
+          "source": "remote-setup/05_backend_api_client",
+          "target": "remote-setup/02_interactive_setup_ui",
+          "label": "Checks auth status"
+        },
+        {
+          "source": "remote-setup/02_interactive_setup_ui",
+          "target": "remote-setup/03_github_cli_integration",
+          "label": "Encapsulates token in"
+        },
+        {
+          "source": "remote-setup/05_backend_api_client",
+          "target": "remote-setup/04_redacted_token_security",
+          "label": "Triggers API upload"
+        },
+        {
+          "source": "remote-setup/04_redacted_token_security",
+          "target": "remote-setup/03_github_cli_integration",
+          "label": "Reads value from"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "remote-setup/01_command_registration___gating",
+      "target": "remote-setup/05_backend_api_client",
+      "label": "Loads and executes"
+    },
+    {
+      "source": "remote-setup/05_backend_api_client",
+      "target": "remote-setup/02_interactive_setup_ui",
+      "label": "Checks auth status"
+    },
+    {
+      "source": "remote-setup/02_interactive_setup_ui",
+      "target": "remote-setup/03_github_cli_integration",
+      "label": "Encapsulates token in"
+    },
+    {
+      "source": "remote-setup/05_backend_api_client",
+      "target": "remote-setup/04_redacted_token_security",
+      "label": "Triggers API upload"
+    },
+    {
+      "source": "remote-setup/04_redacted_token_security",
+      "target": "remote-setup/03_github_cli_integration",
+      "label": "Reads value from"
+    }
+  ],
+  "storyPath": [
+    "remote-setup/01_command_registration___gating",
+    "remote-setup/02_interactive_setup_ui",
+    "remote-setup/03_github_cli_integration",
+    "remote-setup/04_redacted_token_security",
+    "remote-setup/05_backend_api_client"
+  ]
+}

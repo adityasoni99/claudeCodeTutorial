@@ -1,0 +1,156 @@
+{
+  "projectName": "extractMemories",
+  "nodes": [
+    {
+      "id": "extractmemories",
+      "label": "extractMemories",
+      "type": "module",
+      "summary": "This project implements a background system for extracting and saving **persistent memories** from user conversations without interrupting the main chat flow. It uses a **Forked Agent Execution** model to analyze only new messages tracked by an **Incremental Context Cursor**. The system ensures safety and consistency by operating within strict **Scoped Tool Permissions** and using **Closure-Based State Management** to isolate its execution environment.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "extractmemories/01_extraction_prompt_templates",
+          "label": "Extraction Prompt Templates",
+          "type": "chapter",
+          "summary": "These templates define the persona and rules for the subagent. They dynamically inject instructions based on whether \"Team Memory\" is enabled or if the user is in \"Auto-Only\" mode. The prompts dictate the specific YAML frontmatter format required for memory files and instruct the model to update existing files rather than creating duplicates.\n\nThis is the \"Employee Handbook\" given to the background agent, containing specific forms to fill out (frontmatter) and rules of conduct (do not invent facts, do not use git).",
+          "contentPath": "01_extraction_prompt_templates.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "extractmemories/02_memory_manifest_injection",
+          "label": "Memory Manifest Injection",
+          "type": "chapter",
+          "summary": "To save the agent from wasting a turn running `ls` to see what memories already exist, the system pre-scans the memory directory and injects a list (manifest) of existing files directly into the prompt.\n\nIt\u2019s like handing a shopper a list of what's already in the pantry before they go to the store, so they don't accidentally buy a second jar of peanut butter.",
+          "contentPath": "02_memory_manifest_injection.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "extractmemories/03_incremental_context_cursor",
+          "label": "Incremental Context Cursor",
+          "type": "chapter",
+          "summary": "To avoid re-analyzing the entire conversation history every turn, the system maintains a \"cursor\" (specifically `lastMemoryMessageUuid`). It tracks the last message processed and calculates `newMessageCount`.\n\nIt acts like a bookmark in a book. Every time the agent wakes up to extract memories, it doesn't start from page one; it starts reading exactly where it left off last time, processes the new pages, and moves the bookmark forward.",
+          "contentPath": "03_incremental_context_cursor.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "extractmemories/04_forked_agent_execution",
+          "label": "Forked Agent Execution",
+          "type": "chapter",
+          "summary": "The core mechanism that runs memory extraction as a background process. Instead of interrupting the user's main conversation, the system creates a \"perfect fork\" of the chat history. This subagent shares the prompt cache with the main thread for efficiency but runs independently to analyze recent messages.\n\nThink of it like a court stenographer who steps out of the room to file a report based on the testimony just heard, while the trial continues uninterrupted in the main room.",
+          "contentPath": "04_forked_agent_execution.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "extractmemories/05_scoped_tool_permissions",
+          "label": "Scoped Tool Permissions",
+          "type": "chapter",
+          "summary": "The extraction agent operates within a strict security sandbox. Unlike the main assistant, which might have broad access, this subagent uses a custom `canUseTool` function. It is allowed to read files globally (to understand context) but can only write or edit files strictly within the specific memory directory. It is also restricted to read-only Bash commands (like `ls` or `cat`).\n\nIt's like giving a contractor a keycard that opens the archives and the notepad, but strictly locks them out of the server room and the executive offices.",
+          "contentPath": "05_scoped_tool_permissions.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "extractmemories/06_closure_based_state_management",
+          "label": "Closure-Based State Management",
+          "type": "chapter",
+          "summary": "The module uses a closure pattern via `initExtractMemories` to encapsulate state. Variables like `inFlightExtractions`, `turnsSinceLastExtraction`, and the message cursor are kept inside this scope rather than as global module variables. This ensures that tests or new sessions get a fresh state without side effects from previous runs.\n\nImagine a fresh clean room is built for every new project. The tools and notes (state) stay inside that room, and when the project is done, the room is sealed off, ensuring nothing leaks into the next project.",
+          "contentPath": "06_closure_based_state_management.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "extractmemories/06_closure_based_state_management",
+          "target": "extractmemories/01_extraction_prompt_templates",
+          "label": "Orchestrates execution"
+        },
+        {
+          "source": "extractmemories/06_closure_based_state_management",
+          "target": "extractmemories/02_memory_manifest_injection",
+          "label": "Maintains persistent state"
+        },
+        {
+          "source": "extractmemories/02_memory_manifest_injection",
+          "target": "extractmemories/04_forked_agent_execution",
+          "label": "Scopes analysis range"
+        },
+        {
+          "source": "extractmemories/05_scoped_tool_permissions",
+          "target": "extractmemories/04_forked_agent_execution",
+          "label": "Injects existing files"
+        },
+        {
+          "source": "extractmemories/04_forked_agent_execution",
+          "target": "extractmemories/01_extraction_prompt_templates",
+          "label": "Defines agent instructions"
+        },
+        {
+          "source": "extractmemories/01_extraction_prompt_templates",
+          "target": "extractmemories/03_incremental_context_cursor",
+          "label": "Enforces security policies"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "extractmemories/06_closure_based_state_management",
+      "target": "extractmemories/01_extraction_prompt_templates",
+      "label": "Orchestrates execution"
+    },
+    {
+      "source": "extractmemories/06_closure_based_state_management",
+      "target": "extractmemories/02_memory_manifest_injection",
+      "label": "Maintains persistent state"
+    },
+    {
+      "source": "extractmemories/02_memory_manifest_injection",
+      "target": "extractmemories/04_forked_agent_execution",
+      "label": "Scopes analysis range"
+    },
+    {
+      "source": "extractmemories/05_scoped_tool_permissions",
+      "target": "extractmemories/04_forked_agent_execution",
+      "label": "Injects existing files"
+    },
+    {
+      "source": "extractmemories/04_forked_agent_execution",
+      "target": "extractmemories/01_extraction_prompt_templates",
+      "label": "Defines agent instructions"
+    },
+    {
+      "source": "extractmemories/01_extraction_prompt_templates",
+      "target": "extractmemories/03_incremental_context_cursor",
+      "label": "Enforces security policies"
+    }
+  ],
+  "storyPath": [
+    "extractmemories/01_extraction_prompt_templates",
+    "extractmemories/02_memory_manifest_injection",
+    "extractmemories/03_incremental_context_cursor",
+    "extractmemories/04_forked_agent_execution",
+    "extractmemories/05_scoped_tool_permissions",
+    "extractmemories/06_closure_based_state_management"
+  ]
+}

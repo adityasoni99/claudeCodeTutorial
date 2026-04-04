@@ -1,0 +1,134 @@
+{
+  "projectName": "bootstrap",
+  "nodes": [
+    {
+      "id": "bootstrap",
+      "label": "bootstrap",
+      "type": "module",
+      "summary": "This project serves as the **central nervous system** for an AI agent, maintaining a monolithic **Global Application State** as the single source of truth. It coordinates the agent's runtime environment by managing **session lifecycles**, tracking **resource and cost accounting** in real-time, and maintaining **contextual modes** (like \"Plan Mode\" or \"Auto Mode\"). Additionally, it provides the necessary hooks for **telemetry infrastructure** to report health and usage statistics to external observers.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "bootstrap/01_global_application_state",
+          "label": "Global Application State",
+          "type": "chapter",
+          "summary": "This is the central \"single source of truth\" for the application's runtime environment. It acts like a massive singleton object (the `STATE` variable) that holds everything from the current working directory and CLI flags to active plugins and initialization schemas.\n\nThink of it as the application's \"short-term memory\" or whiteboard. Modules across the system read from and write to this central location to coordinate behavior without passing hundreds of parameters through every function call. The code explicitly warns developers to be judicious about adding to this global footprint.",
+          "contentPath": "01_global_application_state.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bootstrap/02_session_lifecycle_management",
+          "label": "Session Lifecycle Management",
+          "type": "chapter",
+          "summary": "This abstraction governs the identity and continuity of a user's interaction with the agent. It manages the `sessionId`, determines the stable `projectRoot` (distinct from the current working directory), and handles the mechanics of \"teleporting\" or switching between sessions via `switchSession`.\n\nIt acts like a session manager in a web browser, ensuring that when the user switches contexts or \"tabs\" (sessions), the correct history, file permissions, and project associations are loaded or reset, maintaining the integrity of the conversation lineage.",
+          "contentPath": "02_session_lifecycle_management.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bootstrap/03_agent_context___mode_tracking",
+          "label": "Agent Context & Mode Tracking",
+          "type": "chapter",
+          "summary": "This abstraction tracks the semantic \"mode\" of the agent\u2014whether it is in \"Plan Mode,\" \"Auto Mode,\" or interactive mode. It also maintains `invokedSkills` and specific latches for beta features (like `afkModeHeaderLatched`).\n\nIt acts like a state machine for the agent's behavior. By checking these flags, the system determines if it should prompt the user for permission, show specific exit notifications, or attach specific headers to API requests to preserve prompt caching efficiency.",
+          "contentPath": "03_agent_context___mode_tracking.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bootstrap/04_resource___cost_accounting",
+          "label": "Resource & Cost Accounting",
+          "type": "chapter",
+          "summary": "A dedicated subsystem within the state for tracking the economic and computational cost of the agent's actions. It aggregates `totalCostUSD`, token usage (input/output/cache), and API duration metrics across various models.\n\nIt functions like a taxi meter running in the background. Every time the agent invokes an LLM or performs a tool action, this abstraction tallies the bill, ensuring the user (and the system) has real-time visibility into the resource consumption of the current task.",
+          "contentPath": "04_resource___cost_accounting.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bootstrap/05_telemetry_infrastructure",
+          "label": "Telemetry Infrastructure",
+          "type": "chapter",
+          "summary": "This layer holds the references to OpenTelemetry providers (`Meter`, `Logger`, `Tracer`) and specific `AttributedCounter` instances (like `locCounter` for lines of code or `costCounter`).\n\nIt serves as the application's \"black box recorder.\" It doesn't generate the data itself but provides the standardized hooks and storage slots where the rest of the application plugs in to report health, performance, and usage statistics to external monitoring systems.",
+          "contentPath": "05_telemetry_infrastructure.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "bootstrap/02_session_lifecycle_management",
+          "target": "bootstrap/01_global_application_state",
+          "label": "Modifies session identity"
+        },
+        {
+          "source": "bootstrap/03_agent_context___mode_tracking",
+          "target": "bootstrap/01_global_application_state",
+          "label": "Records consumption metrics"
+        },
+        {
+          "source": "bootstrap/04_resource___cost_accounting",
+          "target": "bootstrap/01_global_application_state",
+          "label": "Injects monitoring hooks"
+        },
+        {
+          "source": "bootstrap/05_telemetry_infrastructure",
+          "target": "bootstrap/01_global_application_state",
+          "label": "Reads and writes mode state"
+        },
+        {
+          "source": "bootstrap/02_session_lifecycle_management",
+          "target": "bootstrap/05_telemetry_infrastructure",
+          "label": "Clears plan cache on reset"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "bootstrap/02_session_lifecycle_management",
+      "target": "bootstrap/01_global_application_state",
+      "label": "Modifies session identity"
+    },
+    {
+      "source": "bootstrap/03_agent_context___mode_tracking",
+      "target": "bootstrap/01_global_application_state",
+      "label": "Records consumption metrics"
+    },
+    {
+      "source": "bootstrap/04_resource___cost_accounting",
+      "target": "bootstrap/01_global_application_state",
+      "label": "Injects monitoring hooks"
+    },
+    {
+      "source": "bootstrap/05_telemetry_infrastructure",
+      "target": "bootstrap/01_global_application_state",
+      "label": "Reads and writes mode state"
+    },
+    {
+      "source": "bootstrap/02_session_lifecycle_management",
+      "target": "bootstrap/05_telemetry_infrastructure",
+      "label": "Clears plan cache on reset"
+    }
+  ],
+  "storyPath": [
+    "bootstrap/01_global_application_state",
+    "bootstrap/02_session_lifecycle_management",
+    "bootstrap/03_agent_context___mode_tracking",
+    "bootstrap/04_resource___cost_accounting",
+    "bootstrap/05_telemetry_infrastructure"
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "projectName": "review",
+  "nodes": [
+    {
+      "id": "review",
+      "label": "review",
+      "type": "module",
+      "summary": "This project implements an **automated code review** tool that runs in the cloud. It features a **Remote Session Launcher** to \"teleport\" the local codebase to a remote environment for analysis. The system includes a strict **Billing Authorization Gate** to manage quotas and costs, using an **Interactive Dialog System** to confirm overage charges with the user directly in the terminal before execution.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "review/01_command_execution_flow",
+          "label": "Command Execution Flow",
+          "type": "chapter",
+          "summary": "The high-level orchestrator for the `/ultrareview` command. It connects the user's input to the backend logic. It runs the billing checks, decides whether to show the overage dialog or an error message, and finally triggers the remote launch, piping the results back to the chat.\nImagine a front-desk manager who takes your request, checks with finance (billing gate), asks for your signature if needed (dialog), and then dispatches the work to the back office (remote launcher).",
+          "contentPath": "01_command_execution_flow.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "review/02_remote_session_launcher",
+          "label": "Remote Session Launcher",
+          "type": "chapter",
+          "summary": "This abstraction handles the complexity of preparing the local environment for a remote review. It identifies whether to review a specific Pull Request or the local working tree (by finding the merge base). It creates a \"teleport\" session, setting up the necessary environment variables and containers in the cloud to run the review agent.\nThink of it as a logistics coordinator that packages your code (either a specific shipment/PR or the current warehouse state/branch) and sends it to a remote facility where the actual inspection takes place.",
+          "contentPath": "02_remote_session_launcher.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "review/03_interactive_dialog_system",
+          "label": "Interactive Dialog System",
+          "type": "chapter",
+          "summary": "A React-based user interface rendered directly in the command output stream. It manages user interactions for critical decisions\u2014specifically confirming billing overages\u2014without leaving the terminal context. It handles async states (launching vs. idle) and cancellation signals.\nIt's like a pop-up confirmation window embedded in your text conversation that halts the process until you click \"Proceed\" or \"Cancel,\" ensuring you don't accidentally incur charges.",
+          "contentPath": "03_interactive_dialog_system.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "review/04_billing_authorization_gate",
+          "label": "Billing Authorization Gate",
+          "type": "chapter",
+          "summary": "A logic layer that determines if a review can proceed based on the user's subscription, remaining quota, and credit balance. It acts as a checkpoint that categorizes the request status (e.g., 'proceed', 'low-balance', 'needs-confirm') before any resources are provisioned.\nIt functions like a toll booth for the feature: some users have a pass (quota), others pay per use (extra usage), some are blocked due to insufficient funds, and others need to sign a waiver (confirm overage) before the gate opens.",
+          "contentPath": "04_billing_authorization_gate.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "review/05_feature_visibility_control",
+          "label": "Feature Visibility Control",
+          "type": "chapter",
+          "summary": "A simple abstraction used to toggle the availability of the ultrareview command based on remote configuration flags (GrowthBook). It ensures that the command is only exposed to users when the feature is globally enabled or specifically rolled out.\nIt acts like a hidden switch that determines whether the \"Review\" button even appears on the control panel.",
+          "contentPath": "05_feature_visibility_control.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "review/05_feature_visibility_control",
+          "target": "review/04_billing_authorization_gate",
+          "label": "Gates access to"
+        },
+        {
+          "source": "review/04_billing_authorization_gate",
+          "target": "review/02_remote_session_launcher",
+          "label": "Verifies billing status"
+        },
+        {
+          "source": "review/04_billing_authorization_gate",
+          "target": "review/03_interactive_dialog_system",
+          "label": "Renders confirmation UI"
+        },
+        {
+          "source": "review/04_billing_authorization_gate",
+          "target": "review/01_command_execution_flow",
+          "label": "Triggers remote session"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "review/05_feature_visibility_control",
+      "target": "review/04_billing_authorization_gate",
+      "label": "Gates access to"
+    },
+    {
+      "source": "review/04_billing_authorization_gate",
+      "target": "review/02_remote_session_launcher",
+      "label": "Verifies billing status"
+    },
+    {
+      "source": "review/04_billing_authorization_gate",
+      "target": "review/03_interactive_dialog_system",
+      "label": "Renders confirmation UI"
+    },
+    {
+      "source": "review/04_billing_authorization_gate",
+      "target": "review/01_command_execution_flow",
+      "label": "Triggers remote session"
+    }
+  ],
+  "storyPath": [
+    "review/01_command_execution_flow",
+    "review/02_remote_session_launcher",
+    "review/03_interactive_dialog_system",
+    "review/04_billing_authorization_gate",
+    "review/05_feature_visibility_control"
+  ]
+}

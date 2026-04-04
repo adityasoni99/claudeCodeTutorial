@@ -1,0 +1,102 @@
+{
+  "projectName": "mock-limits",
+  "nodes": [
+    {
+      "id": "mock-limits",
+      "label": "mock-limits",
+      "type": "module",
+      "summary": "This project creates a **Mock Definition** which serves as a *placeholder* or \"stub\" for a feature limit within an application. It ensures that the specific feature is permanently **disabled** (via State Evaluation) and **hidden** from the user interface (via Presentation Control), while still providing a valid **identity** so the rest of the system can safely interact with it without crashing.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "mock-limits/01_mock_definition",
+          "label": "Mock Definition",
+          "type": "chapter",
+          "summary": "This is the primary abstraction of the module. It represents a \"stub\" or a placeholder implementation for a limit or feature flag.\nIt is like a \"crash test dummy\" or a prop on a movie set; it fulfills the structural requirements (the API contract) expected by the rest of the application but contains no real logic or functional code, ensuring the system doesn't crash when a real implementation is missing.",
+          "contentPath": "01_mock_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mock-limits/02_identity_management",
+          "label": "Identity Management",
+          "type": "chapter",
+          "summary": "Represented by the `name` property, this provides a human-readable identifier for the module.\nIt is like a nametag or a label on a box; it allows the larger system to identify, log, or reference this specific mock object ('stub') distinct from other real limits or features within the application's registry.",
+          "contentPath": "02_identity_management.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mock-limits/03_state_evaluation",
+          "label": "State Evaluation",
+          "type": "chapter",
+          "summary": "Represented by the `isEnabled` function, this abstraction defines whether the specific limit or feature is currently active.\nIt acts like a circuit breaker or a master switch. In this mock context, it is hardwired to return `false` (the \"Off\" position), ensuring that whatever feature or limit this stub represents is permanently disabled during testing or development.",
+          "contentPath": "03_state_evaluation.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mock-limits/04_presentation_control",
+          "label": "Presentation Control",
+          "type": "chapter",
+          "summary": "Represented by the `isHidden` property, this controls whether this specific module should be visible in user interfaces, such as administration dashboards or configuration lists.\nIt is like an \"Invisible\" attribute in a file system; it tells the UI layer that while this component exists in the code, it is internal or irrelevant to the end-user and should be hidden from view.",
+          "contentPath": "04_presentation_control.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "mock-limits/01_mock_definition",
+          "target": "mock-limits/02_identity_management",
+          "label": "Defines status logic"
+        },
+        {
+          "source": "mock-limits/01_mock_definition",
+          "target": "mock-limits/03_state_evaluation",
+          "label": "Configures visibility"
+        },
+        {
+          "source": "mock-limits/01_mock_definition",
+          "target": "mock-limits/04_presentation_control",
+          "label": "Assigns identifier"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "mock-limits/01_mock_definition",
+      "target": "mock-limits/02_identity_management",
+      "label": "Defines status logic"
+    },
+    {
+      "source": "mock-limits/01_mock_definition",
+      "target": "mock-limits/03_state_evaluation",
+      "label": "Configures visibility"
+    },
+    {
+      "source": "mock-limits/01_mock_definition",
+      "target": "mock-limits/04_presentation_control",
+      "label": "Assigns identifier"
+    }
+  ],
+  "storyPath": [
+    "mock-limits/01_mock_definition",
+    "mock-limits/02_identity_management",
+    "mock-limits/03_state_evaluation",
+    "mock-limits/04_presentation_control"
+  ]
+}

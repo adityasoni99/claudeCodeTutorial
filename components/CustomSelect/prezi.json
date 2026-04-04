@@ -1,0 +1,146 @@
+{
+  "projectName": "CustomSelect",
+  "nodes": [
+    {
+      "id": "customselect",
+      "label": "CustomSelect",
+      "type": "module",
+      "summary": "This project creates a sophisticated **interactive list** component for terminal applications using React Ink. It separates the \"brain\" (navigation and viewport logic) from the \"rules\" (selection behavior) to efficiently handle both single and **multi-select** workflows. It leverages a specialized *doubly-linked list* data structure for fast scrolling and includes versatile renderers for displaying text, inputs, and images.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "customselect/01_multi_select_container",
+          "label": "Multi-Select Container",
+          "type": "chapter",
+          "summary": "The high-level composition component that brings everything together for the multi-select feature. It initializes the state, iterates through the visible options, and chooses whether to render a standard text row or an input row based on the data.\nThink of this as the main \"Window\" or \"Page\" component that assembles the logic (hooks) and the visuals (renderers) into the final UI widget.",
+          "contentPath": "01_multi_select_container.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "customselect/02_option_renderers",
+          "label": "Option Renderers",
+          "type": "chapter",
+          "summary": "These components are responsible for drawing the actual rows of data to the terminal. `SelectOption` renders a standard text row. `SelectInputOption` is a complex variant that renders an interactive text input field within the list, handling specialized features like text editing, cursor positioning, and image pasting.\nThey are the \"View\" in a Model-View-Controller architecture, determining how a specific piece of data looks to the user.",
+          "contentPath": "02_option_renderers.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "customselect/03_selection_behavior_hooks",
+          "label": "Selection Behavior Hooks",
+          "type": "chapter",
+          "summary": "These hooks build upon the Navigation Engine to define the specific rules of interaction. `useSelectState` handles single-choice logic (like a radio button group), while `useMultiSelectState` handles multiple selections (like checkboxes), distinct \"submit\" actions, and maintaining a set of chosen values.\nThey act as the \"Game Rules\" layer\u2014determining what happens when you press Enter (toggle selection vs. confirm choice) or Space.",
+          "contentPath": "03_selection_behavior_hooks.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "customselect/04_input_controller",
+          "label": "Input Controller",
+          "type": "chapter",
+          "summary": "This abstraction acts as the bridge between the user's keyboard and the application state. It intercepts raw terminal input events (via Ink's `useInput`)\u2014such as arrow keys, numbers, and escape\u2014and translates them into high-level actions (like `focusNextOption` or `onCancel`).\nThink of it as the device driver for a game controller; it maps physical button presses to actions the game logic understands.",
+          "contentPath": "04_input_controller.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "customselect/05_navigation_engine___viewport",
+          "label": "Navigation Engine & Viewport",
+          "type": "chapter",
+          "summary": "This is the \"brain\" responsible for movement within the list. It manages which item is currently focused and calculates the \"viewport\" (which items are visible on screen versus which are scrolled out of view). It uses a reducer pattern to handle actions like `focus-next`, `focus-previous`, and `focus-page-down`.\nThink of it like the scroll bar logic in a web browser; it doesn't care *what* the content is, it just ensures the right portion is visible and the correct item is highlighted.",
+          "contentPath": "05_navigation_engine___viewport.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "customselect/06_linked_option_data_structure",
+          "label": "Linked Option Data Structure",
+          "type": "chapter",
+          "summary": "`OptionMap` is a specialized data structure that transforms a flat array of options into a doubly-linked list. It allows the navigation logic to easily find the \"next\" or \"previous\" item without constantly searching through arrays.\nIt acts like a Rolodex where every card knows exactly which card is behind it and which is in front, allowing for O(1) traversal performance during navigation.",
+          "contentPath": "06_linked_option_data_structure.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "customselect/06_linked_option_data_structure",
+          "target": "customselect/02_option_renderers",
+          "label": "Initializes state from"
+        },
+        {
+          "source": "customselect/06_linked_option_data_structure",
+          "target": "customselect/04_input_controller",
+          "label": "Renders visual rows using"
+        },
+        {
+          "source": "customselect/02_option_renderers",
+          "target": "customselect/01_multi_select_container",
+          "label": "Delegates scrolling logic to"
+        },
+        {
+          "source": "customselect/01_multi_select_container",
+          "target": "customselect/05_navigation_engine___viewport",
+          "label": "Organizes data with"
+        },
+        {
+          "source": "customselect/03_selection_behavior_hooks",
+          "target": "customselect/02_option_renderers",
+          "label": "Manipulates state via inputs"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "customselect/06_linked_option_data_structure",
+      "target": "customselect/02_option_renderers",
+      "label": "Initializes state from"
+    },
+    {
+      "source": "customselect/06_linked_option_data_structure",
+      "target": "customselect/04_input_controller",
+      "label": "Renders visual rows using"
+    },
+    {
+      "source": "customselect/02_option_renderers",
+      "target": "customselect/01_multi_select_container",
+      "label": "Delegates scrolling logic to"
+    },
+    {
+      "source": "customselect/01_multi_select_container",
+      "target": "customselect/05_navigation_engine___viewport",
+      "label": "Organizes data with"
+    },
+    {
+      "source": "customselect/03_selection_behavior_hooks",
+      "target": "customselect/02_option_renderers",
+      "label": "Manipulates state via inputs"
+    }
+  ],
+  "storyPath": [
+    "customselect/01_multi_select_container",
+    "customselect/02_option_renderers",
+    "customselect/03_selection_behavior_hooks",
+    "customselect/04_input_controller",
+    "customselect/05_navigation_engine___viewport",
+    "customselect/06_linked_option_data_structure"
+  ]
+}

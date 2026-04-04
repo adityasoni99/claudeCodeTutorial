@@ -1,0 +1,124 @@
+{
+  "projectName": "btw",
+  "nodes": [
+    {
+      "id": "btw",
+      "label": "btw",
+      "type": "module",
+      "summary": "This project implements a **side question** feature for a CLI AI assistant, allowing users to ask quick queries (via `/btw`) without disrupting the main conversation flow. It renders a temporary *overlay UI* to handle these requests and uses **context forking** to efficiently reuse the existing chat history without modifying it.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "btw/01_command_registration",
+          "label": "Command Registration",
+          "type": "chapter",
+          "summary": "Defines how the `btw` feature is plugged into the main application. It uses a structured object to define metadata like the command name, description, and argument hints. Crucially, it uses lazy loading (`load: () => import(...)`) to ensure the heavy logic is only fetched when the user actually runs the command. It's like a menu item in a restaurant that references a recipe in the back, rather than keeping the dish pre-made on the table.",
+          "contentPath": "01_command_registration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "btw/02_side_question_ui_component",
+          "label": "Side Question UI Component",
+          "type": "chapter",
+          "summary": "The `BtwSideQuestion` React component manages the visual interface for the feature. Built using Ink (React for CLI), it handles the display states: showing a spinner while the AI \"thinks,\" rendering the returned Markdown answer, or displaying errors. It creates a dedicated box in the terminal that overlays the main conversation. Think of it as a temporary \"modal\" window or a sticky note that appears on top of your main terminal workflow.",
+          "contentPath": "02_side_question_ui_component.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "btw/03_event_handling___navigation",
+          "label": "Event Handling & Navigation",
+          "type": "chapter",
+          "summary": "Custom keyboard event listeners are set up to manage user interaction within the specific command view. The `handleKeyDown` function captures keys like Escape, Enter, and Arrows to dismiss the view or scroll through the content. It overrides standard terminal behavior to give the user focus control within the side-question box. It acts as a local \"driver\" for the interface, steering the view based on user input.",
+          "contentPath": "03_event_handling___navigation.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "btw/04_async_execution___abort_control",
+          "label": "Async Execution & Abort Control",
+          "type": "chapter",
+          "summary": "The feature handles the interaction with the AI backend asynchronously using `useEffect`. It creates an `AbortController` to manage the request lifecycle. If the user dismisses the question window before the AI responds, the signal aborts the pending operation, preventing memory leaks or state updates on unmounted components. It ensures the UI remains responsive and cleans up after itself, similar to hanging up a phone call if the other person doesn't answer in time.",
+          "contentPath": "04_async_execution___abort_control.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "btw/05_context_forking___caching",
+          "label": "Context Forking & Caching",
+          "type": "chapter",
+          "summary": "Implemented in `buildCacheSafeParams`, this abstraction prepares the AI's context for the side question without disrupting the main chat history. It attempts to reuse the exact system prompts and context from the previous turn (`getLastCacheSafeParams`) to maximize prompt caching (a performance optimization). If cached parameters aren't available, it rebuilds the context from scratch. It's like photocopying the current conversation so you can write notes on the copy without scribbling on the original document.",
+          "contentPath": "05_context_forking___caching.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "btw/01_command_registration",
+          "target": "btw/02_side_question_ui_component",
+          "label": "Lazily loads and renders"
+        },
+        {
+          "source": "btw/02_side_question_ui_component",
+          "target": "btw/05_context_forking___caching",
+          "label": "Binds input handlers"
+        },
+        {
+          "source": "btw/02_side_question_ui_component",
+          "target": "btw/04_async_execution___abort_control",
+          "label": "Triggers async fetch"
+        },
+        {
+          "source": "btw/04_async_execution___abort_control",
+          "target": "btw/03_event_handling___navigation",
+          "label": "Requests context parameters"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "btw/01_command_registration",
+      "target": "btw/02_side_question_ui_component",
+      "label": "Lazily loads and renders"
+    },
+    {
+      "source": "btw/02_side_question_ui_component",
+      "target": "btw/05_context_forking___caching",
+      "label": "Binds input handlers"
+    },
+    {
+      "source": "btw/02_side_question_ui_component",
+      "target": "btw/04_async_execution___abort_control",
+      "label": "Triggers async fetch"
+    },
+    {
+      "source": "btw/04_async_execution___abort_control",
+      "target": "btw/03_event_handling___navigation",
+      "label": "Requests context parameters"
+    }
+  ],
+  "storyPath": [
+    "btw/01_command_registration",
+    "btw/02_side_question_ui_component",
+    "btw/03_event_handling___navigation",
+    "btw/04_async_execution___abort_control",
+    "btw/05_context_forking___caching"
+  ]
+}

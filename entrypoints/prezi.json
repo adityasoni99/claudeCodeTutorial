@@ -1,0 +1,146 @@
+{
+  "projectName": "entrypoints",
+  "nodes": [
+    {
+      "id": "entrypoints",
+      "label": "entrypoints",
+      "type": "module",
+      "summary": "This project implements **Claude Code**, an advanced AI agent accessible via a terminal interface. It serves as a comprehensive **CLI tool** that acts as a \"receptionist\" to route user commands, manages complex **initialization** routines to ensure a secure environment, and exposes an **Agent SDK** for programmatic control. Additionally, it integrates a **Model Context Protocol (MCP)** server to bridge the AI with external tools, all governed by strict **data models** and **sandboxing** rules to ensure safe and structured communication.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "entrypoints/01_cli_entrypoint___dispatch",
+          "label": "CLI Entrypoint & Dispatch",
+          "type": "chapter",
+          "summary": "This is the front door of the application. Like a receptionist at a large building, it intercepts every command line request (`claude ...`) and decides where it needs to go. It handles \"fast paths\" (like checking the version or dumping help) to avoid loading heavy machinery unnecessarily. If the request is complex, it routes execution to the appropriate handler, such as the interactive REPL, the background daemon, or the bridge to the web interface.",
+          "contentPath": "01_cli_entrypoint___dispatch.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "entrypoints/02_system_initialization",
+          "label": "System Initialization",
+          "type": "chapter",
+          "summary": "This abstraction manages the \"pre-flight checks\" before the agent starts working. Just as a pilot checks fuel and instruments before takeoff, this system initializes telemetry, loads configuration files, sets up authentication, establishes trust (security), and prepares the environment variables. It ensures that the application is in a valid state before any user logic or AI processing begins.",
+          "contentPath": "02_system_initialization.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "entrypoints/03_agent_sdk",
+          "label": "Agent SDK",
+          "type": "chapter",
+          "summary": "The SDK acts as a programmatic remote control for the AI agent. Instead of a human typing commands into a terminal, developers use this interface to control the agent via code. It allows for creating sessions, sending queries, forking conversations, and managing permissions programmatically. It serves as the bridge between external codebases and the internal logic of the Claude Code agent.",
+          "contentPath": "03_agent_sdk.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "entrypoints/04_model_context_protocol__mcp__server",
+          "label": "Model Context Protocol (MCP) Server",
+          "type": "chapter",
+          "summary": "MCP is a universal translator that connects the AI model to external tools and data. In this specific context, this abstraction implements an MCP *Server*. It wraps the agent's internal capabilities and exposes them as standardized tools that other MCP-compliant clients can understand. It handles listing available tools and executing them when requested, effectively allowing the AI to \"plug in\" to other software ecosystems.",
+          "contentPath": "04_model_context_protocol__mcp__server.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "entrypoints/05_data_model___communication_protocol",
+          "label": "Data Model & Communication Protocol",
+          "type": "chapter",
+          "summary": "This defines the shared language and grammar for the application. It consists of strict schemas (blueprints) for every type of message, configuration, and control signal. Whether it's a user chat message, a request to interrupt the AI, or a setting to change the model, these files define exactly what that data looks like. This ensures that the SDK, the CLI, and the UI all speak the same language without crashing due to misunderstood data.",
+          "contentPath": "05_data_model___communication_protocol.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "entrypoints/06_sandboxing___security_configuration",
+          "label": "Sandboxing & Security Configuration",
+          "type": "chapter",
+          "summary": "This acts as a digital playpen or safety harness for the AI. It defines the rules of engagement for what the agent is allowed to touch on the user's computer. It includes configurations for network permissions (allowed domains), filesystem access (read/write paths), and command execution policies. This abstraction is critical for preventing the AI from accidentally modifying sensitive files or accessing unauthorized network resources.",
+          "contentPath": "06_sandboxing___security_configuration.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "entrypoints/01_cli_entrypoint___dispatch",
+          "target": "entrypoints/02_system_initialization",
+          "label": "Triggers initialization"
+        },
+        {
+          "source": "entrypoints/01_cli_entrypoint___dispatch",
+          "target": "entrypoints/04_model_context_protocol__mcp__server",
+          "label": "Launches server"
+        },
+        {
+          "source": "entrypoints/03_agent_sdk",
+          "target": "entrypoints/05_data_model___communication_protocol",
+          "label": "Uses types from"
+        },
+        {
+          "source": "entrypoints/03_agent_sdk",
+          "target": "entrypoints/04_model_context_protocol__mcp__server",
+          "label": "Factory for"
+        },
+        {
+          "source": "entrypoints/05_data_model___communication_protocol",
+          "target": "entrypoints/06_sandboxing___security_configuration",
+          "label": "Incorporates schemas"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "entrypoints/01_cli_entrypoint___dispatch",
+      "target": "entrypoints/02_system_initialization",
+      "label": "Triggers initialization"
+    },
+    {
+      "source": "entrypoints/01_cli_entrypoint___dispatch",
+      "target": "entrypoints/04_model_context_protocol__mcp__server",
+      "label": "Launches server"
+    },
+    {
+      "source": "entrypoints/03_agent_sdk",
+      "target": "entrypoints/05_data_model___communication_protocol",
+      "label": "Uses types from"
+    },
+    {
+      "source": "entrypoints/03_agent_sdk",
+      "target": "entrypoints/04_model_context_protocol__mcp__server",
+      "label": "Factory for"
+    },
+    {
+      "source": "entrypoints/05_data_model___communication_protocol",
+      "target": "entrypoints/06_sandboxing___security_configuration",
+      "label": "Incorporates schemas"
+    }
+  ],
+  "storyPath": [
+    "entrypoints/01_cli_entrypoint___dispatch",
+    "entrypoints/02_system_initialization",
+    "entrypoints/03_agent_sdk",
+    "entrypoints/04_model_context_protocol__mcp__server",
+    "entrypoints/05_data_model___communication_protocol",
+    "entrypoints/06_sandboxing___security_configuration"
+  ]
+}

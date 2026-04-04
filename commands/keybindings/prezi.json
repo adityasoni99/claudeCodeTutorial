@@ -1,0 +1,124 @@
+{
+  "projectName": "keybindings",
+  "nodes": [
+    {
+      "id": "keybindings",
+      "label": "keybindings",
+      "type": "module",
+      "summary": "This project manages the setup of user **keybindings** by providing a specific CLI command. It ensures the feature is enabled via **feature gating** before safely creating a configuration file (preventing accidental data loss) and opening it in the user's preferred *external text editor*. The system is optimized to load the heavy execution logic **lazily**, only when the specific command is requested.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "keybindings/01_command_module_structure",
+          "label": "Command Module Structure",
+          "type": "chapter",
+          "summary": "This abstraction defines how a distinct CLI action is structured. It separates the \"metadata\" (name, description, capabilities) from the actual \"execution logic.\"\n\nThink of it like a menu item in a restaurant. The `index.ts` is the text on the menu (Title: \"Steak\", Description: \"Grilled to order\"), telling the waiter what is available. The `keybindings.ts` is the recipe in the kitchen that details the actual steps the chef takes to cook the meal when ordered.",
+          "contentPath": "01_command_module_structure.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "keybindings/02_feature_gating",
+          "label": "Feature Gating",
+          "type": "chapter",
+          "summary": "This abstraction controls access to functionality based on configuration or environment states. Before the code executes logic or even advertises itself as available, it checks `isKeybindingCustomizationEnabled`.\n\nIt is like a VIP rope at a club. The bouncer checks if the \"customization\" feature is on the guest list. If it isn't, the command either hides itself (in `index.ts`) or politely informs the user they cannot proceed (in `keybindings.ts`), ensuring users don't access unfinished or disabled features.",
+          "contentPath": "02_feature_gating.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "keybindings/03_safe_resource_initialization",
+          "label": "Safe Resource Initialization",
+          "type": "chapter",
+          "summary": "This abstraction handles the creation of configuration files using a \"check-and-set\" or \"exclusive create\" strategy. It uses the `wx` file system flag to attempt writing a file only if it doesn't already exist.\n\nThink of it like reserving a seat at a movie theater. You don't just sit down blindly (which might result in sitting on someone else). You check the seat map; if the seat is empty, you claim it immediately. If it's taken (EEXIST error), you acknowledge it and proceed without trying to build a new chair on top of the old one.",
+          "contentPath": "03_safe_resource_initialization.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "keybindings/04_external_editor_delegation",
+          "label": "External Editor Delegation",
+          "type": "chapter",
+          "summary": "This abstraction hands off user interaction from the command line interface to the user's preferred text editor. It pauses the CLI workflow to allow complex editing in a specialized tool.\n\nIt is similar to a general contractor building a house. When it comes time to do the wiring, the contractor doesn't do it themselves; they call in a specialized electrician (the user's editor). The contractor waits until the electrician finishes their specific task before marking the job as complete.",
+          "contentPath": "04_external_editor_delegation.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "keybindings/05_lazy_module_loading",
+          "label": "Lazy Module Loading",
+          "type": "chapter",
+          "summary": "This pattern ensures that heavy code is only imported into memory when the user actually requests it. In `index.ts`, the `load` property uses a dynamic import function.\n\nImagine a library where the librarian doesn't carry every book around constantly. Instead, they keep an index card (metadata). Only when a patron asks for a specific book does the librarian walk to the shelf to retrieve the actual content. This keeps the librarian (the application start-up) fast and unburdened.",
+          "contentPath": "05_lazy_module_loading.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "keybindings/01_command_module_structure",
+          "target": "keybindings/02_feature_gating",
+          "label": "Imports logic via"
+        },
+        {
+          "source": "keybindings/01_command_module_structure",
+          "target": "keybindings/03_safe_resource_initialization",
+          "label": "Checks availability via"
+        },
+        {
+          "source": "keybindings/01_command_module_structure",
+          "target": "keybindings/04_external_editor_delegation",
+          "label": "Executes"
+        },
+        {
+          "source": "keybindings/01_command_module_structure",
+          "target": "keybindings/05_lazy_module_loading",
+          "label": "Invokes"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "keybindings/01_command_module_structure",
+      "target": "keybindings/02_feature_gating",
+      "label": "Imports logic via"
+    },
+    {
+      "source": "keybindings/01_command_module_structure",
+      "target": "keybindings/03_safe_resource_initialization",
+      "label": "Checks availability via"
+    },
+    {
+      "source": "keybindings/01_command_module_structure",
+      "target": "keybindings/04_external_editor_delegation",
+      "label": "Executes"
+    },
+    {
+      "source": "keybindings/01_command_module_structure",
+      "target": "keybindings/05_lazy_module_loading",
+      "label": "Invokes"
+    }
+  ],
+  "storyPath": [
+    "keybindings/01_command_module_structure",
+    "keybindings/02_feature_gating",
+    "keybindings/03_safe_resource_initialization",
+    "keybindings/04_external_editor_delegation",
+    "keybindings/05_lazy_module_loading"
+  ]
+}

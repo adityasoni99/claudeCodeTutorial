@@ -1,0 +1,166 @@
+{
+  "projectName": "settings",
+  "nodes": [
+    {
+      "id": "settings",
+      "label": "settings",
+      "type": "module",
+      "summary": "This project implements a robust **configuration management system** that merges settings from multiple hierarchical sources, such as *User*, *Project*, and *Enterprise Policy*, to determine the application's final state. It ensures data reliability through strict **schema validation** and maintains synchronization with disk and OS-level changes via **real-time detection**, all while optimizing performance using an in-memory **caching strategy**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "settings/01_settings_cascade___resolution",
+          "label": "Settings Cascade & Resolution",
+          "type": "chapter",
+          "summary": "The central engine that determines the final configuration by loading and merging settings from multiple hierarchical sources (User, Project, Local, Flag, and Policy). Think of it like layering varying priorities of transparent sheets: a \"Policy\" setting on the top sheet overrides a \"User\" setting on the bottom sheet.",
+          "contentPath": "01_settings_cascade___resolution.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "settings/02_schema_definition___data_integrity",
+          "label": "Schema Definition & Data Integrity",
+          "type": "chapter",
+          "summary": "Defines the rigid structure of configuration files using Zod schemas. It acts like a strict border patrol, verifying every setting against expected types (strings, booleans, enums) and logical rules. If a setting fails validation, it generates human-readable error messages and helpful tips to fix the JSON.",
+          "contentPath": "02_schema_definition___data_integrity.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "settings/03_permission_rule_syntax_validation",
+          "label": "Permission Rule Syntax Validation",
+          "type": "chapter",
+          "summary": "Handles the specific parsing and validation of security permission strings (e.g., `Bash(*)` or `Read(src/**)`). Unlike the general JSON schema, this validates the internal syntax of rule strings, checking for correct tool names, balanced parentheses, and valid wildcard usage for specific tools.",
+          "contentPath": "03_permission_rule_syntax_validation.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "settings/04_enterprise_policy__mdm__integration",
+          "label": "Enterprise Policy (MDM) Integration",
+          "type": "chapter",
+          "summary": "A specialized subsystem for reading immutable, administrator-controlled settings from OS-level sources like the Windows Registry or macOS Plists. It ensures corporate policies take precedence over user preferences. It uses safe subprocess calls to read these values separately from standard file I/O.",
+          "contentPath": "04_enterprise_policy__mdm__integration.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "settings/05_live_change_detection",
+          "label": "Live Change Detection",
+          "type": "chapter",
+          "summary": "Monitors configuration files on disk for real-time changes. It functions like a security guard watching the settings folder; when a file is modified, deleted, or re-added, it triggers an immediate refresh of the application state. It includes logic to distinguish between external user edits and \"internal writes\" made by the application itself.",
+          "contentPath": "05_live_change_detection.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "settings/06_settings_caching_strategy",
+          "label": "Settings Caching Strategy",
+          "type": "chapter",
+          "summary": "Optimizes performance by storing parsed and merged settings in memory. Instead of reading the disk for every configuration check, the system hits this cache layer. It supports both session-wide caching and per-source caching, with specific mechanisms to invalidate data when file updates are detected.",
+          "contentPath": "06_settings_caching_strategy.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "settings/01_settings_cascade___resolution",
+          "target": "settings/02_schema_definition___data_integrity",
+          "label": "Validates loaded config with"
+        },
+        {
+          "source": "settings/01_settings_cascade___resolution",
+          "target": "settings/04_enterprise_policy__mdm__integration",
+          "label": "Merges policy settings from"
+        },
+        {
+          "source": "settings/01_settings_cascade___resolution",
+          "target": "settings/06_settings_caching_strategy",
+          "label": "Caches resolved settings in"
+        },
+        {
+          "source": "settings/02_schema_definition___data_integrity",
+          "target": "settings/05_live_change_detection",
+          "label": "Delegates rule checking to"
+        },
+        {
+          "source": "settings/03_permission_rule_syntax_validation",
+          "target": "settings/01_settings_cascade___resolution",
+          "label": "Triggers reload of"
+        },
+        {
+          "source": "settings/03_permission_rule_syntax_validation",
+          "target": "settings/04_enterprise_policy__mdm__integration",
+          "label": "Polls for updates"
+        },
+        {
+          "source": "settings/04_enterprise_policy__mdm__integration",
+          "target": "settings/02_schema_definition___data_integrity",
+          "label": "Parses raw data using"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "settings/01_settings_cascade___resolution",
+      "target": "settings/02_schema_definition___data_integrity",
+      "label": "Validates loaded config with"
+    },
+    {
+      "source": "settings/01_settings_cascade___resolution",
+      "target": "settings/04_enterprise_policy__mdm__integration",
+      "label": "Merges policy settings from"
+    },
+    {
+      "source": "settings/01_settings_cascade___resolution",
+      "target": "settings/06_settings_caching_strategy",
+      "label": "Caches resolved settings in"
+    },
+    {
+      "source": "settings/02_schema_definition___data_integrity",
+      "target": "settings/05_live_change_detection",
+      "label": "Delegates rule checking to"
+    },
+    {
+      "source": "settings/03_permission_rule_syntax_validation",
+      "target": "settings/01_settings_cascade___resolution",
+      "label": "Triggers reload of"
+    },
+    {
+      "source": "settings/03_permission_rule_syntax_validation",
+      "target": "settings/04_enterprise_policy__mdm__integration",
+      "label": "Polls for updates"
+    },
+    {
+      "source": "settings/04_enterprise_policy__mdm__integration",
+      "target": "settings/02_schema_definition___data_integrity",
+      "label": "Parses raw data using"
+    }
+  ],
+  "storyPath": [
+    "settings/01_settings_cascade___resolution",
+    "settings/02_schema_definition___data_integrity",
+    "settings/03_permission_rule_syntax_validation",
+    "settings/04_enterprise_policy__mdm__integration",
+    "settings/05_live_change_detection",
+    "settings/06_settings_caching_strategy"
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "projectName": "components",
+  "nodes": [
+    {
+      "id": "components",
+      "label": "components",
+      "type": "module",
+      "summary": "This project focuses on the **Agent Creation** process, providing a user-friendly interface to build and customize AI assistants. It utilizes a *Wizard component* to guide users through a sequence of specific steps\u2014such as selecting a **Model**, defining a **Prompt**, and enabling various **Tools**\u2014to ensure a complete and structured agent setup.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "components/01_agents_new_agent_creation_createagentwizard_tsx",
+          "label": "agents/new-agent-creation/CreateAgentWizard.tsx",
+          "type": "chapter",
+          "summary": "Reconstructed source code for the CreateAgentWizard React component, which configures the WizardProvider with a sequence of steps (Location, Method, Generate, Type, Prompt, Description, Tools, Model, Color, Memory) for creating a new agent.",
+          "contentPath": "01_agents_new_agent_creation_createagentwizard_tsx.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "components/01_agents_new_agent_creation_createagentwizard_tsx",
+          "target": "components/01_agents_new_agent_creation_createagentwizard_tsx",
+          "label": "Orchestrates configuration ..."
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "components/01_agents_new_agent_creation_createagentwizard_tsx",
+      "target": "components/01_agents_new_agent_creation_createagentwizard_tsx",
+      "label": "Orchestrates configuration steps"
+    }
+  ],
+  "storyPath": [
+    "components/01_agents_new_agent_creation_createagentwizard_tsx"
+  ]
+}

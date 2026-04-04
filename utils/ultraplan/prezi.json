@@ -1,0 +1,124 @@
+{
+  "projectName": "ultraplan",
+  "nodes": [
+    {
+      "id": "ultraplan",
+      "label": "ultraplan",
+      "type": "module",
+      "summary": "The **Ultraplan** project implements a smart remote planning assistant that is invoked via **context-aware** keywords, ensuring it only runs when explicitly requested. Once triggered, it manages a **remote planning session** by polling for events and maintaining synchronization through a robust **state machine**. The system translates complex backend states into user-friendly **lifecycle phases** (like \"running\" or \"needs input\") and features a unique **teleportation protocol** to securely transfer approved plans from the remote agent back to the local environment for execution.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "ultraplan/01_context_aware_keyword_detection",
+          "label": "Context-Aware Keyword Detection",
+          "type": "chapter",
+          "summary": "This abstraction functions as a smart filter for user input. Rather than simply searching for the string \"ultraplan\" or \"ultrareview\" using basic pattern matching, it analyzes the grammatical and syntactic context of the word.\n\nThink of it like a copy editor who knows that \"Apple\" refers to the company in one sentence, but the fruit in another. It ignores the keyword if it appears inside quotes, file paths (e.g., `src/ultraplan/file.ts`), or slash commands, ensuring the system only triggers the AI planner when the user actively intends to invoke it as a directive.",
+          "contentPath": "01_context_aware_keyword_detection.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ultraplan/02_remote_session_polling",
+          "label": "Remote Session Polling",
+          "type": "chapter",
+          "summary": "This abstraction manages the asynchronous communication loop between the local client and the remote Cloud Code Runtime (CCR). It repeatedly asks \"Is the plan ready?\" while handling network instability and API pagination.\n\nIt acts like a dedicated courier who waits at an office for a package. If the office is busy (transient errors), the courier waits patiently. If the office closes unexpectedly (max failures), they report back. The courier ensures that the local application stays in sync with the remote agent's progress, translating raw server responses into a unified result or timeout error.",
+          "contentPath": "02_remote_session_polling.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ultraplan/03_session_phase_lifecycle",
+          "label": "Session Phase Lifecycle",
+          "type": "chapter",
+          "summary": "This abstraction simplifies the complex internal states of the remote agent into three human-readable phases: `running`, `needs_input`, and `plan_ready`. This drives the UI indicators (like a status pill).\n\nIt functions like a traffic light for the user interaction flow. Green (`running`) means the AI is working; Yellow (`needs_input`) means the AI has paused to ask a question or requires permission; and Red (`plan_ready`) indicates the AI has finished and is waiting for the user to approve or reject the final plan.",
+          "contentPath": "03_session_phase_lifecycle.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ultraplan/04_event_stream_state_machine",
+          "label": "Event Stream State Machine",
+          "type": "chapter",
+          "summary": "Implemented via the `ExitPlanModeScanner` class, this is a pure logic engine that processes batches of raw events from the remote agent. It determines the current state of the planning session without performing any network I/O.\n\nImagine a sports scorekeeper who doesn't watch the game live but receives a ticker tape of every play. By reading the tape (the event stream), the scorekeeper updates the scoreboard (the session state) to reflect whether the plan is pending, approved, rejected, or if the game has ended unexpectedly. It resolves conflicts, such as when a rejection and a crash happen simultaneously.",
+          "contentPath": "04_event_stream_state_machine.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ultraplan/05_plan_teleportation_protocol",
+          "label": "Plan Teleportation Protocol",
+          "type": "chapter",
+          "summary": "This mechanism allows a plan generated remotely to be \"teleported\" back to the local environment for execution. It relies on a specific sentinel string (`__ULTRAPLAN_TELEPORT_LOCAL__`) embedded within tool rejection messages.\n\nThink of this as a secret handshake or a hidden trapdoor. When the user reviews a plan in the browser but decides to run it on their own machine, the system disguises the plan as a \"rejection\" message containing this secret code. The local poller detects this code, extracts the plan text, and knows to execute it locally instead of archiving it remotely.",
+          "contentPath": "05_plan_teleportation_protocol.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "ultraplan/01_context_aware_keyword_detection",
+          "target": "ultraplan/03_session_phase_lifecycle",
+          "label": "Triggers execution of"
+        },
+        {
+          "source": "ultraplan/03_session_phase_lifecycle",
+          "target": "ultraplan/02_remote_session_polling",
+          "label": "Feeds events to"
+        },
+        {
+          "source": "ultraplan/02_remote_session_polling",
+          "target": "ultraplan/04_event_stream_state_machine",
+          "label": "Decodes sentinel via"
+        },
+        {
+          "source": "ultraplan/03_session_phase_lifecycle",
+          "target": "ultraplan/05_plan_teleportation_protocol",
+          "label": "Derives and updates"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "ultraplan/01_context_aware_keyword_detection",
+      "target": "ultraplan/03_session_phase_lifecycle",
+      "label": "Triggers execution of"
+    },
+    {
+      "source": "ultraplan/03_session_phase_lifecycle",
+      "target": "ultraplan/02_remote_session_polling",
+      "label": "Feeds events to"
+    },
+    {
+      "source": "ultraplan/02_remote_session_polling",
+      "target": "ultraplan/04_event_stream_state_machine",
+      "label": "Decodes sentinel via"
+    },
+    {
+      "source": "ultraplan/03_session_phase_lifecycle",
+      "target": "ultraplan/05_plan_teleportation_protocol",
+      "label": "Derives and updates"
+    }
+  ],
+  "storyPath": [
+    "ultraplan/01_context_aware_keyword_detection",
+    "ultraplan/02_remote_session_polling",
+    "ultraplan/03_session_phase_lifecycle",
+    "ultraplan/04_event_stream_state_machine",
+    "ultraplan/05_plan_teleportation_protocol"
+  ]
+}

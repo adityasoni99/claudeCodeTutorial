@@ -1,0 +1,134 @@
+{
+  "projectName": "filePersistence",
+  "nodes": [
+    {
+      "id": "filepersistence",
+      "label": "filePersistence",
+      "type": "module",
+      "summary": "This project acts as an intelligent **file preservation system** for remote coding sessions. It automatically detects, verifies, and saves any work produced during an interaction \"turn\" (like creating or editing code files). By using **Delta Scanning** to find only new changes and rigorous *Security Sanitization* to prevent unsafe access, it ensures that a user's outputs are safely backed up to the cloud without manual effort.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "filepersistence/01_environment_strategy",
+          "label": "Environment Strategy",
+          "type": "chapter",
+          "summary": "This pattern allows the system to adapt to different hosting contexts, acting like a universal travel adapter. It distinguishes between \"BYOC\" (Bring Your Own Cloud) and \"Anthropic Cloud\" environments. Depending on the detected environment, it switches strategies: locally scanning and uploading files for BYOC, or preparing for a cloud-native sync (currently a placeholder) for the managed cloud environment.",
+          "contentPath": "01_environment_strategy.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "filepersistence/02_session_gating",
+          "label": "Session Gating",
+          "type": "chapter",
+          "summary": "This is the gatekeeper logic that determines if file persistence should run at all. It's like a VIP bouncer that requires three specific forms of ID: a feature flag must be enabled, a valid environment kind must be detected, and a remote session ID/token must be present. This ensures that the heavy lifting of scanning and uploading only happens in specific remote execution contexts, rather than on a standard user's local CLI run.",
+          "contentPath": "02_session_gating.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "filepersistence/03_persistence_orchestration",
+          "label": "Persistence Orchestration",
+          "type": "chapter",
+          "summary": "This is the central nervous system of the file saving process. Like a project manager, it coordinates the entire workflow: it checks if the feature is turned on, authenticates the session, triggers the file scanner, and manages the upload process. It handles the lifecycle from the moment a \"turn\" ends until the files are safely stored or an error is reported, ensuring that the analytics and logs reflect the outcome.",
+          "contentPath": "03_persistence_orchestration.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "filepersistence/04_delta_scanning",
+          "label": "Delta Scanning",
+          "type": "chapter",
+          "summary": "This abstraction determines *what* needs to be saved. Imagine a security camera that only records footage after a specific time; similarly, this scanner looks at the file system and identifies only those files that have been modified or created since the \"turn\" started (based on `mtime`). It efficiently filters out old files so the system only persists relevant, new outputs generated during the current interaction.",
+          "contentPath": "04_delta_scanning.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "filepersistence/05_security_sanitization",
+          "label": "Security Sanitization",
+          "type": "chapter",
+          "summary": "This abstraction acts as the border control for file operations. Before any file is touched or uploaded, it undergoes strict checks to ensure safety. It rejects symbolic links (to prevent recursion or accessing system files) and ensures that file paths do not attempt to escape the designated output directory (using `..` checks). This prevents the system from accidentally or maliciously exposing sensitive files outside the sandbox.",
+          "contentPath": "05_security_sanitization.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "filepersistence/01_environment_strategy",
+          "target": "filepersistence/02_session_gating",
+          "label": "Invokes scan"
+        },
+        {
+          "source": "filepersistence/01_environment_strategy",
+          "target": "filepersistence/03_persistence_orchestration",
+          "label": "Consults context"
+        },
+        {
+          "source": "filepersistence/01_environment_strategy",
+          "target": "filepersistence/04_delta_scanning",
+          "label": "Sanitizes paths"
+        },
+        {
+          "source": "filepersistence/02_session_gating",
+          "target": "filepersistence/04_delta_scanning",
+          "label": "Filters symlinks"
+        },
+        {
+          "source": "filepersistence/05_security_sanitization",
+          "target": "filepersistence/03_persistence_orchestration",
+          "label": "Validates context"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "filepersistence/01_environment_strategy",
+      "target": "filepersistence/02_session_gating",
+      "label": "Invokes scan"
+    },
+    {
+      "source": "filepersistence/01_environment_strategy",
+      "target": "filepersistence/03_persistence_orchestration",
+      "label": "Consults context"
+    },
+    {
+      "source": "filepersistence/01_environment_strategy",
+      "target": "filepersistence/04_delta_scanning",
+      "label": "Sanitizes paths"
+    },
+    {
+      "source": "filepersistence/02_session_gating",
+      "target": "filepersistence/04_delta_scanning",
+      "label": "Filters symlinks"
+    },
+    {
+      "source": "filepersistence/05_security_sanitization",
+      "target": "filepersistence/03_persistence_orchestration",
+      "label": "Validates context"
+    }
+  ],
+  "storyPath": [
+    "filepersistence/01_environment_strategy",
+    "filepersistence/02_session_gating",
+    "filepersistence/03_persistence_orchestration",
+    "filepersistence/04_delta_scanning",
+    "filepersistence/05_security_sanitization"
+  ]
+}

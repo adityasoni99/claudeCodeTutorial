@@ -1,0 +1,134 @@
+{
+  "projectName": "diff",
+  "nodes": [
+    {
+      "id": "diff",
+      "label": "diff",
+      "type": "module",
+      "summary": "This project enables a user to view **file differences** (diffs) and uncommitted changes through a specific command. To keep the application fast, it uses **dynamic lazy loading** to only fetch the necessary code and UI components when the user actually requests them. The logic then uses a **React bridge** to render a visual dialog box populated with data from the application's current state.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "diff/01_command_registration",
+          "label": "Command Registration",
+          "type": "chapter",
+          "summary": "This abstraction defines how a new feature is introduced to the main application. It exports a configuration object containing metadata like the command's `name`, `description`, and `type`.\n\nIt is like a menu entry in a restaurant. The menu lists the dish's name and a short description so the kitchen knows what to prepare when a customer orders it, without needing to keep the actual food sitting on the table until requested.",
+          "contentPath": "01_command_registration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "diff/02_local_jsx_handler",
+          "label": "Local JSX Handler",
+          "type": "chapter",
+          "summary": "This represents the executable logic for a command that renders a user interface. It is a function that receives context and a callback, then returns a React element.\n\nThink of this as the \"app\" within the operating system. When you click the icon (the command registration), this code launches the actual window (the React component) where you can interact with buttons and data.",
+          "contentPath": "02_local_jsx_handler.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "diff/03_dynamic_lazy_loading",
+          "label": "Dynamic Lazy Loading",
+          "type": "chapter",
+          "summary": "A performance pattern where code is imported only at the moment it is needed, rather than at application startup. Both the command logic and the UI components are fetched asynchronously via `import()`.\n\nIt is like a vending machine that 3D prints the snack only after you press the button. This saves space and ensures the machine doesn't have to hold inventory for items that nobody is currently buying.",
+          "contentPath": "03_dynamic_lazy_loading.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "diff/04_context_injection",
+          "label": "Context Injection",
+          "type": "chapter",
+          "summary": "The method by which the application state\u2014such as chat messages or file data\u2014is passed into the command handler. The `context` object carries this information so the command knows \"what\" to operate on.\n\nIt is like a doctor's chart. Before the specialist (the command) sees the patient, they are handed a clipboard (the context) containing the patient's history and symptoms so they can make an informed diagnosis.",
+          "contentPath": "04_context_injection.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "diff/05_react_component_bridge",
+          "label": "React Component Bridge",
+          "type": "chapter",
+          "summary": "The connection point between the command logic and the visual layer. It dynamically imports a specific React component (like `DiffDialog`) and passes down necessary props.\n\nImagine a universal remote control (the handler) that can interface with a specific TV screen (the Component). The remote tells the TV what channel to show (props) and what to do when the power button is pressed (callbacks).",
+          "contentPath": "05_react_component_bridge.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "diff/01_command_registration",
+          "target": "diff/02_local_jsx_handler",
+          "label": "Registers"
+        },
+        {
+          "source": "diff/02_local_jsx_handler",
+          "target": "diff/05_react_component_bridge",
+          "label": "Consumes"
+        },
+        {
+          "source": "diff/02_local_jsx_handler",
+          "target": "diff/03_dynamic_lazy_loading",
+          "label": "Utilizes"
+        },
+        {
+          "source": "diff/02_local_jsx_handler",
+          "target": "diff/04_context_injection",
+          "label": "Renders"
+        },
+        {
+          "source": "diff/04_context_injection",
+          "target": "diff/05_react_component_bridge",
+          "label": "Displays data from"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "diff/01_command_registration",
+      "target": "diff/02_local_jsx_handler",
+      "label": "Registers"
+    },
+    {
+      "source": "diff/02_local_jsx_handler",
+      "target": "diff/05_react_component_bridge",
+      "label": "Consumes"
+    },
+    {
+      "source": "diff/02_local_jsx_handler",
+      "target": "diff/03_dynamic_lazy_loading",
+      "label": "Utilizes"
+    },
+    {
+      "source": "diff/02_local_jsx_handler",
+      "target": "diff/04_context_injection",
+      "label": "Renders"
+    },
+    {
+      "source": "diff/04_context_injection",
+      "target": "diff/05_react_component_bridge",
+      "label": "Displays data from"
+    }
+  ],
+  "storyPath": [
+    "diff/01_command_registration",
+    "diff/02_local_jsx_handler",
+    "diff/03_dynamic_lazy_loading",
+    "diff/04_context_injection",
+    "diff/05_react_component_bridge"
+  ]
+}

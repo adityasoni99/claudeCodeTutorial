@@ -1,0 +1,156 @@
+{
+  "projectName": "suggestions",
+  "nodes": [
+    {
+      "id": "suggestions",
+      "label": "suggestions",
+      "type": "module",
+      "summary": "This project is an intelligent **autocomplete and suggestion engine** for a command-line interface. It helps users quickly find commands, navigate the *filesystem*, and access external tools like Slack by predicting intent. To ensure a smooth, lag-free experience, it heavily utilizes **caching** and prioritizes suggestions based on your **historical usage patterns**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "suggestions/01_fuzzy_command_dispatch",
+          "label": "Fuzzy Command Dispatch",
+          "type": "chapter",
+          "summary": "This is the central engine for interpreting user intent when they type a slash command (e.g., `/help`). It uses a fuzzy search algorithm (Fuse.js) to match imperfect inputs against available commands, handling aliases and descriptions.\n\nThink of it like a smart hotel concierge who understands \"room clean\" means \"Housekeeping,\" even if you don't use the exact official terminology. It prioritizes exact matches first, then falls back to guessing based on similarity.",
+          "contentPath": "01_fuzzy_command_dispatch.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "suggestions/02_filesystem_navigation___discovery",
+          "label": "Filesystem Navigation & Discovery",
+          "type": "chapter",
+          "summary": "A utility for scanning the local operating system to provide path autocompletion. It parses partial strings (like `./src/co`), scans the directory, filters out hidden files if needed, and returns valid paths. It creates the familiar experience of tab-completing file paths.\n\nImagine a flashlight in a dark library. As you walk down a specific aisle (the directory path), it lights up only the books (files) immediately in front of you, saving you from having to memorize the location of every book in the building.",
+          "contentPath": "02_filesystem_navigation___discovery.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "suggestions/03_remote_tool_integration__mcp_",
+          "label": "Remote Tool Integration (MCP)",
+          "type": "chapter",
+          "summary": "This abstraction bridges the local CLI with external services (like Slack) using the Model Context Protocol (MCP). It handles the network negotiation, query formatting, and parsing of complex responses (like Markdown-wrapped JSON) into a simple list of suggestions.\n\nIt acts like a universal remote control. The remote doesn't know how to play a movie itself, but it knows exactly which signal to send to the DVD player to make it happen, and it interprets the blinking light on the player to tell you it's working.",
+          "contentPath": "03_remote_tool_integration__mcp_.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "suggestions/04_history_based_prediction",
+          "label": "History-Based Prediction",
+          "type": "chapter",
+          "summary": "A mechanism that reads the user's shell history (bash/zsh) to suggest likely next commands. Unlike the list-based suggestions, this often powers \"ghost text\"\u2014faint text that appears inline to complete your sentence based on what you've typed before.\n\nIt is like the predictive text on your phone keyboard. It remembers that every time you type \"Good,\" you usually follow it with \"morning,\" so it offers to finish the phrase for you instantly.",
+          "contentPath": "04_history_based_prediction.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "suggestions/05_adaptive_usage_ranking",
+          "label": "Adaptive Usage Ranking",
+          "type": "chapter",
+          "summary": "A system that tracks how often and how recently a user interacts with specific \"skills\" or commands. It uses a mathematical \"half-life\" (7 days) to score items, ensuring that a tool you used 100 times last year doesn't outrank a tool you used 10 times today.\n\nIt works like a music app's \"On Repeat\" playlist. It knows what you are obsessed with *right now*, gradually dropping songs down the list as you stop listening to them, rather than keeping them at the top forever just because they have a high total play count.",
+          "contentPath": "05_adaptive_usage_ranking.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "suggestions/06_performance_caching_layer",
+          "label": "Performance Caching Layer",
+          "type": "chapter",
+          "summary": "Across the codebase, various caching strategies (LRU, Maps, Debouncing) are used to prevent sluggishness. Since filesystem scans and network requests are slow, the system temporarily stores results in memory to make typing feel instant.\n\nIt\u2019s similar to a waiter memorizing a table's order. Instead of running back to the kitchen to write down every single item individually (slow I/O), they hold the information in their head (cache) and submit it all at once or recall it instantly if asked.",
+          "contentPath": "06_performance_caching_layer.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "suggestions/01_fuzzy_command_dispatch",
+          "target": "suggestions/02_filesystem_navigation___discovery",
+          "label": "Prioritizes results using"
+        },
+        {
+          "source": "suggestions/01_fuzzy_command_dispatch",
+          "target": "suggestions/06_performance_caching_layer",
+          "label": "Caches search index"
+        },
+        {
+          "source": "suggestions/02_filesystem_navigation___discovery",
+          "target": "suggestions/06_performance_caching_layer",
+          "label": "Debounces disk writes"
+        },
+        {
+          "source": "suggestions/03_remote_tool_integration__mcp_",
+          "target": "suggestions/06_performance_caching_layer",
+          "label": "Caches API responses"
+        },
+        {
+          "source": "suggestions/04_history_based_prediction",
+          "target": "suggestions/06_performance_caching_layer",
+          "label": "Caches directory scans"
+        },
+        {
+          "source": "suggestions/05_adaptive_usage_ranking",
+          "target": "suggestions/06_performance_caching_layer",
+          "label": "Caches history reads"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "suggestions/01_fuzzy_command_dispatch",
+      "target": "suggestions/02_filesystem_navigation___discovery",
+      "label": "Prioritizes results using"
+    },
+    {
+      "source": "suggestions/01_fuzzy_command_dispatch",
+      "target": "suggestions/06_performance_caching_layer",
+      "label": "Caches search index"
+    },
+    {
+      "source": "suggestions/02_filesystem_navigation___discovery",
+      "target": "suggestions/06_performance_caching_layer",
+      "label": "Debounces disk writes"
+    },
+    {
+      "source": "suggestions/03_remote_tool_integration__mcp_",
+      "target": "suggestions/06_performance_caching_layer",
+      "label": "Caches API responses"
+    },
+    {
+      "source": "suggestions/04_history_based_prediction",
+      "target": "suggestions/06_performance_caching_layer",
+      "label": "Caches directory scans"
+    },
+    {
+      "source": "suggestions/05_adaptive_usage_ranking",
+      "target": "suggestions/06_performance_caching_layer",
+      "label": "Caches history reads"
+    }
+  ],
+  "storyPath": [
+    "suggestions/01_fuzzy_command_dispatch",
+    "suggestions/02_filesystem_navigation___discovery",
+    "suggestions/03_remote_tool_integration__mcp_",
+    "suggestions/04_history_based_prediction",
+    "suggestions/05_adaptive_usage_ranking",
+    "suggestions/06_performance_caching_layer"
+  ]
+}

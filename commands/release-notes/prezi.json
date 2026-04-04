@@ -1,0 +1,124 @@
+{
+  "projectName": "release-notes",
+  "nodes": [
+    {
+      "id": "release-notes",
+      "label": "release-notes",
+      "type": "module",
+      "summary": "This project implements a **CLI command** designed to display software *release notes* to the user. It prioritizes **performance** and **responsiveness** by loading code only when necessary and using a smart strategy to attempt fetching live updates while instantly falling back to *cached data* if the network is too slow.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "release-notes/01_command_registration",
+          "label": "Command Registration",
+          "type": "chapter",
+          "summary": "This abstraction defines the \"identity\" of a command within the CLI application. It acts like a menu entry in a restaurant; it provides the name, description, and settings (like whether it supports non-interactive mode) without actually performing the work.\n\nBy separating the definition from the execution logic, the application can list all available commands quickly without loading the heavy code required to run them until the user actually selects one.",
+          "contentPath": "01_command_registration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "release-notes/02_lazy_module_loading",
+          "label": "Lazy Module Loading",
+          "type": "chapter",
+          "summary": "This pattern allows the application to import code only when it is strictly necessary. In the command definition, the `load` property uses a dynamic `import()` statement.\n\nImagine a toolbox where you only take out the specific tool you need for the job, rather than carrying the weight of the entire box everywhere. This keeps the initial startup of the CLI fast by not loading the logic file (`release-notes.ts`) until the user runs the command.",
+          "contentPath": "02_lazy_module_loading.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "release-notes/03_asynchronous_command_handler",
+          "label": "Asynchronous Command Handler",
+          "type": "chapter",
+          "summary": "The `call()` function represents the \"engine\" of the command. It is the code that actually executes when the user triggers the command.\n\nThink of this as the chef cooking the meal after the order is placed. It performs asynchronous operations (like network requests), processes data, and returns a standardized `LocalCommandResult` that creates the final output for the user's terminal.",
+          "contentPath": "03_asynchronous_command_handler.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "release-notes/04_optimistic_fetching_strategy",
+          "label": "Optimistic Fetching Strategy",
+          "type": "chapter",
+          "summary": "This abstraction handles the balance between data freshness and application speed. It uses a `Promise.race` mechanism to attempt fetching new data from the network but sets a strict time limit (500ms).\n\nIt is like trying to catch a live news broadcast: if the signal connects immediately, you watch it live. If it takes too long to connect, you immediately switch to reading the newspaper you already have on the table (the cache) to avoid keeping the user waiting.",
+          "contentPath": "04_optimistic_fetching_strategy.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "release-notes/05_response_formatting",
+          "label": "Response Formatting",
+          "type": "chapter",
+          "summary": "This logic is responsible for the \"Presentation Layer\" of the command. It takes raw data structures (tuples of version numbers and bullet points) and converts them into a clean, readable string.\n\nIt acts like a formatter or printer, ensuring that the raw information retrieved from the database or API is organized into a user-friendly layout with headers and bullet points before being displayed on the screen.",
+          "contentPath": "05_response_formatting.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "release-notes/01_command_registration",
+          "target": "release-notes/05_response_formatting",
+          "label": "Uses"
+        },
+        {
+          "source": "release-notes/05_response_formatting",
+          "target": "release-notes/02_lazy_module_loading",
+          "label": "Imports"
+        },
+        {
+          "source": "release-notes/02_lazy_module_loading",
+          "target": "release-notes/03_asynchronous_command_handler",
+          "label": "Executes"
+        },
+        {
+          "source": "release-notes/02_lazy_module_loading",
+          "target": "release-notes/04_optimistic_fetching_strategy",
+          "label": "Invokes"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "release-notes/01_command_registration",
+      "target": "release-notes/05_response_formatting",
+      "label": "Uses"
+    },
+    {
+      "source": "release-notes/05_response_formatting",
+      "target": "release-notes/02_lazy_module_loading",
+      "label": "Imports"
+    },
+    {
+      "source": "release-notes/02_lazy_module_loading",
+      "target": "release-notes/03_asynchronous_command_handler",
+      "label": "Executes"
+    },
+    {
+      "source": "release-notes/02_lazy_module_loading",
+      "target": "release-notes/04_optimistic_fetching_strategy",
+      "label": "Invokes"
+    }
+  ],
+  "storyPath": [
+    "release-notes/01_command_registration",
+    "release-notes/02_lazy_module_loading",
+    "release-notes/03_asynchronous_command_handler",
+    "release-notes/04_optimistic_fetching_strategy",
+    "release-notes/05_response_formatting"
+  ]
+}

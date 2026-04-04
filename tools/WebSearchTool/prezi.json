@@ -1,0 +1,146 @@
+{
+  "projectName": "WebSearchTool",
+  "nodes": [
+    {
+      "id": "websearchtool",
+      "label": "WebSearchTool",
+      "type": "module",
+      "summary": "This project implements a comprehensive **Web Search Tool** that enables an AI assistant to fetch real-time information from the internet. It relies on a strict *lifecycle* to manage input validation, executes searches via a **streaming strategy** to provide live feedback, and strictly formats the final output with *markdown citations* to ensure the information is verifiable and user-friendly.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "websearchtool/01_tool_definition___lifecycle",
+          "label": "Tool Definition & Lifecycle",
+          "type": "chapter",
+          "summary": "This is the high-level wrapper that defines the web search capability as a distinct \"tool\" the AI can use. It handles the tool's identity, description, permissions, and lifecycle methods like `validateInput` and `call`.\nThink of it as a **Job Description** for a contractor. It outlines exactly what the contractor (the tool) is named, what skills they have (searching), what equipment they need (inputs), and the rules they must follow to get paid (execution logic).",
+          "contentPath": "01_tool_definition___lifecycle.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "websearchtool/02_data_contract__schemas_",
+          "label": "Data Contract (Schemas)",
+          "type": "chapter",
+          "summary": "Using Zod, this abstraction strictly defines the structure of data entering and leaving the tool. It creates a rigid shape for inputs (queries, domain filters) and outputs (titles, URLs, duration).\nThink of it as a **Customs Declaration Form**. It ensures that nothing gets into the system unless it matches the expected format (no missing queries) and nothing leaves unless it is properly packaged (structured search hits), preventing chaos in the data flow.",
+          "contentPath": "02_data_contract__schemas_.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "websearchtool/03_prompt_engineering_context",
+          "label": "Prompt Engineering Context",
+          "type": "chapter",
+          "summary": "This abstraction provides the specific instructions and behavioral rules the AI must follow when using the tool. It mandates markdown citations, handles temporal context (injecting the current year), and defines domain filtering rules.\nThink of it as the **Rules of Engagement** briefing given to a soldier before a mission. It tells the AI not just *what* to do (search), but *how* to do it responsibly (cite sources, use current dates) so the mission is successful and verifiable.",
+          "contentPath": "03_prompt_engineering_context.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "websearchtool/04_streaming_execution_strategy",
+          "label": "Streaming Execution Strategy",
+          "type": "chapter",
+          "summary": "This logic manages the live interaction with the AI model. Instead of waiting for a complete response, it initiates a stream (`queryModelWithStreaming`) and listens for specific events like `server_tool_use` or `web_search_tool_result`.\nThink of it as a **Live Sports Commentator**. Instead of waiting for the game to finish to tell you the score, this abstraction watches every play (event) as it happens, updating the system instantly when a search is launched or results are found.",
+          "contentPath": "04_streaming_execution_strategy.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "websearchtool/05_result_processing___serialization",
+          "label": "Result Processing & Serialization",
+          "type": "chapter",
+          "summary": "This logic acts as a translator between the raw API response blocks and the internal application state. It converts complex block streams into a clean `Output` object and formats results back into text for the AI to read.\nThink of it as a **court stenographer**. It takes the chaotic, real-time speech (stream of blocks) from the witness stand and transcribes it into a clean, official record (structured output) that the judge and jury (the AI and user) can easily read and reference later.",
+          "contentPath": "05_result_processing___serialization.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "websearchtool/06_interface_rendering__ui_",
+          "label": "Interface Rendering (UI)",
+          "type": "chapter",
+          "summary": "This layer handles how the tool's activity is visually presented to the user in the terminal. It uses React/Ink components to render progress updates (e.g., \"Found 5 results\") and final summaries.\nThink of it as the **Dashboard** of a car. While the engine (the tool logic) does the hard work under the hood, this abstraction flips the dials and gauges to show the driver (the user) that the car is moving, how fast it's going, and when the trip is complete.",
+          "contentPath": "06_interface_rendering__ui_.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "websearchtool/01_tool_definition___lifecycle",
+          "target": "websearchtool/02_data_contract__schemas_",
+          "label": "Enforces structure via"
+        },
+        {
+          "source": "websearchtool/01_tool_definition___lifecycle",
+          "target": "websearchtool/04_streaming_execution_strategy",
+          "label": "Retrieves instructions from"
+        },
+        {
+          "source": "websearchtool/01_tool_definition___lifecycle",
+          "target": "websearchtool/03_prompt_engineering_context",
+          "label": "Initiates"
+        },
+        {
+          "source": "websearchtool/01_tool_definition___lifecycle",
+          "target": "websearchtool/05_result_processing___serialization",
+          "label": "Configures visualization with"
+        },
+        {
+          "source": "websearchtool/01_tool_definition___lifecycle",
+          "target": "websearchtool/06_interface_rendering__ui_",
+          "label": "Parses results using"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "websearchtool/01_tool_definition___lifecycle",
+      "target": "websearchtool/02_data_contract__schemas_",
+      "label": "Enforces structure via"
+    },
+    {
+      "source": "websearchtool/01_tool_definition___lifecycle",
+      "target": "websearchtool/04_streaming_execution_strategy",
+      "label": "Retrieves instructions from"
+    },
+    {
+      "source": "websearchtool/01_tool_definition___lifecycle",
+      "target": "websearchtool/03_prompt_engineering_context",
+      "label": "Initiates"
+    },
+    {
+      "source": "websearchtool/01_tool_definition___lifecycle",
+      "target": "websearchtool/05_result_processing___serialization",
+      "label": "Configures visualization with"
+    },
+    {
+      "source": "websearchtool/01_tool_definition___lifecycle",
+      "target": "websearchtool/06_interface_rendering__ui_",
+      "label": "Parses results using"
+    }
+  ],
+  "storyPath": [
+    "websearchtool/01_tool_definition___lifecycle",
+    "websearchtool/02_data_contract__schemas_",
+    "websearchtool/03_prompt_engineering_context",
+    "websearchtool/04_streaming_execution_strategy",
+    "websearchtool/05_result_processing___serialization",
+    "websearchtool/06_interface_rendering__ui_"
+  ]
+}

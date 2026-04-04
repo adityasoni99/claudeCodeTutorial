@@ -1,0 +1,166 @@
+{
+  "projectName": "FileEditTool",
+  "nodes": [
+    {
+      "id": "fileedittool",
+      "label": "FileEditTool",
+      "type": "module",
+      "summary": "The `FileEditTool` serves as a robust mechanism for safely modifying file contents, bridging the gap between AI-generated intent and the file system. It uses a central **Orchestrator** to manage the editing workflow, relying on **Intelligent Matching** to handle nuances like curly quotes and whitespace without strict byte-for-byte exactness. The tool ensures integrity through a **Safety Layer** and **Data Contracts**, calculates precise text updates via a **Patch Engine**, and displays clear changes to the user through a **Diff Visualization** interface.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "fileedittool/01_tool_orchestrator",
+          "label": "Tool Orchestrator",
+          "type": "chapter",
+          "summary": "The central controller that acts as the entry point for the file editing capability. It implements the `ToolDef` interface, binding together input validation, permission checks, execution logic, and telemetry.\nThink of it as the **General Contractor** of a construction site. It receives the work order (edit request), checks if the permits are valid (permissions), ensures the site is safe (validation), delegates the actual work to specialists (utility functions), and reports back when the job is done.",
+          "contentPath": "01_tool_orchestrator.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "fileedittool/02_data_contracts___schemas",
+          "label": "Data Contracts & Schemas",
+          "type": "chapter",
+          "summary": "The strict definitions of valid inputs and outputs using Zod schemas. It defines exactly what arguments the tool accepts (`file_path`, `old_string`, `new_string`) and the structure of the returned data.\nThink of this as the **Blueprint**. It creates a rigid contract that ensures the AI provides exactly the right materials (data types) needed to build the edit, rejecting anything that doesn't fit the specifications.",
+          "contentPath": "02_data_contracts___schemas.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "fileedittool/03_intelligent_string_matching",
+          "label": "Intelligent String Matching",
+          "type": "chapter",
+          "summary": "A layer of logic designed to handle discrepancies between what the AI \"sees\" and the raw file bytes. It handles quote normalization (curly vs. straight quotes), whitespace stripping, and de-sanitization of specific tags.\nThink of this as a **Diplomatic Translator**. The AI might speak a slightly different dialect (e.g., using straight quotes) than the file (which uses curly quotes). This abstraction ensures they understand each other by finding the intended text despite minor stylistic differences.",
+          "contentPath": "03_intelligent_string_matching.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "fileedittool/04_safety___validation_layer",
+          "label": "Safety & Validation Layer",
+          "type": "chapter",
+          "summary": "A rigorous set of checks performed before any write operation occurs. It ensures the file exists, the edit is unique (to prevent ambiguous replacements), the file size is manageable, and the AI has \"read\" the file recently to avoid overwriting unseen changes.\nThink of this as the **Pre-Flight Checklist**. Before the plane (the edit) is allowed to take off, this system checks the fuel (file existence), weather (permissions), and ensures the pilot has the latest map (read-before-write check).",
+          "contentPath": "04_safety___validation_layer.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "fileedittool/05_patch_engine___text_transformation",
+          "label": "Patch Engine & Text Transformation",
+          "type": "chapter",
+          "summary": "The core logic responsible for physically altering the file content. It calculates diffs, handles line ending normalization, and generates the \"patch\" (the set of instructions describing the changes).\nThink of this as the **Copy Editor**. It takes the original manuscript (file) and the author's notes (old_string/new_string), performs the precise cut-and-paste operations to create the new version, and generates a \"redline\" document showing exactly what changed.",
+          "contentPath": "05_patch_engine___text_transformation.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "fileedittool/06_user_interface___diff_visualization",
+          "label": "User Interface & Diff Visualization",
+          "type": "chapter",
+          "summary": "The presentation layer responsible for rendering the results of an edit to the user. It handles success messages, error reporting, and crucially, renders the visual \"diff\" (difference) view showing what lines were added or removed.\nThink of this as the **Dashboard**. After the engine performs the work, this component displays the gauges and status lights that tell the driver (the user) exactly what happened, highlighting changes in green (additions) and red (deletions).",
+          "contentPath": "06_user_interface___diff_visualization.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "fileedittool/01_tool_orchestrator",
+          "target": "fileedittool/06_user_interface___diff_visualization",
+          "label": "Enforces input structure"
+        },
+        {
+          "source": "fileedittool/01_tool_orchestrator",
+          "target": "fileedittool/04_safety___validation_layer",
+          "label": "Triggers pre-edit checks"
+        },
+        {
+          "source": "fileedittool/04_safety___validation_layer",
+          "target": "fileedittool/03_intelligent_string_matching",
+          "label": "Verifies string existence"
+        },
+        {
+          "source": "fileedittool/01_tool_orchestrator",
+          "target": "fileedittool/03_intelligent_string_matching",
+          "label": "Normalizes match strings"
+        },
+        {
+          "source": "fileedittool/01_tool_orchestrator",
+          "target": "fileedittool/02_data_contracts___schemas",
+          "label": "Generates edit patches"
+        },
+        {
+          "source": "fileedittool/01_tool_orchestrator",
+          "target": "fileedittool/05_patch_engine___text_transformation",
+          "label": "Delegates result rendering"
+        },
+        {
+          "source": "fileedittool/05_patch_engine___text_transformation",
+          "target": "fileedittool/02_data_contracts___schemas",
+          "label": "Calculates preview diffs"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "fileedittool/01_tool_orchestrator",
+      "target": "fileedittool/06_user_interface___diff_visualization",
+      "label": "Enforces input structure"
+    },
+    {
+      "source": "fileedittool/01_tool_orchestrator",
+      "target": "fileedittool/04_safety___validation_layer",
+      "label": "Triggers pre-edit checks"
+    },
+    {
+      "source": "fileedittool/04_safety___validation_layer",
+      "target": "fileedittool/03_intelligent_string_matching",
+      "label": "Verifies string existence"
+    },
+    {
+      "source": "fileedittool/01_tool_orchestrator",
+      "target": "fileedittool/03_intelligent_string_matching",
+      "label": "Normalizes match strings"
+    },
+    {
+      "source": "fileedittool/01_tool_orchestrator",
+      "target": "fileedittool/02_data_contracts___schemas",
+      "label": "Generates edit patches"
+    },
+    {
+      "source": "fileedittool/01_tool_orchestrator",
+      "target": "fileedittool/05_patch_engine___text_transformation",
+      "label": "Delegates result rendering"
+    },
+    {
+      "source": "fileedittool/05_patch_engine___text_transformation",
+      "target": "fileedittool/02_data_contracts___schemas",
+      "label": "Calculates preview diffs"
+    }
+  ],
+  "storyPath": [
+    "fileedittool/01_tool_orchestrator",
+    "fileedittool/02_data_contracts___schemas",
+    "fileedittool/03_intelligent_string_matching",
+    "fileedittool/04_safety___validation_layer",
+    "fileedittool/05_patch_engine___text_transformation",
+    "fileedittool/06_user_interface___diff_visualization"
+  ]
+}

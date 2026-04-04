@@ -1,0 +1,156 @@
+{
+  "projectName": "bridge",
+  "nodes": [
+    {
+      "id": "bridge",
+      "label": "bridge",
+      "type": "module",
+      "summary": "The **Bridge** project implements a remote control capability that allows the CLI to function as a \"headless\" agent managed by a web interface. It replaces traditional polling with a streaming architecture orchestrated by the **Remote Bridge Core**, which wires together the **Unified Transport Layer** for communication, the **Keycard** for security, and the **Dispatcher** for message routing. The system ensures robust session management, compatibility with legacy IDs, and provides real-time feedback via the **Dashboard**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "bridge/01_remote_bridge_core__the__brain__",
+          "label": "Remote Bridge Core (The \"Brain\")",
+          "type": "chapter",
+          "summary": "This is the central controller for the \"Env-less\" (v2) remote control connection. Think of it as the operating system for the bridge session. It initializes the connection, manages the lifecycle of the session, schedules token refreshes, and coordinates the teardown process. Unlike the older \"Environments\" model which polled for work, this abstraction connects directly to a specific session ID using a streaming architecture. It acts as the main orchestrator that wires together the transport, authentication, and message handling logic into a cohesive runtime.",
+          "contentPath": "01_remote_bridge_core__the__brain__.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bridge/02_session_lifecycle___compatibility__the__container__",
+          "label": "Session Lifecycle & Compatibility (The \"Container\")",
+          "type": "chapter",
+          "summary": "This logic manages the existence and identity of a remote coding session. Think of it as the file cabinet manager. It handles creating new sessions, archiving old ones when they are done, and ensuring the session has a readable title. A key component here is the \"Compatibility Layer,\" which translates between different ID formats (`cse_*` vs `session_*`) used by different parts of the backend infrastructure, ensuring that legacy systems and modern infrastructure can talk about the same session without confusion.",
+          "contentPath": "02_session_lifecycle___compatibility__the__container__.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bridge/03_unified_transport_layer__the__pipe__",
+          "label": "Unified Transport Layer (The \"Pipe\")",
+          "type": "chapter",
+          "summary": "This abstraction creates a uniform interface for sending and receiving data, regardless of the underlying protocol. It acts like a universal adapter plug. The system supports two distinct communication methods: a legacy \"v1\" Hybrid Transport (WebSockets + POST) and a modern \"v2\" SSE Transport (Server-Sent Events + HTTP POST). This layer hides the complexity of these protocols, handling heartbeats, connection drops, and batched writes, allowing the higher-level logic to simply \"write a message\" or \"listen for data\" without worrying about how the wires are connected.",
+          "contentPath": "03_unified_transport_layer__the__pipe__.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bridge/04_message_routing___data_flow__the__dispatcher__",
+          "label": "Message Routing & Data Flow (The \"Dispatcher\")",
+          "type": "chapter",
+          "summary": "This layer handles the raw traffic of conversation. Imagine a mail room that sorts incoming letters: it parses raw JSON from the server, filters out \"echoes\" (messages we sent ourselves), handles file attachments, and routes distinct message types (like user prompts vs. control signals) to the correct handlers. It ensures that images are formatted correctly for the SDK and that large file attachments sent by the web client are downloaded and made available to the local session before the AI attempts to read them.",
+          "contentPath": "04_message_routing___data_flow__the__dispatcher__.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bridge/05_authentication___security__the__keycard__",
+          "label": "Authentication & Security (The \"Keycard\")",
+          "type": "chapter",
+          "summary": "This abstraction manages the digital keys required to access the bridge. It functions like a high-security badge system that automatically renews itself. It handles standard OAuth tokens but also manages specialized \"Trusted Device\" tokens and short-lived JWTs (JSON Web Tokens) for session ingress. Crucially, it includes a \"Refresh Scheduler\" that proactively renews credentials before they expire to prevent connection drops during long sessions, and it handles recovery logic if a 401 Unauthorized error occurs.",
+          "contentPath": "05_authentication___security__the__keycard__.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bridge/06_bridge_ui___feedback__the__dashboard__",
+          "label": "Bridge UI & Feedback (The \"Dashboard\")",
+          "type": "chapter",
+          "summary": "This abstraction controls what the user actually sees in their terminal. It's like the instrument panel of a car. It renders the connection status (spinners, \"Connected\", \"Reconnecting\"), generates QR codes for quick mobile login, and formats activity logs (e.g., \"Reading file X\"). It handles the visual state machine, ensuring the user knows if the bridge is idle, working, or if an error has occurred, and manages the display for both single-session and multi-session modes.",
+          "contentPath": "06_bridge_ui___feedback__the__dashboard__.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "bridge/01_remote_bridge_core__the__brain__",
+          "target": "bridge/02_session_lifecycle___compatibility__the__container__",
+          "label": "Initializes and controls"
+        },
+        {
+          "source": "bridge/01_remote_bridge_core__the__brain__",
+          "target": "bridge/03_unified_transport_layer__the__pipe__",
+          "label": "Delegates message routing to"
+        },
+        {
+          "source": "bridge/01_remote_bridge_core__the__brain__",
+          "target": "bridge/04_message_routing___data_flow__the__dispatcher__",
+          "label": "Schedules token refreshes via"
+        },
+        {
+          "source": "bridge/01_remote_bridge_core__the__brain__",
+          "target": "bridge/05_authentication___security__the__keycard__",
+          "label": "Manages session lifecycle via"
+        },
+        {
+          "source": "bridge/03_unified_transport_layer__the__pipe__",
+          "target": "bridge/01_remote_bridge_core__the__brain__",
+          "label": "Reads configuration from"
+        },
+        {
+          "source": "bridge/06_bridge_ui___feedback__the__dashboard__",
+          "target": "bridge/02_session_lifecycle___compatibility__the__container__",
+          "label": "Injects faults into (Debug)"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "bridge/01_remote_bridge_core__the__brain__",
+      "target": "bridge/02_session_lifecycle___compatibility__the__container__",
+      "label": "Initializes and controls"
+    },
+    {
+      "source": "bridge/01_remote_bridge_core__the__brain__",
+      "target": "bridge/03_unified_transport_layer__the__pipe__",
+      "label": "Delegates message routing to"
+    },
+    {
+      "source": "bridge/01_remote_bridge_core__the__brain__",
+      "target": "bridge/04_message_routing___data_flow__the__dispatcher__",
+      "label": "Schedules token refreshes via"
+    },
+    {
+      "source": "bridge/01_remote_bridge_core__the__brain__",
+      "target": "bridge/05_authentication___security__the__keycard__",
+      "label": "Manages session lifecycle via"
+    },
+    {
+      "source": "bridge/03_unified_transport_layer__the__pipe__",
+      "target": "bridge/01_remote_bridge_core__the__brain__",
+      "label": "Reads configuration from"
+    },
+    {
+      "source": "bridge/06_bridge_ui___feedback__the__dashboard__",
+      "target": "bridge/02_session_lifecycle___compatibility__the__container__",
+      "label": "Injects faults into (Debug)"
+    }
+  ],
+  "storyPath": [
+    "bridge/01_remote_bridge_core__the__brain__",
+    "bridge/02_session_lifecycle___compatibility__the__container__",
+    "bridge/03_unified_transport_layer__the__pipe__",
+    "bridge/04_message_routing___data_flow__the__dispatcher__",
+    "bridge/05_authentication___security__the__keycard__",
+    "bridge/06_bridge_ui___feedback__the__dashboard__"
+  ]
+}

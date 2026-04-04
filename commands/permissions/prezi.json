@@ -1,0 +1,102 @@
+{
+  "projectName": "permissions",
+  "nodes": [
+    {
+      "id": "permissions",
+      "label": "permissions",
+      "type": "module",
+      "summary": "This project implements a **permissions management** tool that allows users to view and modify allow/deny rules for application tools via a *visual interface*. To ensure high performance, it utilizes **lazy loading** to fetch the necessary code only when the command is activated, rather than at startup. It also features logic to update the conversation history based on user actions within the permissions UI.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "permissions/01_command_declaration",
+          "label": "Command Declaration",
+          "type": "chapter",
+          "summary": "Defines the identity and metadata of a specific tool or command within the application. It acts like a \"passport\" for functionality, specifying the command's type (e.g., `local-jsx`), distinct name, search aliases, and a brief description. This abstraction allows the main application to index available features without loading their heavy logic immediately.",
+          "contentPath": "01_command_declaration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "permissions/02_lazy_module_loading",
+          "label": "Lazy Module Loading",
+          "type": "chapter",
+          "summary": "A performance optimization pattern used within command definitions. Instead of importing all command logic at startup, this abstraction uses a dynamic import function (`load`). It's like ordering from a menu where the food (code) is only cooked (loaded) after you specifically ask for it, keeping the initial application startup fast and lightweight.",
+          "contentPath": "02_lazy_module_loading.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "permissions/03_local_jsx_command_handler",
+          "label": "Local JSX Command Handler",
+          "type": "chapter",
+          "summary": "Represents the execution logic for commands that require a visual user interface. Defined by the `LocalJSXCommandCall` type, this function receives lifecycle hooks (like `onDone`) and application context. It renders a React component (e.g., `PermissionRuleList`) effectively functioning as a \"mini-app\" or widget that pops up to handle user interaction.",
+          "contentPath": "03_local_jsx_command_handler.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "permissions/04_context_aware_message_handling",
+          "label": "Context-Aware Message Handling",
+          "type": "chapter",
+          "summary": "Manages the feedback loop between the visual interface and the application's conversation history. When a user interacts with the UI (e.g., retrying denied permissions), this logic uses the `context` object to inject new messages into the chat stream. It's akin to a court stenographer recording significant events from a sidebar conference into the main official transcript.",
+          "contentPath": "04_context_aware_message_handling.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "permissions/01_command_declaration",
+          "target": "permissions/02_lazy_module_loading",
+          "label": "Defines loader"
+        },
+        {
+          "source": "permissions/02_lazy_module_loading",
+          "target": "permissions/03_local_jsx_command_handler",
+          "label": "Imports module"
+        },
+        {
+          "source": "permissions/03_local_jsx_command_handler",
+          "target": "permissions/04_context_aware_message_handling",
+          "label": "Triggers update"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "permissions/01_command_declaration",
+      "target": "permissions/02_lazy_module_loading",
+      "label": "Defines loader"
+    },
+    {
+      "source": "permissions/02_lazy_module_loading",
+      "target": "permissions/03_local_jsx_command_handler",
+      "label": "Imports module"
+    },
+    {
+      "source": "permissions/03_local_jsx_command_handler",
+      "target": "permissions/04_context_aware_message_handling",
+      "label": "Triggers update"
+    }
+  ],
+  "storyPath": [
+    "permissions/01_command_declaration",
+    "permissions/02_lazy_module_loading",
+    "permissions/03_local_jsx_command_handler",
+    "permissions/04_context_aware_message_handling"
+  ]
+}

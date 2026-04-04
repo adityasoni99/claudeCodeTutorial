@@ -1,0 +1,156 @@
+{
+  "projectName": "Spinner",
+  "nodes": [
+    {
+      "id": "spinner",
+      "label": "Spinner",
+      "type": "module",
+      "summary": "This project creates a sophisticated **CLI spinner** and progress tracker for AI agents. It uses a **hierarchical tree** to organize \"Leader\" and \"Teammate\" tasks, employing an *isolated animation loop* to render high-performance visual effects like **glimmering text** and elapsed timers without re-rendering the entire UI. It also features visual alerts for **stalled processes** and adapts its styling to different terminal themes.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "spinner/01_agent_hierarchy__the_tree_",
+          "label": "Agent Hierarchy (The Tree)",
+          "type": "chapter",
+          "summary": "This is the structural skeleton of the UI. It organizes the active tasks into a hierarchical tree view. Think of it like a file explorer, but for AI agents: the \"Leader\" (main process) sits at the top, and \"Teammates\" (sub-agents) are listed below. It handles high-level logic like highlighting the active agent, collapsing the list, and navigating selection with arrow keys.",
+          "contentPath": "01_agent_hierarchy__the_tree_.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "spinner/02_teammate_activity_preview",
+          "label": "Teammate Activity Preview",
+          "type": "chapter",
+          "summary": "This logic allows the user to \"peek\" inside the brain of a specific sub-agent. It extracts the most recent and relevant lines from an agent's message log (filtering out internal structures like JSON) to display a concise summary of what that teammate is currently working on (e.g., \"Using search_tool...\").",
+          "contentPath": "02_teammate_activity_preview.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "spinner/03_theme___glyph_utilities",
+          "label": "Theme & Glyph Utilities",
+          "type": "chapter",
+          "summary": "These utilities handle the visual compatibility layer. Different terminals support different characters and colors. This abstraction ensures the spinner looks correct everywhere by providing fallback characters (e.g., using simple dots instead of Braille patterns on unsupported terminals) and handling RGB color parsing and interpolation for the animation gradients.",
+          "contentPath": "03_theme___glyph_utilities.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "spinner/04_isolated_animation_loop",
+          "label": "Isolated Animation Loop",
+          "type": "chapter",
+          "summary": "This component acts as the high-performance engine of the UI. React rendering can be expensive, so instead of re-rendering the entire tree every frame, this specific row isolates the 50ms refresh loop. It handles the fast-updating visuals\u2014like the elapsed timer, token counters, and shimmering text\u2014ensuring the rest of the application stays responsive without constant re-renders.",
+          "contentPath": "04_isolated_animation_loop.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "spinner/05_text_glimmer_effects",
+          "label": "Text Glimmer Effects",
+          "type": "chapter",
+          "summary": "This abstraction handles the aesthetic \"wave of light\" animation that passes through text (e.g., \"Thinking...\"). It breaks strings down into individual segments or characters and calculates color interpolation based on the current animation frame. It ensures the text remains readable while providing a visual cue that the system is active, similar to a \"skeleton loader\" animation on the web.",
+          "contentPath": "05_text_glimmer_effects.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "spinner/06_stall_detection__heartbeat_",
+          "label": "Stall Detection (Heartbeat)",
+          "type": "chapter",
+          "summary": "This logic acts as a health monitor for the AI's generation process. It watches the stream of incoming tokens; if the stream stops for too long (e.g., 3 seconds), it calculates a \"stalled intensity.\" This value is used to gradually fade the spinner color to red, visually alerting the user that the process might be hanging or waiting on a slow network request.",
+          "contentPath": "06_stall_detection__heartbeat_.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "spinner/01_agent_hierarchy__the_tree_",
+          "target": "spinner/05_text_glimmer_effects",
+          "label": "Displays summaries from"
+        },
+        {
+          "source": "spinner/01_agent_hierarchy__the_tree_",
+          "target": "spinner/06_stall_detection__heartbeat_",
+          "label": "Formats colors using"
+        },
+        {
+          "source": "spinner/02_teammate_activity_preview",
+          "target": "spinner/03_theme___glyph_utilities",
+          "label": "Drives animation for"
+        },
+        {
+          "source": "spinner/02_teammate_activity_preview",
+          "target": "spinner/04_isolated_animation_loop",
+          "label": "Monitors activity via"
+        },
+        {
+          "source": "spinner/02_teammate_activity_preview",
+          "target": "spinner/06_stall_detection__heartbeat_",
+          "label": "Renders glyphs using"
+        },
+        {
+          "source": "spinner/03_theme___glyph_utilities",
+          "target": "spinner/06_stall_detection__heartbeat_",
+          "label": "Interpolates colors using"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "spinner/01_agent_hierarchy__the_tree_",
+      "target": "spinner/05_text_glimmer_effects",
+      "label": "Displays summaries from"
+    },
+    {
+      "source": "spinner/01_agent_hierarchy__the_tree_",
+      "target": "spinner/06_stall_detection__heartbeat_",
+      "label": "Formats colors using"
+    },
+    {
+      "source": "spinner/02_teammate_activity_preview",
+      "target": "spinner/03_theme___glyph_utilities",
+      "label": "Drives animation for"
+    },
+    {
+      "source": "spinner/02_teammate_activity_preview",
+      "target": "spinner/04_isolated_animation_loop",
+      "label": "Monitors activity via"
+    },
+    {
+      "source": "spinner/02_teammate_activity_preview",
+      "target": "spinner/06_stall_detection__heartbeat_",
+      "label": "Renders glyphs using"
+    },
+    {
+      "source": "spinner/03_theme___glyph_utilities",
+      "target": "spinner/06_stall_detection__heartbeat_",
+      "label": "Interpolates colors using"
+    }
+  ],
+  "storyPath": [
+    "spinner/01_agent_hierarchy__the_tree_",
+    "spinner/02_teammate_activity_preview",
+    "spinner/03_theme___glyph_utilities",
+    "spinner/04_isolated_animation_loop",
+    "spinner/05_text_glimmer_effects",
+    "spinner/06_stall_detection__heartbeat_"
+  ]
+}

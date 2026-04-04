@@ -1,0 +1,144 @@
+{
+  "projectName": "LogoV2",
+  "nodes": [
+    {
+      "id": "logov2",
+      "label": "LogoV2",
+      "type": "module",
+      "summary": "This project implements a dynamic **terminal dashboard** that serves as the application's startup screen. It uses an **adaptive orchestrator** to toggle between full and condensed layouts, integrating an **animated ASCII mascot**, modular **content feeds**, and state-managed **notifications** to guide users through features and **upsells** without intrusion.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "logov2/01_adaptive_logo_orchestrator",
+          "label": "Adaptive Logo Orchestrator",
+          "type": "chapter",
+          "summary": "The central controller for the application's startup screen. It functions like a responsive design manager, determining whether to show the \"Full\" experience (large ASCII art, feeds) or a \"Condensed\" header based on terminal window width, user history (e.g., if they've seen the release notes), and configuration flags. It manages the high-level layout logic.",
+          "contentPath": "01_adaptive_logo_orchestrator.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "logov2/02_character_animation_engine",
+          "label": "Character Animation Engine",
+          "type": "chapter",
+          "summary": "The abstraction behind the CLI mascot (\"Clawd\"). It treats ASCII art like sprite frames, defining specific \"poses\" (text character arrangements). It uses a frame-loop mechanism to transition between these poses, creating animations like jumping or looking around, while handling cross-platform rendering differences (e.g., Apple Terminal compatibility).",
+          "contentPath": "02_character_animation_engine.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "logov2/03_feed_component_system",
+          "label": "Feed Component System",
+          "type": "chapter",
+          "summary": "A modular UI pattern for displaying lists of dynamic content (like \"Recent Activity\" or \"Tips\") in the terminal. It acts like a widget system where content is standardized into titles, lines, and footers. The system handles layout calculations, width constraints, and column arrangement, allowing the main dashboard to render diverse data sources uniformly.",
+          "contentPath": "03_feed_component_system.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "logov2/04_conditional_feature_notices",
+          "label": "Conditional Feature Notices",
+          "type": "chapter",
+          "summary": "Self-contained components responsible for announcing specific capabilities (like Voice Mode or Channels). They encapsulate the logic for visibility\u2014checking environment variables, feature flags, or authentication status\u2014before rendering. This keeps the main layout clean by offloading the \"should I show this?\" decision to the component itself.",
+          "contentPath": "04_conditional_feature_notices.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "logov2/05_upsell_impression_management",
+          "label": "Upsell Impression Management",
+          "type": "chapter",
+          "summary": "A specialized pattern for promotional content (Credits, Guest Passes). Unlike standard notices, these components manage persistent state regarding \"impressions\" (how many times a user has seen them). They enforce limits (e.g., \"show max 3 times\") and handle dismissal logic to ensure the CLI remains helpful without becoming annoying.",
+          "contentPath": "05_upsell_impression_management.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "logov2/02_character_animation_engine",
+          "target": "logov2/01_adaptive_logo_orchestrator",
+          "label": "Renders layout"
+        },
+        {
+          "source": "logov2/02_character_animation_engine",
+          "target": "logov2/03_feed_component_system",
+          "label": "Displays mascot"
+        },
+        {
+          "source": "logov2/02_character_animation_engine",
+          "target": "logov2/04_conditional_feature_notices",
+          "label": "Conditionally shows"
+        },
+        {
+          "source": "logov2/02_character_animation_engine",
+          "target": "logov2/05_upsell_impression_management",
+          "label": "Manages impressions"
+        },
+        {
+          "source": "logov2/04_conditional_feature_notices",
+          "target": "logov2/03_feed_component_system",
+          "label": "Uses animations"
+        },
+        {
+          "source": "logov2/05_upsell_impression_management",
+          "target": "logov2/01_adaptive_logo_orchestrator",
+          "label": "Provides content"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "logov2/02_character_animation_engine",
+      "target": "logov2/01_adaptive_logo_orchestrator",
+      "label": "Renders layout"
+    },
+    {
+      "source": "logov2/02_character_animation_engine",
+      "target": "logov2/03_feed_component_system",
+      "label": "Displays mascot"
+    },
+    {
+      "source": "logov2/02_character_animation_engine",
+      "target": "logov2/04_conditional_feature_notices",
+      "label": "Conditionally shows"
+    },
+    {
+      "source": "logov2/02_character_animation_engine",
+      "target": "logov2/05_upsell_impression_management",
+      "label": "Manages impressions"
+    },
+    {
+      "source": "logov2/04_conditional_feature_notices",
+      "target": "logov2/03_feed_component_system",
+      "label": "Uses animations"
+    },
+    {
+      "source": "logov2/05_upsell_impression_management",
+      "target": "logov2/01_adaptive_logo_orchestrator",
+      "label": "Provides content"
+    }
+  ],
+  "storyPath": [
+    "logov2/01_adaptive_logo_orchestrator",
+    "logov2/02_character_animation_engine",
+    "logov2/03_feed_component_system",
+    "logov2/04_conditional_feature_notices",
+    "logov2/05_upsell_impression_management"
+  ]
+}

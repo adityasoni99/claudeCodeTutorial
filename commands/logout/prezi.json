@@ -1,0 +1,124 @@
+{
+  "projectName": "logout",
+  "nodes": [
+    {
+      "id": "logout",
+      "label": "logout",
+      "type": "module",
+      "summary": "This project implements a **secure logout** workflow for a CLI application. It acts as a central coordinator that systematically removes *sensitive credentials*, clears temporary memory caches, and resets the persistent configuration file to ensure the user is completely signed out and no data leaks occur.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "logout/01_command_definition",
+          "label": "Command Definition",
+          "type": "chapter",
+          "summary": "This defines the interface between the \"logout\" feature and the main CLI application. It acts like a menu entry in a software program, specifying the command's name, description, and conditions for visibility (e.g., checking environment variables). It also handles lazy loading, meaning the actual code for logging out is only fetched when the user actually runs the command, optimizing startup time.",
+          "contentPath": "01_command_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "logout/02_logout_workflow_orchestrator",
+          "label": "Logout Workflow Orchestrator",
+          "type": "chapter",
+          "summary": "The `performLogout` function serves as the central conductor for the sign-out process. It executes a strict sequence of operations: flushing telemetry data to prevents leaks, wiping credentials, clearing caches, and updating configuration files. It ensures that every necessary step to \"forget\" the user is taken in the correct order before the process terminates.",
+          "contentPath": "02_logout_workflow_orchestrator.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "logout/03_secure_credential_management",
+          "label": "Secure Credential Management",
+          "type": "chapter",
+          "summary": "This abstraction handles the lifecycle of sensitive information like API keys and authentication tokens. During logout, it acts as a digital shredder, calling functions like `removeApiKey()` and `secureStorage.delete()` to permanently remove secrets from the user's device, ensuring the application is left in a secure, unauthenticated state.",
+          "contentPath": "03_secure_credential_management.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "logout/04_global_configuration_state",
+          "label": "Global Configuration State",
+          "type": "chapter",
+          "summary": "Uses `saveGlobalConfig` to modify the persistent settings file stored on disk. It acts as the application's long-term memory. When logging out, this abstraction updates the state to reflect that the user has no active subscription, has not completed onboarding (if requested), and is no longer linked to an OAuth account, effectively resetting the user's journey.",
+          "contentPath": "04_global_configuration_state.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "logout/05_cache_invalidation_strategy",
+          "label": "Cache Invalidation Strategy",
+          "type": "chapter",
+          "summary": "Implemented via `clearAuthRelatedCaches`, this abstraction is responsible for scrubbing in-memory data. Think of it as wiping a whiteboard clean after a meeting. It explicitly targets various subsystems\u2014OAuth tokens, trusted device tokens, beta flags, tool schemas, and remote settings\u2014ensuring that no stale or user-specific data lingers in memory that could affect the next session.",
+          "contentPath": "05_cache_invalidation_strategy.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "logout/01_command_definition",
+          "target": "logout/02_logout_workflow_orchestrator",
+          "label": "Loads and triggers"
+        },
+        {
+          "source": "logout/02_logout_workflow_orchestrator",
+          "target": "logout/04_global_configuration_state",
+          "label": "Deletes credentials via"
+        },
+        {
+          "source": "logout/02_logout_workflow_orchestrator",
+          "target": "logout/03_secure_credential_management",
+          "label": "Invokes cleanup via"
+        },
+        {
+          "source": "logout/02_logout_workflow_orchestrator",
+          "target": "logout/05_cache_invalidation_strategy",
+          "label": "Resets state via"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "logout/01_command_definition",
+      "target": "logout/02_logout_workflow_orchestrator",
+      "label": "Loads and triggers"
+    },
+    {
+      "source": "logout/02_logout_workflow_orchestrator",
+      "target": "logout/04_global_configuration_state",
+      "label": "Deletes credentials via"
+    },
+    {
+      "source": "logout/02_logout_workflow_orchestrator",
+      "target": "logout/03_secure_credential_management",
+      "label": "Invokes cleanup via"
+    },
+    {
+      "source": "logout/02_logout_workflow_orchestrator",
+      "target": "logout/05_cache_invalidation_strategy",
+      "label": "Resets state via"
+    }
+  ],
+  "storyPath": [
+    "logout/01_command_definition",
+    "logout/02_logout_workflow_orchestrator",
+    "logout/03_secure_credential_management",
+    "logout/04_global_configuration_state",
+    "logout/05_cache_invalidation_strategy"
+  ]
+}

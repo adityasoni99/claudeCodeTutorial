@@ -1,0 +1,124 @@
+{
+  "projectName": "rewind",
+  "nodes": [
+    {
+      "id": "rewind",
+      "label": "rewind",
+      "type": "module",
+      "summary": "This project implements a **rewind** command that acts like a time-machine for the application's conversation history. It defines a configuration \"menu entry\" that allows users to restore their workspace to a previous *checkpoint* using a visual selection interface. To keep the application fast and clean, the code uses **lazy loading** to only fetch the logic when needed and ensures the rewind action itself doesn't clutter the chat log.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "rewind/01_command_registry___configuration",
+          "label": "Command Registry & Configuration",
+          "type": "chapter",
+          "summary": "This abstraction acts as the \"Menu Entry\" or \"ID Card\" for a feature within the system. It defines the external interface of a command\u2014its name (`rewind`), description, aliases (`checkpoint`), and capabilities\u2014without containing the heavy implementation logic.\n\nThink of it like a menu in a restaurant: it lists the dish and its ingredients (metadata) so you can order it, but the actual cooking happens elsewhere. This separation allows the system to list available commands quickly without loading all the code behind them.",
+          "contentPath": "01_command_registry___configuration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "rewind/02_tool_context_interface",
+          "label": "Tool Context Interface",
+          "type": "chapter",
+          "summary": "The `ToolUseContext` acts like a \"Control Panel\" or a set of keys passed to the command handler. It provides the command with access to the broader application environment, allowing it to manipulate the UI or access shared state.\n\nIn this specific case, the context provides the `openMessageSelector` function. It's like giving a maintenance worker a universal key; it allows the isolated command code to reach out and interact with the main application window to show a selection interface to the user.",
+          "contentPath": "02_tool_context_interface.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "rewind/03_command_execution_handler",
+          "label": "Command Execution Handler",
+          "type": "chapter",
+          "summary": "This is the \"Engine Room\" or the specific recipe for the command. It exports a `call` function that contains the actual logic executed when the user invokes the command.\n\nIf the configuration file is the menu entry, this abstraction is the chef in the kitchen. It takes arguments and a context, performs the necessary work (like triggering the rewind logic), and prepares the result. It isolates the behavior of this specific tool from the rest of the application.",
+          "contentPath": "03_command_execution_handler.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "rewind/04_local_command_result",
+          "label": "Local Command Result",
+          "type": "chapter",
+          "summary": "This abstraction represents the \"Mission Report\" returned to the system after the command finishes execution. It dictates how the system should update the conversation history or UI based on what happened.\n\nHere, the code returns `{ type: 'skip' }`. This is analogous to a \"Ghost Mode\" operation: the command performs its task (rewinding state) but tells the system, \"Don't write this down in the official chat log.\" It allows for functional side effects without cluttering the user's visible history.",
+          "contentPath": "04_local_command_result.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "rewind/05_lazy_module_loading",
+          "label": "Lazy Module Loading",
+          "type": "chapter",
+          "summary": "This pattern allows the application to be efficient by only loading code when it is strictly necessary. The `load` function in the configuration file uses a dynamic import to fetch the implementation logic.\n\nIt's like \"Just-In-Time\" delivery for manufacturing. Instead of stockpiling every possible part (loading all code) at the start of the day (application launch), the system waits until a specific part is requested before ordering it from the warehouse. This keeps the application startup fast and lightweight.",
+          "contentPath": "05_lazy_module_loading.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "rewind/01_command_registry___configuration",
+          "target": "rewind/05_lazy_module_loading",
+          "label": "Triggers dynamic import"
+        },
+        {
+          "source": "rewind/05_lazy_module_loading",
+          "target": "rewind/02_tool_context_interface",
+          "label": "Loads implementation"
+        },
+        {
+          "source": "rewind/02_tool_context_interface",
+          "target": "rewind/03_command_execution_handler",
+          "label": "Accesses UI methods"
+        },
+        {
+          "source": "rewind/02_tool_context_interface",
+          "target": "rewind/04_local_command_result",
+          "label": "Returns execution status"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "rewind/01_command_registry___configuration",
+      "target": "rewind/05_lazy_module_loading",
+      "label": "Triggers dynamic import"
+    },
+    {
+      "source": "rewind/05_lazy_module_loading",
+      "target": "rewind/02_tool_context_interface",
+      "label": "Loads implementation"
+    },
+    {
+      "source": "rewind/02_tool_context_interface",
+      "target": "rewind/03_command_execution_handler",
+      "label": "Accesses UI methods"
+    },
+    {
+      "source": "rewind/02_tool_context_interface",
+      "target": "rewind/04_local_command_result",
+      "label": "Returns execution status"
+    }
+  ],
+  "storyPath": [
+    "rewind/01_command_registry___configuration",
+    "rewind/02_tool_context_interface",
+    "rewind/03_command_execution_handler",
+    "rewind/04_local_command_result",
+    "rewind/05_lazy_module_loading"
+  ]
+}

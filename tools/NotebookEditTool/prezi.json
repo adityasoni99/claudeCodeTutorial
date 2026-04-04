@@ -1,0 +1,134 @@
+{
+  "projectName": "NotebookEditTool",
+  "nodes": [
+    {
+      "id": "notebookedittool",
+      "label": "NotebookEditTool",
+      "type": "module",
+      "summary": "This project defines a specialized **tool** enabling an AI assistant to edit *Jupyter Notebooks* (`.ipynb` files). It safely parses the notebook's complex JSON structure to **insert**, **replace**, or **delete** specific cells based on user instructions. The tool includes strict **schema validation** to ensure data integrity and custom *UI components* to render the editing actions and results clearly in the chat interface.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "notebookedittool/01_schema_definitions",
+          "label": "Schema Definitions",
+          "type": "chapter",
+          "summary": "Defines the strict data contracts for the tool using `zod`. The `inputSchema` validates parameters provided by the AI (like `notebook_path`, `edit_mode`, and `new_source`), ensuring they match expected types and constraints. The `outputSchema` defines the structure of the returned data, ensuring the system receives consistent results containing attribution and file content.",
+          "contentPath": "01_schema_definitions.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "notebookedittool/02_notebookedittool_core",
+          "label": "NotebookEditTool Core",
+          "type": "chapter",
+          "summary": "The central definition of the tool that ties all functionality together. It uses `buildTool` to define the tool's name, description, and lifecycle methods (`validateInput`, `call`). It acts as the controller, coordinating between the user's request, the file system validation, and the response generation. It serves as the main entry point for the \"Edit Notebook\" feature.",
+          "contentPath": "02_notebookedittool_core.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "notebookedittool/03_tool_prompts_and_metadata",
+          "label": "Tool Prompts and Metadata",
+          "type": "chapter",
+          "summary": "The textual resources that describe the tool to the AI model. This includes the unique tool name, a high-level description, and a detailed system prompt explaining usage rules (like absolute paths and index handling). These strings act as the \"instruction manual\" that the LLM reads to understand how to operate the tool.",
+          "contentPath": "03_tool_prompts_and_metadata.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "notebookedittool/04_notebook_manipulation_logic",
+          "label": "Notebook Manipulation Logic",
+          "type": "chapter",
+          "summary": "The specific business logic responsible for safely modifying Jupyter Notebook (`.ipynb`) files. Since notebooks are complex JSON structures, this logic parses the content, locates specific cells by ID or index, and performs array operations (splice) to insert, delete, or replace cells. It also manages metadata updates, such as clearing execution counts when code is modified.",
+          "contentPath": "04_notebook_manipulation_logic.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "notebookedittool/05_ui_rendering_components",
+          "label": "UI Rendering Components",
+          "type": "chapter",
+          "summary": "A set of React components and helper functions that control how the tool's usage is displayed to the user. It manages the visualization of the tool call (e.g., showing the file path and cell ID being edited), error states, and the successful result (e.g., displaying the new code within the chat interface).",
+          "contentPath": "05_ui_rendering_components.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "notebookedittool/01_schema_definitions",
+          "target": "notebookedittool/05_ui_rendering_components",
+          "label": "Uses metadata from"
+        },
+        {
+          "source": "notebookedittool/01_schema_definitions",
+          "target": "notebookedittool/03_tool_prompts_and_metadata",
+          "label": "Validates inputs/outputs with"
+        },
+        {
+          "source": "notebookedittool/01_schema_definitions",
+          "target": "notebookedittool/02_notebookedittool_core",
+          "label": "Executes editing operations"
+        },
+        {
+          "source": "notebookedittool/01_schema_definitions",
+          "target": "notebookedittool/04_notebook_manipulation_logic",
+          "label": "Renders UI with"
+        },
+        {
+          "source": "notebookedittool/04_notebook_manipulation_logic",
+          "target": "notebookedittool/03_tool_prompts_and_metadata",
+          "label": "Uses types from"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "notebookedittool/01_schema_definitions",
+      "target": "notebookedittool/05_ui_rendering_components",
+      "label": "Uses metadata from"
+    },
+    {
+      "source": "notebookedittool/01_schema_definitions",
+      "target": "notebookedittool/03_tool_prompts_and_metadata",
+      "label": "Validates inputs/outputs with"
+    },
+    {
+      "source": "notebookedittool/01_schema_definitions",
+      "target": "notebookedittool/02_notebookedittool_core",
+      "label": "Executes editing operations"
+    },
+    {
+      "source": "notebookedittool/01_schema_definitions",
+      "target": "notebookedittool/04_notebook_manipulation_logic",
+      "label": "Renders UI with"
+    },
+    {
+      "source": "notebookedittool/04_notebook_manipulation_logic",
+      "target": "notebookedittool/03_tool_prompts_and_metadata",
+      "label": "Uses types from"
+    }
+  ],
+  "storyPath": [
+    "notebookedittool/01_schema_definitions",
+    "notebookedittool/02_notebookedittool_core",
+    "notebookedittool/03_tool_prompts_and_metadata",
+    "notebookedittool/04_notebook_manipulation_logic",
+    "notebookedittool/05_ui_rendering_components"
+  ]
+}

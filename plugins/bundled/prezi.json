@@ -1,0 +1,124 @@
+{
+  "projectName": "bundled",
+  "nodes": [
+    {
+      "id": "bundled",
+      "label": "bundled",
+      "type": "module",
+      "summary": "This project establishes a **centralized framework** for managing the startup and organization of optional extensions within a CLI application. It creates a clear boundary between *automatic skills* and **user-toggleable plugins**, ensuring that features intended for user customization are correctly registered and exposed through a settings interface.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "bundled/01_feature_segregation_strategy",
+          "label": "Feature Segregation Strategy",
+          "type": "chapter",
+          "summary": "This concept defines the architectural boundary between \"Built-in Plugins\" and \"Bundled Skills.\" The code documentation distinguishes plugins (simple, toggleable features) from bundled skills (complex, auto-enabled behaviors like `claude-in-chrome`). It is like the difference between installing an optional app on your phone (a plugin you choose) versus the underlying cellular connection logic (a bundled skill that runs automatically). This abstraction guides developers on where to place new code based on complexity and the necessity of user control.",
+          "contentPath": "01_feature_segregation_strategy.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bundled/02_user_controlled_configuration",
+          "label": "User-Controlled Configuration",
+          "type": "chapter",
+          "summary": "This abstraction highlights the connection between the backend code and the frontend `/plugin` UI. It emphasizes that features initialized here are specifically meant to be explicitly enabled or disabled by the user. It is similar to a \"Settings\" menu in a video game where you can toggle specific options like subtitles or volume, as opposed to the core game engine which runs regardless. It bridges the gap between the CLI's internal logic and the user's ability to customize their experience via the interface.",
+          "contentPath": "02_user_controlled_configuration.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bundled/03_built_in_plugin_initialization",
+          "label": "Built-in Plugin Initialization",
+          "type": "chapter",
+          "summary": "This function serves as the bootstrapping mechanism for the CLI's internal extensions. It acts as the main switchboard that activates optional tools when the application starts. Think of it like the startup sequence of a car that checks and enables features like traction control or automatic headlights. It ensures that any tools intended to be configurable by the user are properly loaded into the system before the user begins interacting with the interface, providing a centralized entry point for enabling capabilities.",
+          "contentPath": "03_built_in_plugin_initialization.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bundled/04_plugin_registration_pattern",
+          "label": "Plugin Registration Pattern",
+          "type": "chapter",
+          "summary": "Although the implementation logic is imported, this file establishes the standard pattern for adding new capabilities. Developers are instructed to import a specific registration function and invoke it within the initialization block. It operates like a guest list at an event; if the plugin isn't explicitly on the list (registered), the system won't acknowledge it or present it to the user. This ensures a controlled, centralized inventory of all available user-facing extensions within the application.",
+          "contentPath": "04_plugin_registration_pattern.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bundled/05_migration_scaffolding",
+          "label": "Migration Scaffolding",
+          "type": "chapter",
+          "summary": "This represents the transitional structure of the project. The code comments indicate that this file currently serves as a placeholder or framework to facilitate moving existing bundled skills into a user-toggleable format. It acts like the wooden framework put up around a building during a renovation; it marks the designated space where future improvements and structural changes will be organized, guiding developers on exactly where to place migrated features as the project evolves from automatic skills to optional plugins.",
+          "contentPath": "05_migration_scaffolding.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "bundled/02_user_controlled_configuration",
+          "target": "bundled/01_feature_segregation_strategy",
+          "label": "Dictates scope of"
+        },
+        {
+          "source": "bundled/05_migration_scaffolding",
+          "target": "bundled/01_feature_segregation_strategy",
+          "label": "Structures"
+        },
+        {
+          "source": "bundled/01_feature_segregation_strategy",
+          "target": "bundled/03_built_in_plugin_initialization",
+          "label": "Executes"
+        },
+        {
+          "source": "bundled/01_feature_segregation_strategy",
+          "target": "bundled/04_plugin_registration_pattern",
+          "label": "Populates"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "bundled/02_user_controlled_configuration",
+      "target": "bundled/01_feature_segregation_strategy",
+      "label": "Dictates scope of"
+    },
+    {
+      "source": "bundled/05_migration_scaffolding",
+      "target": "bundled/01_feature_segregation_strategy",
+      "label": "Structures"
+    },
+    {
+      "source": "bundled/01_feature_segregation_strategy",
+      "target": "bundled/03_built_in_plugin_initialization",
+      "label": "Executes"
+    },
+    {
+      "source": "bundled/01_feature_segregation_strategy",
+      "target": "bundled/04_plugin_registration_pattern",
+      "label": "Populates"
+    }
+  ],
+  "storyPath": [
+    "bundled/01_feature_segregation_strategy",
+    "bundled/02_user_controlled_configuration",
+    "bundled/03_built_in_plugin_initialization",
+    "bundled/04_plugin_registration_pattern",
+    "bundled/05_migration_scaffolding"
+  ]
+}

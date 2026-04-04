@@ -1,0 +1,112 @@
+{
+  "projectName": "StructuredDiff",
+  "nodes": [
+    {
+      "id": "structureddiff",
+      "label": "StructuredDiff",
+      "type": "module",
+      "summary": "The **StructuredDiff** project provides a sophisticated mechanism for displaying code differences in a command-line interface. It goes beyond simple line-by-line comparisons by using a **Word-Level Granularity Strategy** to identify and highlight specific changes within lines (such as variable renames). The system uses a **Native Module Bridge** to ensure high performance while offering a robust *fallback* rendering logic that transforms raw patches into structured **Diff Line Models** for rich, colored terminal output.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "structureddiff/01_terminal_ui_rendering",
+          "label": "Terminal UI Rendering",
+          "type": "chapter",
+          "summary": "The presentation layer responsible for drawing the diff in a command-line interface. Using React-based components for terminals (via `ink`), it handles visual layout concerns like text wrapping, background color padding (to create full-width colored bars), line numbering alignment, and conditional dimming. It translates the abstract diff data into the final grid of characters the user sees on their screen.",
+          "contentPath": "01_terminal_ui_rendering.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "structureddiff/02_diff_line_model",
+          "label": "Diff Line Model",
+          "type": "chapter",
+          "summary": "The structural foundation for processing patches. It transforms raw text lines (strings starting with `+` or `-`) into rich `LineObject` or `DiffLine` data structures. Think of this as parsing a raw text document into a structured database record: it separates the content from the metadata, categorizing each line by its type (add, remove, no change) and preparing it for deeper analysis or rendering.",
+          "contentPath": "02_diff_line_model.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "structureddiff/03_word_level_granularity_strategy",
+          "label": "Word-Level Granularity Strategy",
+          "type": "chapter",
+          "summary": "The intelligence layer that refines standard line-by-line diffs. Instead of simply showing a line was removed and another added, this abstraction pairs adjacent changes to identify exactly *what* changed within the line. It uses heuristics to match \"removed\" lines with their \"added\" counterparts and computes token-level differences, allowing the UI to highlight specific variable name changes or syntax tweaks (e.g., changing `let` to `const`).",
+          "contentPath": "03_word_level_granularity_strategy.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "structureddiff/04_native_module_bridge",
+          "label": "Native Module Bridge",
+          "type": "chapter",
+          "summary": "Acts as a safe gatekeeper for the high-performance syntax highlighting engine. It checks environment variables to determine if the native `color-diff-napi` module should be used or disabled. Like a smart switch, it ensures the application gracefully handles the absence of the native module without crashing, providing a consistent interface for the rest of the app to request syntax themes and file colors.",
+          "contentPath": "04_native_module_bridge.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "structureddiff/04_native_module_bridge",
+          "target": "structureddiff/02_diff_line_model",
+          "label": "Parses and structures"
+        },
+        {
+          "source": "structureddiff/04_native_module_bridge",
+          "target": "structureddiff/03_word_level_granularity_strategy",
+          "label": "Delegates word diffing"
+        },
+        {
+          "source": "structureddiff/03_word_level_granularity_strategy",
+          "target": "structureddiff/02_diff_line_model",
+          "label": "Links and annotates"
+        },
+        {
+          "source": "structureddiff/04_native_module_bridge",
+          "target": "structureddiff/01_terminal_ui_rendering",
+          "label": "Consumes theme configuration"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "structureddiff/04_native_module_bridge",
+      "target": "structureddiff/02_diff_line_model",
+      "label": "Parses and structures"
+    },
+    {
+      "source": "structureddiff/04_native_module_bridge",
+      "target": "structureddiff/03_word_level_granularity_strategy",
+      "label": "Delegates word diffing"
+    },
+    {
+      "source": "structureddiff/03_word_level_granularity_strategy",
+      "target": "structureddiff/02_diff_line_model",
+      "label": "Links and annotates"
+    },
+    {
+      "source": "structureddiff/04_native_module_bridge",
+      "target": "structureddiff/01_terminal_ui_rendering",
+      "label": "Consumes theme configuration"
+    }
+  ],
+  "storyPath": [
+    "structureddiff/01_terminal_ui_rendering",
+    "structureddiff/02_diff_line_model",
+    "structureddiff/03_word_level_granularity_strategy",
+    "structureddiff/04_native_module_bridge"
+  ]
+}

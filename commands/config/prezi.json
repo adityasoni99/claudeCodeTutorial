@@ -1,0 +1,102 @@
+{
+  "projectName": "config",
+  "nodes": [
+    {
+      "id": "config",
+      "label": "config",
+      "type": "module",
+      "summary": "This project defines a **configuration command** that allows users to access the application's *Settings panel*. It utilizes a performance-saving **lazy loading** technique to only fetch the implementation code when the user specifically requests it, at which point it adapts the request to render the visual interface.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "config/01_command_definition",
+          "label": "Command Definition",
+          "type": "chapter",
+          "summary": "This structure acts as the blueprint or registration card for a feature within the system. It defines the command's identity (name, aliases), its category (type: 'local-jsx'), and provides a description. Crucially, it dictates how the system should load the actual implementation logic. It's like a menu item in a restaurant; it lists the name and description of the dish so you can order it, but it isn't the food itself until prepared.",
+          "contentPath": "01_command_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "config/02_lazy_module_loading",
+          "label": "Lazy Module Loading",
+          "type": "chapter",
+          "summary": "A performance optimization pattern used within the Command Definition. The `load` property utilizes a dynamic import (`() => import(...)`) to fetch the command's implementation code only when it is explicitly requested. This is similar to \"Just-In-Time\" delivery in manufacturing; parts (code) arrive exactly when they are needed, rather than cluttering up the warehouse (memory) beforehand.",
+          "contentPath": "02_lazy_module_loading.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "config/03_component_integration_adapter",
+          "label": "Component Integration Adapter",
+          "type": "chapter",
+          "summary": "The logic in `config.tsx` serves as a bridge between the generic command system and specific React components. The `call` function wraps the `Settings` component, translating system-level control signals (like the `onDone` callback) into component-specific props (like `onClose`). This acts like a power adapter, allowing a specific appliance (the Settings UI) to plug into the universal wall socket (the Command runner).",
+          "contentPath": "03_component_integration_adapter.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "config/04_local_jsx_execution_strategy",
+          "label": "Local JSX Execution Strategy",
+          "type": "chapter",
+          "summary": "A specific pattern for commands that render a user interface rather than performing a background task. Defined by the `LocalJSXCommandCall` type, this abstraction invokes a function that returns a React element. It manages the lifecycle of the UI interactions via callbacks like `onDone`. It's analogous to opening a \"modal\" or \"popup\" window within the application to get input from the user.",
+          "contentPath": "04_local_jsx_execution_strategy.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "config/01_command_definition",
+          "target": "config/03_component_integration_adapter",
+          "label": "Utilizes"
+        },
+        {
+          "source": "config/03_component_integration_adapter",
+          "target": "config/04_local_jsx_execution_strategy",
+          "label": "Imports"
+        },
+        {
+          "source": "config/04_local_jsx_execution_strategy",
+          "target": "config/02_lazy_module_loading",
+          "label": "Implements"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "config/01_command_definition",
+      "target": "config/03_component_integration_adapter",
+      "label": "Utilizes"
+    },
+    {
+      "source": "config/03_component_integration_adapter",
+      "target": "config/04_local_jsx_execution_strategy",
+      "label": "Imports"
+    },
+    {
+      "source": "config/04_local_jsx_execution_strategy",
+      "target": "config/02_lazy_module_loading",
+      "label": "Implements"
+    }
+  ],
+  "storyPath": [
+    "config/01_command_definition",
+    "config/02_lazy_module_loading",
+    "config/03_component_integration_adapter",
+    "config/04_local_jsx_execution_strategy"
+  ]
+}

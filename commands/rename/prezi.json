@@ -1,0 +1,124 @@
+{
+  "projectName": "rename",
+  "nodes": [
+    {
+      "id": "rename",
+      "label": "rename",
+      "type": "module",
+      "summary": "The `rename` project provides a feature to update the identifier of a current **conversation session**, either by accepting a user-defined string or by automatically generating a summary title using *artificial intelligence*. This functionality ensures a seamless user experience by persisting the new name locally, updating the active **application state** for immediate UI feedback, and synchronizing the change with remote cloud environments.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "rename/01_command_definition___registry",
+          "label": "Command Definition & Registry",
+          "type": "chapter",
+          "summary": "Defines the metadata and structural contract for a feature in the application. In `index.ts`, the `rename` object acts like a menu item in a restaurant: it lists the name, description, and input hints, but it doesn't cook the food itself. Instead, it uses lazy loading (`load: () => import...`) to fetch the actual execution logic only when ordered. This pattern keeps the application lightweight by decoupling the declaration of a tool from its implementation.",
+          "contentPath": "01_command_definition___registry.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "rename/02_command_execution_lifecycle",
+          "label": "Command Execution Lifecycle",
+          "type": "chapter",
+          "summary": "The runtime logic that processes a user's request. Encapsulated in the `call` function in `rename.ts`, this abstraction acts like a request handler or controller. It receives the context (state) and arguments, performs validation (e.g., checking `isTeammate`), orchestrates necessary operations (generating names or saving data), and finally triggers a callback (`onDone`) to notify the system that the task is complete. It bridges the gap between user input and system action.",
+          "contentPath": "02_command_execution_lifecycle.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "rename/03_ai_driven_content_generation",
+          "label": "AI-Driven Content Generation",
+          "type": "chapter",
+          "summary": "A specialized service pattern that leverages a Language Model (Haiku) to perform cognitive tasks\u2014specifically, summarizing a conversation into a title. Located in `generateSessionName.ts`, this abstraction prepares a specific system prompt and conversation history, sends it to the API, and enforces a strict JSON schema on the output. It acts like hiring a quick, specialized editor to read a transcript and suggest a headline so the main application logic doesn't have to \"think\" about the content itself.",
+          "contentPath": "03_ai_driven_content_generation.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "rename/04_application_state_management",
+          "label": "Application State Management",
+          "type": "chapter",
+          "summary": "Methods for interacting with the running application's memory and context. The code utilizes `ToolUseContext` and `LocalJSXCommandContext` to access global data (like `appState` and `replBridgeSessionId`). It creates a feedback loop where the command updates the React-like state (`context.setAppState`) so that the UI (e.g., a prompt bar) reflects the new name immediately without requiring a full reload. It is the nervous system connecting the command to the rest of the application's body.",
+          "contentPath": "04_application_state_management.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "rename/05_cross_environment_synchronization",
+          "label": "Cross-Environment Synchronization",
+          "type": "chapter",
+          "summary": "The mechanism ensuring that state changes are reflected across both the local environment and remote services. When a session is renamed, the code in `rename.ts` updates the local file storage (`saveCustomTitle`) and simultaneously attempts to sync this change to the remote \"Bridge\" session (`updateBridgeSessionTitle`). It handles the complexity of having a \"split brain\" architecture where the agent runs locally but may mirror its state to a cloud backend (like claude.ai), similar to how Dropbox syncs changes on your desktop to the cloud.",
+          "contentPath": "05_cross_environment_synchronization.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "rename/01_command_definition___registry",
+          "target": "rename/02_command_execution_lifecycle",
+          "label": "Lazily loads"
+        },
+        {
+          "source": "rename/02_command_execution_lifecycle",
+          "target": "rename/03_ai_driven_content_generation",
+          "label": "Delegates name creation"
+        },
+        {
+          "source": "rename/02_command_execution_lifecycle",
+          "target": "rename/04_application_state_management",
+          "label": "Triggers remote sync"
+        },
+        {
+          "source": "rename/02_command_execution_lifecycle",
+          "target": "rename/05_cross_environment_synchronization",
+          "label": "Updates shared context"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "rename/01_command_definition___registry",
+      "target": "rename/02_command_execution_lifecycle",
+      "label": "Lazily loads"
+    },
+    {
+      "source": "rename/02_command_execution_lifecycle",
+      "target": "rename/03_ai_driven_content_generation",
+      "label": "Delegates name creation"
+    },
+    {
+      "source": "rename/02_command_execution_lifecycle",
+      "target": "rename/04_application_state_management",
+      "label": "Triggers remote sync"
+    },
+    {
+      "source": "rename/02_command_execution_lifecycle",
+      "target": "rename/05_cross_environment_synchronization",
+      "label": "Updates shared context"
+    }
+  ],
+  "storyPath": [
+    "rename/01_command_definition___registry",
+    "rename/02_command_execution_lifecycle",
+    "rename/03_ai_driven_content_generation",
+    "rename/04_application_state_management",
+    "rename/05_cross_environment_synchronization"
+  ]
+}

@@ -1,0 +1,146 @@
+{
+  "projectName": "skills",
+  "nodes": [
+    {
+      "id": "skills",
+      "label": "skills",
+      "type": "module",
+      "summary": "This project manages **skills**, which are custom capabilities or commands (like `/loop` or `/debug`) available to the AI model. It supports two main types of skills: **bundled skills** built directly into the CLI binary, and **user-defined skills** loaded dynamically from markdown files in the filesystem. The system handles discovery, parsing, and the dynamic generation of context-aware **prompts** that guide the model's behavior.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "skills/01_skill_registration_pattern",
+          "label": "Skill Registration Pattern",
+          "type": "chapter",
+          "summary": "The initialization pattern used to bootstrap all bundled skills at startup. A central index imports specific skill modules and calls their registration functions. This abstraction allows for modular skill development where each skill is self-contained in its own file but centrally activated, often behind feature flags or environment checks.",
+          "contentPath": "01_skill_registration_pattern.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skills/02_bundled_skill_definition",
+          "label": "Bundled Skill Definition",
+          "type": "chapter",
+          "summary": "The core blueprint for internal capabilities (skills) shipped with the CLI. It defines the contract for a skill, including its name, description, when it should be triggered, and the logic to generate the prompt sent to the model. It acts like a plugin interface for built-in features, enabling the programmatic registration of new capabilities.",
+          "contentPath": "02_bundled_skill_definition.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skills/03_filesystem_skill_loader",
+          "label": "Filesystem Skill Loader",
+          "type": "chapter",
+          "summary": "The engine responsible for discovering and loading user-defined skills from disk. It scans standard directories (like `.claude/skills` or legacy `commands`), parses `SKILL.md` frontmatter, handles deduplication, and creates executable command objects. It serves as the bridge between static markdown files on the user's filesystem and dynamic runtime capabilities.",
+          "contentPath": "03_filesystem_skill_loader.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skills/04_prompt_generation_logic",
+          "label": "Prompt Generation Logic",
+          "type": "chapter",
+          "summary": "The functional core of a skill that constructs the actual context sent to the AI model. It takes user arguments and runtime context (like file contents, debug logs, or system time) and transforms them into a structured prompt. This is where the \"intelligence\" of a skill resides, dynamically tailoring instructions based on the current state.",
+          "contentPath": "04_prompt_generation_logic.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skills/05_static_content_assets",
+          "label": "Static Content Assets",
+          "type": "chapter",
+          "summary": "A mechanism for bundling large static text assets (like documentation or example markdown files) directly into the binary. These assets are lazy-loaded or extracted to disk on demand to provide the model with extensive reference material without polluting the initial runtime memory or requiring external file access.",
+          "contentPath": "05_static_content_assets.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skills/06_mcp_skill_bridge",
+          "label": "MCP Skill Bridge",
+          "type": "chapter",
+          "summary": "A dependency injection utility that allows Model Context Protocol (MCP) components to create skill commands without introducing circular dependencies. It acts as a registry for factory functions, enabling the MCP system to leverage the core skill creation logic defined in the loader module.",
+          "contentPath": "06_mcp_skill_bridge.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "skills/03_filesystem_skill_loader",
+          "target": "skills/01_skill_registration_pattern",
+          "label": "Registers skills using"
+        },
+        {
+          "source": "skills/03_filesystem_skill_loader",
+          "target": "skills/04_prompt_generation_logic",
+          "label": "Defines logic for"
+        },
+        {
+          "source": "skills/04_prompt_generation_logic",
+          "target": "skills/05_static_content_assets",
+          "label": "Injects content from"
+        },
+        {
+          "source": "skills/02_bundled_skill_definition",
+          "target": "skills/04_prompt_generation_logic",
+          "label": "Generates"
+        },
+        {
+          "source": "skills/02_bundled_skill_definition",
+          "target": "skills/06_mcp_skill_bridge",
+          "label": "Registers factories with"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "skills/03_filesystem_skill_loader",
+      "target": "skills/01_skill_registration_pattern",
+      "label": "Registers skills using"
+    },
+    {
+      "source": "skills/03_filesystem_skill_loader",
+      "target": "skills/04_prompt_generation_logic",
+      "label": "Defines logic for"
+    },
+    {
+      "source": "skills/04_prompt_generation_logic",
+      "target": "skills/05_static_content_assets",
+      "label": "Injects content from"
+    },
+    {
+      "source": "skills/02_bundled_skill_definition",
+      "target": "skills/04_prompt_generation_logic",
+      "label": "Generates"
+    },
+    {
+      "source": "skills/02_bundled_skill_definition",
+      "target": "skills/06_mcp_skill_bridge",
+      "label": "Registers factories with"
+    }
+  ],
+  "storyPath": [
+    "skills/01_skill_registration_pattern",
+    "skills/02_bundled_skill_definition",
+    "skills/03_filesystem_skill_loader",
+    "skills/04_prompt_generation_logic",
+    "skills/05_static_content_assets",
+    "skills/06_mcp_skill_bridge"
+  ]
+}

@@ -1,0 +1,146 @@
+{
+  "projectName": "computerUse",
+  "nodes": [
+    {
+      "id": "computeruse",
+      "label": "computerUse",
+      "type": "module",
+      "summary": "The project enables an AI model to **control a computer** by translating high-level intents (like clicking or typing) into low-level OS events on macOS. It integrates this capability via an **MCP Server**, manages concurrency with **session locking**, and ensures user safety through a dedicated **abort hotkey**. A host adapter bridges the generic computer-control logic with the specific CLI environment, while a rendering layer formats tool activities for the terminal user interface.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "computeruse/01_mcp_server_integration",
+          "label": "MCP Server Integration",
+          "type": "chapter",
+          "summary": "This acts as the translator between the AI model and the computer tools. It implements the Model Context Protocol (MCP). When the AI wants to use a tool, this server receives the request, checks permissions (via the adapter), executes the tool, and formats the result back to the AI. It also handles dynamic setup, such as listing installed applications during initialization so the AI knows what is available.",
+          "contentPath": "01_mcp_server_integration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "computeruse/02_the_executor__computer_control_",
+          "label": "The Executor (Computer Control)",
+          "type": "chapter",
+          "summary": "This is the \"hands and eyes\" of the system. It translates high-level intent (like \"click here\" or \"type this\") into actual operating system events. It wraps low-level native modules (Rust and Swift) to control the mouse, keyboard, and screen capture. It handles the nuances of macOS, such as coordinate scaling, animation smoothing, and the event loop timing required to take screenshots or move windows.",
+          "contentPath": "02_the_executor__computer_control_.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "computeruse/03_safety___abort_mechanism__esc_hotkey_",
+          "label": "Safety & Abort Mechanism (Esc Hotkey)",
+          "type": "chapter",
+          "summary": "This is the \"emergency stop\" button. Because the AI takes control of input devices, the user needs a reliable way to interrupt it. This abstraction registers a low-level global hotkey (Escape) that bypasses standard application event queues. If the user presses Escape, this system immediately signals the executor to stop pending actions, preventing the AI from performing unwanted operations.",
+          "contentPath": "03_safety___abort_mechanism__esc_hotkey_.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "computeruse/04_host_adapter",
+          "label": "Host Adapter",
+          "type": "chapter",
+          "summary": "Think of this as a universal travel adapter. The core computer-use library is generic, but this adapter connects it to the specific environment of the CLI. It serves as a singleton that provides the specific logger, the executor instance, and configuration gates (features flags) to the rest of the application. It ensures the generic logic has everything it needs to function in this specific process.",
+          "contentPath": "04_host_adapter.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "computeruse/05_session_locking__concurrency_control_",
+          "label": "Session Locking (Concurrency Control)",
+          "type": "chapter",
+          "summary": "This is the \"Occupied\" sign on the door. Since multiple CLI sessions or AI agents might be running, this system prevents them from fighting over the mouse and keyboard simultaneously. It uses a filesystem lock with PID checking to ensure only one session controls the computer at a time, and includes logic to recover if a previous session crashed without removing the sign.",
+          "contentPath": "05_session_locking__concurrency_control_.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "computeruse/06_tool_rendering",
+          "label": "Tool Rendering",
+          "type": "chapter",
+          "summary": "This is the dashboard display. It defines how tool actions and results look to the human user in the terminal. Instead of showing raw JSON data, it formats actions like `left_click_drag` or `type` into readable, user-friendly summaries (e.g., \"Dragged (x, y) \u2192 (x, y)\"). It acts as the UI layer for the underlying tool execution.",
+          "contentPath": "06_tool_rendering.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "computeruse/02_the_executor__computer_control_",
+          "target": "computeruse/01_mcp_server_integration",
+          "label": "Instantiates and exposes"
+        },
+        {
+          "source": "computeruse/03_safety___abort_mechanism__esc_hotkey_",
+          "target": "computeruse/02_the_executor__computer_control_",
+          "label": "Uses for configuration"
+        },
+        {
+          "source": "computeruse/01_mcp_server_integration",
+          "target": "computeruse/05_session_locking__concurrency_control_",
+          "label": "Notifies of simulated Escape"
+        },
+        {
+          "source": "computeruse/03_safety___abort_mechanism__esc_hotkey_",
+          "target": "computeruse/04_host_adapter",
+          "label": "Checks lock for tools"
+        },
+        {
+          "source": "computeruse/06_tool_rendering",
+          "target": "computeruse/03_safety___abort_mechanism__esc_hotkey_",
+          "label": "Formats tool output"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "computeruse/02_the_executor__computer_control_",
+      "target": "computeruse/01_mcp_server_integration",
+      "label": "Instantiates and exposes"
+    },
+    {
+      "source": "computeruse/03_safety___abort_mechanism__esc_hotkey_",
+      "target": "computeruse/02_the_executor__computer_control_",
+      "label": "Uses for configuration"
+    },
+    {
+      "source": "computeruse/01_mcp_server_integration",
+      "target": "computeruse/05_session_locking__concurrency_control_",
+      "label": "Notifies of simulated Escape"
+    },
+    {
+      "source": "computeruse/03_safety___abort_mechanism__esc_hotkey_",
+      "target": "computeruse/04_host_adapter",
+      "label": "Checks lock for tools"
+    },
+    {
+      "source": "computeruse/06_tool_rendering",
+      "target": "computeruse/03_safety___abort_mechanism__esc_hotkey_",
+      "label": "Formats tool output"
+    }
+  ],
+  "storyPath": [
+    "computeruse/01_mcp_server_integration",
+    "computeruse/02_the_executor__computer_control_",
+    "computeruse/03_safety___abort_mechanism__esc_hotkey_",
+    "computeruse/04_host_adapter",
+    "computeruse/05_session_locking__concurrency_control_",
+    "computeruse/06_tool_rendering"
+  ]
+}

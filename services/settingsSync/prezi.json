@@ -1,0 +1,134 @@
+{
+  "projectName": "settingsSync",
+  "nodes": [
+    {
+      "id": "settingssync",
+      "label": "settingsSync",
+      "type": "module",
+      "summary": "The `settingsSync` project manages the synchronization of user configuration and memory files between the local environment and the remote backend. It utilizes an **Incremental Upload Strategy** to efficiently push only changed settings to the cloud and a **Memoized Download Strategy** to retrieve and cache remote configurations during startup, ensuring a consistent application state without redundant network requests.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "settingssync/01_sync_data_protocol",
+          "label": "Sync Data Protocol",
+          "type": "chapter",
+          "summary": "Defines the contract for data exchanged between the local environment and the remote backend. It uses Zod schemas to validate that the data structure contains a flat key-value store of file contents (like settings and memory files), along with metadata like checksums and version numbers.\nIt acts like a strict shipping manifest, ensuring that both the sender and receiver agree on exactly what is inside the package (the settings) and its condition (checksums) before any transfer occurs.",
+          "contentPath": "01_sync_data_protocol.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "settingssync/02_memoized_download_strategy",
+          "label": "Memoized Download Strategy",
+          "type": "chapter",
+          "summary": "Manages how remote settings are retrieved during application startup. It uses a caching mechanism (a shared promise) to ensure that even if multiple components request settings simultaneously during the boot process, only one network request is actually made.\nIt works like a town crier: rather than every villager (component) going to the castle (server) to ask for the news individually, the crier fetches the news once and shouts it out for everyone to hear at the same time.",
+          "contentPath": "02_memoized_download_strategy.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "settingssync/03_incremental_upload_strategy",
+          "label": "Incremental Upload Strategy",
+          "type": "chapter",
+          "summary": "The logic responsible for pushing local settings to the cloud. It runs in the background and optimizes network usage by first fetching the current remote state and calculating the difference.\nThink of it like a smart backup assistant that scans your documents and only uploads the pages that have actively changed since the last time, rather than re-sending the entire binder every time you make a small edit.",
+          "contentPath": "03_incremental_upload_strategy.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "settingssync/04_safe_io___cache_invalidation",
+          "label": "Safe IO & Cache Invalidation",
+          "type": "chapter",
+          "summary": "The safeguard mechanism for writing downloaded settings to the disk. It enforces file size limits, invalidates internal caches so the app sees the new values immediately, and marks writes as \"internal\" to prevent the local file watcher from triggering a re-upload loop.\nIt acts like a precise surgeon who not only performs the operation (writing the file) but also updates the patient's chart (clearing cache) and tells the nurses (file watchers) that this specific procedure was planned, so they don't raise a false alarm.",
+          "contentPath": "04_safe_io___cache_invalidation.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "settingssync/05_file_path_abstraction",
+          "label": "File Path Abstraction",
+          "type": "chapter",
+          "summary": "A system for mapping abstract, universal keys used in the cloud storage to concrete file paths on the local user's machine. It handles both global settings (user profile) and context-specific files (project settings based on Git hashes).\nThis is similar to a post office sorting system that translates a generic address like \"The Manager, Branch #5\" into a specific physical street address and office number where the delivery actually needs to go on the local map.",
+          "contentPath": "05_file_path_abstraction.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "settingssync/02_memoized_download_strategy",
+          "target": "settingssync/01_sync_data_protocol",
+          "label": "Adheres to"
+        },
+        {
+          "source": "settingssync/02_memoized_download_strategy",
+          "target": "settingssync/04_safe_io___cache_invalidation",
+          "label": "Resolves paths using"
+        },
+        {
+          "source": "settingssync/03_incremental_upload_strategy",
+          "target": "settingssync/01_sync_data_protocol",
+          "label": "Validates response with"
+        },
+        {
+          "source": "settingssync/03_incremental_upload_strategy",
+          "target": "settingssync/05_file_path_abstraction",
+          "label": "Delegates writing to"
+        },
+        {
+          "source": "settingssync/05_file_path_abstraction",
+          "target": "settingssync/04_safe_io___cache_invalidation",
+          "label": "Maps keys using"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "settingssync/02_memoized_download_strategy",
+      "target": "settingssync/01_sync_data_protocol",
+      "label": "Adheres to"
+    },
+    {
+      "source": "settingssync/02_memoized_download_strategy",
+      "target": "settingssync/04_safe_io___cache_invalidation",
+      "label": "Resolves paths using"
+    },
+    {
+      "source": "settingssync/03_incremental_upload_strategy",
+      "target": "settingssync/01_sync_data_protocol",
+      "label": "Validates response with"
+    },
+    {
+      "source": "settingssync/03_incremental_upload_strategy",
+      "target": "settingssync/05_file_path_abstraction",
+      "label": "Delegates writing to"
+    },
+    {
+      "source": "settingssync/05_file_path_abstraction",
+      "target": "settingssync/04_safe_io___cache_invalidation",
+      "label": "Maps keys using"
+    }
+  ],
+  "storyPath": [
+    "settingssync/01_sync_data_protocol",
+    "settingssync/02_memoized_download_strategy",
+    "settingssync/03_incremental_upload_strategy",
+    "settingssync/04_safe_io___cache_invalidation",
+    "settingssync/05_file_path_abstraction"
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "projectName": "EnterWorktreeTool",
+  "nodes": [
+    {
+      "id": "enterworktreetool",
+      "label": "EnterWorktreeTool",
+      "type": "module",
+      "summary": "This project implements a tool that allows an AI agent to create and switch into an isolated **Git worktree** for safe, separate task execution. It orchestrates the process by validating user inputs, managing the filesystem state via specialized *session logic*, and displaying **bold** status updates to the user, ensuring the main working environment remains untouched.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "enterworktreetool/01_tool_definition",
+          "label": "Tool Definition",
+          "type": "chapter",
+          "summary": "This is the central abstraction that packages the capability into a standard format the AI agent can use. It implements the `Tool` interface, binding together the prompt, input schema, execution logic (`call` function), and output formatting.\nIt's like an API endpoint definition or a plugin manifest; it tells the system \"I exist, here is what I need to run, and here is what I do.\"",
+          "contentPath": "01_tool_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "enterworktreetool/02_worktree_session_logic",
+          "label": "Worktree Session Logic",
+          "type": "chapter",
+          "summary": "The operational logic that interacts with the filesystem and Git. It handles resolving the git root, checking if a session is already active, switching the current working directory, and persisting the session state.\nIt's like the engine room of the tool; while the Tool Definition is the control panel, this logic is the machinery that physically creates the isolated workspace and moves the user into it.",
+          "contentPath": "02_worktree_session_logic.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "enterworktreetool/03_input_validation_schema",
+          "label": "Input Validation Schema",
+          "type": "chapter",
+          "summary": "Uses `zod` to rigorously define and validate the input parameters expected by the tool (specifically the `name` of the worktree). It includes custom refinements to ensure the name follows filesystem and slug constraints.\nIt's like a bouncer at the door or a strict form validator; it ensures that the inputs are safe and correctly formatted before the actual processing logic is allowed to touch them.",
+          "contentPath": "03_input_validation_schema.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "enterworktreetool/04_prompt_strategy",
+          "label": "Prompt Strategy",
+          "type": "chapter",
+          "summary": "Defines the specific natural language instructions given to the LLM to govern when the tool should be used. It includes strict \"When to Use\" and \"When NOT to Use\" sections to prevent the AI from confusing worktrees with standard git branches.\nIt's like a set of \"Standing Orders\" or a procedure checklist given to an employee, specifying exactly under which conditions they are authorized to push the big red button.",
+          "contentPath": "04_prompt_strategy.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "enterworktreetool/05_ui_presentation",
+          "label": "UI Presentation",
+          "type": "chapter",
+          "summary": "Handles the visual representation of the tool's activity using React-based components (likely via `ink` for terminal UIs). It defines how to display the \"Creating...\" progress state and the final success message containing the worktree path and branch.\nIt's like the dashboard display; it translates internal data (paths, success flags) into a clean, readable status update for the human user.",
+          "contentPath": "05_ui_presentation.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "enterworktreetool/01_tool_definition",
+          "target": "enterworktreetool/02_worktree_session_logic",
+          "label": "Retrieves instructions"
+        },
+        {
+          "source": "enterworktreetool/01_tool_definition",
+          "target": "enterworktreetool/05_ui_presentation",
+          "label": "Validates parameters"
+        },
+        {
+          "source": "enterworktreetool/01_tool_definition",
+          "target": "enterworktreetool/03_input_validation_schema",
+          "label": "Executes isolation logic"
+        },
+        {
+          "source": "enterworktreetool/01_tool_definition",
+          "target": "enterworktreetool/04_prompt_strategy",
+          "label": "Delegates rendering"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "enterworktreetool/01_tool_definition",
+      "target": "enterworktreetool/02_worktree_session_logic",
+      "label": "Retrieves instructions"
+    },
+    {
+      "source": "enterworktreetool/01_tool_definition",
+      "target": "enterworktreetool/05_ui_presentation",
+      "label": "Validates parameters"
+    },
+    {
+      "source": "enterworktreetool/01_tool_definition",
+      "target": "enterworktreetool/03_input_validation_schema",
+      "label": "Executes isolation logic"
+    },
+    {
+      "source": "enterworktreetool/01_tool_definition",
+      "target": "enterworktreetool/04_prompt_strategy",
+      "label": "Delegates rendering"
+    }
+  ],
+  "storyPath": [
+    "enterworktreetool/01_tool_definition",
+    "enterworktreetool/02_worktree_session_logic",
+    "enterworktreetool/03_input_validation_schema",
+    "enterworktreetool/04_prompt_strategy",
+    "enterworktreetool/05_ui_presentation"
+  ]
+}

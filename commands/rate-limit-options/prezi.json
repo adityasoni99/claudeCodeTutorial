@@ -1,0 +1,134 @@
+{
+  "projectName": "rate-limit-options",
+  "nodes": [
+    {
+      "id": "rate-limit-options",
+      "label": "rate-limit-options",
+      "type": "module",
+      "summary": "This project implements an interactive **Rate Limit Menu** that appears when a user exceeds their usage quotas. It dynamically evaluates the user's *entitlement context* (such as subscription tier and billing status) to offer relevant resolutions like **upgrading** or enabling **extra usage**, rendering these choices via a **Local JSX** interface within the CLI.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "rate-limit-options/01_user_entitlement_context",
+          "label": "User Entitlement Context",
+          "type": "chapter",
+          "summary": "A set of checks used to determine what a user is allowed to do. It acts like a security guard, verifying credentials such as subscription type (`team`, `enterprise`, `max`), rate limit tiers, and billing access before presenting restricted options like \"Extra Usage\" or \"Upgrade.\"",
+          "contentPath": "01_user_entitlement_context.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "rate-limit-options/02_command_definition",
+          "label": "Command Definition",
+          "type": "chapter",
+          "summary": "Defines the entry point and lifecycle of a feature within the application. It acts like a plugin manifest, specifying the command's identity, visibility (`isHidden`), and activation rules (`isEnabled`). It lazily loads the actual implementation only when required.",
+          "contentPath": "02_command_definition.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "rate-limit-options/03_rate_limit_menu_ui",
+          "label": "Rate Limit Menu UI",
+          "type": "chapter",
+          "summary": "The central interactive component (`RateLimitOptionsMenu`) that appears when a user hits a limit. It functions as a decision engine, dynamically calculating and displaying the available paths forward (e.g., Upgrade, Extra Usage, or Wait) based on the user's specific account state and limits.",
+          "contentPath": "03_rate_limit_menu_ui.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "rate-limit-options/04_local_jsx_interface",
+          "label": "Local JSX Interface",
+          "type": "chapter",
+          "summary": "The framework enabling the rendering of React-based UI elements (like `Dialog` and `Select`) within the local command execution context. It bridges the gap between the command-line/backend logic and a rich graphical interface using contexts like `LocalJSXCommandContext`.",
+          "contentPath": "04_local_jsx_interface.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "rate-limit-options/05_workflow_delegation",
+          "label": "Workflow Delegation",
+          "type": "chapter",
+          "summary": "A pattern for composing features where the main menu delegates specific tasks to other modules. When a user selects an option like \"Upgrade,\" the code invokes an external call (`upgradeCall`), effectively handing off the user interface rendering to that sub-module.",
+          "contentPath": "05_workflow_delegation.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "rate-limit-options/01_user_entitlement_context",
+          "target": "rate-limit-options/02_command_definition",
+          "label": "Lazily loads"
+        },
+        {
+          "source": "rate-limit-options/01_user_entitlement_context",
+          "target": "rate-limit-options/03_rate_limit_menu_ui",
+          "label": "Checks activation status"
+        },
+        {
+          "source": "rate-limit-options/02_command_definition",
+          "target": "rate-limit-options/03_rate_limit_menu_ui",
+          "label": "Queries entitlement state"
+        },
+        {
+          "source": "rate-limit-options/02_command_definition",
+          "target": "rate-limit-options/04_local_jsx_interface",
+          "label": "Delegates selected action"
+        },
+        {
+          "source": "rate-limit-options/02_command_definition",
+          "target": "rate-limit-options/05_workflow_delegation",
+          "label": "Renders via"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "rate-limit-options/01_user_entitlement_context",
+      "target": "rate-limit-options/02_command_definition",
+      "label": "Lazily loads"
+    },
+    {
+      "source": "rate-limit-options/01_user_entitlement_context",
+      "target": "rate-limit-options/03_rate_limit_menu_ui",
+      "label": "Checks activation status"
+    },
+    {
+      "source": "rate-limit-options/02_command_definition",
+      "target": "rate-limit-options/03_rate_limit_menu_ui",
+      "label": "Queries entitlement state"
+    },
+    {
+      "source": "rate-limit-options/02_command_definition",
+      "target": "rate-limit-options/04_local_jsx_interface",
+      "label": "Delegates selected action"
+    },
+    {
+      "source": "rate-limit-options/02_command_definition",
+      "target": "rate-limit-options/05_workflow_delegation",
+      "label": "Renders via"
+    }
+  ],
+  "storyPath": [
+    "rate-limit-options/01_user_entitlement_context",
+    "rate-limit-options/02_command_definition",
+    "rate-limit-options/03_rate_limit_menu_ui",
+    "rate-limit-options/04_local_jsx_interface",
+    "rate-limit-options/05_workflow_delegation"
+  ]
+}

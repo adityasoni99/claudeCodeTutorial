@@ -1,0 +1,124 @@
+{
+  "projectName": "copy",
+  "nodes": [
+    {
+      "id": "copy",
+      "label": "copy",
+      "type": "module",
+      "summary": "This project implements a smart **copy command** for a CLI chat interface. It allows users to extract the AI's most recent response, intelligently parsing the content to separate **code blocks** from text. Users are presented with an *interactive menu* to choose whether to copy the full message or specific code snippets to their system clipboard and a local backup file.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "copy/01_command_definition_strategy",
+          "label": "Command Definition Strategy",
+          "type": "chapter",
+          "summary": "This abstraction defines how the CLI recognizes and loads the `copy` command. It separates lightweight metadata (name, description) from the heavy implementation logic. By using a dynamic `import` in the `load` function, the application avoids parsing the complex React/UI code until the user actually executes the command. It is like a menu in a restaurant: you see the name of the dish immediately, but the kitchen only starts cooking (loading the code) after you place the order, keeping startup fast.",
+          "contentPath": "01_command_definition_strategy.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "copy/02_message_history_retrieval",
+          "label": "Message History Retrieval",
+          "type": "chapter",
+          "summary": "This logic is responsible for identifying what content is eligible to be copied. It traverses the chat history in reverse (newest to oldest) to find valid responses from the assistant, skipping over API errors or empty updates. It acts like a smart filter or a search history function, ensuring that when you ask to copy something, the tool grabs the most recent meaningful answer the AI provided, rather than system noise or your own prompts.",
+          "contentPath": "02_message_history_retrieval.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "copy/03_markdown_content_parsing",
+          "label": "Markdown Content Parsing",
+          "type": "chapter",
+          "summary": "This abstraction analyzes the raw text of the AI's response to understand its structure. Specifically, it uses a Markdown lexer to detect and extract code blocks from the surrounding prose. This allows the tool to offer granular options\u2014letting the user copy just a specific code snippet instead of the entire message. It is akin to a text highlighter that automatically identifies and separates the important technical bits from the explanatory text.",
+          "contentPath": "03_markdown_content_parsing.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "copy/04_interactive_picker_ui",
+          "label": "Interactive Picker UI",
+          "type": "chapter",
+          "summary": "This is the visual layer of the command, built using React and Ink to render inside the terminal. It presents a list of copyable items (full text vs. specific code blocks) and handles keyboard events (navigation, selection, shortcuts like 'w' for write). It serves as the control panel for the user, transforming a simple text command into an interactive menu where users can make precise choices about what data they want to extract.",
+          "contentPath": "04_interactive_picker_ui.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "copy/05_output_management",
+          "label": "Output Management",
+          "type": "chapter",
+          "summary": "This layer handles the physical act of saving the data. It implements a dual strategy: it attempts to copy text to the system clipboard while simultaneously writing it to a temporary file on the disk. This provides redundancy, ensuring that even if the terminal environment restricts clipboard access (a common issue in remote sessions), the user still has a reliable way to access the content via the file path. It is like sending an email with a file attachment: if the inline preview fails, you still have the downloadable file.",
+          "contentPath": "05_output_management.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "copy/01_command_definition_strategy",
+          "target": "copy/02_message_history_retrieval",
+          "label": "Fetches recent responses"
+        },
+        {
+          "source": "copy/01_command_definition_strategy",
+          "target": "copy/03_markdown_content_parsing",
+          "label": "Extracts code snippets"
+        },
+        {
+          "source": "copy/01_command_definition_strategy",
+          "target": "copy/04_interactive_picker_ui",
+          "label": "Renders selection menu"
+        },
+        {
+          "source": "copy/04_interactive_picker_ui",
+          "target": "copy/05_output_management",
+          "label": "Persists selected content"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "copy/01_command_definition_strategy",
+      "target": "copy/02_message_history_retrieval",
+      "label": "Fetches recent responses"
+    },
+    {
+      "source": "copy/01_command_definition_strategy",
+      "target": "copy/03_markdown_content_parsing",
+      "label": "Extracts code snippets"
+    },
+    {
+      "source": "copy/01_command_definition_strategy",
+      "target": "copy/04_interactive_picker_ui",
+      "label": "Renders selection menu"
+    },
+    {
+      "source": "copy/04_interactive_picker_ui",
+      "target": "copy/05_output_management",
+      "label": "Persists selected content"
+    }
+  ],
+  "storyPath": [
+    "copy/01_command_definition_strategy",
+    "copy/02_message_history_retrieval",
+    "copy/03_markdown_content_parsing",
+    "copy/04_interactive_picker_ui",
+    "copy/05_output_management"
+  ]
+}

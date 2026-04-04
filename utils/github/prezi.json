@@ -1,0 +1,124 @@
+{
+  "projectName": "github",
+  "nodes": [
+    {
+      "id": "github",
+      "label": "github",
+      "type": "module",
+      "summary": "This project utility acts as a **diagnostic tool** to determine the current state of the GitHub CLI (`gh`) on a user's machine without exposing sensitive data. It checks if the tool is *installed* and if the user is *authenticated* using local configuration files only, gathering this information to support **telemetry** and analytics.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "github/01_telemetry_data_source",
+          "label": "Telemetry Data Source",
+          "type": "chapter",
+          "summary": "Gathers environmental context for analytics purposes.\nIt's like a car's dashboard sensor that reports engine status to the computer. This function is explicitly designed to return the install and auth status for telemetry reporting, allowing the developers to understand how many users have the CLI tool set up correctly.",
+          "contentPath": "01_telemetry_data_source.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "github/02_github_authentication_state",
+          "label": "GitHub Authentication State",
+          "type": "chapter",
+          "summary": "Defines the specific connectivity status of the user relative to GitHub.\nIt's like checking a traveler's status: do they have a passport (installed), is it stamped/valid (authenticated), or do they have no documents at all (not installed)? This abstraction standardizes these states into a simple union type for the application to consume.",
+          "contentPath": "02_github_authentication_state.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "github/03_tool_availability_check",
+          "label": "Tool Availability Check",
+          "type": "chapter",
+          "summary": "Ensures external dependencies exist before attempting to use them.\nIt's like looking into a toolbox to confirm a wrench is there before reaching for it. Before running any GitHub commands, the code uses a `which` utility to verify that the `gh` binary is actually installed and accessible in the system path.",
+          "contentPath": "03_tool_availability_check.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "github/04_secure_subprocess_execution",
+          "label": "Secure Subprocess Execution",
+          "type": "chapter",
+          "summary": "Executes system commands while preventing sensitive data leakage.\nIt's like verifying a password by having a machine nod \"yes\" or \"no\" without ever speaking the password aloud. The code spawns a subprocess to check the token but explicitly ignores the `stdout` stream, ensuring the actual token string never enters the application's memory or logs.",
+          "contentPath": "04_secure_subprocess_execution.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "github/05_local_only_verification",
+          "label": "Local-Only Verification",
+          "type": "chapter",
+          "summary": "Optimizes performance by avoiding unnecessary network calls.\nIt's like checking your pocket for your house key instead of calling a locksmith to see if you own the house. The code prefers `gh auth token` over `gh auth status` because the former only reads local configuration files, avoiding the latency and potential failure points of a network request to GitHub's API.",
+          "contentPath": "05_local_only_verification.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "github/05_local_only_verification",
+          "target": "github/02_github_authentication_state",
+          "label": "Verifies installation via"
+        },
+        {
+          "source": "github/05_local_only_verification",
+          "target": "github/04_secure_subprocess_execution",
+          "label": "Invokes"
+        },
+        {
+          "source": "github/04_secure_subprocess_execution",
+          "target": "github/03_tool_availability_check",
+          "label": "Performs"
+        },
+        {
+          "source": "github/05_local_only_verification",
+          "target": "github/01_telemetry_data_source",
+          "label": "Returns"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "github/05_local_only_verification",
+      "target": "github/02_github_authentication_state",
+      "label": "Verifies installation via"
+    },
+    {
+      "source": "github/05_local_only_verification",
+      "target": "github/04_secure_subprocess_execution",
+      "label": "Invokes"
+    },
+    {
+      "source": "github/04_secure_subprocess_execution",
+      "target": "github/03_tool_availability_check",
+      "label": "Performs"
+    },
+    {
+      "source": "github/05_local_only_verification",
+      "target": "github/01_telemetry_data_source",
+      "label": "Returns"
+    }
+  ],
+  "storyPath": [
+    "github/01_telemetry_data_source",
+    "github/02_github_authentication_state",
+    "github/03_tool_availability_check",
+    "github/04_secure_subprocess_execution",
+    "github/05_local_only_verification"
+  ]
+}

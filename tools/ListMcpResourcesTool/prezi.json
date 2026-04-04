@@ -1,0 +1,124 @@
+{
+  "projectName": "ListMcpResourcesTool",
+  "nodes": [
+    {
+      "id": "listmcpresourcestool",
+      "label": "ListMcpResourcesTool",
+      "type": "module",
+      "summary": "This project implements a specific capability called **ListMcpResourcesTool**, which allows an AI agent to discover and list available *resources* (such as files or data streams) hosted on connected external servers. It bundles the execution logic, **strict data validation**, and user interface formatting into a single package that acts as a bridge between the AI model and the **Model Context Protocol (MCP)** infrastructure.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "listmcpresourcestool/01_tool_metadata",
+          "label": "Tool Metadata",
+          "type": "chapter",
+          "summary": "Static text constants that define the tool's identity and usage instructions for the AI.\nThis includes the tool's name, a description of what it does, and prompt text with usage examples.\nThis serves as the \"user manual\" for the AI model, teaching it when and how to invoke this specific tool.",
+          "contentPath": "01_tool_metadata.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "listmcpresourcestool/02_data_schemas",
+          "label": "Data Schemas",
+          "type": "chapter",
+          "summary": "Strict definitions for the tool's input and output structures using the Zod library.\nThese schemas define exactly what parameters the AI can send (e.g., a server name) and the shape of the data the tool returns (e.g., a list of resources).\nIt functions like a contract or a bouncer, ensuring that data entering and leaving the tool matches expected formats.",
+          "contentPath": "02_data_schemas.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "listmcpresourcestool/03_tool_definition",
+          "label": "Tool Definition",
+          "type": "chapter",
+          "summary": "The central framework for creating an executable capability for the AI.\nIt uses the `buildTool` function to bundle the tool's logic, schemas, and metadata into a single object.\nThink of it as wrapping a raw code function into a standardized \"item\" that the AI agent can pick up, understand, and use within its environment.",
+          "contentPath": "03_tool_definition.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "listmcpresourcestool/04_mcp_client_integration",
+          "label": "MCP Client Integration",
+          "type": "chapter",
+          "summary": "The mechanism for communicating with external Model Context Protocol (MCP) servers.\nIt manages the connection and data retrieval logic, specifically fetching resources from one or multiple clients.\nIt acts like a switchboard operator, routing the tool's request to the appropriate external server (or all of them) to gather the necessary information.",
+          "contentPath": "04_mcp_client_integration.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "listmcpresourcestool/05_ui_presentation",
+          "label": "UI Presentation",
+          "type": "chapter",
+          "summary": "The layer responsible for visualizing the tool's actions and results to the human user.\nIt uses React components to format messages, such as \"List MCP resources...\" or displaying the JSON output.\nIt's like the frontend display of an application, separating how data is fetched from how it looks on the screen.",
+          "contentPath": "05_ui_presentation.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "listmcpresourcestool/01_tool_metadata",
+          "target": "listmcpresourcestool/02_data_schemas",
+          "label": "Fetches data via"
+        },
+        {
+          "source": "listmcpresourcestool/01_tool_metadata",
+          "target": "listmcpresourcestool/03_tool_definition",
+          "label": "Enforces structure using"
+        },
+        {
+          "source": "listmcpresourcestool/01_tool_metadata",
+          "target": "listmcpresourcestool/04_mcp_client_integration",
+          "label": "Formats output using"
+        },
+        {
+          "source": "listmcpresourcestool/01_tool_metadata",
+          "target": "listmcpresourcestool/05_ui_presentation",
+          "label": "Retrieves configuration from"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "listmcpresourcestool/01_tool_metadata",
+      "target": "listmcpresourcestool/02_data_schemas",
+      "label": "Fetches data via"
+    },
+    {
+      "source": "listmcpresourcestool/01_tool_metadata",
+      "target": "listmcpresourcestool/03_tool_definition",
+      "label": "Enforces structure using"
+    },
+    {
+      "source": "listmcpresourcestool/01_tool_metadata",
+      "target": "listmcpresourcestool/04_mcp_client_integration",
+      "label": "Formats output using"
+    },
+    {
+      "source": "listmcpresourcestool/01_tool_metadata",
+      "target": "listmcpresourcestool/05_ui_presentation",
+      "label": "Retrieves configuration from"
+    }
+  ],
+  "storyPath": [
+    "listmcpresourcestool/01_tool_metadata",
+    "listmcpresourcestool/02_data_schemas",
+    "listmcpresourcestool/03_tool_definition",
+    "listmcpresourcestool/04_mcp_client_integration",
+    "listmcpresourcestool/05_ui_presentation"
+  ]
+}

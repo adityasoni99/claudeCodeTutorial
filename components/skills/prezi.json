@@ -1,0 +1,134 @@
+{
+  "projectName": "skills",
+  "nodes": [
+    {
+      "id": "skills",
+      "label": "skills",
+      "type": "module",
+      "summary": "This project implements a **Skills Menu**, a visual dashboard that acts as a launcher for AI capabilities known as *skills*. It organizes these prompt-based tools into groups based on where they are defined (such as **User Settings** or external **MCP** servers) and displays helpful metadata like estimated **token usage** to help users manage their context window.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "skills/01_skills_menu_interface",
+          "label": "Skills Menu Interface",
+          "type": "chapter",
+          "summary": "The `SkillsMenu` React component acts as the central dashboard for users to view and select available AI skills. It functions like a software launcher or a catalog, filtering a global list of commands to isolate \"skills\" (prompt-based capabilities). It then organizes these skills into intuitive groups based on their origin (e.g., project settings, user settings, external plugins), providing a structured view of what the AI can do.",
+          "contentPath": "01_skills_menu_interface.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skills/02_skill_command_structure",
+          "label": "Skill Command Structure",
+          "type": "chapter",
+          "summary": "Represented by the `SkillCommand` type, this abstraction defines what a \"skill\" is within the codebase. It is a specialized form of a generic `Command` (specifically a `PromptCommand`). Think of it as a standardized contract or blueprint for tools; every skill must have specific properties like a name, a source (where it came from), and a description, ensuring the menu can display and interact with them uniformly regardless of whether they are simple text prompts or complex executable functions.",
+          "contentPath": "02_skill_command_structure.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skills/03_skill_sources___scoping",
+          "label": "Skill Sources & Scoping",
+          "type": "chapter",
+          "summary": "The system categorizes skills by their lifecycle and scope using `SkillSource`. Skills can originate from different layers of configuration: `projectSettings` (local to a folder), `userSettings` (global to the user), or `policySettings` (enforced rules). This is analogous to variable scope in programming (local vs. global variables), allowing the user to understand which context a specific skill belongs to and where it is defined on the filesystem.",
+          "contentPath": "03_skill_sources___scoping.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skills/04_mcp__model_context_protocol__integration",
+          "label": "MCP (Model Context Protocol) Integration",
+          "type": "chapter",
+          "summary": "This abstraction handles skills provided by external MCP servers. In the menu, these are identified by the `mcp` source and are specially formatted to show which server they belong to (e.g., grouping by server name). It acts like a universal adapter, allowing the application to treat tools from diverse external servers just like native skills, while visually distinguishing them so the user knows they are remote or protocol-based capabilities.",
+          "contentPath": "04_mcp__model_context_protocol__integration.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skills/05_token_estimation___metadata",
+          "label": "Token Estimation & Metadata",
+          "type": "chapter",
+          "summary": "The code includes logic (via `estimateSkillFrontmatterTokens`) to calculate and display the \"weight\" of a skill in terms of tokens. This provides users with meta-information about the cost or complexity of using a skill before they select it. It's similar to seeing the file size of an application before downloading it, helping users manage their context window effectively.",
+          "contentPath": "05_token_estimation___metadata.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "skills/01_skills_menu_interface",
+          "target": "skills/02_skill_command_structure",
+          "label": "Displays collection of"
+        },
+        {
+          "source": "skills/02_skill_command_structure",
+          "target": "skills/03_skill_sources___scoping",
+          "label": "Categorized by"
+        },
+        {
+          "source": "skills/01_skills_menu_interface",
+          "target": "skills/04_mcp__model_context_protocol__integration",
+          "label": "Adapts display for"
+        },
+        {
+          "source": "skills/01_skills_menu_interface",
+          "target": "skills/05_token_estimation___metadata",
+          "label": "Calculates cost using"
+        },
+        {
+          "source": "skills/05_token_estimation___metadata",
+          "target": "skills/02_skill_command_structure",
+          "label": "Estimates size of"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "skills/01_skills_menu_interface",
+      "target": "skills/02_skill_command_structure",
+      "label": "Displays collection of"
+    },
+    {
+      "source": "skills/02_skill_command_structure",
+      "target": "skills/03_skill_sources___scoping",
+      "label": "Categorized by"
+    },
+    {
+      "source": "skills/01_skills_menu_interface",
+      "target": "skills/04_mcp__model_context_protocol__integration",
+      "label": "Adapts display for"
+    },
+    {
+      "source": "skills/01_skills_menu_interface",
+      "target": "skills/05_token_estimation___metadata",
+      "label": "Calculates cost using"
+    },
+    {
+      "source": "skills/05_token_estimation___metadata",
+      "target": "skills/02_skill_command_structure",
+      "label": "Estimates size of"
+    }
+  ],
+  "storyPath": [
+    "skills/01_skills_menu_interface",
+    "skills/02_skill_command_structure",
+    "skills/03_skill_sources___scoping",
+    "skills/04_mcp__model_context_protocol__integration",
+    "skills/05_token_estimation___metadata"
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "projectName": "toolPermission",
+  "nodes": [
+    {
+      "id": "toolpermission",
+      "label": "toolPermission",
+      "type": "module",
+      "summary": "This project manages **tool permissions** by encapsulating all request details into a smart \"Case File\" context. It employs different *strategies* to handle decisions\u2014whether automatically by a coordinator, delegated to a swarm leader, or via a complex **interactive race** where local user clicks, remote signals, and automation compete to provide the first valid answer. To ensure safety amidst this concurrency, it uses an **atomic buzzer** mechanism to guarantee decisions happen exactly once, while a **centralized telemetry** system records the outcome for analytics.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "toolpermission/01_permission_context__the__smart_case_file__",
+          "label": "Permission Context (The \"Smart Case File\")",
+          "type": "chapter",
+          "summary": "This is the foundational object passed around during a permission request. Instead of passing raw variables (tool name, inputs, message IDs) individually, this context encapsulates all state and operations required to make a decision.\n\nThink of it like a smart \"Case File\" handed to a judge. It contains the evidence (inputs), the form to sign (methods to allow/deny), and automatically files the paperwork (logging/persistence) once a verdict is reached. It decouples the decision logic from the UI state management.",
+          "contentPath": "01_permission_context__the__smart_case_file__.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "toolpermission/02_role_based_handling_strategies",
+          "label": "Role-Based Handling Strategies",
+          "type": "chapter",
+          "summary": "The codebase uses different strategies to handle permissions based on *who* is asking.\n1. **Interactive:** Races user input against automation (File 2).\n2. **Coordinator:** Checks automation sequentially first, then asks user (File 3).\n3. **Swarm Worker:** Delegates the decision to a \"leader\" agent via a mailbox system (File 4).\n\nIt's like having different security protocols: a VIP enters differently than an employee, who enters differently than a guest.",
+          "contentPath": "02_role_based_handling_strategies.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "toolpermission/03_interactive_race_handling__the__trading_floor__",
+          "label": "Interactive Race Handling (The \"Trading Floor\")",
+          "type": "chapter",
+          "summary": "The logic that manages permission requests for the main user session. It is complex because it sets up a \"race\" between the local UI, remote web bridges, messaging channels (like Telegram), and automated classifiers.\n\nImagine a stock trading floor where a trade (tool use) can be approved by a floor trader (local user), a remote investor (web UI), or an algorithm (classifier). This handler stands in the middle, listening to everyone shouting, and accepts the first valid confirmation that arrives, updating the UI accordingly.",
+          "contentPath": "03_interactive_race_handling__the__trading_floor__.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "toolpermission/04_atomic_resolution__the__game_show_buzzer__",
+          "label": "Atomic Resolution (The \"Game Show Buzzer\")",
+          "type": "chapter",
+          "summary": "A critical concurrency utility (`createResolveOnce`) used to handle race conditions. In permission flows, multiple sources might try to decide simultaneously: the user might click \"Approve,\" a hook might run, or a remote bridge might send a signal.\n\nThink of this like a game show buzzer system. Once the first contestant (source) buzzes in and gives an answer, the system locks out all other buzzers. It ensures that a permission request is resolved exactly once, preventing double-logging or conflicting state updates.",
+          "contentPath": "04_atomic_resolution__the__game_show_buzzer__.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "toolpermission/05_centralized_telemetry__the__black_box__",
+          "label": "Centralized Telemetry (The \"Black Box\")",
+          "type": "chapter",
+          "summary": "A dedicated layer for recording the outcome of every permission decision. It handles the \"fan-out\" of data: sending metrics to analytics services, OpenTelemetry traces, and internal counters.\n\nThink of this as the \"Black Box\" flight recorder. Whether a pilot (user) made a move, or the autopilot (config/classifier) took over, this system impartially records exactly what happened, why it happened, and how long it took, ensuring complete visibility into the system's behavior.",
+          "contentPath": "05_centralized_telemetry__the__black_box__.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "toolpermission/03_interactive_race_handling__the__trading_floor__",
+          "target": "toolpermission/01_permission_context__the__smart_case_file__",
+          "label": "Manipulates state via"
+        },
+        {
+          "source": "toolpermission/03_interactive_race_handling__the__trading_floor__",
+          "target": "toolpermission/02_role_based_handling_strategies",
+          "label": "Ensures single outcome via"
+        },
+        {
+          "source": "toolpermission/04_atomic_resolution__the__game_show_buzzer__",
+          "target": "toolpermission/01_permission_context__the__smart_case_file__",
+          "label": "Manipulates state via"
+        },
+        {
+          "source": "toolpermission/04_atomic_resolution__the__game_show_buzzer__",
+          "target": "toolpermission/02_role_based_handling_strategies",
+          "label": "Ensures single outcome via"
+        },
+        {
+          "source": "toolpermission/01_permission_context__the__smart_case_file__",
+          "target": "toolpermission/05_centralized_telemetry__the__black_box__",
+          "label": "Delegates logging to"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "toolpermission/03_interactive_race_handling__the__trading_floor__",
+      "target": "toolpermission/01_permission_context__the__smart_case_file__",
+      "label": "Manipulates state via"
+    },
+    {
+      "source": "toolpermission/03_interactive_race_handling__the__trading_floor__",
+      "target": "toolpermission/02_role_based_handling_strategies",
+      "label": "Ensures single outcome via"
+    },
+    {
+      "source": "toolpermission/04_atomic_resolution__the__game_show_buzzer__",
+      "target": "toolpermission/01_permission_context__the__smart_case_file__",
+      "label": "Manipulates state via"
+    },
+    {
+      "source": "toolpermission/04_atomic_resolution__the__game_show_buzzer__",
+      "target": "toolpermission/02_role_based_handling_strategies",
+      "label": "Ensures single outcome via"
+    },
+    {
+      "source": "toolpermission/01_permission_context__the__smart_case_file__",
+      "target": "toolpermission/05_centralized_telemetry__the__black_box__",
+      "label": "Delegates logging to"
+    }
+  ],
+  "storyPath": [
+    "toolpermission/01_permission_context__the__smart_case_file__",
+    "toolpermission/02_role_based_handling_strategies",
+    "toolpermission/03_interactive_race_handling__the__trading_floor__",
+    "toolpermission/04_atomic_resolution__the__game_show_buzzer__",
+    "toolpermission/05_centralized_telemetry__the__black_box__"
+  ]
+}

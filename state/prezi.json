@@ -1,0 +1,124 @@
+{
+  "projectName": "state",
+  "nodes": [
+    {
+      "id": "state",
+      "label": "state",
+      "type": "module",
+      "summary": "This project manages the application's data using a **Single Source of Truth** approach, where the entire state (from settings to active tasks) lives in one central **Store**. A **React Integration Layer** connects this raw data to the UI, allowing components to \"subscribe\" only to the specific updates they need. Meanwhile, a background **Synchronization** module watches for changes to handle side effects like saving files or checking permissions, while dedicated **Selectors** and **View Logic** helpers keep the complex rules for retrieving and updating data organized and consistent.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "state/01_core_state_definition__the_store_",
+          "label": "Core State Definition (The Store)",
+          "type": "chapter",
+          "summary": "This represents the \"Single Source of Truth\" for the entire application. It defines the massive JSON object (`AppState`) that holds everything from user settings and active tasks to UI toggles and plugin statuses.\n\nThink of this as the application's central whiteboard. `store.ts` provides the mechanism to write on it and watch for changes, while `AppStateStore.ts` defines exactly what sections exist on the board and what their default values are. It uses a generic subscription model independent of React, making the state portable.",
+          "contentPath": "01_core_state_definition__the_store_.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "state/02_state_selectors__derived_data_",
+          "label": "State Selectors (Derived Data)",
+          "type": "chapter",
+          "summary": "These are pure helper functions designed to extract and compute specific information from the raw state. They don't modify data; they simply interpret it.\n\nThink of `AppState` as a raw database and Selectors as pre-written queries or reports. Instead of every component figuring out complex logic (like \"Where should this user input go based on who I'm looking at?\"), they simply call a selector like `getActiveAgentForInput` to get the clean, computed answer.",
+          "contentPath": "02_state_selectors__derived_data_.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "state/03_teammate_view_logic__domain_actions_",
+          "label": "Teammate View Logic (Domain Actions)",
+          "type": "chapter",
+          "summary": "This encapsulates the specific, complex logic required to switch the user's view between the main \"leader\" agent and sub-agent \"teammates.\"\n\nIt acts like a specialized director for the application's camera. It handles the choreography of \"entering\" a teammate's view (locking them in memory, loading their logs) and \"exiting\" back to the main view (cleaning up memory, scheduling garbage collection). It ensures that all the necessary bookkeeping happens atomically during these transitions.",
+          "contentPath": "03_teammate_view_logic__domain_actions_.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "state/04_react_integration_layer",
+          "label": "React Integration Layer",
+          "type": "chapter",
+          "summary": "This abstraction connects the raw JavaScript store to the React UI. It provides the `AppStateProvider` context and hooks like `useAppState` and `useSetAppState`.\n\nIt acts like a smart subscription service. Instead of re-rendering the whole app whenever *anything* changes, components use selectors to subscribe only to the specific slice of data they need. It creates a bridge so that when the underlying data updates, only the relevant parts of the UI \"light up\" and refresh.",
+          "contentPath": "04_react_integration_layer.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "state/05_state_synchronization__side_effects_",
+          "label": "State Synchronization (Side Effects)",
+          "type": "chapter",
+          "summary": "This module handles the \"consequences\" of state changes that need to happen outside the React UI. It functions as middleware or an observer.\n\nImagine a clerk standing next to the central whiteboard. Whenever specific numbers change (like permissions, settings, or models), this clerk immediately runs to file paperwork (save to disk), calls headquarters (notify the backend/CCR), or updates security clearance (auth caches). It ensures the external world stays in sync with the internal application state.",
+          "contentPath": "05_state_synchronization__side_effects_.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "state/02_state_selectors__derived_data_",
+          "target": "state/01_core_state_definition__the_store_",
+          "label": "Initializes and provides"
+        },
+        {
+          "source": "state/03_teammate_view_logic__domain_actions_",
+          "target": "state/01_core_state_definition__the_store_",
+          "label": "Monitors changes in"
+        },
+        {
+          "source": "state/04_react_integration_layer",
+          "target": "state/01_core_state_definition__the_store_",
+          "label": "Queries data from"
+        },
+        {
+          "source": "state/05_state_synchronization__side_effects_",
+          "target": "state/01_core_state_definition__the_store_",
+          "label": "Updates domain state in"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "state/02_state_selectors__derived_data_",
+      "target": "state/01_core_state_definition__the_store_",
+      "label": "Initializes and provides"
+    },
+    {
+      "source": "state/03_teammate_view_logic__domain_actions_",
+      "target": "state/01_core_state_definition__the_store_",
+      "label": "Monitors changes in"
+    },
+    {
+      "source": "state/04_react_integration_layer",
+      "target": "state/01_core_state_definition__the_store_",
+      "label": "Queries data from"
+    },
+    {
+      "source": "state/05_state_synchronization__side_effects_",
+      "target": "state/01_core_state_definition__the_store_",
+      "label": "Updates domain state in"
+    }
+  ],
+  "storyPath": [
+    "state/01_core_state_definition__the_store_",
+    "state/02_state_selectors__derived_data_",
+    "state/03_teammate_view_logic__domain_actions_",
+    "state/04_react_integration_layer",
+    "state/05_state_synchronization__side_effects_"
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "projectName": "keybindings",
+  "nodes": [
+    {
+      "id": "keybindings",
+      "label": "keybindings",
+      "type": "module",
+      "summary": "This project implements a robust **keyboard shortcut system** for a terminal-based React application, designed to decouple *key combinations* from the *actions* they trigger. It handles the entire lifecycle of keybindings: loading **default and user-defined configurations**, validating them against safety rules, normalizing raw terminal inputs, and managing complex **multi-step chord sequences** (like `Ctrl+K` followed by `Ctrl+S`).",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "keybindings/01_the_keybinding_registry",
+          "label": "The Keybinding Registry",
+          "type": "chapter",
+          "summary": "This is the \"database\" of the system. It defines valid actions, contexts, and the default keyboard shortcuts. It handles loading configuration from the default TypeScript definitions and merging them with user-defined JSON files. Think of it as the rulebook that lists every possible move a player can make in a game and which buttons trigger them, prioritizing user customizations over factory defaults.",
+          "contentPath": "01_the_keybinding_registry.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "keybindings/02_react_integration_hooks",
+          "label": "React Integration Hooks",
+          "type": "chapter",
+          "summary": "The \"interface\" for developers building UI components. These hooks allow components to listen for specific actions without worrying about the specific keys bound to them. Instead of hardcoding `if (key === 'ctrl+c')`, a component simply says `useKeybinding('app:exit', handler)`. It decouples the *intent* (the action) from the *implementation* (the physical keystroke).",
+          "contentPath": "02_react_integration_hooks.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "keybindings/03_context_aware_resolution",
+          "label": "Context-Aware Resolution",
+          "type": "chapter",
+          "summary": "The \"brain\" of the system that decides which action to trigger when a key is pressed. Since the same key (e.g., \"Enter\") does different things in different places (sending a message vs. selecting an item in a list), this abstraction checks which UI contexts are currently active. It acts like a traffic controller, ensuring the \"Global\" command yields to the \"Chat\" command, which yields to a specific \"Dropdown\" command.",
+          "contentPath": "03_context_aware_resolution.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "keybindings/04_chord_sequence_management",
+          "label": "Chord Sequence Management",
+          "type": "chapter",
+          "summary": "Handles complex \"secret handshake\" inputs involving multiple steps, like pressing `Ctrl+K` followed immediately by `Ctrl+S`. This abstraction maintains a temporary state machine: when the first part of a sequence is detected, it pauses standard input processing and waits for the user to complete the sequence or for a timeout to occur. It prevents the first key from accidentally triggering a different command while waiting for the second.",
+          "contentPath": "04_chord_sequence_management.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "keybindings/05_input_parsing___matching",
+          "label": "Input Parsing & Matching",
+          "type": "chapter",
+          "summary": "The \"translator\" that converts raw signals from the terminal into a standardized format. Terminal input is messy (modifiers like Ctrl or Alt vary by OS); this layer normalizes inputs into a consistent structure (e.g., `ctrl+shift+k`) and compares them against defined patterns. It ensures that \"Ctrl+C\" on Windows and \"Command+C\" on macOS are understood correctly by the system.",
+          "contentPath": "05_input_parsing___matching.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "keybindings/06_safety___validation",
+          "label": "Safety & Validation",
+          "type": "chapter",
+          "summary": "The \"guard rails\" of the system. It ensures that users don't accidentally break the application by overriding critical shortcuts (like the \"Emergency Stop\" buttons `Ctrl+C` or `Ctrl+D`) or creating impossible conflicting bindings. It analyzes the configuration for duplicates, reserved OS shortcuts, and syntax errors, providing helpful warnings to the user via the `doctor` command or notifications.",
+          "contentPath": "06_safety___validation.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "keybindings/01_the_keybinding_registry",
+          "target": "keybindings/06_safety___validation",
+          "label": "Validates configuration"
+        },
+        {
+          "source": "keybindings/01_the_keybinding_registry",
+          "target": "keybindings/04_chord_sequence_management",
+          "label": "Parses binding strings"
+        },
+        {
+          "source": "keybindings/05_input_parsing___matching",
+          "target": "keybindings/02_react_integration_hooks",
+          "label": "Resolves chord state"
+        },
+        {
+          "source": "keybindings/03_context_aware_resolution",
+          "target": "keybindings/02_react_integration_hooks",
+          "label": "Consumes resolution logic"
+        },
+        {
+          "source": "keybindings/02_react_integration_hooks",
+          "target": "keybindings/04_chord_sequence_management",
+          "label": "Matches input signals"
+        },
+        {
+          "source": "keybindings/06_safety___validation",
+          "target": "keybindings/04_chord_sequence_management",
+          "label": "Normalizes keys for checks"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "keybindings/01_the_keybinding_registry",
+      "target": "keybindings/06_safety___validation",
+      "label": "Validates configuration"
+    },
+    {
+      "source": "keybindings/01_the_keybinding_registry",
+      "target": "keybindings/04_chord_sequence_management",
+      "label": "Parses binding strings"
+    },
+    {
+      "source": "keybindings/05_input_parsing___matching",
+      "target": "keybindings/02_react_integration_hooks",
+      "label": "Resolves chord state"
+    },
+    {
+      "source": "keybindings/03_context_aware_resolution",
+      "target": "keybindings/02_react_integration_hooks",
+      "label": "Consumes resolution logic"
+    },
+    {
+      "source": "keybindings/02_react_integration_hooks",
+      "target": "keybindings/04_chord_sequence_management",
+      "label": "Matches input signals"
+    },
+    {
+      "source": "keybindings/06_safety___validation",
+      "target": "keybindings/04_chord_sequence_management",
+      "label": "Normalizes keys for checks"
+    }
+  ],
+  "storyPath": [
+    "keybindings/01_the_keybinding_registry",
+    "keybindings/02_react_integration_hooks",
+    "keybindings/03_context_aware_resolution",
+    "keybindings/04_chord_sequence_management",
+    "keybindings/05_input_parsing___matching",
+    "keybindings/06_safety___validation"
+  ]
+}

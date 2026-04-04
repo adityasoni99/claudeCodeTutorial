@@ -1,0 +1,102 @@
+{
+  "projectName": "login",
+  "nodes": [
+    {
+      "id": "login",
+      "label": "login",
+      "type": "module",
+      "summary": "This project implements a **login command** for a CLI tool, utilizing a *React-based* terminal interface to handle user authentication. It manages the full lifecycle of a sign-in event, from lazy-loading the UI to performing **session cleanup** (like clearing caches and enrolling devices) and propagating the new authentication state globally via a *shared context*.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "login/01_command_definition",
+          "label": "Command Definition",
+          "type": "chapter",
+          "summary": "Acts as the registration manifest for a specific feature within the CLI. It defines the command's metadata (name, description), determines when it is active (`isEnabled`), and uses lazy loading (`load`) to import the heavy logic only when needed. It's like a menu item in a restaurant: it describes the dish but doesn't cook it until ordered.",
+          "contentPath": "01_command_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "login/02_react_based_terminal_ui",
+          "label": "React-based Terminal UI",
+          "type": "chapter",
+          "summary": "Leverages React and Ink to build interactive user interfaces directly in the terminal. Instead of simple text input/output, it composes higher-level components like `Dialog` and `ConsoleOAuthFlow`. This abstraction allows terminal scripts to have structured, visual layouts similar to web modals.",
+          "contentPath": "02_react_based_terminal_ui.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "login/03_session_initialization___cleanup",
+          "label": "Session Initialization & Cleanup",
+          "type": "chapter",
+          "summary": "The choreography of side effects triggered immediately after a successful login. It manages the transition between accounts by clearing stale data (user cache, trusted device tokens) and initializing new state (refreshing settings, enrolling devices). It\u2019s akin to a hotel cleaning service preparing a room for the next guest to ensure no traces of the previous one remain.",
+          "contentPath": "03_session_initialization___cleanup.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "login/04_context_driven_state_updates",
+          "label": "Context-Driven State Updates",
+          "type": "chapter",
+          "summary": "A mechanism to propagate local command changes to the global application state. The `context` object allows the login command to update critical shared resources\u2014such as the active API key, message history, and app-wide configuration versions\u2014ensuring the main loop reacts instantly to the new authentication status.",
+          "contentPath": "04_context_driven_state_updates.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "login/01_command_definition",
+          "target": "login/02_react_based_terminal_ui",
+          "label": "Lazy loads"
+        },
+        {
+          "source": "login/02_react_based_terminal_ui",
+          "target": "login/03_session_initialization___cleanup",
+          "label": "Triggers on completion"
+        },
+        {
+          "source": "login/03_session_initialization___cleanup",
+          "target": "login/04_context_driven_state_updates",
+          "label": "Updates global state via"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "login/01_command_definition",
+      "target": "login/02_react_based_terminal_ui",
+      "label": "Lazy loads"
+    },
+    {
+      "source": "login/02_react_based_terminal_ui",
+      "target": "login/03_session_initialization___cleanup",
+      "label": "Triggers on completion"
+    },
+    {
+      "source": "login/03_session_initialization___cleanup",
+      "target": "login/04_context_driven_state_updates",
+      "label": "Updates global state via"
+    }
+  ],
+  "storyPath": [
+    "login/01_command_definition",
+    "login/02_react_based_terminal_ui",
+    "login/03_session_initialization___cleanup",
+    "login/04_context_driven_state_updates"
+  ]
+}

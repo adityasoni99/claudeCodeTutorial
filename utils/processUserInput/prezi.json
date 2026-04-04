@@ -1,0 +1,134 @@
+{
+  "projectName": "processUserInput",
+  "nodes": [
+    {
+      "id": "processuserinput",
+      "label": "processUserInput",
+      "type": "module",
+      "summary": "This project serves as a robust **input processing engine** designed to interpret and route various types of user interactions. It acts as a central *switchboard*, intelligently distinguishing between standard text **prompts**, executable **shell commands**, and inputs containing **media attachments**. Additionally, it enforces a *lifecycle hook* system to validate, modify, or block requests before they are finalized and sent to the AI model.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "processuserinput/01_input_orchestration",
+          "label": "Input Orchestration",
+          "type": "chapter",
+          "summary": "The central logic that acts as the entry point for all user interactions. It inspects the input mode (e.g., 'prompt', 'bash') and content (e.g., slash commands starting with `/`, specific keywords) to route the request to the appropriate handler.\n\nThink of it as a central switchboard operator who listens to the incoming call and connects it to the right department\u2014Sales (Text Prompt), Tech Support (Shell Command), or Special Services (Slash Commands).",
+          "contentPath": "01_input_orchestration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "processuserinput/02_standard_prompt_processing",
+          "label": "Standard Prompt Processing",
+          "type": "chapter",
+          "summary": "The default pathway for handling conversational text inputs. It prepares the user's message for the AI model by assigning unique IDs, generating telemetry events (OpenTelemetry), and detecting specific user intent keywords (like negative or \"keep going\" signals).\n\nIt is like a formal letter-processing center that stamps, logs, and packages your casual note into a standardized, tracked format ready for delivery to the AI backend.",
+          "contentPath": "02_standard_prompt_processing.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "processuserinput/03_media_and_attachment_preprocessing",
+          "label": "Media and Attachment Preprocessing",
+          "type": "chapter",
+          "summary": "The logic responsible for preparing non-text content, specifically images and pasted files, before the main prompt is processed. It handles resizing images to fit API limits, generating metadata strings, and converting raw data into structured content blocks.\n\nImagine a shipping department that measures, weighs, and repackages oversized items (images) so they fit perfectly into the standard delivery truck alongside regular envelopes (text).",
+          "contentPath": "03_media_and_attachment_preprocessing.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "processuserinput/04_shell_command_execution",
+          "label": "Shell Command Execution",
+          "type": "chapter",
+          "summary": "A specialized handler for running system commands when the input mode is set to 'bash'. It manages the complexity of selecting the underlying shell (Bash vs. PowerShell), handling sandbox constraints, and rendering real-time UI progress.\n\nIt acts like a command-line terminal embedded within the chat interface, translating user text into actual system actions and formatting the raw output (stdout/stderr) into structured messages for the conversation history.",
+          "contentPath": "04_shell_command_execution.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "processuserinput/05_submission_lifecycle_hooks",
+          "label": "Submission Lifecycle Hooks",
+          "type": "chapter",
+          "summary": "An interception layer that runs before the final query is submitted to the AI. It allows other parts of the system to validate, block, or augment the user's input with additional context (attachment messages).\n\nThink of it as a pre-flight security gate where the system inspects the cargo (user input). It can either clear it for takeoff, add necessary supplies (context), or ground the flight (block execution) if a safety check fails.",
+          "contentPath": "05_submission_lifecycle_hooks.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "processuserinput/01_input_orchestration",
+          "target": "processuserinput/02_standard_prompt_processing",
+          "label": "Routes bash inputs to"
+        },
+        {
+          "source": "processuserinput/01_input_orchestration",
+          "target": "processuserinput/03_media_and_attachment_preprocessing",
+          "label": "Delegates text inputs to"
+        },
+        {
+          "source": "processuserinput/01_input_orchestration",
+          "target": "processuserinput/04_shell_command_execution",
+          "label": "Initiates resizing and form..."
+        },
+        {
+          "source": "processuserinput/01_input_orchestration",
+          "target": "processuserinput/05_submission_lifecycle_hooks",
+          "label": "Executes validation hooks"
+        },
+        {
+          "source": "processuserinput/04_shell_command_execution",
+          "target": "processuserinput/03_media_and_attachment_preprocessing",
+          "label": "Supplies processed image data"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "processuserinput/01_input_orchestration",
+      "target": "processuserinput/02_standard_prompt_processing",
+      "label": "Routes bash inputs to"
+    },
+    {
+      "source": "processuserinput/01_input_orchestration",
+      "target": "processuserinput/03_media_and_attachment_preprocessing",
+      "label": "Delegates text inputs to"
+    },
+    {
+      "source": "processuserinput/01_input_orchestration",
+      "target": "processuserinput/04_shell_command_execution",
+      "label": "Initiates resizing and formatting"
+    },
+    {
+      "source": "processuserinput/01_input_orchestration",
+      "target": "processuserinput/05_submission_lifecycle_hooks",
+      "label": "Executes validation hooks"
+    },
+    {
+      "source": "processuserinput/04_shell_command_execution",
+      "target": "processuserinput/03_media_and_attachment_preprocessing",
+      "label": "Supplies processed image data"
+    }
+  ],
+  "storyPath": [
+    "processuserinput/01_input_orchestration",
+    "processuserinput/02_standard_prompt_processing",
+    "processuserinput/03_media_and_attachment_preprocessing",
+    "processuserinput/04_shell_command_execution",
+    "processuserinput/05_submission_lifecycle_hooks"
+  ]
+}

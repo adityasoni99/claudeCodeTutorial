@@ -1,0 +1,146 @@
+{
+  "projectName": "bash",
+  "nodes": [
+    {
+      "id": "bash",
+      "label": "bash",
+      "type": "module",
+      "summary": "This project implements a secure and robust layer for interpreting and executing **shell** commands, designed to let an AI agent act safely on a user's behalf. It leverages **Tree-Sitter** to build an Abstract Syntax Tree (AST) for deep syntactic understanding, while a **Registry** defines the specific behavior and arguments of commands. To ensure security and reliability, the system performs rigorous **Sanitization**, handles complex **Heredoc** structures, and captures a **Snapshot** of the user's environment to preserve aliases and configurations.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "bash/01_command_semantic_registry__specs_",
+          "label": "Command Semantic Registry (Specs)",
+          "type": "chapter",
+          "summary": "While the parser handles syntax, the Registry understands semantics\u2014what specific commands actually *do* and what arguments they accept. It uses a declarative specification system (similar to Fig/Amazon Q autocomplete specs) to define command structures.\n\nThink of this as a dictionary or a user manual. It tells the system that `sleep` takes a duration, or that `timeout` is a \"wrapper\" command that takes another command as an argument. This allows the system to parse deeply into nested commands (e.g., parsing `git` inside `sudo git commit`).",
+          "contentPath": "01_command_semantic_registry__specs_.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bash/02_shell_environment_snapshotting",
+          "label": "Shell Environment Snapshotting",
+          "type": "chapter",
+          "summary": "For an AI agent to truly act on behalf of the user, it needs to inherit the user's specific shell configuration (aliases, environment variables, and functions). This abstraction creates a \"snapshot\" of the user's current shell state.\n\nImagine a photographer entering a room (the user's terminal) and taking a high-resolution 360\u00b0 photo. The system then builds a temporary script that re-creates that exact environment. This ensures that if the user has `alias g='git'`, the AI agent knows `g status` works, preventing confusion and ensuring the tool behaves natively.",
+          "contentPath": "02_shell_environment_snapshotting.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bash/03_robust_command_parsing__tree_sitter___ast_",
+          "label": "Robust Command Parsing (Tree-Sitter & AST)",
+          "type": "chapter",
+          "summary": "This is the \"brain\" of the shell interpretation layer. Instead of relying solely on fragile Regular Expressions to understand complex Bash commands, the system prioritizes a robust Abstract Syntax Tree (AST) approach using Tree-sitter. \n\nThink of it like diagramming a sentence in English class: rather than just looking for keywords, the parser understands the grammatical structure\u2014subject, verb, object, and clauses. This allows the system to accurately identify pipelines, redirections, and quote scopes. It includes a unified interface (`IParsedCommand`) that gracefully falls back to regex-based parsing if the native parser isn't available.",
+          "contentPath": "03_robust_command_parsing__tree_sitter___ast_.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bash/04_command_prefix_extraction",
+          "label": "Command Prefix Extraction",
+          "type": "chapter",
+          "summary": "This logic determines the \"identity\" of the tool being executed, stripping away noise to find the root capability. It handles the complexity of wrapper commands (like `nice`, `time`, or `npm run`).\n\nIf you tell a friend \"I'm going to quickly run to the store,\" the core action is \"run to store,\" not \"quickly.\" Similarly, if the command is `sudo nice -n 10 git status`, this abstraction identifies that the core tool being acted upon is `git`. This is essential for applying permission policies and determining if a command is safe to run.",
+          "contentPath": "04_command_prefix_extraction.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bash/05_security___tokenization_sanitization",
+          "label": "Security & Tokenization Sanitization",
+          "type": "chapter",
+          "summary": "Bash commands are prone to \"injection\" attacks where malicious input breaks out of quotes to execute arbitrary code. This abstraction acts as the security guard. It handles the splitting of commands, the detection of dangerous control operators (like `||` or `;`), and the correct quoting of arguments.\n\nIt includes patches for known vulnerabilities in standard libraries (like `shell-quote`) and logic to detect malformed tokens. It ensures that when the system intends to pass a filename, it stays a filename and doesn't become a new command execution instruction.",
+          "contentPath": "05_security___tokenization_sanitization.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bash/06_heredoc_extraction___restoration",
+          "label": "Heredoc Extraction & Restoration",
+          "type": "chapter",
+          "summary": "\"Here Documents\" (`<<EOF`) in Bash allow multi-line strings to be passed as input, but they are notoriously difficult to parse because they break standard tokenization rules. This abstraction acts as a pre-processor and post-processor.\n\nIt extracts these complex multi-line blocks and replaces them with safe placeholders (e.g., `__HEREDOC_1__`) before the main parsing logic runs. Once parsing and security checks are complete, it restores the original content. It's like removing a fragile letter from an envelope to scan the envelope's address, then putting the letter back safely before delivery.",
+          "contentPath": "06_heredoc_extraction___restoration.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "bash/02_shell_environment_snapshotting",
+          "target": "bash/06_heredoc_extraction___restoration",
+          "label": "Extracts heredocs before pa..."
+        },
+        {
+          "source": "bash/05_security___tokenization_sanitization",
+          "target": "bash/01_command_semantic_registry__specs_",
+          "label": "Parses AST to identify comm..."
+        },
+        {
+          "source": "bash/05_security___tokenization_sanitization",
+          "target": "bash/04_command_prefix_extraction",
+          "label": "Consults definitions for wr..."
+        },
+        {
+          "source": "bash/01_command_semantic_registry__specs_",
+          "target": "bash/02_shell_environment_snapshotting",
+          "label": "Delegates tokenization and ..."
+        },
+        {
+          "source": "bash/03_robust_command_parsing__tree_sitter___ast_",
+          "target": "bash/02_shell_environment_snapshotting",
+          "label": "Quotes content for safe scr..."
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "bash/02_shell_environment_snapshotting",
+      "target": "bash/06_heredoc_extraction___restoration",
+      "label": "Extracts heredocs before parsing"
+    },
+    {
+      "source": "bash/05_security___tokenization_sanitization",
+      "target": "bash/01_command_semantic_registry__specs_",
+      "label": "Parses AST to identify commands"
+    },
+    {
+      "source": "bash/05_security___tokenization_sanitization",
+      "target": "bash/04_command_prefix_extraction",
+      "label": "Consults definitions for wrappers"
+    },
+    {
+      "source": "bash/01_command_semantic_registry__specs_",
+      "target": "bash/02_shell_environment_snapshotting",
+      "label": "Delegates tokenization and quoting"
+    },
+    {
+      "source": "bash/03_robust_command_parsing__tree_sitter___ast_",
+      "target": "bash/02_shell_environment_snapshotting",
+      "label": "Quotes content for safe scripts"
+    }
+  ],
+  "storyPath": [
+    "bash/01_command_semantic_registry__specs_",
+    "bash/02_shell_environment_snapshotting",
+    "bash/03_robust_command_parsing__tree_sitter___ast_",
+    "bash/04_command_prefix_extraction",
+    "bash/05_security___tokenization_sanitization",
+    "bash/06_heredoc_extraction___restoration"
+  ]
+}

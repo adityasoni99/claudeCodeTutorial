@@ -1,0 +1,124 @@
+{
+  "projectName": "session",
+  "nodes": [
+    {
+      "id": "session",
+      "label": "session",
+      "type": "module",
+      "summary": "The `session` project is a CLI command module designed to display **remote session details**, specifically a URL and a **QR code**. It employs a **lazy loading** strategy to import the UI logic only when executed and utilizes a **reactive state** system to render real-time connection information within interactive **terminal components**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "session/01_command_configuration",
+          "label": "Command Configuration",
+          "type": "chapter",
+          "summary": "The blueprint for defining CLI commands. It encapsulates identity (name, aliases), logic loading (`load`), and availability rules (`isEnabled`, `isHidden`) in a single object. Think of it as a menu item definition that tells the system when to show the item and what to do when selected.",
+          "contentPath": "01_command_configuration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "session/02_lazy_command_loading",
+          "label": "Lazy Command Loading",
+          "type": "chapter",
+          "summary": "A performance pattern where the implementation of a command is imported only when needed. Instead of loading the UI code at startup, the `load` function in the command definition fetches the module on-demand, similar to loading a webpage only when a link is clicked.",
+          "contentPath": "02_lazy_command_loading.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "session/03_terminal_ui_components",
+          "label": "Terminal UI Components",
+          "type": "chapter",
+          "summary": "The visual building blocks for the CLI interface using the Ink library. Components like `Pane`, `Box`, and `Text` are used to structure layout and style text, functioning analogously to HTML `div` and `span` tags but specifically designed for rendering in a terminal window.",
+          "contentPath": "03_terminal_ui_components.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "session/04_reactive_state_hook",
+          "label": "Reactive State Hook",
+          "type": "chapter",
+          "summary": "A mechanism to subscribe to global application data. The `useAppState` hook allows the component to listen for changes in the application's central store (specifically the `remoteSessionUrl`) and re-render automatically, similar to a UI widget binding to a data model.",
+          "contentPath": "04_reactive_state_hook.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "session/05_interactive_keybindings",
+          "label": "Interactive Keybindings",
+          "type": "chapter",
+          "summary": "Handles user keyboard input within a specific context. The `useKeybinding` hook maps specific key actions (like pressing Escape, mapped to `confirm:no`) to functions (like `onDone`), acting like an event listener for keyboard shortcuts on the active screen.",
+          "contentPath": "05_interactive_keybindings.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "session/01_command_configuration",
+          "target": "session/05_interactive_keybindings",
+          "label": "Uses"
+        },
+        {
+          "source": "session/05_interactive_keybindings",
+          "target": "session/02_lazy_command_loading",
+          "label": "Lazily loads"
+        },
+        {
+          "source": "session/03_terminal_ui_components",
+          "target": "session/02_lazy_command_loading",
+          "label": "Provides data to"
+        },
+        {
+          "source": "session/04_reactive_state_hook",
+          "target": "session/02_lazy_command_loading",
+          "label": "Handles interaction for"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "session/01_command_configuration",
+      "target": "session/05_interactive_keybindings",
+      "label": "Uses"
+    },
+    {
+      "source": "session/05_interactive_keybindings",
+      "target": "session/02_lazy_command_loading",
+      "label": "Lazily loads"
+    },
+    {
+      "source": "session/03_terminal_ui_components",
+      "target": "session/02_lazy_command_loading",
+      "label": "Provides data to"
+    },
+    {
+      "source": "session/04_reactive_state_hook",
+      "target": "session/02_lazy_command_loading",
+      "label": "Handles interaction for"
+    }
+  ],
+  "storyPath": [
+    "session/01_command_configuration",
+    "session/02_lazy_command_loading",
+    "session/03_terminal_ui_components",
+    "session/04_reactive_state_hook",
+    "session/05_interactive_keybindings"
+  ]
+}

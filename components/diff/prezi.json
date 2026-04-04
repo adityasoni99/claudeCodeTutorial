@@ -1,0 +1,134 @@
+{
+  "projectName": "diff",
+  "nodes": [
+    {
+      "id": "diff",
+      "label": "diff",
+      "type": "module",
+      "summary": "This project implements an interactive, terminal-based **diff viewer**. It orchestrates a workflow allowing users to browse a **paginated list** of changed files and drill down into a **detailed view** of code changes (hunks). The system creates a unified interface by **normalizing** different data sources and includes *guardrails* to safely handle binary, large, or untracked files without crashing the UI.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "diff/01_diff_dialog_orchestration",
+          "label": "Diff Dialog Orchestration",
+          "type": "chapter",
+          "summary": "This is the central hub of the feature. It manages the global state, such as which mode the user is seeing (List view vs. Detail view) and which file is currently selected. Think of it as a stage manager who directs the show, deciding which scene to present to the audience and handling the inputs (keyboard shortcuts) to switch between them.",
+          "contentPath": "01_diff_dialog_orchestration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "diff/02_data_normalization_adapter",
+          "label": "Data Normalization Adapter",
+          "type": "chapter",
+          "summary": "The codebase handles two types of diff sources: the current uncommitted changes and historical changes from previous \"turns\" (chat interactions). This abstraction converts the historical \"Turn\" data into a generic `DiffData` format. It works like a universal travel adapter, allowing different types of data \"plugs\" to connect to the same display \"socket\" without the UI needing to know the difference.",
+          "contentPath": "02_data_normalization_adapter.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "diff/03_paginated_file_list",
+          "label": "Paginated File List",
+          "type": "chapter",
+          "summary": "This component handles the summary view of all changed files. It implements a \"sliding window\" logic to handle pagination within the limited vertical space of a terminal. Imagine a long menu at a restaurant where you can only see 5 items at a time through a small cutout window; as you move your finger (cursor) down, the paper slides up to reveal the next items.",
+          "contentPath": "03_paginated_file_list.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "diff/04_detail_view___hunk_rendering",
+          "label": "Detail View & Hunk Rendering",
+          "type": "chapter",
+          "summary": "This abstraction is responsible for visualizing the actual code changes inside a specific file. It takes raw \"hunks\" (chunks of differences) and renders them visibly. It acts like a document viewer that not only displays the text but also has built-in safety mechanisms to detect if a file is too large or binary, preventing the interface from crashing by trying to read unreadable formats.",
+          "contentPath": "04_detail_view___hunk_rendering.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "diff/05_file_status_guardrails",
+          "label": "File Status Guardrails",
+          "type": "chapter",
+          "summary": "Across both the list and detail views, there is consistent logic to handle \"special\" file states (Binary, Large, Untracked, Truncated). This abstraction acts like a warning system or a traffic sign, alerting the user that a specific road (file) cannot be traversed normally because it's under construction (untracked) or not suitable for standard vehicles (binary/large files).",
+          "contentPath": "05_file_status_guardrails.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "diff/01_diff_dialog_orchestration",
+          "target": "diff/02_data_normalization_adapter",
+          "label": "Normalizes diff data"
+        },
+        {
+          "source": "diff/01_diff_dialog_orchestration",
+          "target": "diff/03_paginated_file_list",
+          "label": "Renders list view"
+        },
+        {
+          "source": "diff/01_diff_dialog_orchestration",
+          "target": "diff/04_detail_view___hunk_rendering",
+          "label": "Renders detail view"
+        },
+        {
+          "source": "diff/03_paginated_file_list",
+          "target": "diff/05_file_status_guardrails",
+          "label": "Displays status indicators"
+        },
+        {
+          "source": "diff/04_detail_view___hunk_rendering",
+          "target": "diff/05_file_status_guardrails",
+          "label": "Enforces display limits"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "diff/01_diff_dialog_orchestration",
+      "target": "diff/02_data_normalization_adapter",
+      "label": "Normalizes diff data"
+    },
+    {
+      "source": "diff/01_diff_dialog_orchestration",
+      "target": "diff/03_paginated_file_list",
+      "label": "Renders list view"
+    },
+    {
+      "source": "diff/01_diff_dialog_orchestration",
+      "target": "diff/04_detail_view___hunk_rendering",
+      "label": "Renders detail view"
+    },
+    {
+      "source": "diff/03_paginated_file_list",
+      "target": "diff/05_file_status_guardrails",
+      "label": "Displays status indicators"
+    },
+    {
+      "source": "diff/04_detail_view___hunk_rendering",
+      "target": "diff/05_file_status_guardrails",
+      "label": "Enforces display limits"
+    }
+  ],
+  "storyPath": [
+    "diff/01_diff_dialog_orchestration",
+    "diff/02_data_normalization_adapter",
+    "diff/03_paginated_file_list",
+    "diff/04_detail_view___hunk_rendering",
+    "diff/05_file_status_guardrails"
+  ]
+}

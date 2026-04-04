@@ -1,0 +1,134 @@
+{
+  "projectName": "secureStorage",
+  "nodes": [
+    {
+      "id": "securestorage",
+      "label": "secureStorage",
+      "type": "module",
+      "summary": "This project provides a robust mechanism for **securely storing** sensitive credentials like API keys and OAuth tokens. It automatically determines the best storage method based on the operating system, prioritizing the **system keychain** on macOS while providing a *resilient fallback* to text files if errors occur. To optimize performance, it utilizes **parallel prefetching** to retrieve data during startup and maintains an **in-memory cache** to minimize slow system interactions.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "securestorage/01_platform_based_storage_factory",
+          "label": "Platform-Based Storage Factory",
+          "type": "chapter",
+          "summary": "This is the entry point logic that determines which storage mechanism to use based on the operating system. It acts like a travel agent who decides the best mode of transport for you depending on your destination. If you are on macOS (`darwin`), it constructs a sophisticated system using the system Keychain with a fallback; for other platforms (like Linux or Windows), it currently defaults to simple text file storage. This abstraction ensures the rest of the application simply asks for \"storage\" without worrying about the underlying implementation details.",
+          "contentPath": "01_platform_based_storage_factory.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "securestorage/02_cli_command_interaction",
+          "label": "CLI Command Interaction",
+          "type": "chapter",
+          "summary": "This abstraction represents the low-level \"driver\" that physically talks to the macOS `security` executable. It handles the messy details of Inter-Process Communication (IPC). It deals with buffer limits (switching from passing data via `stdin` to command-line arguments if the JSON payload is too large) and parsing raw string output into usable objects. It acts like a translator that knows exactly how to phrase requests to the strict and sometimes quirky operating system API to safely store and retrieve sensitive hex-encoded data.",
+          "contentPath": "02_cli_command_interaction.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "securestorage/03_resilient_fallback_layer",
+          "label": "Resilient Fallback Layer",
+          "type": "chapter",
+          "summary": "This abstraction functions as a safety net or a \"spare tire\" for credential storage. It wraps two storage implementations: a primary (secure Keychain) and a secondary (insecure plaintext). If the primary storage fails to read or write (e.g., due to Keychain corruption or locking), this layer automatically degrades to the secondary storage. Crucially, it manages state synchronization\u2014cleaning up the secondary file if the primary starts working again\u2014to prevent the application from reading stale data from a \"ghost\" backup when fresh data exists in the main vault.",
+          "contentPath": "03_resilient_fallback_layer.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "securestorage/04_keychain_state_caching",
+          "label": "Keychain State Caching",
+          "type": "chapter",
+          "summary": "To prevent system sluggishness, this abstraction acts as a short-term memory buffer. Since asking the operating system for passwords via the `security` command is expensive (slow), this layer caches the result in memory for a set duration (30 seconds). It handles cache invalidation (clearing memory when a new password is written) and \"stale-while-error\" logic (returning old data if a new read fails). This ensures that rapid-fire requests from different parts of the application don't bring the system to a crawl by spawning dozens of subprocesses.",
+          "contentPath": "04_keychain_state_caching.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "securestorage/05_parallel_startup_prefetching",
+          "label": "Parallel Startup Prefetching",
+          "type": "chapter",
+          "summary": "This component optimizes application startup time by treating credential retrieval like pre-ordering a coffee before you arrive at the shop. Because querying the macOS Keychain via the CLI is slow (~65ms), this module fires off the retrieval process asynchronously at the very beginning of execution. By the time the main application logic and heavy imports have finished loading, the credentials are already fetched and waiting. It explicitly avoids heavy dependencies to ensure it starts instantly, running in parallel with the rest of the app's initialization.",
+          "contentPath": "05_parallel_startup_prefetching.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "securestorage/01_platform_based_storage_factory",
+          "target": "securestorage/02_cli_command_interaction",
+          "label": "Constructs"
+        },
+        {
+          "source": "securestorage/01_platform_based_storage_factory",
+          "target": "securestorage/05_parallel_startup_prefetching",
+          "label": "Selects as primary"
+        },
+        {
+          "source": "securestorage/02_cli_command_interaction",
+          "target": "securestorage/05_parallel_startup_prefetching",
+          "label": "Delegates to"
+        },
+        {
+          "source": "securestorage/05_parallel_startup_prefetching",
+          "target": "securestorage/04_keychain_state_caching",
+          "label": "Reads and invalidates"
+        },
+        {
+          "source": "securestorage/03_resilient_fallback_layer",
+          "target": "securestorage/04_keychain_state_caching",
+          "label": "Primes with data"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "securestorage/01_platform_based_storage_factory",
+      "target": "securestorage/02_cli_command_interaction",
+      "label": "Constructs"
+    },
+    {
+      "source": "securestorage/01_platform_based_storage_factory",
+      "target": "securestorage/05_parallel_startup_prefetching",
+      "label": "Selects as primary"
+    },
+    {
+      "source": "securestorage/02_cli_command_interaction",
+      "target": "securestorage/05_parallel_startup_prefetching",
+      "label": "Delegates to"
+    },
+    {
+      "source": "securestorage/05_parallel_startup_prefetching",
+      "target": "securestorage/04_keychain_state_caching",
+      "label": "Reads and invalidates"
+    },
+    {
+      "source": "securestorage/03_resilient_fallback_layer",
+      "target": "securestorage/04_keychain_state_caching",
+      "label": "Primes with data"
+    }
+  ],
+  "storyPath": [
+    "securestorage/01_platform_based_storage_factory",
+    "securestorage/02_cli_command_interaction",
+    "securestorage/03_resilient_fallback_layer",
+    "securestorage/04_keychain_state_caching",
+    "securestorage/05_parallel_startup_prefetching"
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "projectName": "background",
+  "nodes": [
+    {
+      "id": "background",
+      "label": "background",
+      "type": "module",
+      "summary": "This project manages the lifecycle and validation of **remote background sessions**, allowing users to execute long-running tasks in a cloud environment. It acts as a safety system that orchestrates a \"pre-flight checklist\" to verify **Git context**, *user authentication*, and GitHub permissions before authorizing the creation of a remote process handle.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "background/01_remote_session_model",
+          "label": "Remote Session Model",
+          "type": "chapter",
+          "summary": "Defines the structure and state of a background task running on a remote environment. It acts as a local \"handle\" or ticket for the remote process, tracking essential details like the session ID, current status (e.g., running, completed), logs, and the command being executed.",
+          "contentPath": "01_remote_session_model.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "background/02_session_eligibility_gatekeeper",
+          "label": "Session Eligibility Gatekeeper",
+          "type": "chapter",
+          "summary": "The high-level logic that orchestrates validation specifically for starting a background session. It aggregates various preconditions\u2014checking policies, login status, and git configuration\u2014to produce a definitive list of blocking errors. This abstraction decides whether the \"Start\" button is active or disabled.",
+          "contentPath": "02_session_eligibility_gatekeeper.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "background/03_precondition_verification",
+          "label": "Precondition Verification",
+          "type": "chapter",
+          "summary": "A suite of atomic validation functions that ensure the environment is ready before an operation proceeds. It serves as a comprehensive \"pre-flight checklist,\" verifying requirements such as user authentication, git repository status, and the presence of remote execution environments.",
+          "contentPath": "03_precondition_verification.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "background/04_git_context_awareness",
+          "label": "Git Context Awareness",
+          "type": "chapter",
+          "summary": "A set of helpers that inspect the local file system to determine its Git state. These functions distinguish between simply being inside a initialized folder, having a clean working directory (no uncommitted changes), and having a valid remote `origin`. This context is crucial for safely synchronizing code with remote environments.",
+          "contentPath": "04_git_context_awareness.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "background/05_github_repository_access",
+          "label": "GitHub Repository Access",
+          "type": "chapter",
+          "summary": "Manages the authorization logic for interacting with GitHub repositories. It implements a tiered checking strategy: first verifying if a GitHub App is installed on the repository, and if not, checking for a synced user OAuth token. This ensures the tool has the necessary permissions to read or write code remotely.",
+          "contentPath": "05_github_repository_access.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "background/03_precondition_verification",
+          "target": "background/01_remote_session_model",
+          "label": "Guards creation of"
+        },
+        {
+          "source": "background/03_precondition_verification",
+          "target": "background/02_session_eligibility_gatekeeper",
+          "label": "Invokes checks from"
+        },
+        {
+          "source": "background/03_precondition_verification",
+          "target": "background/05_github_repository_access",
+          "label": "Validates repository state"
+        },
+        {
+          "source": "background/03_precondition_verification",
+          "target": "background/04_git_context_awareness",
+          "label": "Verifies permissions via"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "background/03_precondition_verification",
+      "target": "background/01_remote_session_model",
+      "label": "Guards creation of"
+    },
+    {
+      "source": "background/03_precondition_verification",
+      "target": "background/02_session_eligibility_gatekeeper",
+      "label": "Invokes checks from"
+    },
+    {
+      "source": "background/03_precondition_verification",
+      "target": "background/05_github_repository_access",
+      "label": "Validates repository state"
+    },
+    {
+      "source": "background/03_precondition_verification",
+      "target": "background/04_git_context_awareness",
+      "label": "Verifies permissions via"
+    }
+  ],
+  "storyPath": [
+    "background/01_remote_session_model",
+    "background/02_session_eligibility_gatekeeper",
+    "background/03_precondition_verification",
+    "background/04_git_context_awareness",
+    "background/05_github_repository_access"
+  ]
+}

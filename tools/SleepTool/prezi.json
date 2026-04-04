@@ -1,0 +1,124 @@
+{
+  "projectName": "SleepTool",
+  "nodes": [
+    {
+      "id": "sleeptool",
+      "label": "SleepTool",
+      "type": "module",
+      "summary": "The **SleepTool** provides a specialized mechanism for an AI to *wait* or rest for a specific duration without blocking other processes. Instead of shutting down completely, the tool uses a **smart waiting** approach that allows the AI to remain responsive to periodic *heartbeat check-ins* and user interruptions, while balancing API costs with memory cache limits.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "sleeptool/01_tool_registration_metadata",
+          "label": "Tool Registration Metadata",
+          "type": "chapter",
+          "summary": "This captures the standardized constants exported by the module (`SLEEP_TOOL_NAME`, `DESCRIPTION`). These act as the interface identifiers allowing the larger system to discover and display the tool to the AI or user.\n\nIt is similar to a driver's license or ID badge. It doesn't describe the person's personality (that's the prompt), but it provides the essential labels\u2014Name and Role\u2014that authorities (the system) need to identify and call upon them.",
+          "contentPath": "01_tool_registration_metadata.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sleeptool/02_tool_behavior_definition",
+          "label": "Tool Behavior Definition",
+          "type": "chapter",
+          "summary": "This abstraction defines the core logic and instructions provided to the AI for the Sleep tool. It dictates that the tool is used for waiting or resting and sets the rules for usage.\n\nThink of it as the \"script\" or \"standing orders\" given to a sentry. It tells them exactly what \"standing guard\" implies\u2014in this case, waiting for a duration but remaining alert to new commands rather than shutting down completely.",
+          "contentPath": "02_tool_behavior_definition.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sleeptool/03_asynchronous_flow_control",
+          "label": "Asynchronous Flow Control",
+          "type": "chapter",
+          "summary": "This concept distinguishes the Sleep tool from a blocking shell command (like `sleep 5`). The prompts instruct the AI to treat this sleep as a concurrent process that does not hold up other operations.\n\nImagine a chef waiting for dough to rise. Instead of freezing in place (blocking/`Bash(sleep)`), the chef cleans the counter or preps vegetables (concurrent execution). The Sleep tool allows the AI to \"wait\" while still being able to process other parallel streams or interrupts.",
+          "contentPath": "03_asynchronous_flow_control.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sleeptool/04_periodic_heartbeat_handling",
+          "label": "Periodic Heartbeat Handling",
+          "type": "chapter",
+          "summary": "This abstraction manages the \"Tick\" mechanism (`TICK_TAG`). It represents a system where the sleeping agent is periodically pinged to check for useful work, ensuring it doesn't drift into complete inactivity.\n\nIt is like a lifeguard sitting in a chair. Most of the time they are \"resting\" (sleeping), but every few seconds they scan the pool (the `tick` check-in). If they see someone struggling (useful work), they act immediately; otherwise, they resume their watch.",
+          "contentPath": "04_periodic_heartbeat_handling.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sleeptool/05_cache_lifecycle_management",
+          "label": "Cache Lifecycle Management",
+          "type": "chapter",
+          "summary": "This abstraction deals with the economic trade-off between API call costs and context retention. The prompt explicitly instructs the AI to balance wake-up frequency with the 5-minute prompt cache expiration.\n\nThink of a motion-sensor light in a hallway. If you set the timer too short, the light turns off while you're still there (cache expires, context lost). If you wave your hand constantly to keep it on, you waste electricity (expensive API calls). This logic helps the AI find the \"sweet spot.\"",
+          "contentPath": "05_cache_lifecycle_management.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "sleeptool/01_tool_registration_metadata",
+          "target": "sleeptool/02_tool_behavior_definition",
+          "label": "Instructs non-blocking"
+        },
+        {
+          "source": "sleeptool/03_asynchronous_flow_control",
+          "target": "sleeptool/01_tool_registration_metadata",
+          "label": "Injects signal into"
+        },
+        {
+          "source": "sleeptool/01_tool_registration_metadata",
+          "target": "sleeptool/04_periodic_heartbeat_handling",
+          "label": "Implements strategy for"
+        },
+        {
+          "source": "sleeptool/05_cache_lifecycle_management",
+          "target": "sleeptool/01_tool_registration_metadata",
+          "label": "Identifies capability of"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "sleeptool/01_tool_registration_metadata",
+      "target": "sleeptool/02_tool_behavior_definition",
+      "label": "Instructs non-blocking"
+    },
+    {
+      "source": "sleeptool/03_asynchronous_flow_control",
+      "target": "sleeptool/01_tool_registration_metadata",
+      "label": "Injects signal into"
+    },
+    {
+      "source": "sleeptool/01_tool_registration_metadata",
+      "target": "sleeptool/04_periodic_heartbeat_handling",
+      "label": "Implements strategy for"
+    },
+    {
+      "source": "sleeptool/05_cache_lifecycle_management",
+      "target": "sleeptool/01_tool_registration_metadata",
+      "label": "Identifies capability of"
+    }
+  ],
+  "storyPath": [
+    "sleeptool/01_tool_registration_metadata",
+    "sleeptool/02_tool_behavior_definition",
+    "sleeptool/03_asynchronous_flow_control",
+    "sleeptool/04_periodic_heartbeat_handling",
+    "sleeptool/05_cache_lifecycle_management"
+  ]
+}

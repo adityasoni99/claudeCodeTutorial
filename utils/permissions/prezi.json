@@ -1,0 +1,166 @@
+{
+  "projectName": "permissions",
+  "nodes": [
+    {
+      "id": "permissions",
+      "label": "permissions",
+      "type": "module",
+      "summary": "This project implements a robust **permission enforcement system** for an AI agent, acting as the central gatekeeper for all tool executions. It evaluates actions against a hierarchy of security checks: explicit **static rules**, the agent's current **operating mode** (e.g., *Auto* vs. *Plan*), and strict **filesystem sandboxing**. When executed in autonomous modes, it leverages an **AI classifier** to judge the safety of ambiguous commands based on conversation context.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "permissions/01_permission_modes___state",
+          "label": "Permission Modes & State",
+          "type": "chapter",
+          "summary": "This abstraction defines the agent's operating posture. It controls the transition between states like \"Plan Mode\" (read-only/planning), \"Auto Mode\" (autonomous), and \"Default\" (ask for everything). It handles the logic for cycling modes (Shift+Tab) and initializing state from CLI flags.\n\nIt works like the driving modes in a car (Eco, Sport, Off-Road). Switching modes changes the behavior of the entire system\u2014adjusting how aggressive the agent is, what safety checks are disabled, and how much confirmation is required from the driver.",
+          "contentPath": "01_permission_modes___state.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "permissions/02_the_rule_system",
+          "label": "The Rule System",
+          "type": "chapter",
+          "summary": "This abstraction manages the static definitions of what is allowed or denied. It handles loading rules from configuration files (like `config.json`), parsing rule syntax (e.g., `Bash(npm:*)`), and detecting conflicts or \"shadowed\" rules where a broad deny might hide a specific allow.\n\nImagine a sophisticated firewall configuration or an access control list (ACL). It reads line-by-line instructions from disk, translates text like \"Allow reading /tmp\" into structured data objects, and ensures the rules don't contradict each other logicially.",
+          "contentPath": "02_the_rule_system.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "permissions/03_permission_enforcement_engine",
+          "label": "Permission Enforcement Engine",
+          "type": "chapter",
+          "summary": "This is the central gatekeeper that determines if a tool execution is allowed. It orchestrates the entire decision pipeline: first checking explicit allow/deny rules, then evaluating the current permission mode (e.g., Plan vs. Auto), and finally delegating to the AI classifier if necessary.\n\nThink of it as a security checkpoint at an airport. It first checks your ticket (static rules), then your travel status (modes), and if something looks ambiguous, it sends you to a specialist for a deeper interview (the AI classifier).",
+          "contentPath": "03_permission_enforcement_engine.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "permissions/04_auto_mode_classifier__yolo_",
+          "label": "Auto Mode Classifier (YOLO)",
+          "type": "chapter",
+          "summary": "This is the \"brain\" of the permission system used in Auto Mode. Instead of relying solely on exact string matches, it constructs a prompt containing the conversation context and the proposed tool action, then asks an LLM (Claude) to classify the action as safe or dangerous.\n\nIt acts like a human security analyst sitting on your shoulder. When the system encounters a command that isn't explicitly whitelisted but looks plausible (like running a specific test script), this system reviews the context (\"Did the user ask for this?\") to make a judgement call.",
+          "contentPath": "04_auto_mode_classifier__yolo_.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "permissions/05_filesystem_security___sandboxing",
+          "label": "Filesystem Security & Sandboxing",
+          "type": "chapter",
+          "summary": "This layer specifically handles file access permissions. It normalizes paths, resolves symlinks to prevent path traversal attacks (e.g., `../../etc/passwd`), and enforces \"dangerous\" directory blocks (like preventing edits to `.git` or `.vscode`). It also manages internal \"safe\" paths like scratchpads and memory files.\n\nThink of this as the physical key system of a building. Even if you have permission to enter \"the office,\" this system ensures you are actually walking through the front door and not trying to crawl through a vent or tunnel into a restricted server room.",
+          "contentPath": "05_filesystem_security___sandboxing.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "permissions/06_configuration_persistence",
+          "label": "Configuration Persistence",
+          "type": "chapter",
+          "summary": "This system handles modifying the user's permission settings. When a user says \"Always allow this,\" this abstraction constructs a `PermissionUpdate` object, determines the correct scope (Session vs. Project vs. Global), and writes the new rule to the appropriate JSON setting source.\n\nIt acts like a stenographer for the security team. When a decision is made to change policy, this system drafts the official record, stamps it with the correct authority level, and files it away so the decision is remembered next time.",
+          "contentPath": "06_configuration_persistence.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "permissions/01_permission_modes___state",
+          "target": "permissions/02_the_rule_system",
+          "label": "Evaluates actions against"
+        },
+        {
+          "source": "permissions/01_permission_modes___state",
+          "target": "permissions/05_filesystem_security___sandboxing",
+          "label": "Checks current state of"
+        },
+        {
+          "source": "permissions/01_permission_modes___state",
+          "target": "permissions/03_permission_enforcement_engine",
+          "label": "Delegates ambiguous decisio..."
+        },
+        {
+          "source": "permissions/01_permission_modes___state",
+          "target": "permissions/04_auto_mode_classifier__yolo_",
+          "label": "Validates file paths using"
+        },
+        {
+          "source": "permissions/01_permission_modes___state",
+          "target": "permissions/06_configuration_persistence",
+          "label": "Applies updates via"
+        },
+        {
+          "source": "permissions/05_filesystem_security___sandboxing",
+          "target": "permissions/02_the_rule_system",
+          "label": "Loads initial rules from"
+        },
+        {
+          "source": "permissions/06_configuration_persistence",
+          "target": "permissions/02_the_rule_system",
+          "label": "Modifies settings for"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "permissions/01_permission_modes___state",
+      "target": "permissions/02_the_rule_system",
+      "label": "Evaluates actions against"
+    },
+    {
+      "source": "permissions/01_permission_modes___state",
+      "target": "permissions/05_filesystem_security___sandboxing",
+      "label": "Checks current state of"
+    },
+    {
+      "source": "permissions/01_permission_modes___state",
+      "target": "permissions/03_permission_enforcement_engine",
+      "label": "Delegates ambiguous decisions to"
+    },
+    {
+      "source": "permissions/01_permission_modes___state",
+      "target": "permissions/04_auto_mode_classifier__yolo_",
+      "label": "Validates file paths using"
+    },
+    {
+      "source": "permissions/01_permission_modes___state",
+      "target": "permissions/06_configuration_persistence",
+      "label": "Applies updates via"
+    },
+    {
+      "source": "permissions/05_filesystem_security___sandboxing",
+      "target": "permissions/02_the_rule_system",
+      "label": "Loads initial rules from"
+    },
+    {
+      "source": "permissions/06_configuration_persistence",
+      "target": "permissions/02_the_rule_system",
+      "label": "Modifies settings for"
+    }
+  ],
+  "storyPath": [
+    "permissions/01_permission_modes___state",
+    "permissions/02_the_rule_system",
+    "permissions/03_permission_enforcement_engine",
+    "permissions/04_auto_mode_classifier__yolo_",
+    "permissions/05_filesystem_security___sandboxing",
+    "permissions/06_configuration_persistence"
+  ]
+}

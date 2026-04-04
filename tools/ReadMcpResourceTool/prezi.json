@@ -1,0 +1,146 @@
+{
+  "projectName": "ReadMcpResourceTool",
+  "nodes": [
+    {
+      "id": "readmcpresourcetool",
+      "label": "ReadMcpResourceTool",
+      "type": "module",
+      "summary": "This project defines a **ReadMcpResourceTool**, a utility that allows an AI assistant to fetch specific resources (like files or data) from connected **MCP servers** by URI. It orchestrates the process of validating inputs, establishing communication with the server, and handling the response. Notably, it includes a strategy to **persist binary data** (blobs) to the local disk to keep the context window clean, while displaying text content and operation summaries directly in the user interface.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "readmcpresourcetool/01_tool_definition___configuration",
+          "label": "Tool Definition & Configuration",
+          "type": "chapter",
+          "summary": "The central object that encapsulates the tool's identity and behavior using the `buildTool` factory. It defines metadata (name, search hint), behavioral flags (read-only, concurrency safe), and binds the execution logic to the schemas. Think of it as the registration card that tells the system exactly what this tool is and how it behaves.",
+          "contentPath": "01_tool_definition___configuration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "readmcpresourcetool/02_schema_validation",
+          "label": "Schema Validation",
+          "type": "chapter",
+          "summary": "Uses Zod libraries to strictly define the shape of inputs (server name, URI) and outputs (content structure). This ensures type safety and runtime validation, acting as a contract that guarantees the tool receives the right arguments and returns data in a format the system expects.",
+          "contentPath": "02_schema_validation.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "readmcpresourcetool/03_llm_context___prompts",
+          "label": "LLM Context & Prompts",
+          "type": "chapter",
+          "summary": "Contains the text descriptions and usage examples fed to the Large Language Model. These strings explain the tool's purpose and parameters in natural language, serving as the \"instruction manual\" the AI reads to understand how to operate the tool.",
+          "contentPath": "03_llm_context___prompts.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "readmcpresourcetool/04_mcp_client_integration",
+          "label": "MCP Client Integration",
+          "type": "chapter",
+          "summary": "The logic responsible for locating and communicating with external MCP servers. It validates that the requested server exists, is connected, and supports resource capabilities before sending a standard `resources/read` request. It acts like a dispatcher finding the right line to call an external service.",
+          "contentPath": "04_mcp_client_integration.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "readmcpresourcetool/05_content_persistence_strategy",
+          "label": "Content Persistence Strategy",
+          "type": "chapter",
+          "summary": "A mechanism to handle different data types efficiently. While text is returned directly, binary data (blobs) is intercepted, decoded, and saved to the local disk instead of clogging the context window with Base64 strings. It replaces the raw data with a file path reference, similar to downloading a large attachment and just sending the filename in an email.",
+          "contentPath": "05_content_persistence_strategy.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "readmcpresourcetool/06_user_interface_rendering",
+          "label": "User Interface Rendering",
+          "type": "chapter",
+          "summary": "Separates the visual presentation from the tool's logic using React components. It defines how tool usage (e.g., \"Read resource...\") and results (formatted JSON) are displayed in the terminal. This is like the \"View\" in an MVC architecture, ensuring the user sees a clean, human-readable summary of the operation.",
+          "contentPath": "06_user_interface_rendering.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "readmcpresourcetool/01_tool_definition___configuration",
+          "target": "readmcpresourcetool/04_mcp_client_integration",
+          "label": "Defines input/output with"
+        },
+        {
+          "source": "readmcpresourcetool/01_tool_definition___configuration",
+          "target": "readmcpresourcetool/02_schema_validation",
+          "label": "Requests resources via"
+        },
+        {
+          "source": "readmcpresourcetool/01_tool_definition___configuration",
+          "target": "readmcpresourcetool/03_llm_context___prompts",
+          "label": "Offloads binary data to"
+        },
+        {
+          "source": "readmcpresourcetool/01_tool_definition___configuration",
+          "target": "readmcpresourcetool/05_content_persistence_strategy",
+          "label": "Delegates display logic to"
+        },
+        {
+          "source": "readmcpresourcetool/01_tool_definition___configuration",
+          "target": "readmcpresourcetool/06_user_interface_rendering",
+          "label": "Retrieves instructions from"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "readmcpresourcetool/01_tool_definition___configuration",
+      "target": "readmcpresourcetool/04_mcp_client_integration",
+      "label": "Defines input/output with"
+    },
+    {
+      "source": "readmcpresourcetool/01_tool_definition___configuration",
+      "target": "readmcpresourcetool/02_schema_validation",
+      "label": "Requests resources via"
+    },
+    {
+      "source": "readmcpresourcetool/01_tool_definition___configuration",
+      "target": "readmcpresourcetool/03_llm_context___prompts",
+      "label": "Offloads binary data to"
+    },
+    {
+      "source": "readmcpresourcetool/01_tool_definition___configuration",
+      "target": "readmcpresourcetool/05_content_persistence_strategy",
+      "label": "Delegates display logic to"
+    },
+    {
+      "source": "readmcpresourcetool/01_tool_definition___configuration",
+      "target": "readmcpresourcetool/06_user_interface_rendering",
+      "label": "Retrieves instructions from"
+    }
+  ],
+  "storyPath": [
+    "readmcpresourcetool/01_tool_definition___configuration",
+    "readmcpresourcetool/02_schema_validation",
+    "readmcpresourcetool/03_llm_context___prompts",
+    "readmcpresourcetool/04_mcp_client_integration",
+    "readmcpresourcetool/05_content_persistence_strategy",
+    "readmcpresourcetool/06_user_interface_rendering"
+  ]
+}

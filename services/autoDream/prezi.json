@@ -1,0 +1,156 @@
+{
+  "projectName": "autoDream",
+  "nodes": [
+    {
+      "id": "autodream",
+      "label": "autoDream",
+      "type": "module",
+      "summary": "**Auto-Dream** is a background system designed to automatically consolidate an AI's recent conversation transcripts into durable memory files. It operates like a *night watchman*, using strict **Gating Logic** to ensure it only \"dreams\" when enough time has passed and sufficient new data exists. When triggered, it spins up a sub-agent to review, organize, and prune memory files without interrupting the user's active workflow.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "autodream/01_auto_dream_orchestrator",
+          "label": "Auto-Dream Orchestrator",
+          "type": "chapter",
+          "summary": "The central background process that manages the lifecycle of memory consolidation. It initializes a runner that hooks into the application's event loop (via `stopHooks`). It decides when to trigger a dream, spins up a sub-agent to do the work, and handles the success or failure of that task.\nThink of it as a night watchman who waits for the building to be quiet and enough time to pass before starting their rounds to organize the files.",
+          "contentPath": "01_auto_dream_orchestrator.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "autodream/02_gating_logic",
+          "label": "Gating Logic",
+          "type": "chapter",
+          "summary": "A set of three checks (Time, Session Count, and Lock) that determines if a dream should occur. It ensures resources aren't wasted by dreaming too frequently or when there is insufficient new data.\nIt's like a security door that only opens if three conditions are met: it's been 24 hours since the last entry, at least 5 people have visited since then, and the room is currently empty.",
+          "contentPath": "02_gating_logic.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "autodream/03_session_discovery",
+          "label": "Session Discovery",
+          "type": "chapter",
+          "summary": "Utilities to scan the project directory for conversation transcripts that have changed since the last consolidation. This calculates the \"Session Gate\" metric by filtering files based on their modification timestamps relative to the lock file.\nIt's like checking the mailroom to count how many new envelopes have arrived since yesterday to decide if it's worth making a trip to the post office.",
+          "contentPath": "03_session_discovery.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "autodream/04_consolidation_lock___timestamp",
+          "label": "Consolidation Lock & Timestamp",
+          "type": "chapter",
+          "summary": "A filesystem-based mechanism used for both concurrency control and state persistence. It places a lock file (`.consolidate-lock`) in the memory directory. The file's modification time (`mtime`) serves as the \"Last Consolidated At\" timestamp, while the file's content (Process ID) prevents multiple processes from dreaming simultaneously.\nIt acts like a punch card on a door: the timestamp shows when the room was last cleaned, and the name on the card shows who is currently inside cleaning it.",
+          "contentPath": "04_consolidation_lock___timestamp.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "autodream/05_dream_prompt_strategy",
+          "label": "Dream Prompt Strategy",
+          "type": "chapter",
+          "summary": "The specific set of instructions given to the AI agent to perform memory consolidation. It divides the task into four distinct phases: Orient (look around), Gather (find new info), Consolidate (write memories), and Prune (update the index).\nIt is similar to a standard operating procedure (SOP) given to a filing clerk, instructing them strictly on how to read, sort, and archive documents without making up new information.",
+          "contentPath": "05_dream_prompt_strategy.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "autodream/06_progress_monitoring",
+          "label": "Progress Monitoring",
+          "type": "chapter",
+          "summary": "A stream watcher that observes the output of the forked \"dreaming\" agent. It parses the agent's text blocks to capture reasoning and counts tool usage (like file edits) to report progress back to the main application state without interfering with the agent's execution.\nIt's like a supervisor standing behind a worker, taking notes on what tools they use and what files they touch, so they can write a summary report for the boss later.",
+          "contentPath": "06_progress_monitoring.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "autodream/01_auto_dream_orchestrator",
+          "target": "autodream/02_gating_logic",
+          "label": "Evaluates triggers via"
+        },
+        {
+          "source": "autodream/01_auto_dream_orchestrator",
+          "target": "autodream/04_consolidation_lock___timestamp",
+          "label": "Generates instructions using"
+        },
+        {
+          "source": "autodream/01_auto_dream_orchestrator",
+          "target": "autodream/05_dream_prompt_strategy",
+          "label": "Observes execution via"
+        },
+        {
+          "source": "autodream/02_gating_logic",
+          "target": "autodream/03_session_discovery",
+          "label": "Checks last run time from"
+        },
+        {
+          "source": "autodream/02_gating_logic",
+          "target": "autodream/06_progress_monitoring",
+          "label": "Validates work volume with"
+        },
+        {
+          "source": "autodream/01_auto_dream_orchestrator",
+          "target": "autodream/03_session_discovery",
+          "label": "Acquires/Updates state"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "autodream/01_auto_dream_orchestrator",
+      "target": "autodream/02_gating_logic",
+      "label": "Evaluates triggers via"
+    },
+    {
+      "source": "autodream/01_auto_dream_orchestrator",
+      "target": "autodream/04_consolidation_lock___timestamp",
+      "label": "Generates instructions using"
+    },
+    {
+      "source": "autodream/01_auto_dream_orchestrator",
+      "target": "autodream/05_dream_prompt_strategy",
+      "label": "Observes execution via"
+    },
+    {
+      "source": "autodream/02_gating_logic",
+      "target": "autodream/03_session_discovery",
+      "label": "Checks last run time from"
+    },
+    {
+      "source": "autodream/02_gating_logic",
+      "target": "autodream/06_progress_monitoring",
+      "label": "Validates work volume with"
+    },
+    {
+      "source": "autodream/01_auto_dream_orchestrator",
+      "target": "autodream/03_session_discovery",
+      "label": "Acquires/Updates state"
+    }
+  ],
+  "storyPath": [
+    "autodream/01_auto_dream_orchestrator",
+    "autodream/02_gating_logic",
+    "autodream/03_session_discovery",
+    "autodream/04_consolidation_lock___timestamp",
+    "autodream/05_dream_prompt_strategy",
+    "autodream/06_progress_monitoring"
+  ]
+}

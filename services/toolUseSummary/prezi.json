@@ -1,0 +1,124 @@
+{
+  "projectName": "toolUseSummary",
+  "nodes": [
+    {
+      "id": "toolusesummary",
+      "label": "toolUseSummary",
+      "type": "module",
+      "summary": "This project is designed to generate concise, human-readable labels for technical actions performed by the system. It uses **Artificial Intelligence** to transform raw execution logs into short, *Git-commit style* summaries, ensuring that users receive clear progress updates without being overwhelmed by massive amounts of technical data.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "toolusesummary/01_tool_execution_structure",
+          "label": "Tool Execution Structure",
+          "type": "chapter",
+          "summary": "The standardized data shape used to represent an action taken by the system.\nThe `ToolInfo` type acts as a container or a \"report card\" for a specific task. It bundles the tool's name (what was used), the input (parameters), and the output (result) together so the generator has a complete picture of the event.",
+          "contentPath": "01_tool_execution_structure.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "toolusesummary/02_tool_summary_generator",
+          "label": "Tool Summary Generator",
+          "type": "chapter",
+          "summary": "The main orchestrator function that converts raw technical logs into human-readable text. \nIt acts like a news editor, taking raw notes (tool inputs and outputs), preparing them for the writer (the AI model), and refining the final headline. It manages the entire lifecycle of the summary request, from data formatting to handling the AI's response.",
+          "contentPath": "02_tool_summary_generator.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "toolusesummary/03_prompt_configuration",
+          "label": "Prompt Configuration",
+          "type": "chapter",
+          "summary": "Defines the \"persona\" and style guide for the AI model via the System Prompt.\nThink of this as a creative brief given to a copywriter. It strictly instructs the AI to ignore pleasantries and formatting, enforcing a specific \"Git commit subject\" style (past tense, concise, ~30 characters) so the output fits perfectly in the UI.",
+          "contentPath": "03_prompt_configuration.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "toolusesummary/04_payload_optimization",
+          "label": "Payload Optimization",
+          "type": "chapter",
+          "summary": "A mechanism to ensure data fits within the AI's context window limits.\nSince tool outputs can be massive (like reading a whole file), `truncateJson` acts like a file compressor or a \"preview\" generator. It trims the data down to the first 300 characters, ensuring the AI gets the gist without overwhelming the API or driving up costs.",
+          "contentPath": "04_payload_optimization.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "toolusesummary/05_non_blocking_error_handling",
+          "label": "Non-Blocking Error Handling",
+          "type": "chapter",
+          "summary": "The safety strategy used to ensure the application remains stable even if this feature fails.\nSince summaries are a \"nice-to-have\" cosmetic feature, the code wraps operations in a try-catch block. If the AI service fails, it returns `null` instead of throwing an exception. It's like a car radio failing\u2014it shouldn't stop the car from driving.",
+          "contentPath": "05_non_blocking_error_handling.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "toolusesummary/01_tool_execution_structure",
+          "target": "toolusesummary/02_tool_summary_generator",
+          "label": "Injects system prompt"
+        },
+        {
+          "source": "toolusesummary/01_tool_execution_structure",
+          "target": "toolusesummary/03_prompt_configuration",
+          "label": "Calls truncation logic"
+        },
+        {
+          "source": "toolusesummary/01_tool_execution_structure",
+          "target": "toolusesummary/04_payload_optimization",
+          "label": "Consumes data shape"
+        },
+        {
+          "source": "toolusesummary/01_tool_execution_structure",
+          "target": "toolusesummary/05_non_blocking_error_handling",
+          "label": "Wraps execution flow"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "toolusesummary/01_tool_execution_structure",
+      "target": "toolusesummary/02_tool_summary_generator",
+      "label": "Injects system prompt"
+    },
+    {
+      "source": "toolusesummary/01_tool_execution_structure",
+      "target": "toolusesummary/03_prompt_configuration",
+      "label": "Calls truncation logic"
+    },
+    {
+      "source": "toolusesummary/01_tool_execution_structure",
+      "target": "toolusesummary/04_payload_optimization",
+      "label": "Consumes data shape"
+    },
+    {
+      "source": "toolusesummary/01_tool_execution_structure",
+      "target": "toolusesummary/05_non_blocking_error_handling",
+      "label": "Wraps execution flow"
+    }
+  ],
+  "storyPath": [
+    "toolusesummary/01_tool_execution_structure",
+    "toolusesummary/02_tool_summary_generator",
+    "toolusesummary/03_prompt_configuration",
+    "toolusesummary/04_payload_optimization",
+    "toolusesummary/05_non_blocking_error_handling"
+  ]
+}

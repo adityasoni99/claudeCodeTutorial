@@ -1,0 +1,134 @@
+{
+  "projectName": "tasks",
+  "nodes": [
+    {
+      "id": "tasks",
+      "label": "tasks",
+      "type": "module",
+      "summary": "This project provides a terminal-based UI for managing concurrent operations, featuring a persistent **Background Task Footer** that summarizes running activities and allows users to inspect them via specialized **Task Detail Dialogs**. It employs a shared **Visual Status System** to ensure consistent state representation (icons, colors) across views, while utilizing specific renderers like the **Tool Activity Renderer** and **Remote Session Visualization** to translate complex internal logs and session states into human-readable formats.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "tasks/01_background_task_footer",
+          "label": "Background Task Footer",
+          "type": "chapter",
+          "summary": "A persistent dashboard component that summarizes concurrent activities, managing their display order and visibility within the terminal's limited width.\nIt acts like a system tray or taskbar in an operating system, showing you what's running in the background at a glance.",
+          "contentPath": "01_background_task_footer.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tasks/02_task_detail_dialogs",
+          "label": "Task Detail Dialogs",
+          "type": "chapter",
+          "summary": "A set of specialized modal interfaces that allow users to inspect the internal state, logs, and outputs of specific background tasks.\nThink of it like \"zooming in\" from a high-level map to a street view for a specific activity to see exactly what's happening.",
+          "contentPath": "02_task_detail_dialogs.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tasks/03_visual_status_system",
+          "label": "Visual Status System",
+          "type": "chapter",
+          "summary": "Shared utilities and components that standardize how task states (running, failed, success) are visually represented using consistent icons and colors.\nIt functions as the \"traffic light\" system for the application, ensuring that \"green\" always means go/success and \"red\" always means stop/error across all views.",
+          "contentPath": "03_visual_status_system.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tasks/04_remote_session_visualization",
+          "label": "Remote Session Visualization",
+          "type": "chapter",
+          "summary": "Components dedicated to visualizing the complex, multi-stage progress of remote agent sessions, utilizing specific animations (like rainbows) and formatting.\nIt's like a specialized progress bar that doesn't just show a percentage, but tells a story of the specific stages (finding, verifying, deduping) the remote agent is going through.",
+          "contentPath": "04_remote_session_visualization.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tasks/05_tool_activity_renderer",
+          "label": "Tool Activity Renderer",
+          "type": "chapter",
+          "summary": "A utility that translates raw, machine-structured tool usage data into human-readable summaries for the UI logs.\nIt acts as a translator or interpreter, converting the agent's technical function calls into clear, concise descriptions that a user can easily understand.",
+          "contentPath": "05_tool_activity_renderer.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "tasks/01_background_task_footer",
+          "target": "tasks/05_tool_activity_renderer",
+          "label": "Uses to render logs"
+        },
+        {
+          "source": "tasks/01_background_task_footer",
+          "target": "tasks/04_remote_session_visualization",
+          "label": "Embeds progress component"
+        },
+        {
+          "source": "tasks/01_background_task_footer",
+          "target": "tasks/03_visual_status_system",
+          "label": "Uses for status styling"
+        },
+        {
+          "source": "tasks/02_task_detail_dialogs",
+          "target": "tasks/04_remote_session_visualization",
+          "label": "Embeds progress component"
+        },
+        {
+          "source": "tasks/02_task_detail_dialogs",
+          "target": "tasks/03_visual_status_system",
+          "label": "Uses for status indicators"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "tasks/01_background_task_footer",
+      "target": "tasks/05_tool_activity_renderer",
+      "label": "Uses to render logs"
+    },
+    {
+      "source": "tasks/01_background_task_footer",
+      "target": "tasks/04_remote_session_visualization",
+      "label": "Embeds progress component"
+    },
+    {
+      "source": "tasks/01_background_task_footer",
+      "target": "tasks/03_visual_status_system",
+      "label": "Uses for status styling"
+    },
+    {
+      "source": "tasks/02_task_detail_dialogs",
+      "target": "tasks/04_remote_session_visualization",
+      "label": "Embeds progress component"
+    },
+    {
+      "source": "tasks/02_task_detail_dialogs",
+      "target": "tasks/03_visual_status_system",
+      "label": "Uses for status indicators"
+    }
+  ],
+  "storyPath": [
+    "tasks/01_background_task_footer",
+    "tasks/02_task_detail_dialogs",
+    "tasks/03_visual_status_system",
+    "tasks/04_remote_session_visualization",
+    "tasks/05_tool_activity_renderer"
+  ]
+}

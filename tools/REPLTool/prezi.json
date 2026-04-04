@@ -1,0 +1,124 @@
+{
+  "projectName": "REPLTool",
+  "nodes": [
+    {
+      "id": "repltool",
+      "label": "REPLTool",
+      "type": "module",
+      "summary": "The **REPLTool** project provides the infrastructure for a \"Read-Eval-Print Loop\" mode, enabling an AI agent to execute code for complex tasks rather than performing single actions. It manages a registry of *primitive tools* (like file editing or bash commands) that are hidden from direct use and only accessible via the REPL. The system uses **environment context** detection to automatically toggle this mode and configure tool exclusivity.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "repltool/01_repl_mode_activation",
+          "label": "REPL Mode Activation",
+          "type": "chapter",
+          "summary": "This abstraction determines whether the \"Read-Eval-Print Loop\" (REPL) environment is active for the current session. It acts as the master switch for the tool's behavior.\n\nThink of it like an \"Advanced Mode\" toggle in a video game settings menu. When enabled (based on environment variables or user type), the game mechanics change\u2014specific tools become hidden, and the AI must interact with the system via code execution rather than direct actions.",
+          "contentPath": "01_repl_mode_activation.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "repltool/02_environment_context_detection",
+          "label": "Environment Context Detection",
+          "type": "chapter",
+          "summary": "This logic inspects the runtime environment (e.g., is this an internal \"Ant\" agent, a CLI user, or an SDK consumer?) to automatically configure defaults.\n\nIt operates like a website adjusting its layout between Mobile and Desktop views. Depending on \"where\" the code is running (the environment variables), the system automatically decides whether to turn on the complex REPL features or stay in a simpler, direct-tool mode.",
+          "contentPath": "02_environment_context_detection.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "repltool/03_tool_exclusivity_strategy",
+          "label": "Tool Exclusivity Strategy",
+          "type": "chapter",
+          "summary": "This logic defines which tools are strictly \"REPL Only.\" When REPL mode is on, these tools are hidden from the AI's standard toolkit to force it to use the REPL interface for batch operations.\n\nIt's like a \"Staff Only\" door in a restaurant. The customer (the AI) cannot walk into the kitchen (direct file access) to get food; they must place an order through the waiter (the REPL tool), who then interacts with the kitchen on their behalf.",
+          "contentPath": "03_tool_exclusivity_strategy.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "repltool/04_primitive_tools_registry",
+          "label": "Primitive Tools Registry",
+          "type": "chapter",
+          "summary": "This component manages the collection of fundamental capabilities (like reading files, editing notebooks, or running bash commands) that the REPL environment relies on.\n\nIt is analogous to the internal engine parts of a car (pistons, spark plugs). The driver (the AI model) doesn't interact with these parts directly while driving; instead, they operate the steering wheel (the REPL), which internally manipulates these primitive tools to get the work done.",
+          "contentPath": "04_primitive_tools_registry.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "repltool/05_lazy_initialization_pattern",
+          "label": "Lazy Initialization Pattern",
+          "type": "chapter",
+          "summary": "This architectural pattern ensures that tool definitions are loaded only when they are actually requested, rather than at the start of the application.\n\nThink of it like a \"Just-In-Time\" manufacturing process. Instead of building an entire inventory of products (tools) and storing them in a warehouse before anyone orders, the factory waits until an order comes in to assemble the product. This prevents circular dependency errors and ensures the system only loads what is needed.",
+          "contentPath": "05_lazy_initialization_pattern.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "repltool/01_repl_mode_activation",
+          "target": "repltool/05_lazy_initialization_pattern",
+          "label": "Checks runtime state"
+        },
+        {
+          "source": "repltool/02_environment_context_detection",
+          "target": "repltool/04_primitive_tools_registry",
+          "label": "Uses lazy loading"
+        },
+        {
+          "source": "repltool/02_environment_context_detection",
+          "target": "repltool/03_tool_exclusivity_strategy",
+          "label": "Implements tools for"
+        },
+        {
+          "source": "repltool/03_tool_exclusivity_strategy",
+          "target": "repltool/01_repl_mode_activation",
+          "label": "Conditional on"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "repltool/01_repl_mode_activation",
+      "target": "repltool/05_lazy_initialization_pattern",
+      "label": "Checks runtime state"
+    },
+    {
+      "source": "repltool/02_environment_context_detection",
+      "target": "repltool/04_primitive_tools_registry",
+      "label": "Uses lazy loading"
+    },
+    {
+      "source": "repltool/02_environment_context_detection",
+      "target": "repltool/03_tool_exclusivity_strategy",
+      "label": "Implements tools for"
+    },
+    {
+      "source": "repltool/03_tool_exclusivity_strategy",
+      "target": "repltool/01_repl_mode_activation",
+      "label": "Conditional on"
+    }
+  ],
+  "storyPath": [
+    "repltool/01_repl_mode_activation",
+    "repltool/02_environment_context_detection",
+    "repltool/03_tool_exclusivity_strategy",
+    "repltool/04_primitive_tools_registry",
+    "repltool/05_lazy_initialization_pattern"
+  ]
+}

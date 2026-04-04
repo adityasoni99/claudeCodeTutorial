@@ -1,0 +1,134 @@
+{
+  "projectName": "plugins",
+  "nodes": [
+    {
+      "id": "plugins",
+      "label": "plugins",
+      "type": "module",
+      "summary": "The **plugins** project serves as a modular extension system, separating logic into a functional **Core** library and a user-facing **CLI** interface. It features an autonomous **Background Manager** to synchronize the runtime environment with declared configurations and employs a hierarchical **Scope Strategy** (User, Project, Local) to manage setting precedence. The system relies on a robust **Identification** mechanism to discover and resolve plugin identities across these contexts.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "plugins/01_cli_command_interface",
+          "label": "CLI Command Interface",
+          "type": "chapter",
+          "summary": "The presentation layer for the command line tools. It wraps the core operations, handling user interaction (console output), error formatting, telemetry logging, and process lifecycle (exit codes). It translates user commands into calls to the core logic.\nIt's like the steering wheel and dashboard of a car, translating driver inputs into mechanical actions performed by the engine.",
+          "contentPath": "01_cli_command_interface.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plugins/02_plugin_identification___discovery",
+          "label": "Plugin Identification & Discovery",
+          "type": "chapter",
+          "summary": "The mechanism for parsing identifier strings (e.g., `plugin_name` vs `plugin@marketplace`), locating them across different scopes (settings files), matching them against installed manifests, and resolving edge cases like delisted plugins.\nIt acts like a smart search function that can find a specific contact whether you type their full name, email, or nickname.",
+          "contentPath": "02_plugin_identification___discovery.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plugins/03_scope_resolution_strategy",
+          "label": "Scope Resolution Strategy",
+          "type": "chapter",
+          "summary": "The logic defining the hierarchy of configuration contexts: `user` (global), `project` (shared team settings), and `local` (personal overrides). It determines the precedence for where a plugin is installed or enabled, ensuring local preferences can override shared project settings.\nIt works like CSS specificity, where specific local styles override global defaults.",
+          "contentPath": "03_scope_resolution_strategy.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plugins/04_core_plugin_operations",
+          "label": "Core Plugin Operations",
+          "type": "chapter",
+          "summary": "The functional core containing the business logic for managing plugins (install, uninstall, enable, disable). It is designed as a library of \"pure\" functions that handle file system changes, settings updates, and cache management without side effects like writing to the console or exiting the process. This allows the logic to be shared between the CLI and interactive UIs.",
+          "contentPath": "04_core_plugin_operations.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plugins/05_background_reconciliation_manager",
+          "label": "Background Reconciliation Manager",
+          "type": "chapter",
+          "summary": "An autonomous system responsible for ensuring the runtime environment matches the declared configuration. It runs in the background (typically on startup) to synchronize marketplaces, install missing plugins, and update the global application state (UI spinners/status).\nIt acts like an automatic software updater that runs silently to ensure all systems are go before you start working.",
+          "contentPath": "05_background_reconciliation_manager.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "plugins/02_plugin_identification___discovery",
+          "target": "plugins/01_cli_command_interface",
+          "label": "Delegates commands"
+        },
+        {
+          "source": "plugins/01_cli_command_interface",
+          "target": "plugins/04_core_plugin_operations",
+          "label": "Enforces precedence"
+        },
+        {
+          "source": "plugins/01_cli_command_interface",
+          "target": "plugins/05_background_reconciliation_manager",
+          "label": "Parses identifiers"
+        },
+        {
+          "source": "plugins/02_plugin_identification___discovery",
+          "target": "plugins/05_background_reconciliation_manager",
+          "label": "Formats telemetry"
+        },
+        {
+          "source": "plugins/03_scope_resolution_strategy",
+          "target": "plugins/04_core_plugin_operations",
+          "label": "Reads scoped config"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "plugins/02_plugin_identification___discovery",
+      "target": "plugins/01_cli_command_interface",
+      "label": "Delegates commands"
+    },
+    {
+      "source": "plugins/01_cli_command_interface",
+      "target": "plugins/04_core_plugin_operations",
+      "label": "Enforces precedence"
+    },
+    {
+      "source": "plugins/01_cli_command_interface",
+      "target": "plugins/05_background_reconciliation_manager",
+      "label": "Parses identifiers"
+    },
+    {
+      "source": "plugins/02_plugin_identification___discovery",
+      "target": "plugins/05_background_reconciliation_manager",
+      "label": "Formats telemetry"
+    },
+    {
+      "source": "plugins/03_scope_resolution_strategy",
+      "target": "plugins/04_core_plugin_operations",
+      "label": "Reads scoped config"
+    }
+  ],
+  "storyPath": [
+    "plugins/01_cli_command_interface",
+    "plugins/02_plugin_identification___discovery",
+    "plugins/03_scope_resolution_strategy",
+    "plugins/04_core_plugin_operations",
+    "plugins/05_background_reconciliation_manager"
+  ]
+}

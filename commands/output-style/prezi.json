@@ -1,0 +1,102 @@
+{
+  "projectName": "output-style",
+  "nodes": [
+    {
+      "id": "output-style",
+      "label": "output-style",
+      "type": "module",
+      "summary": "This project defines a specific **slash command** named `/output-style` which has been deprecated. Its primary function is to *intercept the user's request* and immediately provide feedback instructing them to use the `/config` command instead. To ensure the application remains fast, it uses a **lazy loading strategy** so that the code for this command is only loaded into memory if the user actually tries to run it.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "output-style/01_command_registration_interface",
+          "label": "Command Registration Interface",
+          "type": "chapter",
+          "summary": "Defines how a new command is introduced to the system. It acts like a registry entry or a menu item, specifying the command's name, description, type, and visibility. It links the command's identity to its execution logic.",
+          "contentPath": "01_command_registration_interface.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "output-style/02_feedback_output_system",
+          "label": "Feedback/Output System",
+          "type": "chapter",
+          "summary": "The mechanism used by commands to communicate results back to the user. Using the `onDone` callback, commands can send messages and format instructions (e.g., `display: 'system'`) back to the interface, decoupling the command's logic from how the output is rendered.",
+          "contentPath": "02_feedback_output_system.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "output-style/03_lazy_loading_strategy",
+          "label": "Lazy Loading Strategy",
+          "type": "chapter",
+          "summary": "A performance pattern where code is loaded only when needed. The `load` property in the command definition uses dynamic imports to fetch the implementation file on-demand, preventing the main application from being bogged down by unused command logic at startup.",
+          "contentPath": "03_lazy_loading_strategy.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "output-style/04_command_handler_implementation",
+          "label": "Command Handler Implementation",
+          "type": "chapter",
+          "summary": "The specific logic executed when a command is triggered. Encapsulated within an asynchronous `call` function, this is the \"worker\" that performs the task\u2014in this case, informing the user of deprecation\u2014when the command is invoked.",
+          "contentPath": "04_command_handler_implementation.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "output-style/01_command_registration_interface",
+          "target": "output-style/04_command_handler_implementation",
+          "label": "Configures"
+        },
+        {
+          "source": "output-style/04_command_handler_implementation",
+          "target": "output-style/02_feedback_output_system",
+          "label": "Dynamically imports"
+        },
+        {
+          "source": "output-style/02_feedback_output_system",
+          "target": "output-style/03_lazy_loading_strategy",
+          "label": "Sends output via"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "output-style/01_command_registration_interface",
+      "target": "output-style/04_command_handler_implementation",
+      "label": "Configures"
+    },
+    {
+      "source": "output-style/04_command_handler_implementation",
+      "target": "output-style/02_feedback_output_system",
+      "label": "Dynamically imports"
+    },
+    {
+      "source": "output-style/02_feedback_output_system",
+      "target": "output-style/03_lazy_loading_strategy",
+      "label": "Sends output via"
+    }
+  ],
+  "storyPath": [
+    "output-style/01_command_registration_interface",
+    "output-style/02_feedback_output_system",
+    "output-style/03_lazy_loading_strategy",
+    "output-style/04_command_handler_implementation"
+  ]
+}

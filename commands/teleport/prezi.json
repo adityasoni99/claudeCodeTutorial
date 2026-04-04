@@ -1,0 +1,102 @@
+{
+  "projectName": "teleport",
+  "nodes": [
+    {
+      "id": "teleport",
+      "label": "teleport",
+      "type": "module",
+      "summary": "This component represents a **stub module**, which serves as a *placeholder* in the system to satisfy architectural dependencies without performing actual work. It explicitly configures itself to be **disabled** and **hidden**, allowing the application to reference the module by name while ensuring it remains inactive and invisible to the user.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "teleport/01_module_definition",
+          "label": "Module Definition",
+          "type": "chapter",
+          "summary": "This is the fundamental contract for a component within the system. It acts like a blueprint or a formatted ID card that every module must present. It bundles configuration, behavior, and identity into a single object (`export default { ... }`). In this specific context, it represents a \"stub\"\u2014a placeholder object used to satisfy dependency requirements without providing actual logic, much like a prop on a movie set that looks like a real object but doesn't function.",
+          "contentPath": "01_module_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teleport/02_component_identification",
+          "label": "Component Identification",
+          "type": "chapter",
+          "summary": "The `name` property represents the identity abstraction. It acts like a unique nametag or a serial number for the module. This string allows the parent system to query, register, or log the specific module by a human-readable identifier (in this case, 'stub'). It decouples the specific instance of the code from how it is referenced by the larger application architecture.",
+          "contentPath": "02_component_identification.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teleport/03_feature_gating",
+          "label": "Feature Gating",
+          "type": "chapter",
+          "summary": "Represented by the `isEnabled` method, this abstraction controls the functional state of the module. It operates like a master circuit breaker or a safety switch. Even if the code is loaded into memory, this function determines whether the machinery inside turns on. Returning `false` (as seen in the context) ensures the feature remains dormant, preventing incomplete or optional logic from executing in the production environment.",
+          "contentPath": "03_feature_gating.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teleport/04_visibility_control",
+          "label": "Visibility Control",
+          "type": "chapter",
+          "summary": "Defined by the `isHidden` property, this abstraction manages the presentation layer of the component. It is similar to a \"Do Not Disturb\" sign or a hidden file attribute. While the component exists in the system registry, this flag tells the user interface or consuming services to ignore it visually. This allows developers to ship code (like this stub) that is technically present but completely invisible to the end-user.",
+          "contentPath": "04_visibility_control.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "teleport/01_module_definition",
+          "target": "teleport/02_component_identification",
+          "label": "Defines enablement strategy"
+        },
+        {
+          "source": "teleport/01_module_definition",
+          "target": "teleport/03_feature_gating",
+          "label": "Configures presentation state"
+        },
+        {
+          "source": "teleport/01_module_definition",
+          "target": "teleport/04_visibility_control",
+          "label": "Assigns unique identifier"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "teleport/01_module_definition",
+      "target": "teleport/02_component_identification",
+      "label": "Defines enablement strategy"
+    },
+    {
+      "source": "teleport/01_module_definition",
+      "target": "teleport/03_feature_gating",
+      "label": "Configures presentation state"
+    },
+    {
+      "source": "teleport/01_module_definition",
+      "target": "teleport/04_visibility_control",
+      "label": "Assigns unique identifier"
+    }
+  ],
+  "storyPath": [
+    "teleport/01_module_definition",
+    "teleport/02_component_identification",
+    "teleport/03_feature_gating",
+    "teleport/04_visibility_control"
+  ]
+}

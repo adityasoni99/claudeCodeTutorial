@@ -1,0 +1,102 @@
+{
+  "projectName": "remote-env",
+  "nodes": [
+    {
+      "id": "remote-env",
+      "label": "remote-env",
+      "type": "module",
+      "summary": "This project defines a **configuration command** that allows users to set up a *remote environment* for teleport sessions. It ensures security by checking if the user has the correct **subscription status** and **policy permissions** before the option is visible or usable. To keep the application fast, the specific code for the **user interface dialog** is only loaded when the user actually activates the command.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "remote-env/01_command_registration",
+          "label": "Command Registration",
+          "type": "chapter",
+          "summary": "This abstraction defines how a new feature is registered within the system. It encapsulates metadata like the command's name, description, and type. Think of it as an ID card for a specific tool in a toolbox; it tells the system what the tool is and provides a reference to use it without immediately pulling out the heavy machinery behind it.",
+          "contentPath": "01_command_registration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "remote-env/02_access_control_policies",
+          "label": "Access Control Policies",
+          "type": "chapter",
+          "summary": "Manages the visibility and availability of features based on user status and system configuration. It uses predicates like `isEnabled` and `isHidden` to check conditions such as subscription status (`isClaudeAISubscriber`) or administrative policies (`isPolicyAllowed`). It acts like a security checkpoint, ensuring only authorized users can see or execute specific commands.",
+          "contentPath": "02_access_control_policies.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "remote-env/03_lazy_module_loading",
+          "label": "Lazy Module Loading",
+          "type": "chapter",
+          "summary": "A performance pattern used to defer the loading of implementation code until it is strictly needed. The `load` function dynamically imports the actual logic file. This is similar to a \"just-in-time\" delivery system, where resources are fetched only when the user explicitly requests to use the feature, keeping the initial application footprint light.",
+          "contentPath": "03_lazy_module_loading.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "remote-env/04_ui_command_handler",
+          "label": "UI Command Handler",
+          "type": "chapter",
+          "summary": "The concrete implementation for commands that render a graphical user interface. It exports a `call` function which takes a completion callback (`onDone`) and returns a React node. This abstraction bridges the gap between the command execution engine and the visual layer, launching a dialog component like `RemoteEnvironmentDialog` for user interaction.",
+          "contentPath": "04_ui_command_handler.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "remote-env/01_command_registration",
+          "target": "remote-env/02_access_control_policies",
+          "label": "Enforces limits"
+        },
+        {
+          "source": "remote-env/01_command_registration",
+          "target": "remote-env/03_lazy_module_loading",
+          "label": "Defers execution"
+        },
+        {
+          "source": "remote-env/03_lazy_module_loading",
+          "target": "remote-env/04_ui_command_handler",
+          "label": "Imports implementation"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "remote-env/01_command_registration",
+      "target": "remote-env/02_access_control_policies",
+      "label": "Enforces limits"
+    },
+    {
+      "source": "remote-env/01_command_registration",
+      "target": "remote-env/03_lazy_module_loading",
+      "label": "Defers execution"
+    },
+    {
+      "source": "remote-env/03_lazy_module_loading",
+      "target": "remote-env/04_ui_command_handler",
+      "label": "Imports implementation"
+    }
+  ],
+  "storyPath": [
+    "remote-env/01_command_registration",
+    "remote-env/02_access_control_policies",
+    "remote-env/03_lazy_module_loading",
+    "remote-env/04_ui_command_handler"
+  ]
+}

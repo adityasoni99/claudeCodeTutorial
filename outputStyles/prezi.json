@@ -1,0 +1,124 @@
+{
+  "projectName": "outputStyles",
+  "nodes": [
+    {
+      "id": "outputstyles",
+      "label": "outputStyles",
+      "type": "module",
+      "summary": "This system manages **Output Styles**, which act like \"recipes\" telling the AI how to format its responses. It searches for these instructions within *Markdown files* located in your project or user folders, automatically cleaning up the metadata and **caching** the results to ensure the application runs quickly.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "outputstyles/01_output_style_configuration",
+          "label": "Output Style Configuration",
+          "type": "chapter",
+          "summary": "This is the fundamental data structure that defines how the AI should behave or format its text. It bundles together a name, a description, and the actual instructions (prompt). \n\nThink of it as a \"Recipe Card\" for the AI. The card has a title (Name), a summary of what the dish is (Description), and the step-by-step cooking instructions (Prompt). This abstraction ensures that every style, regardless of where it came from, looks the same to the rest of the application.",
+          "contentPath": "01_output_style_configuration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "outputstyles/02_markdown_based_configuration_strategy",
+          "label": "Markdown-Based Configuration strategy",
+          "type": "chapter",
+          "summary": "The system uses Markdown files as configuration objects rather than standard JSON or YAML files. It splits the file into two parts: the \"Frontmatter\" (metadata like name and settings) and the \"Body\" (the actual prompt content).\n\nIt is similar to writing a formal letter. The top section (the header) contains metadata like the date and recipient, while the main text block contains the actual message you want to convey. This allows users to write prompts naturally in a readable text format.",
+          "contentPath": "02_markdown_based_configuration_strategy.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "outputstyles/03_hierarchical_file_loading",
+          "label": "Hierarchical File Loading",
+          "type": "chapter",
+          "summary": "This logic determines which styles are available based on the user's location in the file system. It looks for styles in the specific project folder first, and then in the user's global home directory.\n\nImagine looking for a specific tool. First, you check your portable toolbox (Project scope) because those tools are specific to the job at hand. If you don't find it there, you check your garage (User/Global scope). If a tool exists in both places, the one in your portable toolbox takes precedence.",
+          "contentPath": "03_hierarchical_file_loading.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "outputstyles/04_metadata_parsing_and_coercion",
+          "label": "Metadata Parsing and Coercion",
+          "type": "chapter",
+          "summary": "This process handles the extraction and cleaning of configuration options from the raw file input. It ensures that values like `keep-coding-instructions` are correctly interpreted as booleans (true/false) even if they are written as strings (\"true\"/\"false\"), and generates fallback descriptions if none are provided.\n\nIt acts like a strict form validator at a government office. Even if you scribble \"Yes\" instead of checking the box, or leave a field blank, this logic interprets your intent, corrects minor errors, and ensures the final form is filed correctly.",
+          "contentPath": "04_metadata_parsing_and_coercion.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "outputstyles/05_cache_management",
+          "label": "Cache Management",
+          "type": "chapter",
+          "summary": "To ensure the application runs quickly, the system \"memoizes\" (remembers) the list of loaded styles so it doesn't have to re-read the hard drive every time a style is requested. It also includes a mechanism to wipe this memory when files change.\n\nIt is like a waiter memorizing the daily specials. Instead of walking back to the kitchen to ask the chef every time a customer asks \"what is the soup of the day?\", the waiter remembers the answer. However, if the chef changes the soup, the waiter must be told to \"clear\" their memory and learn the new list.",
+          "contentPath": "05_cache_management.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "outputstyles/05_cache_management",
+          "target": "outputstyles/03_hierarchical_file_loading",
+          "label": "Memoizes results of"
+        },
+        {
+          "source": "outputstyles/03_hierarchical_file_loading",
+          "target": "outputstyles/02_markdown_based_configuration_strategy",
+          "label": "Loads"
+        },
+        {
+          "source": "outputstyles/02_markdown_based_configuration_strategy",
+          "target": "outputstyles/04_metadata_parsing_and_coercion",
+          "label": "Provides raw data to"
+        },
+        {
+          "source": "outputstyles/04_metadata_parsing_and_coercion",
+          "target": "outputstyles/01_output_style_configuration",
+          "label": "Generates"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "outputstyles/05_cache_management",
+      "target": "outputstyles/03_hierarchical_file_loading",
+      "label": "Memoizes results of"
+    },
+    {
+      "source": "outputstyles/03_hierarchical_file_loading",
+      "target": "outputstyles/02_markdown_based_configuration_strategy",
+      "label": "Loads"
+    },
+    {
+      "source": "outputstyles/02_markdown_based_configuration_strategy",
+      "target": "outputstyles/04_metadata_parsing_and_coercion",
+      "label": "Provides raw data to"
+    },
+    {
+      "source": "outputstyles/04_metadata_parsing_and_coercion",
+      "target": "outputstyles/01_output_style_configuration",
+      "label": "Generates"
+    }
+  ],
+  "storyPath": [
+    "outputstyles/01_output_style_configuration",
+    "outputstyles/02_markdown_based_configuration_strategy",
+    "outputstyles/03_hierarchical_file_loading",
+    "outputstyles/04_metadata_parsing_and_coercion",
+    "outputstyles/05_cache_management"
+  ]
+}

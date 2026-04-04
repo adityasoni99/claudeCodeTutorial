@@ -1,0 +1,134 @@
+{
+  "projectName": "task",
+  "nodes": [
+    {
+      "id": "task",
+      "label": "task",
+      "type": "module",
+      "summary": "This project creates a robust **task execution environment** designed to manage long-running background processes and their generated data. It utilizes an intelligent **hybrid buffering system** that keeps small data chunks in fast memory while automatically offloading massive logs to *persistent disk storage* to prevent overflows. The system orchestrates the full **lifecycle** of these tasks\u2014from creation to eviction\u2014ensuring the application stays synchronized via **asynchronous polling** and prepares output for AI consumption through smart **truncation and formatting**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "task/01_task_lifecycle_orchestration",
+          "label": "Task Lifecycle Orchestration",
+          "type": "chapter",
+          "summary": "This abstraction governs the lifespan of a task within the application's global state. It handles registering new tasks, updating their status (running, completed, failed), and \"evicting\" (deleting) them when they are no longer needed to free up memory.\nIt acts like a Project Manager's whiteboard. When a new job starts, a card goes up. As work happens, the card is updated. When the job is done and the report is filed, the manager wipes that section of the board clean to make room for the next project.",
+          "contentPath": "01_task_lifecycle_orchestration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "task/02_asynchronous_state_synchronization__polling_",
+          "label": "Asynchronous State Synchronization (Polling)",
+          "type": "chapter",
+          "summary": "Because tasks often run in separate processes (like a shell), the main application needs a way to know what is happening without blocking. This abstraction uses a \"heartbeat\" mechanism that periodically checks (polls) the output files for new content (\"deltas\") or status changes.\nIt is analogous to a security guard walking their rounds. Instead of staring at one door continuously, the guard visits every active room every few seconds to see if anything has changed, noting down only the new events since their last visit.",
+          "contentPath": "02_asynchronous_state_synchronization__polling_.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "task/03_hybrid_output_management",
+          "label": "Hybrid Output Management",
+          "type": "chapter",
+          "summary": "This abstraction acts as the intelligent \"traffic controller\" for task data. It determines whether command output stays in fast system memory (for short messages) or spills over into physical files (for massive logs). It handles two modes: \"File Mode\" (where bash writes directly to disk) and \"Pipe Mode\" (where hooks buffer data).\nThink of it like a reservoir system: small amounts of rain (data) are held in a local tank (memory), but if a storm hits, the overflow is automatically diverted to a massive lake (disk) to prevent flooding the system.",
+          "contentPath": "03_hybrid_output_management.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "task/04_persistent_disk_storage",
+          "label": "Persistent Disk Storage",
+          "type": "chapter",
+          "summary": "This is the foundational infrastructure layer that manages the raw \"write\" operations to the file system. It handles creating temporary directories, managing file handles, security constraints (like preventing symlink attacks), and appending data chunks.\nImagine a secure, diligent archivist in a basement. They don't care what the document says; their only job is to ensure the paper is physically filed in the correct folder, the folder exists, and no one can trick them into filing it in a restricted area.",
+          "contentPath": "04_persistent_disk_storage.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "task/05_output_formatting_and_truncation",
+          "label": "Output Formatting and Truncation",
+          "type": "chapter",
+          "summary": "This utility layer prepares raw task data for consumption by the AI or API. Since LLMs have token limits, we cannot feed them infinite log files. This abstraction enforces size limits, truncating excessive output and adding headers to point to the full file location.\nThink of this as an Executive Summary writer. The CEO (the AI) doesn't have time to read a 500-page transcript. This writer takes the massive document, cuts it down to the most critical recent lines, and adds a note saying, \"Full report available in the archives.\"",
+          "contentPath": "05_output_formatting_and_truncation.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "task/01_task_lifecycle_orchestration",
+          "target": "task/02_asynchronous_state_synchronization__polling_",
+          "label": "Offloads overflow data to"
+        },
+        {
+          "source": "task/03_hybrid_output_management",
+          "target": "task/04_persistent_disk_storage",
+          "label": "Initiates synchronization c..."
+        },
+        {
+          "source": "task/04_persistent_disk_storage",
+          "target": "task/01_task_lifecycle_orchestration",
+          "label": "Monitors for activity"
+        },
+        {
+          "source": "task/05_output_formatting_and_truncation",
+          "target": "task/02_asynchronous_state_synchronization__polling_",
+          "label": "Retrieves file paths from"
+        },
+        {
+          "source": "task/03_hybrid_output_management",
+          "target": "task/02_asynchronous_state_synchronization__polling_",
+          "label": "Consumes data deltas from"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "task/01_task_lifecycle_orchestration",
+      "target": "task/02_asynchronous_state_synchronization__polling_",
+      "label": "Offloads overflow data to"
+    },
+    {
+      "source": "task/03_hybrid_output_management",
+      "target": "task/04_persistent_disk_storage",
+      "label": "Initiates synchronization cycle"
+    },
+    {
+      "source": "task/04_persistent_disk_storage",
+      "target": "task/01_task_lifecycle_orchestration",
+      "label": "Monitors for activity"
+    },
+    {
+      "source": "task/05_output_formatting_and_truncation",
+      "target": "task/02_asynchronous_state_synchronization__polling_",
+      "label": "Retrieves file paths from"
+    },
+    {
+      "source": "task/03_hybrid_output_management",
+      "target": "task/02_asynchronous_state_synchronization__polling_",
+      "label": "Consumes data deltas from"
+    }
+  ],
+  "storyPath": [
+    "task/01_task_lifecycle_orchestration",
+    "task/02_asynchronous_state_synchronization__polling_",
+    "task/03_hybrid_output_management",
+    "task/04_persistent_disk_storage",
+    "task/05_output_formatting_and_truncation"
+  ]
+}

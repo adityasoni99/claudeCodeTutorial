@@ -1,0 +1,124 @@
+{
+  "projectName": "todo",
+  "nodes": [
+    {
+      "id": "todo",
+      "label": "todo",
+      "type": "module",
+      "summary": "This project establishes the foundational structure for a **Todo List Application**. It focuses on defining the \"Todo Item\" with strict rules to ensure data integrity, validating inputs like text content and *Task Lifecycle States* (e.g., pending or completed) in real-time to prevent errors.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "todo/01_task_lifecycle_state",
+          "label": "Task Lifecycle State",
+          "type": "chapter",
+          "summary": "Represented by the `TodoStatusSchema`, this abstraction restricts the specific states a task can inhabit: `pending`, `in_progress`, or `completed`.\n\nIt acts like a traffic light system for your workflow. Just as a traffic light can only be Red, Yellow, or Green (and never \"Purple\"), a task is restricted to these specific phases. This ensures the application logic can handle transitions predictably, moving items from \"To Do\" to \"Doing\" to \"Done\" without ambiguity or invalid states.",
+          "contentPath": "01_task_lifecycle_state.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "todo/02_runtime_schema_validation",
+          "label": "Runtime Schema Validation",
+          "type": "chapter",
+          "summary": "This layer utilizes the Zod library to enforce strict data integrity rules while the application is running. \n\nImagine a strict bouncer at a club or a quality control inspector on an assembly line. Before any data is allowed to pass into the application's core logic, this abstraction measures it against precise templates. It checks if strings are empty or if the status is valid. If the data doesn't fit the mold, it is rejected immediately, preventing \"bad\" data from causing crashes or bugs later on.",
+          "contentPath": "02_runtime_schema_validation.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "todo/03_todo_entity_definition",
+          "label": "Todo Entity Definition",
+          "type": "chapter",
+          "summary": "This abstraction defines the fundamental unit of work within the application\u2014the \"Todo Item.\" It serves as the blueprint for every task created by the user.\n\nThink of it like a standardized form or index card used in a bureaucratic office. Every card must have specific fields filled out\u2014specifically \"Content\" (what needs to be done), a \"Status\" (progress tracking), and an \"Active Form.\" This standardization ensures that every part of the system knows exactly what data to expect when handling a task, preventing confusion or missing information.",
+          "contentPath": "03_todo_entity_definition.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "todo/04_type_inference_bridge",
+          "label": "Type Inference Bridge",
+          "type": "chapter",
+          "summary": "This concept connects runtime validation rules directly to static compile-time types using `z.infer`.\n\nIt is like having an automatic translator. Instead of writing the definition of a \"Todo Item\" twice\u2014once for the code that runs (Javascript) and once for the compiler that checks for errors (TypeScript)\u2014this abstraction derives the static type directly from the validation rules. If you update the validation logic (e.g., adding a new field), the TypeScript definitions automatically update, keeping everything in sync and reducing maintenance work.",
+          "contentPath": "04_type_inference_bridge.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "todo/05_lazy_evaluation_pattern",
+          "label": "Lazy Evaluation Pattern",
+          "type": "chapter",
+          "summary": "The code uses a `lazySchema` wrapper to define the data structures. \n\nThink of a pop-up book where the complex 3D structures remain flat until you actually turn the page. Similarly, this pattern delays the construction of the schema objects until they are strictly needed or called upon. This is often used to solve \"chicken and egg\" problems where two data types might refer to each other (circular dependencies), or simply to optimize startup performance by not building the entire validation graph immediately.",
+          "contentPath": "05_lazy_evaluation_pattern.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "todo/05_lazy_evaluation_pattern",
+          "target": "todo/01_task_lifecycle_state",
+          "label": "Wraps schema"
+        },
+        {
+          "source": "todo/01_task_lifecycle_state",
+          "target": "todo/03_todo_entity_definition",
+          "label": "Embeds status"
+        },
+        {
+          "source": "todo/01_task_lifecycle_state",
+          "target": "todo/02_runtime_schema_validation",
+          "label": "Uses validation rules"
+        },
+        {
+          "source": "todo/04_type_inference_bridge",
+          "target": "todo/01_task_lifecycle_state",
+          "label": "Extracts static type"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "todo/05_lazy_evaluation_pattern",
+      "target": "todo/01_task_lifecycle_state",
+      "label": "Wraps schema"
+    },
+    {
+      "source": "todo/01_task_lifecycle_state",
+      "target": "todo/03_todo_entity_definition",
+      "label": "Embeds status"
+    },
+    {
+      "source": "todo/01_task_lifecycle_state",
+      "target": "todo/02_runtime_schema_validation",
+      "label": "Uses validation rules"
+    },
+    {
+      "source": "todo/04_type_inference_bridge",
+      "target": "todo/01_task_lifecycle_state",
+      "label": "Extracts static type"
+    }
+  ],
+  "storyPath": [
+    "todo/01_task_lifecycle_state",
+    "todo/02_runtime_schema_validation",
+    "todo/03_todo_entity_definition",
+    "todo/04_type_inference_bridge",
+    "todo/05_lazy_evaluation_pattern"
+  ]
+}

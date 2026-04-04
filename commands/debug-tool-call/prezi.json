@@ -1,0 +1,124 @@
+{
+  "projectName": "debug-tool-call",
+  "nodes": [
+    {
+      "id": "debug-tool-call",
+      "label": "debug-tool-call",
+      "type": "module",
+      "summary": "This project defines a standardized **placeholder** for a debugging tool within a larger system. It uses a specific *configuration contract* to register the tool, but deliberately sets it to be **disabled** and **hidden** (a \"stub\"), ensuring it stays inactive until real functionality is added.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "debug-tool-call/01_tool_configuration_interface",
+          "label": "Tool Configuration Interface",
+          "type": "chapter",
+          "summary": "This is the primary structure exported by the module. It acts as a standardized contract or schema that defines how a debug tool interacts with the hosting system. By exporting a single object containing specific properties like status checks and identifiers, the system knows exactly how to treat this module.\n\nIt is like a standardized ID badge for an employee. Regardless of who the employee is (or what the tool does), the badge always lists their name, access level, and current status in the same spot so security (the system) can read it easily.",
+          "contentPath": "01_tool_configuration_interface.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "debug-tool-call/02_component_identity",
+          "label": "Component Identity",
+          "type": "chapter",
+          "summary": "This abstraction serves as the unique identifier for the module, found in the `name` property (currently set to `'stub'`). This string allows the rest of the application to reference, load, or log specific events related to this tool without needing to know its internal logic.\n\nIt is similar to a license plate on a car. While the car has complex internal mechanics, the license plate provides a simple, unique string that traffic cameras and parking systems use to identify and track that specific vehicle.",
+          "contentPath": "02_component_identity.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "debug-tool-call/03_runtime_availability_logic",
+          "label": "Runtime Availability Logic",
+          "type": "chapter",
+          "summary": "Represented by the `isEnabled` function, this abstraction determines whether the tool should be active or executable at runtime. In this specific context, it is hardcoded to return `false`, effectively disabling the tool entirely.\n\nIt operates like a master circuit breaker for a specific room. Even if the appliances (code) are plugged in and ready to go, if this breaker is flipped off (returns false), no electricity flows, and nothing turns on.",
+          "contentPath": "03_runtime_availability_logic.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "debug-tool-call/04_visibility_management",
+          "label": "Visibility Management",
+          "type": "chapter",
+          "summary": "Controlled by the `isHidden` property, this abstraction manages the user interface presence of the tool. It separates the concept of a tool \"existing\" from a tool being \"seen.\" Here, it is set to `true`, meaning the tool is concealed from the user.\n\nThink of it as a stagehand in a theater production. They are present and part of the crew (the system), but they wear black clothing (isHidden: true) so the audience doesn't notice them during the show.",
+          "contentPath": "04_visibility_management.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "debug-tool-call/05_stub_implementation_pattern",
+          "label": "Stub Implementation Pattern",
+          "type": "chapter",
+          "summary": "The code represents a \"Stub\"\u2014a minimal, non-functional implementation used as a placeholder. It fulfills the required interface (having a name, enabled state, etc.) without performing any actual logic. This is often used during development before a feature is built, or to disable a feature cleanly.\n\nIt is like a \"prop\" book on a furniture store shelf. It looks like a book and sits where a book belongs to complete the look of the room, but if you open it, the pages are blank.",
+          "contentPath": "05_stub_implementation_pattern.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "debug-tool-call/05_stub_implementation_pattern",
+          "target": "debug-tool-call/01_tool_configuration_interface",
+          "label": "Implements"
+        },
+        {
+          "source": "debug-tool-call/01_tool_configuration_interface",
+          "target": "debug-tool-call/02_component_identity",
+          "label": "Exposes property"
+        },
+        {
+          "source": "debug-tool-call/01_tool_configuration_interface",
+          "target": "debug-tool-call/03_runtime_availability_logic",
+          "label": "Exposes property"
+        },
+        {
+          "source": "debug-tool-call/01_tool_configuration_interface",
+          "target": "debug-tool-call/04_visibility_management",
+          "label": "Exposes property"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "debug-tool-call/05_stub_implementation_pattern",
+      "target": "debug-tool-call/01_tool_configuration_interface",
+      "label": "Implements"
+    },
+    {
+      "source": "debug-tool-call/01_tool_configuration_interface",
+      "target": "debug-tool-call/02_component_identity",
+      "label": "Exposes property"
+    },
+    {
+      "source": "debug-tool-call/01_tool_configuration_interface",
+      "target": "debug-tool-call/03_runtime_availability_logic",
+      "label": "Exposes property"
+    },
+    {
+      "source": "debug-tool-call/01_tool_configuration_interface",
+      "target": "debug-tool-call/04_visibility_management",
+      "label": "Exposes property"
+    }
+  ],
+  "storyPath": [
+    "debug-tool-call/01_tool_configuration_interface",
+    "debug-tool-call/02_component_identity",
+    "debug-tool-call/03_runtime_availability_logic",
+    "debug-tool-call/04_visibility_management",
+    "debug-tool-call/05_stub_implementation_pattern"
+  ]
+}

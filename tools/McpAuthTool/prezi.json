@@ -1,0 +1,124 @@
+{
+  "projectName": "McpAuthTool",
+  "nodes": [
+    {
+      "id": "mcpauthtool",
+      "label": "McpAuthTool",
+      "type": "module",
+      "summary": "This project implements a **Pseudo-Tool Pattern** to handle authentication for **MCP servers** within an AI assistant. Instead of exposing unusable tools, the system presents a temporary \"authenticate\" tool that the AI can invoke to start an **OAuth flow**. Once the user successfully logs in, **Dynamic State Management** seamlessly swaps this placeholder for the server's actual capabilities, allowing the \"conversation\" to proceed without interruption.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "mcpauthtool/01_mcp_server_configuration",
+          "label": "MCP Server Configuration",
+          "type": "chapter",
+          "summary": "Represented by types like `ScopedMcpServerConfig`, this abstraction holds the connection details for a Model Context Protocol server, such as its transport type (`sse`, `http`, `stdio`) and URL.\n\nThink of this as a generic \"Contact Card\" for a service. It tells the application not only *who* the server is (its name) but *how* to reach it (the transport mechanism) and *where* it lives (the URL). The system checks this card to ensure it supports the requested operation (like OAuth) before proceeding.",
+          "contentPath": "01_mcp_server_configuration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcpauthtool/02_tool_interface",
+          "label": "Tool Interface",
+          "type": "chapter",
+          "summary": "This abstraction defines the standard contract between the application and the AI model. It encapsulates everything the model needs to know to use a capability: its name, description, input schema (arguments), and the execution logic (`call`).\n\nThink of it like a \"Skill\" installed on a smart assistant. The assistant (AI) reads the manual (schema/description) to understand when and how to use the skill, and when it decides to use it, the application executes the underlying code to perform the action.",
+          "contentPath": "02_tool_interface.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcpauthtool/03_pseudo_tool_pattern",
+          "label": "Pseudo-Tool Pattern",
+          "type": "chapter",
+          "summary": "This pattern involves creating a temporary, placeholder tool to handle specific system states\u2014in this case, a server that is installed but not authenticated. Instead of showing the server's real tools (which would fail), the system exposes this \"Auth Tool.\"\n\nIt's like a \"Login\" button that appears on a dashboard where your data charts usually sit. Until you click that button and verify your identity, the actual content (the real tools) remains hidden. Once authenticated, this placeholder is automatically removed.",
+          "contentPath": "03_pseudo_tool_pattern.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcpauthtool/04_oauth_flow_orchestration",
+          "label": "OAuth Flow Orchestration",
+          "type": "chapter",
+          "summary": "This logic coordinates the complex, asynchronous dance of authenticating a user. It involves generating an authorization URL, pausing to let the user interact with a browser, and handling the background reconnection of the server.\n\nIt works like a coat check at a secure facility. You (the tool) request entry. The attendant hands you a ticket (the Auth URL) and tells you to go verify it with security (the browser). Meanwhile, the attendant waits. Once security approves you, the attendant unlocks the door (reconnects the server) and lets you in.",
+          "contentPath": "04_oauth_flow_orchestration.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcpauthtool/05_dynamic_state_management",
+          "label": "Dynamic State Management",
+          "type": "chapter",
+          "summary": "This abstraction manages the global application state (`appState`), specifically the list of available MCP tools, clients, and resources. The code demonstrates how to atomically update this state\u2014swapping out the temporary auth tool for the real server tools once authentication succeeds.\n\nImagine a stage manager in a theater. When a scene change happens (authentication completes), the manager rushes onto the stage (the state), removes the old props (the auth tool), and sets up the new scenery (the real server tools) so the actors (the AI) can continue the play without interruption.",
+          "contentPath": "05_dynamic_state_management.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "mcpauthtool/02_tool_interface",
+          "target": "mcpauthtool/01_mcp_server_configuration",
+          "label": "Implements contract"
+        },
+        {
+          "source": "mcpauthtool/02_tool_interface",
+          "target": "mcpauthtool/05_dynamic_state_management",
+          "label": "Reads connection settings"
+        },
+        {
+          "source": "mcpauthtool/02_tool_interface",
+          "target": "mcpauthtool/04_oauth_flow_orchestration",
+          "label": "Triggers auth process"
+        },
+        {
+          "source": "mcpauthtool/04_oauth_flow_orchestration",
+          "target": "mcpauthtool/03_pseudo_tool_pattern",
+          "label": "Updates state on completion"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "mcpauthtool/02_tool_interface",
+      "target": "mcpauthtool/01_mcp_server_configuration",
+      "label": "Implements contract"
+    },
+    {
+      "source": "mcpauthtool/02_tool_interface",
+      "target": "mcpauthtool/05_dynamic_state_management",
+      "label": "Reads connection settings"
+    },
+    {
+      "source": "mcpauthtool/02_tool_interface",
+      "target": "mcpauthtool/04_oauth_flow_orchestration",
+      "label": "Triggers auth process"
+    },
+    {
+      "source": "mcpauthtool/04_oauth_flow_orchestration",
+      "target": "mcpauthtool/03_pseudo_tool_pattern",
+      "label": "Updates state on completion"
+    }
+  ],
+  "storyPath": [
+    "mcpauthtool/01_mcp_server_configuration",
+    "mcpauthtool/02_tool_interface",
+    "mcpauthtool/03_pseudo_tool_pattern",
+    "mcpauthtool/04_oauth_flow_orchestration",
+    "mcpauthtool/05_dynamic_state_management"
+  ]
+}

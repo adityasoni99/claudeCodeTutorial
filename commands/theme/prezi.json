@@ -1,0 +1,124 @@
+{
+  "projectName": "theme",
+  "nodes": [
+    {
+      "id": "theme",
+      "label": "theme",
+      "type": "module",
+      "summary": "This project implements a **theme management** command for a CLI application. It allows users to interactively change the visual appearance of the tool by launching a temporary, **React-based** UI directly in the terminal. The command is designed to be lightweight, using a *dynamic loading* strategy to fetch the necessary code only when the user explicitly requests to change the theme.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "theme/01_command_registration_pattern",
+          "label": "Command Registration Pattern",
+          "type": "chapter",
+          "summary": "This is the \"ID card\" for a feature within the application. It defines the metadata for a command\u2014such as its name, description, and execution type\u2014so the main CLI application can recognize it and list it in help menus without loading the entire logic immediately.",
+          "contentPath": "01_command_registration_pattern.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "theme/02_global_theme_state",
+          "label": "Global Theme State",
+          "type": "chapter",
+          "summary": "Acting like a central control panel for aesthetics, the `useTheme` hook allows the command to access and modify the application's global visual settings. It enables the command to read the current style or push new settings (like color schemes) to the entire application.",
+          "contentPath": "02_global_theme_state.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "theme/03_interactive_ui_composition",
+          "label": "Interactive UI Composition",
+          "type": "chapter",
+          "summary": "Similar to building a web page with components, this abstraction constructs the terminal interface using React. It combines structural elements (like `Pane`) and functional widgets (like `ThemePicker`) to create a cohesive user experience that handles layout and user input automatically.",
+          "contentPath": "03_interactive_ui_composition.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "theme/04_local_jsx_execution_interface",
+          "label": "Local JSX Execution Interface",
+          "type": "chapter",
+          "summary": "Think of this as a \"mini-app\" launcher for the terminal. Instead of a simple text script, this pattern (`LocalJSXCommandCall`) tells the system to render a rich, interactive React interface locally on the user's machine when the command is triggered.",
+          "contentPath": "04_local_jsx_execution_interface.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "theme/05_dynamic_loading_strategy",
+          "label": "Dynamic Loading Strategy",
+          "type": "chapter",
+          "summary": "This is a performance optimization acting like \"on-demand service.\" The `load` function ensures that the heavy code for the React components and logic is imported only when the user explicitly runs the command, keeping the application's initial startup time fast.",
+          "contentPath": "05_dynamic_loading_strategy.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "theme/01_command_registration_pattern",
+          "target": "theme/05_dynamic_loading_strategy",
+          "label": "Uses lazy loading"
+        },
+        {
+          "source": "theme/05_dynamic_loading_strategy",
+          "target": "theme/02_global_theme_state",
+          "label": "Loads implementation"
+        },
+        {
+          "source": "theme/02_global_theme_state",
+          "target": "theme/03_interactive_ui_composition",
+          "label": "Renders"
+        },
+        {
+          "source": "theme/03_interactive_ui_composition",
+          "target": "theme/04_local_jsx_execution_interface",
+          "label": "Updates"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "theme/01_command_registration_pattern",
+      "target": "theme/05_dynamic_loading_strategy",
+      "label": "Uses lazy loading"
+    },
+    {
+      "source": "theme/05_dynamic_loading_strategy",
+      "target": "theme/02_global_theme_state",
+      "label": "Loads implementation"
+    },
+    {
+      "source": "theme/02_global_theme_state",
+      "target": "theme/03_interactive_ui_composition",
+      "label": "Renders"
+    },
+    {
+      "source": "theme/03_interactive_ui_composition",
+      "target": "theme/04_local_jsx_execution_interface",
+      "label": "Updates"
+    }
+  ],
+  "storyPath": [
+    "theme/01_command_registration_pattern",
+    "theme/02_global_theme_state",
+    "theme/03_interactive_ui_composition",
+    "theme/04_local_jsx_execution_interface",
+    "theme/05_dynamic_loading_strategy"
+  ]
+}

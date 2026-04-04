@@ -1,0 +1,144 @@
+{
+  "projectName": "ToolSearchTool",
+  "nodes": [
+    {
+      "id": "toolsearchtool",
+      "label": "ToolSearchTool",
+      "type": "module",
+      "summary": "The **ToolSearchTool** functions as a dynamic catalog for AI agents, managing a large library of tools by keeping most \"hidden\" (**deferred**) to save context window space. It provides agents with a **Keyword Search** algorithm and a fast **Direct Selection Mode** to discover and retrieve specific tool definitions on demand. The system uses **Dynamic Prompt Generation** to teach the AI how to query the library and **Result Mapping** to format the found tools so they can be immediately executed.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "toolsearchtool/01_deferred_tool_filtering",
+          "label": "Deferred Tool Filtering",
+          "type": "chapter",
+          "summary": "This logic determines which tools are hidden (deferred) behind the search interface and which are immediately available. It acts like a gatekeeper or a librarian deciding which books stay in the \"reference section\" (immediate access) versus the \"archive\" (must be requested).\n\nThe system checks if a tool is an MCP tool, has a specific deferral flag, or belongs to critical infrastructure (like the `ToolSearch` tool itself, which must never be deferred). This prevents the AI from getting stuck in a loop where it needs a tool to find the tool it needs to search.",
+          "contentPath": "01_deferred_tool_filtering.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "toolsearchtool/02_dynamic_prompt_generation",
+          "label": "Dynamic Prompt Generation",
+          "type": "chapter",
+          "summary": "This abstraction constructs the \"manual\" that tells the AI how to use the search tool. It isn't a static string; it changes based on feature flags and the environment (e.g., whether to use system reminders or user messages).\n\nIt serves as the interface contract. It explains to the AI: \"Here is how you search,\" \"Here is the syntax for selecting,\" and \"Here is what the output will look like.\" Without this context, the AI wouldn't know that hidden tools exist or how to retrieve their schemas.",
+          "contentPath": "02_dynamic_prompt_generation.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "toolsearchtool/03_keyword_search___scoring",
+          "label": "Keyword Search & Scoring",
+          "type": "chapter",
+          "summary": "This is the search engine algorithm. It parses user queries to find relevant tools among the deferred set. It splits CamelCase names (e.g., \"ReadNote\" becomes \"read note\"), handles special prefixes for MCP servers (like `mcp__`), and calculates a relevance score.\n\nThink of it as a fuzzy matching system. If you ask for \"notebook,\" it looks at tool names, descriptions, and manual search hints. It assigns points based on exact matches, partial matches, or specific server names, ensuring the most relevant tool bubbles to the top of the list.",
+          "contentPath": "03_keyword_search___scoring.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "toolsearchtool/04_direct_selection_mode",
+          "label": "Direct Selection Mode",
+          "type": "chapter",
+          "summary": "A \"fast path\" mechanism that bypasses the fuzzy search algorithm. If the query starts with `select:`, the system assumes the AI already knows the exact name of the tool it wants.\n\nIt acts like a \"Call Number\" lookup in a library. Instead of describing a book about \"stars,\" the AI asks for \"book ID 505.\" This allows the AI to efficiently load multiple specific tools at once (e.g., `select:Read,Edit`) without the overhead of calculating search scores, reducing latency and potential errors.",
+          "contentPath": "04_direct_selection_mode.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "toolsearchtool/05_result_mapping__tool_reference_",
+          "label": "Result Mapping (Tool Reference)",
+          "type": "chapter",
+          "summary": "This logic handles how the search results are formatted and returned to the AI model. Instead of just returning a text string saying \"Here is the tool,\" it constructs a structured `tool_result` containing `tool_reference` blocks.\n\nIt's similar to a pointer or a hyperlink. When the search is successful, this abstraction effectively \"expands\" the hidden tool's full definition (schema) into the conversation context, allowing the AI to immediately call that tool in its next turn as if it had been there all along.",
+          "contentPath": "05_result_mapping__tool_reference_.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "toolsearchtool/01_deferred_tool_filtering",
+          "target": "toolsearchtool/02_dynamic_prompt_generation",
+          "label": "Supplies candidate tools"
+        },
+        {
+          "source": "toolsearchtool/01_deferred_tool_filtering",
+          "target": "toolsearchtool/03_keyword_search___scoring",
+          "label": "Supplies candidate tools"
+        },
+        {
+          "source": "toolsearchtool/04_direct_selection_mode",
+          "target": "toolsearchtool/02_dynamic_prompt_generation",
+          "label": "Defines query syntax"
+        },
+        {
+          "source": "toolsearchtool/04_direct_selection_mode",
+          "target": "toolsearchtool/03_keyword_search___scoring",
+          "label": "Defines selection syntax"
+        },
+        {
+          "source": "toolsearchtool/02_dynamic_prompt_generation",
+          "target": "toolsearchtool/05_result_mapping__tool_reference_",
+          "label": "Outputs matches to"
+        },
+        {
+          "source": "toolsearchtool/03_keyword_search___scoring",
+          "target": "toolsearchtool/05_result_mapping__tool_reference_",
+          "label": "Outputs matches to"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "toolsearchtool/01_deferred_tool_filtering",
+      "target": "toolsearchtool/02_dynamic_prompt_generation",
+      "label": "Supplies candidate tools"
+    },
+    {
+      "source": "toolsearchtool/01_deferred_tool_filtering",
+      "target": "toolsearchtool/03_keyword_search___scoring",
+      "label": "Supplies candidate tools"
+    },
+    {
+      "source": "toolsearchtool/04_direct_selection_mode",
+      "target": "toolsearchtool/02_dynamic_prompt_generation",
+      "label": "Defines query syntax"
+    },
+    {
+      "source": "toolsearchtool/04_direct_selection_mode",
+      "target": "toolsearchtool/03_keyword_search___scoring",
+      "label": "Defines selection syntax"
+    },
+    {
+      "source": "toolsearchtool/02_dynamic_prompt_generation",
+      "target": "toolsearchtool/05_result_mapping__tool_reference_",
+      "label": "Outputs matches to"
+    },
+    {
+      "source": "toolsearchtool/03_keyword_search___scoring",
+      "target": "toolsearchtool/05_result_mapping__tool_reference_",
+      "label": "Outputs matches to"
+    }
+  ],
+  "storyPath": [
+    "toolsearchtool/01_deferred_tool_filtering",
+    "toolsearchtool/02_dynamic_prompt_generation",
+    "toolsearchtool/03_keyword_search___scoring",
+    "toolsearchtool/04_direct_selection_mode",
+    "toolsearchtool/05_result_mapping__tool_reference_"
+  ]
+}

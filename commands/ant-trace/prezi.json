@@ -1,0 +1,58 @@
+{
+  "projectName": "ant-trace",
+  "nodes": [
+    {
+      "id": "ant-trace",
+      "label": "ant-trace",
+      "type": "module",
+      "summary": "This component acts as a **placeholder** or *stub* within the `ant-trace` system. It defines a module structure that is intentionally **disabled** and *hidden*, ensuring the application builds correctly without activating this specific feature.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "ant-trace/01_stub_module_definition",
+          "label": "Stub Module Definition",
+          "type": "chapter",
+          "summary": "Represents a placeholder implementation for a system component or plugin. It defines a standard interface (exporting specific properties like `name`) while explicitly identifying itself as a 'stub' to satisfy build or runtime requirements without executing logic.\nIt's like a prop book on a movie set; it looks like a book and fits on the shelf so the scene looks complete, but it contains no actual text or story inside.",
+          "contentPath": "01_stub_module_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ant-trace/02_feature_visibility_control",
+          "label": "Feature Visibility Control",
+          "type": "chapter",
+          "summary": "Mechanisms to control the operational state and UI presence of a module. Through properties like `isHidden` and functions like `isEnabled`, the code dictates that this specific feature is currently inactive.\nIt's similar to a circuit breaker switch set to the \"Off\" position; the wiring exists, but the switch prevents electricity from flowing, effectively disabling the appliance connected to it.",
+          "contentPath": "02_feature_visibility_control.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "ant-trace/01_stub_module_definition",
+          "target": "ant-trace/02_feature_visibility_control",
+          "label": "Configures status"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "ant-trace/01_stub_module_definition",
+      "target": "ant-trace/02_feature_visibility_control",
+      "label": "Configures status"
+    }
+  ],
+  "storyPath": [
+    "ant-trace/01_stub_module_definition",
+    "ant-trace/02_feature_visibility_control"
+  ]
+}

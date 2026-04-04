@@ -1,0 +1,146 @@
+{
+  "projectName": "PromptInput",
+  "nodes": [
+    {
+      "id": "promptinput",
+      "label": "PromptInput",
+      "type": "module",
+      "summary": "A sophisticated, context-aware **terminal input interface** for an AI coding assistant. It features a responsive **Footer Status Dashboard** that adapts to the terminal width, displaying critical information like current mode and background tasks. The system includes an intelligent **Smart Input** area with visual effects, *autocomplete suggestions*, and a **Notification System** for non-blocking feedback, all while dynamically reflecting the **Swarm Identity** of active AI agents.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "promptinput/01_footer_status_dashboard",
+          "label": "Footer Status Dashboard",
+          "type": "chapter",
+          "summary": "Acts like a cockpit dashboard positioned immediately below the user input. It dynamically orchestrates and displays critical contextual information\u2014such as the current editing mode (Vim/Insert), active background tasks, Git status, and keyboard shortcuts. It creates a responsive layout that adapts to the terminal's width, ensuring vital controls are visible without cluttering the interface.",
+          "contentPath": "01_footer_status_dashboard.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "promptinput/02_smart_input_processing",
+          "label": "Smart Input Processing",
+          "type": "chapter",
+          "summary": "The logic engine behind the text entry field, functioning like a smart code editor line. It handles complex interactions beyond simple text capture, such as truncating massive text pastes to prevent UI lag, applying visual \"shimmer\" effects during processing, managing distinct input modes (e.g., Bash vs. Chat), and rendering search interfaces for command history.",
+          "contentPath": "02_smart_input_processing.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "promptinput/03_swarm_identity_context",
+          "label": "Swarm Identity Context",
+          "type": "chapter",
+          "summary": "Visual cues that orient the user within a multi-agent environment, similar to seeing different uniforms for different team members. It modifies UI elements\u2014such as the prompt character, banners, and theme colors\u2014to clearly indicate whether the user is interacting with the main coordinator, a specific teammate, or a standalone agent, ensuring the context of the conversation is always clear.",
+          "contentPath": "03_swarm_identity_context.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "promptinput/04_autocomplete_suggestion_overlay",
+          "label": "Autocomplete Suggestion Overlay",
+          "type": "chapter",
+          "summary": "The UI component responsible for IntelliSense-like behavior in the terminal. It renders context-aware suggestions (such as file paths, commands, or agent names) as the user types. It calculates the optimal layout to fit suggestions within the terminal window, styling different types of items (e.g., files vs. MCP resources) for quick visual recognition.",
+          "contentPath": "04_autocomplete_suggestion_overlay.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "promptinput/05_notification___feedback_system",
+          "label": "Notification & Feedback System",
+          "type": "chapter",
+          "summary": "A centralized communication layer that functions like a phone's notification center. It manages transient alerts and persistent status updates, routing everything from critical API authentication errors and software update prompts to ephemeral hints and voice mode indicators. This abstraction ensures the user is informed of system state changes without blocking their workflow.",
+          "contentPath": "05_notification___feedback_system.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "promptinput/06_command_queue_preview",
+          "label": "Command Queue Preview",
+          "type": "chapter",
+          "summary": "Acts like an email \"outbox\" for the chat interface. It visualizes messages or commands that have been queued for execution but haven't been sent yet. This abstraction handles the normalization of different message types (like task notifications vs. user chats) to provide a clean, readable preview of what is about to be processed.",
+          "contentPath": "06_command_queue_preview.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "promptinput/01_footer_status_dashboard",
+          "target": "promptinput/02_smart_input_processing",
+          "label": "Embeds and manages"
+        },
+        {
+          "source": "promptinput/01_footer_status_dashboard",
+          "target": "promptinput/05_notification___feedback_system",
+          "label": "Renders suggestions"
+        },
+        {
+          "source": "promptinput/01_footer_status_dashboard",
+          "target": "promptinput/03_swarm_identity_context",
+          "label": "Embeds search input"
+        },
+        {
+          "source": "promptinput/03_swarm_identity_context",
+          "target": "promptinput/06_command_queue_preview",
+          "label": "Checks queue state"
+        },
+        {
+          "source": "promptinput/04_autocomplete_suggestion_overlay",
+          "target": "promptinput/03_swarm_identity_context",
+          "label": "Visualizes input mode"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "promptinput/01_footer_status_dashboard",
+      "target": "promptinput/02_smart_input_processing",
+      "label": "Embeds and manages"
+    },
+    {
+      "source": "promptinput/01_footer_status_dashboard",
+      "target": "promptinput/05_notification___feedback_system",
+      "label": "Renders suggestions"
+    },
+    {
+      "source": "promptinput/01_footer_status_dashboard",
+      "target": "promptinput/03_swarm_identity_context",
+      "label": "Embeds search input"
+    },
+    {
+      "source": "promptinput/03_swarm_identity_context",
+      "target": "promptinput/06_command_queue_preview",
+      "label": "Checks queue state"
+    },
+    {
+      "source": "promptinput/04_autocomplete_suggestion_overlay",
+      "target": "promptinput/03_swarm_identity_context",
+      "label": "Visualizes input mode"
+    }
+  ],
+  "storyPath": [
+    "promptinput/01_footer_status_dashboard",
+    "promptinput/02_smart_input_processing",
+    "promptinput/03_swarm_identity_context",
+    "promptinput/04_autocomplete_suggestion_overlay",
+    "promptinput/05_notification___feedback_system",
+    "promptinput/06_command_queue_preview"
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "projectName": "hooks",
+  "nodes": [
+    {
+      "id": "hooks",
+      "label": "hooks",
+      "type": "module",
+      "summary": "This project implements a robust **event-driven hook system** for an AI agent, allowing it to react to lifecycle events such as *file changes*, *tool usage*, or *session starts*. It orchestrates a central registry of **configuration rules** that trigger various **execution strategies** (like running shell commands, HTTP requests, or sub-agents), while maintaining **security** through network validation and managing temporary **session-scoped** logic.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "hooks/01_hook_configuration___metadata",
+          "label": "Hook Configuration & Metadata",
+          "type": "chapter",
+          "summary": "This is the \"rulebook\" of the system. It defines every possible event that can trigger a hook (like `PreToolUse`, `FileChanged`, or `SessionStart`) and what data those hooks receive. It also manages where these rules come from\u2014merging configurations from user settings, project settings, and temporary session state into a single list of executable instructions.",
+          "contentPath": "01_hook_configuration___metadata.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "hooks/02_execution_strategies",
+          "label": "Execution Strategies",
+          "type": "chapter",
+          "summary": "These modules define *how* a hook actually runs once triggered. The system supports different \"engines\" for logic:\n1. **Agent Hooks**: Spawns a sub-agent to perform complex, multi-step tasks.\n2. **HTTP Hooks**: Sends a webhook payload to an external server.\n3. **Prompt Hooks**: Asks a small, fast LLM to make a boolean decision (e.g., \"should I allow this?\").",
+          "contentPath": "02_execution_strategies.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "hooks/03_asynchronous_registry___event_bus",
+          "label": "Asynchronous Registry & Event Bus",
+          "type": "chapter",
+          "summary": "This system manages hooks that run in the background (like shell commands) without blocking the main chat interface. It acts like a \"download manager\" for processes, tracking their IDs, capturing their output (stdout/stderr), and determining when they finish. It works alongside an event bus that broadcasts updates (start, progress, success, failure) to the UI or logs.",
+          "contentPath": "03_asynchronous_registry___event_bus.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "hooks/04_session_scoped_lifecycle",
+          "label": "Session-Scoped Lifecycle",
+          "type": "chapter",
+          "summary": "While some hooks are permanent (defined in settings files), others are ephemeral. This abstraction manages hooks that exist only for the duration of a specific session, agent run, or skill execution. Think of these like temporary \"sticky notes\" of instructions that are attached to the current context and thrown away when the session ends or the agent finishes its task.",
+          "contentPath": "04_session_scoped_lifecycle.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "hooks/05_environment_watchers",
+          "label": "Environment Watchers",
+          "type": "chapter",
+          "summary": "This component acts as a security camera for the file system. It watches for changes to specific files or the current working directory (CWD). When a change is detected, it triggers the relevant `FileChanged` or `CwdChanged` hooks, allowing the agent to react dynamically to the environment (e.g., reloading environment variables when `.env` changes).",
+          "contentPath": "05_environment_watchers.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "hooks/06_security___ssrf_protection",
+          "label": "Security & SSRF Protection",
+          "type": "chapter",
+          "summary": "A security layer specifically for HTTP hooks. It acts like a network bouncer, preventing user-defined hooks from making requests to dangerous internal IP addresses (like AWS metadata services at 169.254.x.x or local loopbacks). It ensures that if a project defines a webhook, it can't be used to map the internal network infrastructure.",
+          "contentPath": "06_security___ssrf_protection.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "hooks/01_hook_configuration___metadata",
+          "target": "hooks/03_asynchronous_registry___event_bus",
+          "label": "Aggregates ephemeral hooks"
+        },
+        {
+          "source": "hooks/05_environment_watchers",
+          "target": "hooks/01_hook_configuration___metadata",
+          "label": "Reads watch patterns"
+        },
+        {
+          "source": "hooks/02_execution_strategies",
+          "target": "hooks/06_security___ssrf_protection",
+          "label": "Validates network targets"
+        },
+        {
+          "source": "hooks/02_execution_strategies",
+          "target": "hooks/01_hook_configuration___metadata",
+          "label": "Reads allowlists"
+        },
+        {
+          "source": "hooks/02_execution_strategies",
+          "target": "hooks/03_asynchronous_registry___event_bus",
+          "label": "Cleans up session state"
+        },
+        {
+          "source": "hooks/04_session_scoped_lifecycle",
+          "target": "hooks/01_hook_configuration___metadata",
+          "label": "Refreshes session config"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "hooks/01_hook_configuration___metadata",
+      "target": "hooks/03_asynchronous_registry___event_bus",
+      "label": "Aggregates ephemeral hooks"
+    },
+    {
+      "source": "hooks/05_environment_watchers",
+      "target": "hooks/01_hook_configuration___metadata",
+      "label": "Reads watch patterns"
+    },
+    {
+      "source": "hooks/02_execution_strategies",
+      "target": "hooks/06_security___ssrf_protection",
+      "label": "Validates network targets"
+    },
+    {
+      "source": "hooks/02_execution_strategies",
+      "target": "hooks/01_hook_configuration___metadata",
+      "label": "Reads allowlists"
+    },
+    {
+      "source": "hooks/02_execution_strategies",
+      "target": "hooks/03_asynchronous_registry___event_bus",
+      "label": "Cleans up session state"
+    },
+    {
+      "source": "hooks/04_session_scoped_lifecycle",
+      "target": "hooks/01_hook_configuration___metadata",
+      "label": "Refreshes session config"
+    }
+  ],
+  "storyPath": [
+    "hooks/01_hook_configuration___metadata",
+    "hooks/02_execution_strategies",
+    "hooks/03_asynchronous_registry___event_bus",
+    "hooks/04_session_scoped_lifecycle",
+    "hooks/05_environment_watchers",
+    "hooks/06_security___ssrf_protection"
+  ]
+}

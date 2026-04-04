@@ -1,0 +1,156 @@
+{
+  "projectName": "PromptSuggestion",
+  "nodes": [
+    {
+      "id": "promptsuggestion",
+      "label": "PromptSuggestion",
+      "type": "module",
+      "summary": "This project implements an intelligent **Prompt Suggestion Engine** that acts like an advanced autocomplete for user intent, predicting the next likely command. It utilizes *Speculative Execution* to pro-actively run these predictions in the background, allowing for instant results if accepted. To ensure safety and cleanliness, these background tasks operate within a **Forked Agent** using a temporary *Overlay Filesystem*, ensuring the main conversation and actual files remain untouched until the user explicitly commits to the suggestion.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "promptsuggestion/01_prompt_suggestion_engine",
+          "label": "Prompt Suggestion Engine",
+          "type": "chapter",
+          "summary": "This abstraction is responsible for predicting what the user might want to do next. It analyzes the conversation history and generates a short text prompt (e.g., \"run the tests\") using a background LLM process. It includes logic to debounce, abort, and manage the lifecycle of these suggestions in the CLI.\nThink of it as an advanced \"autocomplete\" for your intent\u2014like a helpful colleague whispering, \"You probably want to check the logs now,\" based on the context of your work.",
+          "contentPath": "01_prompt_suggestion_engine.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "promptsuggestion/02_speculative_execution",
+          "label": "Speculative Execution",
+          "type": "chapter",
+          "summary": "Once a prompt is suggested, this system proactively executes it in the background before the user accepts it. If the user accepts the suggestion, the results (tool outputs, file changes) are applied instantly, saving time. If rejected, the work is discarded.\nIt's like a chef who starts cooking your usual order the moment you walk in. If you order it, it's served immediately. If you order something else, the pre-made dish is tossed out without affecting your table.",
+          "contentPath": "02_speculative_execution.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "promptsuggestion/03_forked_agent_execution",
+          "label": "Forked Agent Execution",
+          "type": "chapter",
+          "summary": "This pattern runs LLM queries and tool usage in a parallel, isolated context (\"fork\") separate from the main conversation thread. It ensures that background tasks\u2014like generating suggestions or running speculations\u2014do not pollute the main transcript or break the specific API caching strategy used for the primary chat.\nImagine having a \"shadow clone\" of the AI that runs errands in parallel. It shares the same memories (context) but operates independently so the main AI stays focused on the user.",
+          "contentPath": "03_forked_agent_execution.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "promptsuggestion/04_overlay_filesystem__isolation_",
+          "label": "Overlay Filesystem (Isolation)",
+          "type": "chapter",
+          "summary": "To make speculative execution safe, this abstraction redirects file writes to a temporary \"overlay\" directory. It uses a copy-on-write strategy: if the AI tries to edit a file during speculation, it edits a copy in a temp folder. These changes are only merged back to the real file system if the user accepts the speculation.\nIt acts like a sandbox or a transparency layer over your project. The AI can draw on the plastic sheet (overlay), but the actual paper (your code) remains untouched until you say \"keep it.\"",
+          "contentPath": "04_overlay_filesystem__isolation_.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "promptsuggestion/05_completion_boundaries",
+          "label": "Completion Boundaries",
+          "type": "chapter",
+          "summary": "Used within the speculation engine, \"boundaries\" define the hard limits where background execution must stop. A boundary is hit when the AI attempts a risky action (like an irreversible Bash command) or a file edit requiring permission.\nIt functions as an automatic \"dead man's switch\" or safety tripwire. The moment the background process tries to do something that requires human oversight, the system freezes the state there and waits for the user to catch up.",
+          "contentPath": "05_completion_boundaries.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "promptsuggestion/06_heuristic_filtering___suppression",
+          "label": "Heuristic Filtering & Suppression",
+          "type": "chapter",
+          "summary": "This logic acts as a quality control gate for suggestions. It checks various conditions\u2014such as rate limits, non-interactive modes, or specific output patterns (e.g., if the AI suggests \"silence\" or an API error message)\u2014to decide if a suggestion should be hidden.\nThink of it as a spam filter for the AI's internal thoughts. It ensures that only high-quality, actionable, and safe suggestions reach the user interface, filtering out noise or \"hallucinated\" commands.",
+          "contentPath": "06_heuristic_filtering___suppression.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "promptsuggestion/01_prompt_suggestion_engine",
+          "target": "promptsuggestion/05_completion_boundaries",
+          "label": "Validates suggestions using"
+        },
+        {
+          "source": "promptsuggestion/01_prompt_suggestion_engine",
+          "target": "promptsuggestion/03_forked_agent_execution",
+          "label": "Queries LLM via"
+        },
+        {
+          "source": "promptsuggestion/01_prompt_suggestion_engine",
+          "target": "promptsuggestion/02_speculative_execution",
+          "label": "Triggers background task"
+        },
+        {
+          "source": "promptsuggestion/02_speculative_execution",
+          "target": "promptsuggestion/03_forked_agent_execution",
+          "label": "Runs isolated agent"
+        },
+        {
+          "source": "promptsuggestion/02_speculative_execution",
+          "target": "promptsuggestion/04_overlay_filesystem__isolation_",
+          "label": "Redirects writes to"
+        },
+        {
+          "source": "promptsuggestion/02_speculative_execution",
+          "target": "promptsuggestion/06_heuristic_filtering___suppression",
+          "label": "Stops execution at"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "promptsuggestion/01_prompt_suggestion_engine",
+      "target": "promptsuggestion/05_completion_boundaries",
+      "label": "Validates suggestions using"
+    },
+    {
+      "source": "promptsuggestion/01_prompt_suggestion_engine",
+      "target": "promptsuggestion/03_forked_agent_execution",
+      "label": "Queries LLM via"
+    },
+    {
+      "source": "promptsuggestion/01_prompt_suggestion_engine",
+      "target": "promptsuggestion/02_speculative_execution",
+      "label": "Triggers background task"
+    },
+    {
+      "source": "promptsuggestion/02_speculative_execution",
+      "target": "promptsuggestion/03_forked_agent_execution",
+      "label": "Runs isolated agent"
+    },
+    {
+      "source": "promptsuggestion/02_speculative_execution",
+      "target": "promptsuggestion/04_overlay_filesystem__isolation_",
+      "label": "Redirects writes to"
+    },
+    {
+      "source": "promptsuggestion/02_speculative_execution",
+      "target": "promptsuggestion/06_heuristic_filtering___suppression",
+      "label": "Stops execution at"
+    }
+  ],
+  "storyPath": [
+    "promptsuggestion/01_prompt_suggestion_engine",
+    "promptsuggestion/02_speculative_execution",
+    "promptsuggestion/03_forked_agent_execution",
+    "promptsuggestion/04_overlay_filesystem__isolation_",
+    "promptsuggestion/05_completion_boundaries",
+    "promptsuggestion/06_heuristic_filtering___suppression"
+  ]
+}

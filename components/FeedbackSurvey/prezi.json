@@ -1,0 +1,156 @@
+{
+  "projectName": "FeedbackSurvey",
+  "nodes": [
+    {
+      "id": "feedbacksurvey",
+      "label": "FeedbackSurvey",
+      "type": "module",
+      "summary": "The `FeedbackSurvey` project implements a **feedback system** for an AI assistant, designed to collect user ratings and optional conversation transcripts. It relies on a central **state machine** to manage the survey's lifecycle (opening, closing, thanking) and employs logic to trigger surveys based on time, usage turns, or specific **events** like memory compaction. The system renders an interactive CLI-based UI and handles the secure **submission** of redacted transcript data upon user approval.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "feedbacksurvey/01_main_ui_controller",
+          "label": "Main UI Controller",
+          "type": "chapter",
+          "summary": "This component is the visual entry point that decides *which* screen to render based on the current state provided by the state machine. It acts as the switchboard, swapping between the initial rating view, the transcript permission prompt, or the success message.\n\nIt's like the stage manager in a play. The audience doesn't see the manager, but the manager decides whether the curtain is up, which actors (Views) are on stage, and when to fade to black.",
+          "contentPath": "01_main_ui_controller.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "feedbacksurvey/02_interactive_prompt_views",
+          "label": "Interactive Prompt Views",
+          "type": "chapter",
+          "summary": "These are the actual visual components the user interacts with. They display the questions (e.g., \"How is Claude doing?\" or \"Can we share this transcript?\") and handle the specific keyboard inputs (1, 2, 3) to capture the user's choice.\n\nThink of these as the paper forms you fill out. One form is a star rating card (`FeedbackSurveyView`), and the other is a legal waiver asking for permission to record the session (`TranscriptSharePrompt`).",
+          "contentPath": "02_interactive_prompt_views.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "feedbacksurvey/03_survey_lifecycle_state_machine",
+          "label": "Survey Lifecycle State Machine",
+          "type": "chapter",
+          "summary": "This abstraction acts as the central brain that manages the flow of the survey experience. It handles the transitions between different stages\u2014from being closed, to opening, asking for a rating, requesting transcript permissions, submitting data, and finally showing a thank you message.\n\nThink of it like a traffic light controller for a conversation: it ensures the interface doesn't turn \"Green\" (show the survey) while it's supposed to be \"Red\" (closed), and it manages the timing of the \"Yellow\" light (the thank you message before closing).",
+          "contentPath": "03_survey_lifecycle_state_machine.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "feedbacksurvey/04_general_pacing_and_configuration",
+          "label": "General Pacing and Configuration",
+          "type": "chapter",
+          "summary": "This logic determines *when* the standard feedback survey is allowed to appear based on time and usage. It enforces rules like \"only show after 5 minutes\" or \"don't show if the user just saw one,\" and checks probability gates.\n\nImagine a polite waiter who knows exactly when to ask \"How is your meal?\" The waiter ensures they don't interrupt you immediately after you sit down, nor do they ask you every single time you take a bite.",
+          "contentPath": "04_general_pacing_and_configuration.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "feedbacksurvey/05_event_driven_survey_triggers",
+          "label": "Event-Driven Survey Triggers",
+          "type": "chapter",
+          "summary": "These hooks trigger surveys based on specific technical events rather than just time passing. One watches for when the assistant reads from long-term memory, and the other watches for when the session memory is compacted (summarized).\n\nThink of these like specific sensors in a car. While the general maintenance light turns on based on mileage (General Pacing), these lights turn on only when specific events occur, like the tire pressure dropping or the engine overheating.",
+          "contentPath": "05_event_driven_survey_triggers.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "feedbacksurvey/06_transcript_data_submission",
+          "label": "Transcript Data Submission",
+          "type": "chapter",
+          "summary": "This abstraction handles the heavy lifting of packaging the conversation history, redacting sensitive information, and transmitting it to the server API. It is triggered only when the user explicitly agrees to share their data.\n\nThink of this as the secure mailroom. Once you sign a document, this service puts it in an envelope, blacks out your credit card number (redaction), stamps it, and hands it off to the courier to be delivered to headquarters.",
+          "contentPath": "06_transcript_data_submission.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "feedbacksurvey/02_interactive_prompt_views",
+          "target": "feedbacksurvey/01_main_ui_controller",
+          "label": "Uses for state management"
+        },
+        {
+          "source": "feedbacksurvey/03_survey_lifecycle_state_machine",
+          "target": "feedbacksurvey/01_main_ui_controller",
+          "label": "Uses for state management"
+        },
+        {
+          "source": "feedbacksurvey/02_interactive_prompt_views",
+          "target": "feedbacksurvey/06_transcript_data_submission",
+          "label": "Submits shared transcript"
+        },
+        {
+          "source": "feedbacksurvey/03_survey_lifecycle_state_machine",
+          "target": "feedbacksurvey/06_transcript_data_submission",
+          "label": "Submits shared transcript"
+        },
+        {
+          "source": "feedbacksurvey/04_general_pacing_and_configuration",
+          "target": "feedbacksurvey/05_event_driven_survey_triggers",
+          "label": "Renders"
+        },
+        {
+          "source": "feedbacksurvey/01_main_ui_controller",
+          "target": "feedbacksurvey/05_event_driven_survey_triggers",
+          "label": "Imports types"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "feedbacksurvey/02_interactive_prompt_views",
+      "target": "feedbacksurvey/01_main_ui_controller",
+      "label": "Uses for state management"
+    },
+    {
+      "source": "feedbacksurvey/03_survey_lifecycle_state_machine",
+      "target": "feedbacksurvey/01_main_ui_controller",
+      "label": "Uses for state management"
+    },
+    {
+      "source": "feedbacksurvey/02_interactive_prompt_views",
+      "target": "feedbacksurvey/06_transcript_data_submission",
+      "label": "Submits shared transcript"
+    },
+    {
+      "source": "feedbacksurvey/03_survey_lifecycle_state_machine",
+      "target": "feedbacksurvey/06_transcript_data_submission",
+      "label": "Submits shared transcript"
+    },
+    {
+      "source": "feedbacksurvey/04_general_pacing_and_configuration",
+      "target": "feedbacksurvey/05_event_driven_survey_triggers",
+      "label": "Renders"
+    },
+    {
+      "source": "feedbacksurvey/01_main_ui_controller",
+      "target": "feedbacksurvey/05_event_driven_survey_triggers",
+      "label": "Imports types"
+    }
+  ],
+  "storyPath": [
+    "feedbacksurvey/01_main_ui_controller",
+    "feedbacksurvey/02_interactive_prompt_views",
+    "feedbacksurvey/03_survey_lifecycle_state_machine",
+    "feedbacksurvey/04_general_pacing_and_configuration",
+    "feedbacksurvey/05_event_driven_survey_triggers",
+    "feedbacksurvey/06_transcript_data_submission"
+  ]
+}

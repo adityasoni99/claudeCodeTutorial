@@ -1,0 +1,124 @@
+{
+  "projectName": "GlobTool",
+  "nodes": [
+    {
+      "id": "globtool",
+      "label": "GlobTool",
+      "type": "module",
+      "summary": "The project defines a **GlobTool** capability that allows the system to search for files using *wildcard patterns* (like `**/*.ts`). It orchestrates **data schemas** for validation, **security checks** to ensure safe filesystem access, and specific **execution logic** to perform the search, while utilizing a dedicated **UI** layer to format and display the results to the user.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "globtool/01_tool_definition",
+          "label": "Tool Definition",
+          "type": "chapter",
+          "summary": "The central configuration object (`GlobTool`) that aggregates all aspects of the tool: metadata, schemas, execution logic, and UI handlers.\nIt acts like a plugin definition or a blueprint, telling the larger system exactly how to interact with this specific capability (finding files via patterns), incorporating the tool's name and description.",
+          "contentPath": "01_tool_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "globtool/02_data_schemas",
+          "label": "Data Schemas",
+          "type": "chapter",
+          "summary": "Defines the strict contracts for data entering and leaving the tool using Zod.\nIt acts like a gatekeeper or a form validator. The `inputSchema` ensures the user provides a valid glob pattern and optional path, while the `outputSchema` guarantees the tool returns a consistent structure containing the list of filenames, counts, and timing metrics.",
+          "contentPath": "02_data_schemas.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "globtool/03_execution_handler",
+          "label": "Execution Handler",
+          "type": "chapter",
+          "summary": "The `call` method within the tool definition containing the core business logic.\nIt acts as the engine of the tool. It takes the validated input, performs the actual filesystem globbing operation (searching for files), measures performance, handles limits (truncation), and formats the results for the output schema.",
+          "contentPath": "03_execution_handler.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "globtool/04_filesystem_security___validation",
+          "label": "Filesystem Security & Validation",
+          "type": "chapter",
+          "summary": "The logic responsible for ensuring safety and validity before execution (`validateInput`, `checkPermissions`).\nIt acts like a security guard. It checks if the target directory actually exists and is valid, and verifies that the tool has the necessary permissions to read the requested files or directories, preventing unauthorized access or crashes on invalid paths.",
+          "contentPath": "04_filesystem_security___validation.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "globtool/05_ui_rendering",
+          "label": "UI Rendering",
+          "type": "chapter",
+          "summary": "A set of functions and components responsible for displaying the tool's activities and results to the user.\nIt acts as the \"frontend\" or view layer. It converts abstract data (like a glob pattern or a list of found files) into human-readable status messages (e.g., \"Finding files...\") or formatted blocks in the chat interface.",
+          "contentPath": "05_ui_rendering.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "globtool/01_tool_definition",
+          "target": "globtool/02_data_schemas",
+          "label": "Enforces data contracts"
+        },
+        {
+          "source": "globtool/01_tool_definition",
+          "target": "globtool/04_filesystem_security___validation",
+          "label": "Delegates display logic"
+        },
+        {
+          "source": "globtool/03_execution_handler",
+          "target": "globtool/01_tool_definition",
+          "label": "Calls path utility"
+        },
+        {
+          "source": "globtool/05_ui_rendering",
+          "target": "globtool/01_tool_definition",
+          "label": "Validates tool permissions"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "globtool/01_tool_definition",
+      "target": "globtool/02_data_schemas",
+      "label": "Enforces data contracts"
+    },
+    {
+      "source": "globtool/01_tool_definition",
+      "target": "globtool/04_filesystem_security___validation",
+      "label": "Delegates display logic"
+    },
+    {
+      "source": "globtool/03_execution_handler",
+      "target": "globtool/01_tool_definition",
+      "label": "Calls path utility"
+    },
+    {
+      "source": "globtool/05_ui_rendering",
+      "target": "globtool/01_tool_definition",
+      "label": "Validates tool permissions"
+    }
+  ],
+  "storyPath": [
+    "globtool/01_tool_definition",
+    "globtool/02_data_schemas",
+    "globtool/03_execution_handler",
+    "globtool/04_filesystem_security___validation",
+    "globtool/05_ui_rendering"
+  ]
+}

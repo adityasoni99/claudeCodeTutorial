@@ -1,0 +1,166 @@
+{
+  "projectName": "SessionMemory",
+  "nodes": [
+    {
+      "id": "sessionmemory",
+      "label": "SessionMemory",
+      "type": "module",
+      "summary": "The **Session Memory** project implements an automatic, background note-taking system for AI conversations. It unobtrusively monitors the chat and, when specific activity thresholds are met, launches an *isolated forked agent* to summarize key information into a structured markdown file. This ensures the system maintains long-term context about tasks, files, and decisions without cluttering the main conversation flow or pausing the user's workflow.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "sessionmemory/01_memory_file_lifecycle",
+          "label": "Memory File Lifecycle",
+          "type": "chapter",
+          "summary": "Handles the physical interactions with the filesystem, including creating the initial markdown file, reading its current state, and managing permissions.\n\nThis is the librarian of the system. It ensures the physical book (the `session-memory.md` file) actually exists on the shelf. If the book is missing, it creates a new one with a blank template. If the book is locked or inaccessible, it handles the errors gracefully so the rest of the application doesn't crash.",
+          "contentPath": "01_memory_file_lifecycle.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sessionmemory/02_post_sampling_extraction_hook",
+          "label": "Post-Sampling Extraction Hook",
+          "type": "chapter",
+          "summary": "This is the main entry point (controller) for the Session Memory feature. It registers a hook that runs sequentially after the main conversation loop processes a message.\n\nThink of it like a court stenographer who waits for a pause in the trial (the conversation) to quickly review what was said and update the official record. It orchestrates the entire process: checking if the feature is enabled, validating triggers, creating an isolated environment, and dispatching the summarization task without interrupting the main user flow.",
+          "contentPath": "02_post_sampling_extraction_hook.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sessionmemory/03_update_threshold_logic",
+          "label": "Update Threshold Logic",
+          "type": "chapter",
+          "summary": "A set of heuristics that determines *when* the memory needs to be updated. It balances the need for fresh notes against the cost of running an extraction agent.\n\nImagine a notebook that only gets updated when significant events happen. This logic acts as the gatekeeper, deciding that \"not enough has happened yet\" (e.g., only a few words were spoken) or \"it's time to write\" because a specific token limit was reached or a certain number of tools were used, ensuring the system doesn't waste energy summarizing trivial chatter.",
+          "contentPath": "03_update_threshold_logic.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sessionmemory/04_isolated_forked_agent",
+          "label": "Isolated Forked Agent",
+          "type": "chapter",
+          "summary": "The mechanism used to perform the actual summarization work without polluting the main conversation's context or tool history. It creates a \"fork\" of the current state.\n\nIt's like having a clone of yourself step into a soundproof room to organize your filing cabinet. The clone knows everything you know up to that moment, does the administrative work, and then disappears. This ensures the main \"you\" (the conversation with the user) isn't distracted or confused by the self-talk required to organize the notes.",
+          "contentPath": "04_isolated_forked_agent.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sessionmemory/05_prompt_construction___templating",
+          "label": "Prompt Construction & Templating",
+          "type": "chapter",
+          "summary": "Defines the rigid structure and instructions used to generate the session notes. It handles loading markdown templates, substituting variables (like current notes content), and enforcing section limits.\n\nThink of this as a pre-printed form or a strict agenda. Instead of letting the AI write a free-form diary, this abstraction forces the output into specific boxes like \"Task Specification,\" \"Files,\" and \"Errors.\" It also includes logic to measure text length and warn the AI if specific sections are getting too bloated.",
+          "contentPath": "05_prompt_construction___templating.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sessionmemory/06_shared_state___concurrency_control",
+          "label": "Shared State & Concurrency Control",
+          "type": "chapter",
+          "summary": "A centralized module for managing the \"health\" and status of the memory system across different files. It tracks configuration settings, timestamps, and locking mechanisms.\n\nIt functions like a traffic light or a status dashboard. It prevents two updates from happening at the exact same time (race conditions) by tracking when extraction started, and it holds global settings (like how many tokens constitute a \"trigger\") so that circular dependencies between the main logic and utility functions are avoided.",
+          "contentPath": "06_shared_state___concurrency_control.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "sessionmemory/01_memory_file_lifecycle",
+          "target": "sessionmemory/02_post_sampling_extraction_hook",
+          "label": "Checks update triggers"
+        },
+        {
+          "source": "sessionmemory/01_memory_file_lifecycle",
+          "target": "sessionmemory/06_shared_state___concurrency_control",
+          "label": "Initializes and reads file"
+        },
+        {
+          "source": "sessionmemory/06_shared_state___concurrency_control",
+          "target": "sessionmemory/04_isolated_forked_agent",
+          "label": "Loads initial template"
+        },
+        {
+          "source": "sessionmemory/01_memory_file_lifecycle",
+          "target": "sessionmemory/04_isolated_forked_agent",
+          "label": "Generates update instructions"
+        },
+        {
+          "source": "sessionmemory/01_memory_file_lifecycle",
+          "target": "sessionmemory/03_update_threshold_logic",
+          "label": "Dispatches extraction task"
+        },
+        {
+          "source": "sessionmemory/01_memory_file_lifecycle",
+          "target": "sessionmemory/05_prompt_construction___templating",
+          "label": "Updates extraction status"
+        },
+        {
+          "source": "sessionmemory/02_post_sampling_extraction_hook",
+          "target": "sessionmemory/05_prompt_construction___templating",
+          "label": "Reads config and history"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "sessionmemory/01_memory_file_lifecycle",
+      "target": "sessionmemory/02_post_sampling_extraction_hook",
+      "label": "Checks update triggers"
+    },
+    {
+      "source": "sessionmemory/01_memory_file_lifecycle",
+      "target": "sessionmemory/06_shared_state___concurrency_control",
+      "label": "Initializes and reads file"
+    },
+    {
+      "source": "sessionmemory/06_shared_state___concurrency_control",
+      "target": "sessionmemory/04_isolated_forked_agent",
+      "label": "Loads initial template"
+    },
+    {
+      "source": "sessionmemory/01_memory_file_lifecycle",
+      "target": "sessionmemory/04_isolated_forked_agent",
+      "label": "Generates update instructions"
+    },
+    {
+      "source": "sessionmemory/01_memory_file_lifecycle",
+      "target": "sessionmemory/03_update_threshold_logic",
+      "label": "Dispatches extraction task"
+    },
+    {
+      "source": "sessionmemory/01_memory_file_lifecycle",
+      "target": "sessionmemory/05_prompt_construction___templating",
+      "label": "Updates extraction status"
+    },
+    {
+      "source": "sessionmemory/02_post_sampling_extraction_hook",
+      "target": "sessionmemory/05_prompt_construction___templating",
+      "label": "Reads config and history"
+    }
+  ],
+  "storyPath": [
+    "sessionmemory/01_memory_file_lifecycle",
+    "sessionmemory/02_post_sampling_extraction_hook",
+    "sessionmemory/03_update_threshold_logic",
+    "sessionmemory/04_isolated_forked_agent",
+    "sessionmemory/05_prompt_construction___templating",
+    "sessionmemory/06_shared_state___concurrency_control"
+  ]
+}

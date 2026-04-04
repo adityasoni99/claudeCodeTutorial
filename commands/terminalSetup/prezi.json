@@ -1,0 +1,124 @@
+{
+  "projectName": "terminalSetup",
+  "nodes": [
+    {
+      "id": "terminalsetup",
+      "label": "terminalSetup",
+      "type": "module",
+      "summary": "This project automatically configures advanced keybindings (specifically **Shift+Enter**) across various terminal environments. It uses a **lazy-loaded command** to detect the current terminal's capabilities and employs a **strategy pattern** to apply fixes: either by safely **patching configuration files** for modern text-based editors or by modifying binary **system property lists** for the macOS Terminal.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "terminalsetup/01_command_definition___lazy_loading",
+          "label": "Command Definition & Lazy Loading",
+          "type": "chapter",
+          "summary": "This abstraction defines the `terminal-setup` command within the CLI application. It specifies metadata like the command name, a dynamic description based on the detected environment, and visibility rules (hiding it if the terminal natively supports required features). Crucially, it uses lazy loading to import the heavy implementation logic only when the command is actually executed.\nIt's like a restaurant menu item that only appears if the chef knows you might like it, and the kitchen only starts prepping the ingredients once you actually order it to save resources.",
+          "contentPath": "01_command_definition___lazy_loading.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "terminalsetup/02_terminal_capability_detection",
+          "label": "Terminal Capability Detection",
+          "type": "chapter",
+          "summary": "This logic determines the capabilities of the current terminal environment to decide if setup is necessary. It maintains a registry of terminals (`NATIVE_CSIU_TERMINALS`) that already support advanced keyboard protocols (like CSI u). If the current terminal is found in this list, the system knows no intervention is required.\nIt's like a triage nurse assessing a patient. If the patient (terminal) is already healthy (supports the protocol natively), the nurse sends them home without treatment; otherwise, they are directed to a specialist for a procedure.",
+          "contentPath": "02_terminal_capability_detection.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "terminalsetup/03_setup_strategy_dispatcher",
+          "label": "Setup Strategy Dispatcher",
+          "type": "chapter",
+          "summary": "The `setupTerminal` function acts as a central dispatcher (Strategy Pattern). It evaluates the `env.terminal` variable and routes the execution to the specific handler function designed for that terminal (e.g., VSCode, Alacritty, or Apple Terminal). This isolates the specific implementation details of each terminal from the high-level command flow.\nIt's like a general contractor for home repairs. You tell them \"fix the house,\" and they decide whether to call a plumber, an electrician, or a carpenter based on the specific type of building they are working on.",
+          "contentPath": "03_setup_strategy_dispatcher.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "terminalsetup/04_configuration_file_patching",
+          "label": "Configuration File Patching",
+          "type": "chapter",
+          "summary": "This abstraction handles the safe modification of user configuration files (JSON, TOML, etc.) to inject keybindings. It follows a strict safety protocol: locating the correct platform-specific path, creating a backup of the existing file, parsing the content, adding the specific keybinding if missing, and saving the result.\nIt's like a careful editor revising a manuscript. Before making any changes, they make a photocopy of the original page (backup) so nothing is lost if they make a mistake. Then they write in the new paragraph (keybinding) and file it back in the cabinet.",
+          "contentPath": "04_configuration_file_patching.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "terminalsetup/05_apple_terminal_plist_management",
+          "label": "Apple Terminal Plist Management",
+          "type": "chapter",
+          "summary": "Unlike modern editors that use text-based config files, macOS Terminal uses binary or XML Property Lists (`.plist`). This abstraction wraps system calls to command-line tools like `/usr/libexec/PlistBuddy` and `defaults` to safely read and modify these system settings. It handles the complexity of \"Window Settings\" profiles and visual bells.\nIt's like working on a vintage car engine that requires specialized, proprietary tools to adjust. You can't just use a standard screwdriver; you have to use the manufacturer's specific instrument to tweak the internal settings without breaking the engine.",
+          "contentPath": "05_apple_terminal_plist_management.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "terminalsetup/01_command_definition___lazy_loading",
+          "target": "terminalsetup/02_terminal_capability_detection",
+          "label": "Checks support for visibility"
+        },
+        {
+          "source": "terminalsetup/01_command_definition___lazy_loading",
+          "target": "terminalsetup/03_setup_strategy_dispatcher",
+          "label": "Loads and executes"
+        },
+        {
+          "source": "terminalsetup/03_setup_strategy_dispatcher",
+          "target": "terminalsetup/04_configuration_file_patching",
+          "label": "Delegates text config updates"
+        },
+        {
+          "source": "terminalsetup/03_setup_strategy_dispatcher",
+          "target": "terminalsetup/05_apple_terminal_plist_management",
+          "label": "Delegates binary plist updates"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "terminalsetup/01_command_definition___lazy_loading",
+      "target": "terminalsetup/02_terminal_capability_detection",
+      "label": "Checks support for visibility"
+    },
+    {
+      "source": "terminalsetup/01_command_definition___lazy_loading",
+      "target": "terminalsetup/03_setup_strategy_dispatcher",
+      "label": "Loads and executes"
+    },
+    {
+      "source": "terminalsetup/03_setup_strategy_dispatcher",
+      "target": "terminalsetup/04_configuration_file_patching",
+      "label": "Delegates text config updates"
+    },
+    {
+      "source": "terminalsetup/03_setup_strategy_dispatcher",
+      "target": "terminalsetup/05_apple_terminal_plist_management",
+      "label": "Delegates binary plist updates"
+    }
+  ],
+  "storyPath": [
+    "terminalsetup/01_command_definition___lazy_loading",
+    "terminalsetup/02_terminal_capability_detection",
+    "terminalsetup/03_setup_strategy_dispatcher",
+    "terminalsetup/04_configuration_file_patching",
+    "terminalsetup/05_apple_terminal_plist_management"
+  ]
+}

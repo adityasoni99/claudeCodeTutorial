@@ -1,0 +1,200 @@
+{
+  "projectName": "cli",
+  "nodes": [
+    {
+      "id": "cli",
+      "label": "cli",
+      "type": "module",
+      "summary": "The project is a robust Command Line Interface (CLI) designed to connect a local terminal environment with a remote AI session, likely powered by **Claude**. It features a **Remote I/O Bridge** that securely transmits standard input/output over various **Transport Strategies** (like WebSockets or SSE) using a strict **Structured Message Protocol**. The system includes advanced capabilities for **CCR State Synchronization** to reliably mirror the \"worker\" state, integrates external tools via the **Model Context Protocol (MCP)**, manages extensibility through **Plugins**, and handles secure **Authentication** and the **Application Lifecycle**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "cli/01_remote_i_o_bridge",
+          "label": "Remote I/O Bridge",
+          "type": "chapter",
+          "summary": "Extends the structured message handling to bridge local standard input/output with the remote `Transport`. It manages the input stream, handles connection lifecycle events (like keep-alives), and routes data between the local user/process and the remote backend session. It acts like a relay station connecting a local terminal to a distant server.",
+          "contentPath": "01_remote_i_o_bridge.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "cli/02_authentication_flow",
+          "label": "Authentication Flow",
+          "type": "chapter",
+          "summary": "Manages user authentication, including OAuth flows (via browser or refresh token), API key storage, and profile retrieval. It handles the acquisition and secure storage of credentials required to access the backend services.",
+          "contentPath": "02_authentication_flow.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "cli/03_structured_message_protocol",
+          "label": "Structured Message Protocol",
+          "type": "chapter",
+          "summary": "Manages the reading and writing of newline-delimited JSON (NDJSON) messages between the CLI and SDK consumers. It ensures messages are safely stringified (escaping line terminators) and typed (validating control messages like `can_use_tool`). Think of it as a strict translator that ensures every \"sentence\" exchanged is grammatically correct and written on its own line to prevent miscommunication.",
+          "contentPath": "03_structured_message_protocol.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "cli/04_transport_strategies",
+          "label": "Transport Strategies",
+          "type": "chapter",
+          "summary": "Abstracts the underlying network communication method used to connect to the backend session. It provides a unified interface (`Transport`) while implementing specific strategies like WebSockets (`WebSocketTransport`), Server-Sent Events with POST (`SSETransport`), or a Hybrid approach (`HybridTransport`) to handle different network environments (e.g., corporate proxies, firewalls).",
+          "contentPath": "04_transport_strategies.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "cli/05_ccr_state_synchronization",
+          "label": "CCR State Synchronization",
+          "type": "chapter",
+          "summary": "A high-level client for the Cloud Code Runtime (CCR) protocol. It handles the reliability aspects of communication, such as batching events for upload, exponential backoff retries, coalescing state updates, and sending heartbeats. It ensures that the \"worker\" state is accurately and reliably mirrored to the server, even over flaky connections.",
+          "contentPath": "05_ccr_state_synchronization.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "cli/06_plugin_management",
+          "label": "Plugin Management",
+          "type": "chapter",
+          "summary": "Handles the lifecycle of plugins, including installation, validation, enabling/disabling, and updates. It interfaces with marketplaces (like GitHub or local directories) to fetch plugins and integrates them into the system. Think of it as the package manager or \"App Store\" logic for the CLI.",
+          "contentPath": "06_plugin_management.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "cli/07_mcp_integration",
+          "label": "MCP Integration",
+          "type": "chapter",
+          "summary": "Manages the configuration, health checking, and lifecycle of Model Context Protocol (MCP) servers. It allows the CLI to add, remove, and list external tool providers (servers) that the AI can interact with. It serves as a configuration manager for external data sources and tools.",
+          "contentPath": "07_mcp_integration.md",
+          "x": -800.0,
+          "y": 450.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "cli/08_application_lifecycle",
+          "label": "Application Lifecycle",
+          "type": "chapter",
+          "summary": "Handles the critical startup and shutdown phases of the CLI commands. It includes mechanisms for self-updates (`update.ts`) and a centralized, type-safe exit strategy (`exit.ts`) that ensures proper cleanup (like flushing logs or stopping spinners) before the process terminates.",
+          "contentPath": "08_application_lifecycle.md",
+          "x": -100.0,
+          "y": 450.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "cli/03_structured_message_protocol",
+          "target": "cli/02_authentication_flow",
+          "label": "Extends for message parsing"
+        },
+        {
+          "source": "cli/03_structured_message_protocol",
+          "target": "cli/01_remote_i_o_bridge",
+          "label": "Delegates network communica..."
+        },
+        {
+          "source": "cli/03_structured_message_protocol",
+          "target": "cli/04_transport_strategies",
+          "label": "Initializes runtime synchro..."
+        },
+        {
+          "source": "cli/04_transport_strategies",
+          "target": "cli/01_remote_i_o_bridge",
+          "label": "Uses SSE transport strategy"
+        },
+        {
+          "source": "cli/03_structured_message_protocol",
+          "target": "cli/07_mcp_integration",
+          "label": "Consumes session tokens"
+        },
+        {
+          "source": "cli/06_plugin_management",
+          "target": "cli/05_ccr_state_synchronization",
+          "label": "Loads bundled MCP servers"
+        },
+        {
+          "source": "cli/05_ccr_state_synchronization",
+          "target": "cli/08_application_lifecycle",
+          "label": "Uses exit and shutdown helpers"
+        },
+        {
+          "source": "cli/06_plugin_management",
+          "target": "cli/08_application_lifecycle",
+          "label": "Uses exit and shutdown helpers"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "cli/03_structured_message_protocol",
+      "target": "cli/02_authentication_flow",
+      "label": "Extends for message parsing"
+    },
+    {
+      "source": "cli/03_structured_message_protocol",
+      "target": "cli/01_remote_i_o_bridge",
+      "label": "Delegates network communication"
+    },
+    {
+      "source": "cli/03_structured_message_protocol",
+      "target": "cli/04_transport_strategies",
+      "label": "Initializes runtime synchronization"
+    },
+    {
+      "source": "cli/04_transport_strategies",
+      "target": "cli/01_remote_i_o_bridge",
+      "label": "Uses SSE transport strategy"
+    },
+    {
+      "source": "cli/03_structured_message_protocol",
+      "target": "cli/07_mcp_integration",
+      "label": "Consumes session tokens"
+    },
+    {
+      "source": "cli/06_plugin_management",
+      "target": "cli/05_ccr_state_synchronization",
+      "label": "Loads bundled MCP servers"
+    },
+    {
+      "source": "cli/05_ccr_state_synchronization",
+      "target": "cli/08_application_lifecycle",
+      "label": "Uses exit and shutdown helpers"
+    },
+    {
+      "source": "cli/06_plugin_management",
+      "target": "cli/08_application_lifecycle",
+      "label": "Uses exit and shutdown helpers"
+    }
+  ],
+  "storyPath": [
+    "cli/01_remote_i_o_bridge",
+    "cli/02_authentication_flow",
+    "cli/03_structured_message_protocol",
+    "cli/04_transport_strategies",
+    "cli/05_ccr_state_synchronization",
+    "cli/06_plugin_management",
+    "cli/07_mcp_integration",
+    "cli/08_application_lifecycle"
+  ]
+}

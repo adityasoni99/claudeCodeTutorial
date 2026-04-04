@@ -1,0 +1,124 @@
+{
+  "projectName": "vim",
+  "nodes": [
+    {
+      "id": "vim",
+      "label": "vim",
+      "type": "module",
+      "summary": "This project defines a CLI command that allows users to **toggle** between standard text editing and *Vim-style* key bindings. It utilizes a **lazy-loading** mechanism to keep startup fast, only importing the core logic when the command is run, and it automatically *persists* the user's choice to the global configuration while recording telemetry data for analysis.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "vim/01_command_definition___registration",
+          "label": "Command Definition & Registration",
+          "type": "chapter",
+          "summary": "This abstraction defines how a new feature is registered within the CLI application. The `index.ts` file acts as the manifest, declaring the command's name, description, and type, while decoupling it from the actual execution logic.\n\nIt is like a restaurant menu: the menu (index.ts) lists the item and its description so you can choose it, but the actual cooking happens in the kitchen (the implementation file) only after you order.",
+          "contentPath": "01_command_definition___registration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "vim/02_dynamic_command_loading",
+          "label": "Dynamic Command Loading",
+          "type": "chapter",
+          "summary": "This is a performance optimization pattern used to keep the application startup fast. Instead of loading all code at once, the `load` function in `index.ts` imports the heavy logic (`vim.ts`) only when the specific command is actually executed.\n\nIt is similar to a library archive. The librarian doesn't carry every book to the front desk every morning; they only go into the stacks to retrieve a specific book when a patron asks for it.",
+          "contentPath": "02_dynamic_command_loading.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "vim/03_editor_mode_logic",
+          "label": "Editor Mode Logic",
+          "type": "chapter",
+          "summary": "This abstraction manages the specific state logic regarding how the application handles user input (e.g., Vim bindings vs. standard text entry). It handles normalization (treating 'emacs' as 'normal') and toggling between states.\n\nIt is like the transmission mode in a car. You can switch between \"Drive\" (normal) and \"Sport\" (vim), changing how the car responds to your inputs, but the car (the application) remains the same vehicle.",
+          "contentPath": "03_editor_mode_logic.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "vim/04_global_configuration_management",
+          "label": "Global Configuration Management",
+          "type": "chapter",
+          "summary": "This handles the persistent state of the application, allowing user preferences to survive across different sessions. The code reads the current state using `getGlobalConfig` and updates it via `saveGlobalConfig`.\n\nThink of this as the \"Save Game\" file in a video game. Even if you turn off the console, the game remembers your settings (like controller layout or difficulty) because they were written to this configuration layer.",
+          "contentPath": "04_global_configuration_management.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "vim/05_event_analytics___telemetry",
+          "label": "Event Analytics & Telemetry",
+          "type": "chapter",
+          "summary": "A system for tracking user interactions and system state changes for data analysis. The code uses `logEvent` to record when specific actions occur, such as changing the editor mode, along with metadata about the event.\n\nIt acts like a flight data recorder (black box) on an airplane. It silently records important events (like \"landing gear down\" or \"autopilot engaged\") so that engineers can later analyze how the plane was flown and improve its design.",
+          "contentPath": "05_event_analytics___telemetry.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "vim/01_command_definition___registration",
+          "target": "vim/03_editor_mode_logic",
+          "label": "Configures lazy loading"
+        },
+        {
+          "source": "vim/03_editor_mode_logic",
+          "target": "vim/05_event_analytics___telemetry",
+          "label": "Imports implementation"
+        },
+        {
+          "source": "vim/05_event_analytics___telemetry",
+          "target": "vim/02_dynamic_command_loading",
+          "label": "Persists user preference"
+        },
+        {
+          "source": "vim/05_event_analytics___telemetry",
+          "target": "vim/04_global_configuration_management",
+          "label": "Records usage events"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "vim/01_command_definition___registration",
+      "target": "vim/03_editor_mode_logic",
+      "label": "Configures lazy loading"
+    },
+    {
+      "source": "vim/03_editor_mode_logic",
+      "target": "vim/05_event_analytics___telemetry",
+      "label": "Imports implementation"
+    },
+    {
+      "source": "vim/05_event_analytics___telemetry",
+      "target": "vim/02_dynamic_command_loading",
+      "label": "Persists user preference"
+    },
+    {
+      "source": "vim/05_event_analytics___telemetry",
+      "target": "vim/04_global_configuration_management",
+      "label": "Records usage events"
+    }
+  ],
+  "storyPath": [
+    "vim/01_command_definition___registration",
+    "vim/02_dynamic_command_loading",
+    "vim/03_editor_mode_logic",
+    "vim/04_global_configuration_management",
+    "vim/05_event_analytics___telemetry"
+  ]
+}

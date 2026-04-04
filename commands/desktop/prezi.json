@@ -1,0 +1,102 @@
+{
+  "projectName": "desktop",
+  "nodes": [
+    {
+      "id": "desktop",
+      "label": "desktop",
+      "type": "module",
+      "summary": "This project enables a **command** that allows users to transfer their current session to the *Claude Desktop* application. It utilizes a **configuration object** to define the command's metadata, employs a **platform guard** to ensure visibility only on supported operating systems (macOS/Windows), and uses **lazy loading** to import the visual interface code only when requested.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "desktop/01_command_configuration",
+          "label": "Command Configuration",
+          "type": "chapter",
+          "summary": "This is the blueprint that tells the system how to treat the \"desktop\" feature. It defines metadata like the command's name, aliases (shortcuts), and description. \n\nThink of it like a menu item listing in a restaurant; it details what the dish is, who can order it (availability), and provides a reference to the kitchen on how to prepare it (via the `load` function). It adheres to a strictly typed `Command` interface to ensure consistency across the application.",
+          "contentPath": "01_command_configuration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "desktop/02_platform_guard",
+          "label": "Platform Guard",
+          "type": "chapter",
+          "summary": "This logic acts as a gatekeeper to ensure the feature only runs on compatible operating systems. It checks `process.platform` and `process.arch` to verify if the user is on macOS or Windows (x64).\n\nIt's similar to a \"You must be this tall to ride\" sign at an amusement park. If the system requirements aren't met, the `isEnabled` check fails, and the `isHidden` property ensures the option is completely invisible to the user, preventing confusion or errors on unsupported platforms like Linux or mobile.",
+          "contentPath": "02_platform_guard.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "desktop/03_lazy_module_loading",
+          "label": "Lazy Module Loading",
+          "type": "chapter",
+          "summary": "This pattern allows the application to load the heavy logic for the desktop command only when it is actually requested. Instead of importing the UI code immediately, it uses a dynamic import function.\n\nImagine a mechanic who keeps their heavy specialty tools in a truck and only brings them into the garage when a specific repair job requires them. This keeps the main application lightweight and fast to start up, fetching the specific code bundle (`desktop.js`) only when the user types the command.",
+          "contentPath": "03_lazy_module_loading.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "desktop/04_visual_command_handler",
+          "label": "Visual Command Handler",
+          "type": "chapter",
+          "summary": "This abstraction represents the entry point for commands that require a user interface rather than just a text output. The `call` function is the bridge between the command trigger and the visual rendering.\n\nIt behaves like a TV director shouting \"Action!\"; when the command is invoked, this function takes over to render a React component (`DesktopHandoff`) that guides the user through the process of handing off their session to the desktop application, effectively switching the \"channel\" of interaction.",
+          "contentPath": "04_visual_command_handler.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "desktop/01_command_configuration",
+          "target": "desktop/03_lazy_module_loading",
+          "label": "Validates availability via"
+        },
+        {
+          "source": "desktop/01_command_configuration",
+          "target": "desktop/04_visual_command_handler",
+          "label": "Utilizes for loading"
+        },
+        {
+          "source": "desktop/04_visual_command_handler",
+          "target": "desktop/02_platform_guard",
+          "label": "Dynamically imports"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "desktop/01_command_configuration",
+      "target": "desktop/03_lazy_module_loading",
+      "label": "Validates availability via"
+    },
+    {
+      "source": "desktop/01_command_configuration",
+      "target": "desktop/04_visual_command_handler",
+      "label": "Utilizes for loading"
+    },
+    {
+      "source": "desktop/04_visual_command_handler",
+      "target": "desktop/02_platform_guard",
+      "label": "Dynamically imports"
+    }
+  ],
+  "storyPath": [
+    "desktop/01_command_configuration",
+    "desktop/02_platform_guard",
+    "desktop/03_lazy_module_loading",
+    "desktop/04_visual_command_handler"
+  ]
+}

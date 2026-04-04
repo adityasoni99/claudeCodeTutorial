@@ -1,0 +1,124 @@
+{
+  "projectName": "GrepTool",
+  "nodes": [
+    {
+      "id": "greptool",
+      "label": "GrepTool",
+      "type": "module",
+      "summary": "The project implements a **text search tool** that integrates the `ripgrep` engine with an AI agent interface. It features a robust **schema definition** to validate search parameters, a *command builder* to translate high-level requests into CLI arguments, and an **output processor** that formats results into content, file lists, or counts. The system also manages data volume via **pagination** and includes a **UI layer** to present clear summaries and results to human users.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "greptool/01_tool_definition___schema",
+          "label": "Tool Definition & Schema",
+          "type": "chapter",
+          "summary": "Defines the contract for the tool using the `buildTool` factory. It specifies the Zod `inputSchema` (patterns, paths, flags like `-i` or `-C`) and `outputSchema` ensuring strictly typed communication between the AI agent and the code.\nIt's like a detailed application form that checks if all necessary fields (search pattern, target path) are filled correctly before processing the request.",
+          "contentPath": "01_tool_definition___schema.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "greptool/02_ui_presentation_layer",
+          "label": "UI Presentation Layer",
+          "type": "chapter",
+          "summary": "A set of React components that render the tool's activities to the human user. It handles displaying the \"Tool Use\" (e.g., \"Searching for 'pattern'...\") and the \"Tool Result\" (e.g., \"Found 5 matches in 2 files\") in a visually distinct, sometimes interactive format.\nIt's like the dashboard display in a car, converting engine signals and sensor data into readable gauges and status messages for the driver.",
+          "contentPath": "02_ui_presentation_layer.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "greptool/03_search_command_builder",
+          "label": "Search Command Builder",
+          "type": "chapter",
+          "summary": "Located within the `call` method, this logic acts as a translator. It converts the abstract input object (e.g., `{ multiline: true, glob: \"*.ts\" }`) into a concrete list of command-line arguments for the underlying `ripgrep` binary.\nIt's like a specialized compiler that turns high-level intent into the specific machine code (CLI flags) required to run the search engine.",
+          "contentPath": "03_search_command_builder.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "greptool/04_output_mode_processing",
+          "label": "Output Mode Processing",
+          "type": "chapter",
+          "summary": "Handles the three distinct ways to view search results: `content` (actual lines), `files_with_matches` (file paths only), and `count` (statistics). It parses raw `ripgrep` output and formats it specifically for the requested mode, including relativizing paths to save tokens.\nIt's like a report generator that can output data as a full transcript, a simple table of contents, or a statistical summary chart depending on what the user asked for.",
+          "contentPath": "04_output_mode_processing.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "greptool/05_result_pagination",
+          "label": "Result Pagination",
+          "type": "chapter",
+          "summary": "Implemented via `applyHeadLimit`, this abstraction manages the volume of data returned to the AI. It slices the result array based on a limit (default 250) and an offset, adding metadata if results were truncated.\nIt acts like a news editor who cuts a massive story down to the most important headlines and the first few paragraphs so the reader (the AI context window) isn't overwhelmed.",
+          "contentPath": "05_result_pagination.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "greptool/01_tool_definition___schema",
+          "target": "greptool/02_ui_presentation_layer",
+          "label": "Invokes command construction"
+        },
+        {
+          "source": "greptool/01_tool_definition___schema",
+          "target": "greptool/04_output_mode_processing",
+          "label": "Delegates result formatting"
+        },
+        {
+          "source": "greptool/04_output_mode_processing",
+          "target": "greptool/03_search_command_builder",
+          "label": "Applies data limits"
+        },
+        {
+          "source": "greptool/01_tool_definition___schema",
+          "target": "greptool/05_result_pagination",
+          "label": "Uses for rendering"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "greptool/01_tool_definition___schema",
+      "target": "greptool/02_ui_presentation_layer",
+      "label": "Invokes command construction"
+    },
+    {
+      "source": "greptool/01_tool_definition___schema",
+      "target": "greptool/04_output_mode_processing",
+      "label": "Delegates result formatting"
+    },
+    {
+      "source": "greptool/04_output_mode_processing",
+      "target": "greptool/03_search_command_builder",
+      "label": "Applies data limits"
+    },
+    {
+      "source": "greptool/01_tool_definition___schema",
+      "target": "greptool/05_result_pagination",
+      "label": "Uses for rendering"
+    }
+  ],
+  "storyPath": [
+    "greptool/01_tool_definition___schema",
+    "greptool/02_ui_presentation_layer",
+    "greptool/03_search_command_builder",
+    "greptool/04_output_mode_processing",
+    "greptool/05_result_pagination"
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "projectName": "wizard",
+  "nodes": [
+    {
+      "id": "wizard",
+      "label": "wizard",
+      "type": "module",
+      "summary": "This project implements a **multi-step wizard framework** designed for CLI applications. It features a centralized **State Management** system (`WizardProvider`) to track progress and collect data, which is accessible throughout the application via a custom *hook*. Additionally, it provides standardized **layout components** and navigation guidance to ensure a consistent user interface and seamless keyboard interaction.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "wizard/01_wizard_state_management",
+          "label": "Wizard State Management",
+          "type": "chapter",
+          "summary": "This is the central \"brain\" of the wizard workflow, implemented primarily in the `WizardProvider`. It manages the state of the entire process, including the current step index, the data collected so far, and the navigation history to support moving back and forth. \n\nIt acts like a game console saving your progress: it knows which level you are on, what items you have collected (data), and allows you to load previous levels (go back) or proceed to the next stage.",
+          "contentPath": "01_wizard_state_management.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "wizard/02_context_access_hook",
+          "label": "Context Access Hook",
+          "type": "chapter",
+          "summary": "The `useWizard` hook is the bridge connecting individual components to the central wizard state. It allows any child component to read the current progress or trigger actions like \"next\" or \"cancel\" without props being passed down manually.\n\nIt is like a universal remote control provided to every person in a room; regardless of where they are sitting, they can change the channel or adjust the volume of the main TV system directly.",
+          "contentPath": "02_context_access_hook.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "wizard/03_standardized_dialog_layout",
+          "label": "Standardized Dialog Layout",
+          "type": "chapter",
+          "summary": "`WizardDialogLayout` provides the visual scaffolding for every step in the wizard. It ensures that titles, step counters (e.g., \"Step 1/3\"), and footers appear consistently, wrapping the unique content of each step.\n\nThink of it as a pre-printed form template. While the specific questions in the middle of the page change, the company header, page numbers, and signature box at the bottom remain exactly the same to keep everything organized.",
+          "contentPath": "03_standardized_dialog_layout.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "wizard/04_navigation_guidance_system",
+          "label": "Navigation Guidance System",
+          "type": "chapter",
+          "summary": "The `WizardNavigationFooter` handles the display of instructions and keyboard shortcuts at the bottom of the screen. It informs the user how to interact with the application (e.g., \"Enter to select\") and handles special states like confirming an exit.\n\nIt serves as the legend on a map. It doesn't change the terrain you are navigating, but it tells you exactly what the symbols mean and how to read the path so you don't get lost.",
+          "contentPath": "04_navigation_guidance_system.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "wizard/05_public_module_interface",
+          "label": "Public Module Interface",
+          "type": "chapter",
+          "summary": "The `index.ts` file acts as the public gatekeeper for the module. It aggregates and exports only the necessary components (`WizardProvider`, `useWizard`, etc.) for the rest of the application to use, hiding internal implementation details.\n\nIt's like a restaurant menu. It lists the dishes you can order (available components) without forcing you to go into the kitchen to see exactly how the chef prepares the ingredients.",
+          "contentPath": "05_public_module_interface.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "wizard/02_context_access_hook",
+          "target": "wizard/01_wizard_state_management",
+          "label": "Consumes context"
+        },
+        {
+          "source": "wizard/03_standardized_dialog_layout",
+          "target": "wizard/02_context_access_hook",
+          "label": "Retrieves wizard state"
+        },
+        {
+          "source": "wizard/03_standardized_dialog_layout",
+          "target": "wizard/04_navigation_guidance_system",
+          "label": "Renders footer"
+        },
+        {
+          "source": "wizard/05_public_module_interface",
+          "target": "wizard/01_wizard_state_management",
+          "label": "Exports component"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "wizard/02_context_access_hook",
+      "target": "wizard/01_wizard_state_management",
+      "label": "Consumes context"
+    },
+    {
+      "source": "wizard/03_standardized_dialog_layout",
+      "target": "wizard/02_context_access_hook",
+      "label": "Retrieves wizard state"
+    },
+    {
+      "source": "wizard/03_standardized_dialog_layout",
+      "target": "wizard/04_navigation_guidance_system",
+      "label": "Renders footer"
+    },
+    {
+      "source": "wizard/05_public_module_interface",
+      "target": "wizard/01_wizard_state_management",
+      "label": "Exports component"
+    }
+  ],
+  "storyPath": [
+    "wizard/01_wizard_state_management",
+    "wizard/02_context_access_hook",
+    "wizard/03_standardized_dialog_layout",
+    "wizard/04_navigation_guidance_system",
+    "wizard/05_public_module_interface"
+  ]
+}

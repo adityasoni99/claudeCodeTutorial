@@ -1,0 +1,134 @@
+{
+  "projectName": "help",
+  "nodes": [
+    {
+      "id": "help",
+      "label": "help",
+      "type": "module",
+      "summary": "This project implements a **help command** designed to guide users by displaying a list of available system features. It utilizes a *lazy loading strategy* to keep the application fast, ensuring the specific help logic is only fetched when needed. Once activated, the command uses **declarative UI components** to present information and manages the user's session lifecycle cleanly.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "help/01_standardized_command_interface",
+          "label": "Standardized Command Interface",
+          "type": "chapter",
+          "summary": "The specific function signature (`LocalJSXCommandCall`) that every executable command must follow. It ensures that the system knows exactly how to invoke the command, providing a consistent way to pass arguments and context options (like `commands`).\nIt's like a standard USB port. The computer (the system) provides a specific shape and connection protocol. Any device (command) that matches that shape can be plugged in and will work immediately, regardless of what the device actually does.",
+          "contentPath": "01_standardized_command_interface.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "help/02_command_metadata_registry",
+          "label": "Command Metadata Registry",
+          "type": "chapter",
+          "summary": "Defines the identity and configuration of a specific feature (like 'help') within the system. It acts as a manifest, detailing the command's name, description, type, and loading strategy. This allows the main application to list the command without loading its heavy code immediately.\nIt's like a menu in a restaurant. The menu lists the name and description of the dish, but it isn't the food itself. The kitchen (the system) uses this entry to know what to offer the customer.",
+          "contentPath": "02_command_metadata_registry.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "help/03_lazy_code_splitting",
+          "label": "Lazy Code Splitting",
+          "type": "chapter",
+          "summary": "A performance pattern where the actual implementation logic of a command is only imported when the user specifically requests it. Defined via the `load` function, this prevents the application from loading unnecessary code during startup.\nIt's like a library archive. The librarian doesn't keep every single book on the front desk. They only go into the back storage (the file system) to retrieve the specific book (the code) when you explicitly ask to read it.",
+          "contentPath": "03_lazy_code_splitting.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "help/04_declarative_ui_composition",
+          "label": "Declarative UI Composition",
+          "type": "chapter",
+          "summary": "The practice of separating the command's logic from its visual presentation. The command handler delegates the actual rendering to a specialized React component (`HelpV2`), keeping the logic file clean and focused on data passing.\nIt's like a general contractor hiring a specialist. The contractor (the `call` function) receives the work order, but they hire a specialized painter (the `HelpV2` component) to actually put the color on the walls.",
+          "contentPath": "04_declarative_ui_composition.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "help/05_lifecycle_management",
+          "label": "Lifecycle Management",
+          "type": "chapter",
+          "summary": "The mechanism for controlling the flow of the command's execution, represented by the `onDone` callback. This allows the command to signal to the main application when it has finished its task or when the user closes the UI, ensuring clean transitions.\nIt's like a \"Check Out\" process at a hotel. When you are finished with your stay (the command execution), you return the key (call `onDone`) so the hotel management knows the room is free and can proceed to the next task.",
+          "contentPath": "05_lifecycle_management.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "help/01_standardized_command_interface",
+          "target": "help/02_command_metadata_registry",
+          "label": "Configures loading strategy"
+        },
+        {
+          "source": "help/02_command_metadata_registry",
+          "target": "help/03_lazy_code_splitting",
+          "label": "Resolves implementation"
+        },
+        {
+          "source": "help/03_lazy_code_splitting",
+          "target": "help/05_lifecycle_management",
+          "label": "Delegates rendering"
+        },
+        {
+          "source": "help/03_lazy_code_splitting",
+          "target": "help/04_declarative_ui_composition",
+          "label": "Receives completion callback"
+        },
+        {
+          "source": "help/05_lifecycle_management",
+          "target": "help/04_declarative_ui_composition",
+          "label": "Triggers completion"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "help/01_standardized_command_interface",
+      "target": "help/02_command_metadata_registry",
+      "label": "Configures loading strategy"
+    },
+    {
+      "source": "help/02_command_metadata_registry",
+      "target": "help/03_lazy_code_splitting",
+      "label": "Resolves implementation"
+    },
+    {
+      "source": "help/03_lazy_code_splitting",
+      "target": "help/05_lifecycle_management",
+      "label": "Delegates rendering"
+    },
+    {
+      "source": "help/03_lazy_code_splitting",
+      "target": "help/04_declarative_ui_composition",
+      "label": "Receives completion callback"
+    },
+    {
+      "source": "help/05_lifecycle_management",
+      "target": "help/04_declarative_ui_composition",
+      "label": "Triggers completion"
+    }
+  ],
+  "storyPath": [
+    "help/01_standardized_command_interface",
+    "help/02_command_metadata_registry",
+    "help/03_lazy_code_splitting",
+    "help/04_declarative_ui_composition",
+    "help/05_lifecycle_management"
+  ]
+}

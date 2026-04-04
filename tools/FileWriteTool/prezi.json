@@ -1,0 +1,124 @@
+{
+  "projectName": "FileWriteTool",
+  "nodes": [
+    {
+      "id": "filewritetool",
+      "label": "FileWriteTool",
+      "type": "module",
+      "summary": "This project implements a robust **file writing tool** that allows an AI agent to safely create or overwrite files on the local filesystem. It orchestrates the process by validating permissions and file states to ensure **safety**, executing the write operation, and synchronizing changes with external systems like **VS Code** and Language Servers. The tool also provides a clear **User Interface** to visualize changes and supplies specific instructions to the AI model on how to use the capability correctly.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "filewritetool/01_tool_definition___execution",
+          "label": "Tool Definition & Execution",
+          "type": "chapter",
+          "summary": "This is the core engine of the feature. It defines the `FileWriteTool` using a builder pattern, establishing the \"contract\" for how the AI agent interacts with the filesystem. It handles the actual logic of taking input (path and content), executing the write operation, and returning a result.\nIt's like the transmission of a car; it takes the intent (input) and converts it into mechanical action (writing to disk), creating the central object that the rest of the system drives.",
+          "contentPath": "01_tool_definition___execution.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "filewritetool/02_llm_prompt_strategy",
+          "label": "LLM Prompt Strategy",
+          "type": "chapter",
+          "summary": "This abstraction defines the \"instruction manual\" provided to the AI model. It explains what the tool does, its limitations (e.g., \"use the Read tool first\"), and best practices (e.g., \"don't create documentation unless asked\").\nIt serves as the rules of engagement. If the Tool Definition is the hammer, this concept is the safety training course that teaches the AI how to hold the hammer correctly and when it is appropriate to swing it.",
+          "contentPath": "02_llm_prompt_strategy.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "filewritetool/03_safety___state_validation",
+          "label": "Safety & State Validation",
+          "type": "chapter",
+          "summary": "Before any file is written, a rigorous set of checks occurs to prevent data loss or unauthorized access. This abstraction includes permission checks (can I write here?), path expansion, and \"staleness\" checks (has the file changed since I last read it?).\nThink of this as a bank teller verifying your ID and checking your account balance before processing a withdrawal. It ensures that the operation is safe and based on the most current information before making permanent changes.",
+          "contentPath": "03_safety___state_validation.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "filewritetool/04_ecosystem_integration__side_effects_",
+          "label": "Ecosystem Integration (Side Effects)",
+          "type": "chapter",
+          "summary": "Writing a file isn't an isolated event. This concept encompasses the hooks that notify external systems about the change. This includes updating the Language Server Protocol (LSP) so errors update immediately, notifying VS Code to refresh its view, and logging analytics.\nIt's like a town crier or a notification system. When a renovation happens (file write), this system immediately alerts the neighbors (VS Code), the building inspector (LSP), and the archives (File History) so everyone stays in sync.",
+          "contentPath": "04_ecosystem_integration__side_effects_.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "filewritetool/05_user_interface___feedback",
+          "label": "User Interface & Feedback",
+          "type": "chapter",
+          "summary": "This layer handles how the tool's actions are visualized in the terminal. Using React-based components (via Ink), it renders different views depending on the action: a simple \"File created\" message for new files, or a detailed \"Diff\" view for updates.\nIt acts like a translator or a dashboard display. While the engine (Tool Definition) does the hard work, this component ensures the human user sees a clean, understandable summary of what changed, rather than raw data.",
+          "contentPath": "05_user_interface___feedback.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "filewritetool/01_tool_definition___execution",
+          "target": "filewritetool/02_llm_prompt_strategy",
+          "label": "Enforces security checks"
+        },
+        {
+          "source": "filewritetool/01_tool_definition___execution",
+          "target": "filewritetool/03_safety___state_validation",
+          "label": "Delegates rendering to"
+        },
+        {
+          "source": "filewritetool/01_tool_definition___execution",
+          "target": "filewritetool/04_ecosystem_integration__side_effects_",
+          "label": "Triggers environment updates"
+        },
+        {
+          "source": "filewritetool/01_tool_definition___execution",
+          "target": "filewritetool/05_user_interface___feedback",
+          "label": "Retrieves usage instructions"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "filewritetool/01_tool_definition___execution",
+      "target": "filewritetool/02_llm_prompt_strategy",
+      "label": "Enforces security checks"
+    },
+    {
+      "source": "filewritetool/01_tool_definition___execution",
+      "target": "filewritetool/03_safety___state_validation",
+      "label": "Delegates rendering to"
+    },
+    {
+      "source": "filewritetool/01_tool_definition___execution",
+      "target": "filewritetool/04_ecosystem_integration__side_effects_",
+      "label": "Triggers environment updates"
+    },
+    {
+      "source": "filewritetool/01_tool_definition___execution",
+      "target": "filewritetool/05_user_interface___feedback",
+      "label": "Retrieves usage instructions"
+    }
+  ],
+  "storyPath": [
+    "filewritetool/01_tool_definition___execution",
+    "filewritetool/02_llm_prompt_strategy",
+    "filewritetool/03_safety___state_validation",
+    "filewritetool/04_ecosystem_integration__side_effects_",
+    "filewritetool/05_user_interface___feedback"
+  ]
+}

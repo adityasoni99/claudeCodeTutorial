@@ -1,0 +1,146 @@
+{
+  "projectName": "fast",
+  "nodes": [
+    {
+      "id": "fast",
+      "label": "fast",
+      "type": "module",
+      "summary": "The project implements a **Fast Mode** feature for a CLI application, enabling users to toggle a high-speed, premium AI model with specific pricing and cooldown rules. It utilizes a *command plugin* architecture to lazy-load the feature, a centralized **Global Application State** to manage model transitions, and a React-based *Terminal UI* to present interactive confirmation dialogs and status updates.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "fast/01_command_plugin_definition",
+          "label": "Command Plugin Definition",
+          "type": "chapter",
+          "summary": "Defines the contract for a CLI command within the application. It encapsulates metadata like the command's name, description, availability, and argument hints, and handles lazy loading of the implementation. It acts like a plugin manifest that tells the main application how to register and invoke the `fast` feature.",
+          "contentPath": "01_command_plugin_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "fast/02_fast_mode_business_logic",
+          "label": "Fast Mode Business Logic",
+          "type": "chapter",
+          "summary": "Encapsulates the core rules for toggling \"Fast Mode\". It handles validation (availability, cooldowns), state transitions (switching AI models), and persistence (updating user settings). It serves as the \"brain\" of the feature, ensuring all conditions are met before changing the application's behavior.",
+          "contentPath": "02_fast_mode_business_logic.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "fast/03_global_application_state",
+          "label": "Global Application State",
+          "type": "chapter",
+          "summary": "A centralized state management system accessed via hooks (`useAppState`, `useSetAppState`). It acts as the single source of truth for the application's configuration (e.g., the current AI model), allowing specific features like Fast Mode to read and modify the global context reactively.",
+          "contentPath": "03_global_application_state.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "fast/04_terminal_ui__tui__rendering",
+          "label": "Terminal UI (TUI) Rendering",
+          "type": "chapter",
+          "summary": "Uses React-based components (via the Ink library) to render interactive user interfaces in the terminal. It composes visual elements like `Dialog`, `Text`, and `Box` to display status, pricing, and confirmation prompts, effectively treating the console output as a structured, graphical UI.",
+          "contentPath": "04_terminal_ui__tui__rendering.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "fast/05_keyboard_input_abstraction",
+          "label": "Keyboard Input Abstraction",
+          "type": "chapter",
+          "summary": "Manages user input within the terminal UI using high-level keybindings (`useKeybindings`). It maps raw keystrokes to semantic actions (like `confirm:yes` or `confirm:toggle`), decoupling the physical input method from the logical action performed by the component.",
+          "contentPath": "05_keyboard_input_abstraction.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "fast/06_event_telemetry",
+          "label": "Event Telemetry",
+          "type": "chapter",
+          "summary": "A service for recording user interactions and system states (`logEvent`). It abstracts the details of analytics, allowing the code to simply report significant events\u2014like toggling a mode or encountering an error\u2014tagged with relevant metadata for future analysis.",
+          "contentPath": "06_event_telemetry.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "fast/01_command_plugin_definition",
+          "target": "fast/02_fast_mode_business_logic",
+          "label": "Checks availability and loads"
+        },
+        {
+          "source": "fast/02_fast_mode_business_logic",
+          "target": "fast/04_terminal_ui__tui__rendering",
+          "label": "Updates model configuration"
+        },
+        {
+          "source": "fast/02_fast_mode_business_logic",
+          "target": "fast/03_global_application_state",
+          "label": "Renders interactive picker"
+        },
+        {
+          "source": "fast/02_fast_mode_business_logic",
+          "target": "fast/05_keyboard_input_abstraction",
+          "label": "Logs usage events"
+        },
+        {
+          "source": "fast/03_global_application_state",
+          "target": "fast/06_event_telemetry",
+          "label": "Maps keys to actions"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "fast/01_command_plugin_definition",
+      "target": "fast/02_fast_mode_business_logic",
+      "label": "Checks availability and loads"
+    },
+    {
+      "source": "fast/02_fast_mode_business_logic",
+      "target": "fast/04_terminal_ui__tui__rendering",
+      "label": "Updates model configuration"
+    },
+    {
+      "source": "fast/02_fast_mode_business_logic",
+      "target": "fast/03_global_application_state",
+      "label": "Renders interactive picker"
+    },
+    {
+      "source": "fast/02_fast_mode_business_logic",
+      "target": "fast/05_keyboard_input_abstraction",
+      "label": "Logs usage events"
+    },
+    {
+      "source": "fast/03_global_application_state",
+      "target": "fast/06_event_telemetry",
+      "label": "Maps keys to actions"
+    }
+  ],
+  "storyPath": [
+    "fast/01_command_plugin_definition",
+    "fast/02_fast_mode_business_logic",
+    "fast/03_global_application_state",
+    "fast/04_terminal_ui__tui__rendering",
+    "fast/05_keyboard_input_abstraction",
+    "fast/06_event_telemetry"
+  ]
+}

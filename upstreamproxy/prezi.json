@@ -1,0 +1,124 @@
+{
+  "projectName": "upstreamproxy",
+  "nodes": [
+    {
+      "id": "upstreamproxy",
+      "label": "upstreamproxy",
+      "type": "module",
+      "summary": "This project establishes a **secure local bridge** that allows tools running inside an isolated container (like `curl` or `git`) to access the internet. It acts as a *Stage Manager*, coordinating a local server that intercepts network traffic, wraps it in a special **Protobuf** package, and ships it through a **WebSocket tunnel** to the outside world, while automatically configuring security permissions and environment variables so other applications can use it without setup.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "upstreamproxy/01_proxy_orchestration___lifecycle",
+          "label": "Proxy Orchestration & Lifecycle",
+          "type": "chapter",
+          "summary": "This is the \"main loop\" for the proxy feature. It determines if the proxy should run, initializes the necessary components, and cleans up sensitive data.\nThink of it as a **Stage Manager** for a theater production. It checks if the show is on (environment vars), sets up the props (certificates), unlocks the doors (starts the relay), and burns the secret script (deletes the token file) once the actors know their lines, ensuring the show runs smoothly without leaving loose ends.",
+          "contentPath": "01_proxy_orchestration___lifecycle.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "upstreamproxy/02_connect_over_websocket_relay",
+          "label": "CONNECT-over-WebSocket Relay",
+          "type": "chapter",
+          "summary": "This component acts as a translation layer between standard local networking tools and the remote cloud infrastructure. Since the container cannot make direct outbound TCP connections, this relay intercepts HTTP `CONNECT` requests and tunnels them over a WebSocket.\nIt works like a **ferry boat**. Cars (TCP packets from tools like `curl` or `git`) cannot drive across the water (the network gap). The ferry (the Relay) loads the cars, transports them across the river via a specific route (WebSocket), and offloads them on the other side to continue their journey.",
+          "contentPath": "02_connect_over_websocket_relay.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "upstreamproxy/03_protobuf_chunking_protocol",
+          "label": "Protobuf Chunking Protocol",
+          "type": "chapter",
+          "summary": "A low-level encoding mechanism used to wrap raw data bytes into a format the upstream server understands. It manually encodes a simple Protobuf message (`UpstreamProxyChunk`) without requiring a heavy external library.\nImagine sending a fragile item through the mail. You can't just toss the item in the mailbox; you must wrap it in a box (the chunk) and attach a label saying exactly how big it is (the varint length header) so the post office (the server) knows how to handle it without breaking it.",
+          "contentPath": "03_protobuf_chunking_protocol.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "upstreamproxy/04_environment_injection",
+          "label": "Environment Injection",
+          "type": "chapter",
+          "summary": "A mechanism to export the proxy configuration to child processes. Once the relay is running on a local port, this abstraction generates the standard environment variables (`HTTPS_PROXY`, `SSL_CERT_FILE`, etc.) needed for other tools to use it.\nThink of this as **DNA inheritance**. The parent process sets up the complex survival traits (the running proxy). It then encodes these traits into genes (Env Vars) and passes them down to all its children (subprocesses), so the children automatically know how to survive (connect to the internet) without having to learn it from scratch.",
+          "contentPath": "04_environment_injection.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "upstreamproxy/05_security_hardening___trust",
+          "label": "Security Hardening & Trust",
+          "type": "chapter",
+          "summary": "Ensures that the proxy is secure from local inspection and that outgoing traffic is trusted. It uses `prctl` to prevent other processes from reading the proxy's memory (dumping) and manages Custom Authority (CA) certificates to prevent SSL errors.\nIt operates like a **Secret Service agent**. It wears a badge (the CA Bundle) so everyone knows it's official, but it also uses a \"cone of silence\" (memory protection) so that even if a spy (malicious process) gets into the room, they cannot read the agent's mind to steal the secrets (session tokens).",
+          "contentPath": "05_security_hardening___trust.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "upstreamproxy/01_proxy_orchestration___lifecycle",
+          "target": "upstreamproxy/02_connect_over_websocket_relay",
+          "label": "Initializes and monitors"
+        },
+        {
+          "source": "upstreamproxy/01_proxy_orchestration___lifecycle",
+          "target": "upstreamproxy/04_environment_injection",
+          "label": "Enforces protection policies"
+        },
+        {
+          "source": "upstreamproxy/02_connect_over_websocket_relay",
+          "target": "upstreamproxy/03_protobuf_chunking_protocol",
+          "label": "Encodes traffic using"
+        },
+        {
+          "source": "upstreamproxy/01_proxy_orchestration___lifecycle",
+          "target": "upstreamproxy/05_security_hardening___trust",
+          "label": "Populates configuration for"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "upstreamproxy/01_proxy_orchestration___lifecycle",
+      "target": "upstreamproxy/02_connect_over_websocket_relay",
+      "label": "Initializes and monitors"
+    },
+    {
+      "source": "upstreamproxy/01_proxy_orchestration___lifecycle",
+      "target": "upstreamproxy/04_environment_injection",
+      "label": "Enforces protection policies"
+    },
+    {
+      "source": "upstreamproxy/02_connect_over_websocket_relay",
+      "target": "upstreamproxy/03_protobuf_chunking_protocol",
+      "label": "Encodes traffic using"
+    },
+    {
+      "source": "upstreamproxy/01_proxy_orchestration___lifecycle",
+      "target": "upstreamproxy/05_security_hardening___trust",
+      "label": "Populates configuration for"
+    }
+  ],
+  "storyPath": [
+    "upstreamproxy/01_proxy_orchestration___lifecycle",
+    "upstreamproxy/02_connect_over_websocket_relay",
+    "upstreamproxy/03_protobuf_chunking_protocol",
+    "upstreamproxy/04_environment_injection",
+    "upstreamproxy/05_security_hardening___trust"
+  ]
+}

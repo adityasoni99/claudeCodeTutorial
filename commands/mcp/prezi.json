@@ -1,0 +1,144 @@
+{
+  "projectName": "mcp",
+  "nodes": [
+    {
+      "id": "mcp",
+      "label": "mcp",
+      "type": "module",
+      "summary": "This project serves as a comprehensive management tool for the **Model Context Protocol (MCP)**, enabling users to easily register, configure, and control AI servers and tools via the command line. It features a **reactive terminal UI** for interactive state management and employs a centralized **Extended Authentication Architecture (XAA)** to handle identities across multiple servers, ensuring sensitive credentials are stored securely in the system keychain rather than in plain text configurations.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "mcp/01_cli_command_architecture",
+          "label": "CLI Command Architecture",
+          "type": "chapter",
+          "summary": "Defines how the application understands and routes user inputs. It acts as the central switchboard, mapping specific text commands (like `xaa setup` or `add`) to their corresponding executable logic. It handles the structure of arguments, flags, and help menus, ensuring that when a user types a command, the request is routed to the correct \"department\" to handle the task.",
+          "contentPath": "01_cli_command_architecture.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcp/02_mcp_server_provisioning",
+          "label": "MCP Server Provisioning",
+          "type": "chapter",
+          "summary": "Handles the registration and configuration of new Model Context Protocol (MCP) servers. Think of this like the \"Device Manager\" on a computer or an \"App Store\" installer. It takes a user's request to add a tool (via URL or command line), determines how to communicate with it (HTTP, SSE, or Standard IO), and saves the configuration so the main application can utilize the tool's capabilities.",
+          "contentPath": "02_mcp_server_provisioning.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcp/03_reactive_terminal_ui",
+          "label": "Reactive Terminal UI",
+          "type": "chapter",
+          "summary": "Unlike traditional command-line tools that print text and exit, this abstraction uses React (via Ink) to render interactive, persistent interfaces directly in the terminal. It's like having a dynamic dashboard or control panel inside your console window. This allows users to toggle server states (enable/disable) and see immediate visual feedback without running new commands for every update.",
+          "contentPath": "03_reactive_terminal_ui.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcp/04_xaa_identity_management",
+          "label": "XAA Identity Management",
+          "type": "chapter",
+          "summary": "Manages the \"Extended Authentication Architecture\" (SEP-990) for the project. Instead of logging into every server individually, this system acts like a passport office. Users configure a single Identity Provider (IdP) once, and the system obtains a \"master key\" (token). This key allows silent, automatic authentication with any compatible MCP server, streamlining security without repetitive logins.",
+          "contentPath": "04_xaa_identity_management.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcp/05_secure_credential_handling",
+          "label": "Secure Credential Handling",
+          "type": "chapter",
+          "summary": "This abstraction separates public configuration from sensitive authentication data. It treats configuration files like a public phone book (safe for URLs and names) while delegating passwords and tokens to the operating system's secure keychain. This ensures that even if configuration files are shared or inspected, the actual keys to the servers remain locked in a digital safe.",
+          "contentPath": "05_secure_credential_handling.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "mcp/05_secure_credential_handling",
+          "target": "mcp/01_cli_command_architecture",
+          "label": "Routes commands to"
+        },
+        {
+          "source": "mcp/05_secure_credential_handling",
+          "target": "mcp/02_mcp_server_provisioning",
+          "label": "Routes commands to"
+        },
+        {
+          "source": "mcp/05_secure_credential_handling",
+          "target": "mcp/03_reactive_terminal_ui",
+          "label": "Invokes interactive UI"
+        },
+        {
+          "source": "mcp/02_mcp_server_provisioning",
+          "target": "mcp/01_cli_command_architecture",
+          "label": "Validates identity settings"
+        },
+        {
+          "source": "mcp/01_cli_command_architecture",
+          "target": "mcp/04_xaa_identity_management",
+          "label": "Safely stores secrets"
+        },
+        {
+          "source": "mcp/02_mcp_server_provisioning",
+          "target": "mcp/04_xaa_identity_management",
+          "label": "Safely stores secrets"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "mcp/05_secure_credential_handling",
+      "target": "mcp/01_cli_command_architecture",
+      "label": "Routes commands to"
+    },
+    {
+      "source": "mcp/05_secure_credential_handling",
+      "target": "mcp/02_mcp_server_provisioning",
+      "label": "Routes commands to"
+    },
+    {
+      "source": "mcp/05_secure_credential_handling",
+      "target": "mcp/03_reactive_terminal_ui",
+      "label": "Invokes interactive UI"
+    },
+    {
+      "source": "mcp/02_mcp_server_provisioning",
+      "target": "mcp/01_cli_command_architecture",
+      "label": "Validates identity settings"
+    },
+    {
+      "source": "mcp/01_cli_command_architecture",
+      "target": "mcp/04_xaa_identity_management",
+      "label": "Safely stores secrets"
+    },
+    {
+      "source": "mcp/02_mcp_server_provisioning",
+      "target": "mcp/04_xaa_identity_management",
+      "label": "Safely stores secrets"
+    }
+  ],
+  "storyPath": [
+    "mcp/01_cli_command_architecture",
+    "mcp/02_mcp_server_provisioning",
+    "mcp/03_reactive_terminal_ui",
+    "mcp/04_xaa_identity_management",
+    "mcp/05_secure_credential_handling"
+  ]
+}

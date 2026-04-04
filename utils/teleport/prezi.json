@@ -1,0 +1,134 @@
+{
+  "projectName": "teleport",
+  "nodes": [
+    {
+      "id": "teleport",
+      "label": "teleport",
+      "type": "module",
+      "summary": "This project enables **remote code execution** by establishing persistent *Sessions* where an AI agent can safely read and write code. It orchestrates the lifecycle of these sessions across different *Execution Environments* (such as managed cloud instances), ensuring the remote workspace perfectly mirrors the local codebase by **synchronizing state** via git bundles and managing network interactions through a resilient API layer.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "teleport/01_remote_code_sessions",
+          "label": "Remote Code Sessions",
+          "type": "chapter",
+          "summary": "A Session represents a persistent workspace or conversation context running on a backend server. It maintains the state of the AI's work, including the code context, chat history, and current status.\n\nThink of it as a virtual meeting room where the AI works. Just as you dial into a conference call, the local client connects to a specific Session ID via the API to send messages (events) or receive updates. This abstraction handles the lifecycle of that meeting, from checking if it's \"running\" or \"idle\" to retrieving the transcript.",
+          "contentPath": "01_remote_code_sessions.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teleport/02_execution_environments",
+          "label": "Execution Environments",
+          "type": "chapter",
+          "summary": "Environments are the compute infrastructure where code sessions actually execute. These can be managed cloud instances (`anthropic_cloud`) or Bring-Your-Own-Compute (`byoc`).\n\nIf a Session is the software meeting room, the Environment is the physical building or server rack housing it. This abstraction defines the types of buildings available (Cloud vs. Bridge) and handles the logistics of listing them or constructing a new one if the user doesn't have a place to work yet.",
+          "contentPath": "02_execution_environments.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teleport/03_environment_selection_strategy",
+          "label": "Environment Selection Strategy",
+          "type": "chapter",
+          "summary": "This logic determines *where* a new session should be launched. It queries the API for available environments and cross-references them with user configuration settings (flags and config files).\n\nThink of it as a travel agent. The agent looks at a list of all available hotels (API environments) and compares them against your travel preferences and loyalty program settings (user config). It prioritizes specific requests (flags) over general preferences to book the exact room (Environment ID) you intended to use.",
+          "contentPath": "03_environment_selection_strategy.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teleport/04_state_synchronization__git_bundling_",
+          "label": "State Synchronization (Git Bundling)",
+          "type": "chapter",
+          "summary": "This abstraction creates a portable snapshot of the user's local codebase to \"seed\" the remote environment. It uses `git bundle` to pack commits and even uncommitted \"work-in-progress\" (via stashing) into a single file.\n\nImagine packing a suitcase to travel to the remote server. This logic ensures that not only do your folded clothes (committed code) make it, but also the messy pile on the chair (uncommitted changes). It handles the complexities of uploading this suitcase so the remote environment opens up looking exactly like your local machine.",
+          "contentPath": "04_state_synchronization__git_bundling_.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teleport/05_api_communication_layer",
+          "label": "API Communication Layer",
+          "type": "chapter",
+          "summary": "This layer acts as the resilient courier between the local CLI and the backend services. It manages authentication (OAuth tokens), standardizes HTTP headers, and, crucially, handles network instability.\n\nIt implements an \"exponential backoff\" strategy\u2014if the server doesn't answer the door immediately, the courier waits 2 seconds, then 4, then 8, knocking again rather than giving up immediately. It ensures that transient network hiccups don't crash the application while fetching sessions or sending commands.",
+          "contentPath": "05_api_communication_layer.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "teleport/01_remote_code_sessions",
+          "target": "teleport/02_execution_environments",
+          "label": "Runs on"
+        },
+        {
+          "source": "teleport/01_remote_code_sessions",
+          "target": "teleport/04_state_synchronization__git_bundling_",
+          "label": "Uses for transport"
+        },
+        {
+          "source": "teleport/02_execution_environments",
+          "target": "teleport/04_state_synchronization__git_bundling_",
+          "label": "Uses for authentication"
+        },
+        {
+          "source": "teleport/05_api_communication_layer",
+          "target": "teleport/02_execution_environments",
+          "label": "Selects from"
+        },
+        {
+          "source": "teleport/01_remote_code_sessions",
+          "target": "teleport/03_environment_selection_strategy",
+          "label": "Seeds filesystem from"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "teleport/01_remote_code_sessions",
+      "target": "teleport/02_execution_environments",
+      "label": "Runs on"
+    },
+    {
+      "source": "teleport/01_remote_code_sessions",
+      "target": "teleport/04_state_synchronization__git_bundling_",
+      "label": "Uses for transport"
+    },
+    {
+      "source": "teleport/02_execution_environments",
+      "target": "teleport/04_state_synchronization__git_bundling_",
+      "label": "Uses for authentication"
+    },
+    {
+      "source": "teleport/05_api_communication_layer",
+      "target": "teleport/02_execution_environments",
+      "label": "Selects from"
+    },
+    {
+      "source": "teleport/01_remote_code_sessions",
+      "target": "teleport/03_environment_selection_strategy",
+      "label": "Seeds filesystem from"
+    }
+  ],
+  "storyPath": [
+    "teleport/01_remote_code_sessions",
+    "teleport/02_execution_environments",
+    "teleport/03_environment_selection_strategy",
+    "teleport/04_state_synchronization__git_bundling_",
+    "teleport/05_api_communication_layer"
+  ]
+}

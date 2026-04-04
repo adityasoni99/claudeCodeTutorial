@@ -1,0 +1,198 @@
+{
+  "projectName": "tools",
+  "nodes": [
+    {
+      "id": "tools",
+      "label": "tools",
+      "type": "module",
+      "summary": "The **tools** project implements a comprehensive suite of capabilities for an autonomous AI agent, enabling it to interact with the local environment and coordinate complex workflows. It features a **recursive agent runtime** that can spawn specialized sub-agents, a set of **filesystem and codebase intelligence** tools for reading, writing, and analyzing code, and a **planning mode** to architect solutions before implementation. Additionally, it includes a robust **task and team coordination** layer with communication channels to manage multi-agent swarms and maintain persistent state across sessions.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "tools/01_recursive_agent_runtime",
+          "label": "Recursive Agent Runtime",
+          "type": "chapter",
+          "summary": "The core engine that allows the system to spawn sub-agents (specialized workers) to solve complex sub-tasks. It manages the lifecycle, context inheritance, and memory of these sub-processes.\nThink of it like a main program forking child processes, or a manager delegating specific jobs (like \"Research\" or \"Planning\") to specialized employees who report back when done.",
+          "contentPath": "01_recursive_agent_runtime.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tools/02_task___team_coordination",
+          "label": "Task & Team Coordination",
+          "type": "chapter",
+          "summary": "A persistent state layer for tracking work items (Tasks) and organizing agents into \"Teams\". This allows multiple agents (or the same agent over time) to maintain a shared todo list, assign work, and track blockers.\nIt acts like a shared project management board (e.g., Jira or Trello) where the team records tickets and updates their status to stay synchronized.",
+          "contentPath": "02_task___team_coordination.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tools/03_communication_channels",
+          "label": "Communication Channels",
+          "type": "chapter",
+          "summary": "The protocols for the agent to output information to the user or exchange messages with other agents in a swarm. It handles soliciting user input, providing status updates, or sending structured requests to peers.\nSimilar to a developer using Slack to message a teammate (`SendMessage`), asking a clarifying question in a meeting (`AskUserQuestion`), or sending a daily status email (`Brief`).",
+          "contentPath": "03_communication_channels.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tools/04_planning_workflow",
+          "label": "Planning Workflow",
+          "type": "chapter",
+          "summary": "A dedicated state machine that forces the agent to switch into a read-only \"architect\" mode before writing code. This abstraction enforces a \"measure twice, cut once\" philosophy by restricting write permissions until a plan is approved.\nIt's like a whiteboard session where you sketch out the design and agree on the approach before anyone touches a keyboard to write production code.",
+          "contentPath": "04_planning_workflow.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tools/05_file_system_manipulation",
+          "label": "File System Manipulation",
+          "type": "chapter",
+          "summary": "The set of tools that serve as the agent's \"hands\" for interacting with files. It handles reading, writing, and surgically editing code or notebooks, often with safety checks like `read-before-write` and backup tracking.\nIt's similar to a developer using a text editor: opening files to read context, typing code, and saving changes to disk.",
+          "contentPath": "05_file_system_manipulation.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tools/06_shell___system_execution",
+          "label": "Shell & System Execution",
+          "type": "chapter",
+          "summary": "The raw interface to the underlying operating system. When higher-level tools aren't enough, this allows the agent to execute arbitrary shell commands to run tests, manage git, or check system configuration.\nThis is simply the terminal window where a developer runs CLI commands.",
+          "contentPath": "06_shell___system_execution.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tools/07_codebase_intelligence",
+          "label": "Codebase Intelligence",
+          "type": "chapter",
+          "summary": "Tools that provide the agent with semantic understanding and navigational capabilities within the codebase. This ranges from simple pattern matching (Grep/Glob) to deep language-aware analysis (LSP) for finding definitions and references.\nIt's the agent's equivalent of IDE features like \"Go to Definition,\" \"Find in Files,\" and the file explorer tree.",
+          "contentPath": "07_codebase_intelligence.md",
+          "x": -800.0,
+          "y": 450.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "tools/01_recursive_agent_runtime",
+          "target": "tools/07_codebase_intelligence",
+          "label": "Manages background shell tasks"
+        },
+        {
+          "source": "tools/01_recursive_agent_runtime",
+          "target": "tools/04_planning_workflow",
+          "label": "Promotes search tool usage"
+        },
+        {
+          "source": "tools/02_task___team_coordination",
+          "target": "tools/04_planning_workflow",
+          "label": "Notifies LSP of edits"
+        },
+        {
+          "source": "tools/03_communication_channels",
+          "target": "tools/06_shell___system_execution",
+          "label": "Sends task assignment updates"
+        },
+        {
+          "source": "tools/05_file_system_manipulation",
+          "target": "tools/02_task___team_coordination",
+          "label": "Saves plan to disk"
+        },
+        {
+          "source": "tools/05_file_system_manipulation",
+          "target": "tools/06_shell___system_execution",
+          "label": "Sends approval requests"
+        },
+        {
+          "source": "tools/06_shell___system_execution",
+          "target": "tools/01_recursive_agent_runtime",
+          "label": "Resumes background agents"
+        },
+        {
+          "source": "tools/06_shell___system_execution",
+          "target": "tools/03_communication_channels",
+          "label": "Resolves team members"
+        },
+        {
+          "source": "tools/07_codebase_intelligence",
+          "target": "tools/02_task___team_coordination",
+          "label": "Directs usage to file tools"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "tools/01_recursive_agent_runtime",
+      "target": "tools/07_codebase_intelligence",
+      "label": "Manages background shell tasks"
+    },
+    {
+      "source": "tools/01_recursive_agent_runtime",
+      "target": "tools/04_planning_workflow",
+      "label": "Promotes search tool usage"
+    },
+    {
+      "source": "tools/02_task___team_coordination",
+      "target": "tools/04_planning_workflow",
+      "label": "Notifies LSP of edits"
+    },
+    {
+      "source": "tools/03_communication_channels",
+      "target": "tools/06_shell___system_execution",
+      "label": "Sends task assignment updates"
+    },
+    {
+      "source": "tools/05_file_system_manipulation",
+      "target": "tools/02_task___team_coordination",
+      "label": "Saves plan to disk"
+    },
+    {
+      "source": "tools/05_file_system_manipulation",
+      "target": "tools/06_shell___system_execution",
+      "label": "Sends approval requests"
+    },
+    {
+      "source": "tools/06_shell___system_execution",
+      "target": "tools/01_recursive_agent_runtime",
+      "label": "Resumes background agents"
+    },
+    {
+      "source": "tools/06_shell___system_execution",
+      "target": "tools/03_communication_channels",
+      "label": "Resolves team members"
+    },
+    {
+      "source": "tools/07_codebase_intelligence",
+      "target": "tools/02_task___team_coordination",
+      "label": "Directs usage to file tools"
+    }
+  ],
+  "storyPath": [
+    "tools/01_recursive_agent_runtime",
+    "tools/02_task___team_coordination",
+    "tools/03_communication_channels",
+    "tools/04_planning_workflow",
+    "tools/05_file_system_manipulation",
+    "tools/06_shell___system_execution",
+    "tools/07_codebase_intelligence"
+  ]
+}

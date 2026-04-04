@@ -1,0 +1,144 @@
+{
+  "projectName": "lsp",
+  "nodes": [
+    {
+      "id": "lsp",
+      "label": "lsp",
+      "type": "module",
+      "summary": "This project implements a **Language Server Protocol (LSP)** client system that allows the application to understand code by communicating with external language tools (like `tsserver` or `pyright`). A central **Manager** routes file events (open, change, save) to the appropriate **Server Instance** based on file extension, while a low-level **Communicator** handles the raw process communication. It also features a **Diagnostic Feedback Loop** that asynchronously captures, deduplicates, and stores error messages sent by the servers for later retrieval.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "lsp/01_global_lifecycle_singleton__the_anchor_",
+          "label": "Global Lifecycle Singleton (The Anchor)",
+          "type": "chapter",
+          "summary": "This abstraction ensures only one LSP system exists within the application and manages its startup/shutdown timing. Think of it as the building manager who unlocks the doors in the morning (initialization) and locks up at night (shutdown). It handles the asynchronous complexity of loading plugins and ensures the system doesn't try to run before it is ready or after it has failed.",
+          "contentPath": "01_global_lifecycle_singleton__the_anchor_.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "lsp/02_lsp_server_manager__the_router_",
+          "label": "LSP Server Manager (The Router)",
+          "type": "chapter",
+          "summary": "The central coordinator that manages multiple language servers simultaneously. It acts like a traffic controller or switchboard operator: when a file is opened or changed, this manager determines which specific server (e.g., TypeScript vs. Python) handles that file extension and routes the request accordingly. It also handles loading the initial configuration for all available servers.",
+          "contentPath": "02_lsp_server_manager__the_router_.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "lsp/03_server_instance__the_worker_",
+          "label": "Server Instance (The Worker)",
+          "type": "chapter",
+          "summary": "Represents a single, specific running language server (like a specific instance of `tsserver`). It manages the state machine for that server (Starting -> Running -> Error), handles health checks, and enforces crash recovery logic. It acts like a specific contractor you've hired: it tracks whether they are currently working, taking a break, or have quit unexpectedly, and manages their specific tasks.",
+          "contentPath": "03_server_instance__the_worker_.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "lsp/04_low_level_client__the_communicator_",
+          "label": "Low-Level Client (The Communicator)",
+          "type": "chapter",
+          "summary": "The foundational layer that handles the raw communication with the server process via standard input/output (stdio). It wraps the JSON-RPC protocol, spawning the actual child process and managing the data streams. It is like the telephone line and translator combined; it doesn't care *what* is being said, it just ensures the message gets transmitted and received correctly between the two parties.",
+          "contentPath": "04_low_level_client__the_communicator_.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "lsp/05_diagnostic_feedback_loop__the_mailbox_",
+          "label": "Diagnostic Feedback Loop (The Mailbox)",
+          "type": "chapter",
+          "summary": "LSP servers send error reports (diagnostics) asynchronously whenever they detect issues, not just when asked. This system catches these unsolicited notifications, deduplicates them, and stores them until the user or AI is ready to read them. It's like a voicemail inbox: even if you are busy when a caller (the server) has important news, the message is recorded and saved for you to retrieve later.",
+          "contentPath": "05_diagnostic_feedback_loop__the_mailbox_.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "lsp/02_lsp_server_manager__the_router_",
+          "target": "lsp/01_global_lifecycle_singleton__the_anchor_",
+          "label": "Initializes and manages"
+        },
+        {
+          "source": "lsp/01_global_lifecycle_singleton__the_anchor_",
+          "target": "lsp/03_server_instance__the_worker_",
+          "label": "Creates and coordinates"
+        },
+        {
+          "source": "lsp/03_server_instance__the_worker_",
+          "target": "lsp/04_low_level_client__the_communicator_",
+          "label": "Delegates RPC communication to"
+        },
+        {
+          "source": "lsp/02_lsp_server_manager__the_router_",
+          "target": "lsp/05_diagnostic_feedback_loop__the_mailbox_",
+          "label": "Registers handlers"
+        },
+        {
+          "source": "lsp/05_diagnostic_feedback_loop__the_mailbox_",
+          "target": "lsp/01_global_lifecycle_singleton__the_anchor_",
+          "label": "Retrieves server list from"
+        },
+        {
+          "source": "lsp/05_diagnostic_feedback_loop__the_mailbox_",
+          "target": "lsp/03_server_instance__the_worker_",
+          "label": "Subscribes to notifications"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "lsp/02_lsp_server_manager__the_router_",
+      "target": "lsp/01_global_lifecycle_singleton__the_anchor_",
+      "label": "Initializes and manages"
+    },
+    {
+      "source": "lsp/01_global_lifecycle_singleton__the_anchor_",
+      "target": "lsp/03_server_instance__the_worker_",
+      "label": "Creates and coordinates"
+    },
+    {
+      "source": "lsp/03_server_instance__the_worker_",
+      "target": "lsp/04_low_level_client__the_communicator_",
+      "label": "Delegates RPC communication to"
+    },
+    {
+      "source": "lsp/02_lsp_server_manager__the_router_",
+      "target": "lsp/05_diagnostic_feedback_loop__the_mailbox_",
+      "label": "Registers handlers"
+    },
+    {
+      "source": "lsp/05_diagnostic_feedback_loop__the_mailbox_",
+      "target": "lsp/01_global_lifecycle_singleton__the_anchor_",
+      "label": "Retrieves server list from"
+    },
+    {
+      "source": "lsp/05_diagnostic_feedback_loop__the_mailbox_",
+      "target": "lsp/03_server_instance__the_worker_",
+      "label": "Subscribes to notifications"
+    }
+  ],
+  "storyPath": [
+    "lsp/01_global_lifecycle_singleton__the_anchor_",
+    "lsp/02_lsp_server_manager__the_router_",
+    "lsp/03_server_instance__the_worker_",
+    "lsp/04_low_level_client__the_communicator_",
+    "lsp/05_diagnostic_feedback_loop__the_mailbox_"
+  ]
+}

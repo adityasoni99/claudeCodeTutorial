@@ -1,0 +1,124 @@
+{
+  "projectName": "chrome",
+  "nodes": [
+    {
+      "id": "chrome",
+      "label": "chrome",
+      "type": "module",
+      "summary": "This project implements an interactive **CLI menu** that allows users to configure the \"Claude in Chrome\" feature directly from their terminal. It acts as a bridge to a *browser extension*, enabling users to check connection status, manage permissions, and toggle preferences through a **React-based** textual interface that adapts to the local **environment**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "chrome/01_command_module_definition",
+          "label": "Command Module Definition",
+          "type": "chapter",
+          "summary": "Defines how a feature is exposed to the CLI application. It encapsulates metadata like the command name, description, and availability rules. Crucially, it uses a lazy-loading pattern (`load`) to import the heavy UI logic only when the command is actually executed, optimizing application startup time.\nIt's like a menu item in a restaurant; the kitchen doesn't prepare the ingredients (load the code) until the customer actually orders that specific dish.",
+          "contentPath": "01_command_module_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "chrome/02_interactive_cli_ui__react_ink_",
+          "label": "Interactive CLI UI (React/Ink)",
+          "type": "chapter",
+          "summary": "Implements the visual interface within the terminal using React and the `ink` library. It manages local component state (like menu selection indices and toggle switches) and renders UI elements like Dialogs, Select lists, and colored Text. This abstraction treats the terminal like a DOM, allowing for complex, interactive, component-based flows.\nIt's like building a web application, but instead of rendering HTML to a browser window, it renders text characters and control codes to a command-line interface.",
+          "contentPath": "02_interactive_cli_ui__react_ink_.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "chrome/03_browser_extension_bridge",
+          "label": "Browser Extension Bridge",
+          "type": "chapter",
+          "summary": "Encapsulates the logic for interacting with the external Chrome extension. It handles status checks (is it installed?), connection management (reconnect flows), and navigation to specific configuration URLs (permissions). It serves as the glue between the local CLI environment and the browser context.\nIt's like a specialized remote control that pairs with a specific TV (the extension). It checks if the TV is plugged in and sends specific signals to change settings or open channels.",
+          "contentPath": "03_browser_extension_bridge.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "chrome/04_environment___state_context",
+          "label": "Environment & State Context",
+          "type": "chapter",
+          "summary": "Manages the feature's availability based on the execution environment and global application state. It checks if the app is running in WSL, a remote \"Homespace,\" or if the user is a subscriber, and queries the status of MCP (Model Context Protocol) clients. This ensures the feature behaves correctly across different platforms and connection states.\nIt's like a vehicle's pre-flight check system that disables certain driving modes if it detects icy roads (environment constraints) or if the key isn't authorized (subscription status).",
+          "contentPath": "04_environment___state_context.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "chrome/05_configuration_persistence",
+          "label": "Configuration Persistence",
+          "type": "chapter",
+          "summary": "Handles the reading and writing of persistent user settings. It utilizes `getGlobalConfig` and `saveGlobalConfig` to store preferences, such as whether \"Claude in Chrome\" should be enabled by default. This ensures user choices are remembered across different sessions of the CLI.\nIt's like the \"Preferences\" menu in a desktop application where your choices are written to a settings file, so the app remembers your customization the next time you open it.",
+          "contentPath": "05_configuration_persistence.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "chrome/01_command_module_definition",
+          "target": "chrome/02_interactive_cli_ui__react_ink_",
+          "label": "Lazily loads and executes"
+        },
+        {
+          "source": "chrome/02_interactive_cli_ui__react_ink_",
+          "target": "chrome/03_browser_extension_bridge",
+          "label": "Checks status and opens URLs"
+        },
+        {
+          "source": "chrome/02_interactive_cli_ui__react_ink_",
+          "target": "chrome/04_environment___state_context",
+          "label": "Queries environment and state"
+        },
+        {
+          "source": "chrome/02_interactive_cli_ui__react_ink_",
+          "target": "chrome/05_configuration_persistence",
+          "label": "Reads and modifies settings"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "chrome/01_command_module_definition",
+      "target": "chrome/02_interactive_cli_ui__react_ink_",
+      "label": "Lazily loads and executes"
+    },
+    {
+      "source": "chrome/02_interactive_cli_ui__react_ink_",
+      "target": "chrome/03_browser_extension_bridge",
+      "label": "Checks status and opens URLs"
+    },
+    {
+      "source": "chrome/02_interactive_cli_ui__react_ink_",
+      "target": "chrome/04_environment___state_context",
+      "label": "Queries environment and state"
+    },
+    {
+      "source": "chrome/02_interactive_cli_ui__react_ink_",
+      "target": "chrome/05_configuration_persistence",
+      "label": "Reads and modifies settings"
+    }
+  ],
+  "storyPath": [
+    "chrome/01_command_module_definition",
+    "chrome/02_interactive_cli_ui__react_ink_",
+    "chrome/03_browser_extension_bridge",
+    "chrome/04_environment___state_context",
+    "chrome/05_configuration_persistence"
+  ]
+}

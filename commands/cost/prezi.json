@@ -1,0 +1,134 @@
+{
+  "projectName": "cost",
+  "nodes": [
+    {
+      "id": "cost",
+      "label": "cost",
+      "type": "module",
+      "summary": "This project implements a **cost tracking command** for a CLI application. It uses a *lazy-loading architecture* to ensure the tool starts quickly by only loading heavy logic when the user specifically asks for cost details. The system creates a dynamic experience by checking **user permissions** to determine if pricing details should be displayed or if the command should be *hidden* entirely from the menu.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "cost/01_command_definition___metadata",
+          "label": "Command Definition & Metadata",
+          "type": "chapter",
+          "summary": "This abstraction defines the \"shape\" of a command within the CLI framework. It exports a structured object containing the command's name, type, description, and behavioral flags (like support for non-interactive modes).\n\nIt acts like an ID badge or a business card for a specific tool. It tells the main application \"Hello, I am the 'cost' command, here is what I do, and here are the rules for showing me to users,\" without actually performing the work itself.",
+          "contentPath": "01_command_definition___metadata.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "cost/02_user_context___authorization",
+          "label": "User Context & Authorization",
+          "type": "chapter",
+          "summary": "This logic determines how the application behaves based on who the user is. It checks specific conditions\u2014such as whether the user is a paid subscriber (`isClaudeAISubscriber`) or an internal employee (`process.env.USER_TYPE === 'ant'`)\u2014to alter functionality or text output.\n\nIt's similar to a smart electronic lock on a door. Depending on the keycard scanned (the user's status), the lock might open a different way, turn on specific lights, or perhaps deny entry entirely.",
+          "contentPath": "02_user_context___authorization.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "cost/03_dynamic_visibility_logic",
+          "label": "Dynamic Visibility Logic",
+          "type": "chapter",
+          "summary": "This concept controls whether a command appears in the list of available tools or help menus. Instead of a static boolean (true/false), it uses a getter function (`get isHidden`) to evaluate conditions at runtime.\n\nImagine a video game HUD that only shows a \"Cast Spell\" button if your character actually has mana. The button exists in the code, but the interface dynamically hides or reveals it based on your character's current stats or subscription level.",
+          "contentPath": "03_dynamic_visibility_logic.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "cost/04_lazy_loaded_command_architecture",
+          "label": "Lazy-Loaded Command Architecture",
+          "type": "chapter",
+          "summary": "This pattern separates the command's definition (metadata) from its actual execution logic to improve startup performance. The main entry point defines what the command is but does not import the heavy logic until the command is actually invoked.\n\nThink of it like a restaurant menu. The menu (`index.ts`) lists the name and description of a dish so you can decide to order it. The kitchen doesn't actually start cooking or assembling ingredients (`cost.ts`) until you specifically place that order.",
+          "contentPath": "04_lazy_loaded_command_architecture.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "cost/05_cost___quota_management",
+          "label": "Cost & Quota Management",
+          "type": "chapter",
+          "summary": "This represents the core business logic for tracking usage. It handles the retrieval of cost data (`formatTotalCost`) and checks against usage limits (`currentLimits`), handling edge cases like overage usage versus standard subscription usage.\n\nIt operates like a utility meter in your home. It reads how much electricity (compute/tokens) you've used and determines your bill or status based on your specific rate plan, alerting you if you are dipping into emergency reserves (overages).",
+          "contentPath": "05_cost___quota_management.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "cost/02_user_context___authorization",
+          "target": "cost/01_command_definition___metadata",
+          "label": "Lazily imports"
+        },
+        {
+          "source": "cost/02_user_context___authorization",
+          "target": "cost/04_lazy_loaded_command_architecture",
+          "label": "Determines availability via"
+        },
+        {
+          "source": "cost/04_lazy_loaded_command_architecture",
+          "target": "cost/03_dynamic_visibility_logic",
+          "label": "Queries status from"
+        },
+        {
+          "source": "cost/01_command_definition___metadata",
+          "target": "cost/05_cost___quota_management",
+          "label": "Retrieves usage data from"
+        },
+        {
+          "source": "cost/01_command_definition___metadata",
+          "target": "cost/03_dynamic_visibility_logic",
+          "label": "Adapts output based on"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "cost/02_user_context___authorization",
+      "target": "cost/01_command_definition___metadata",
+      "label": "Lazily imports"
+    },
+    {
+      "source": "cost/02_user_context___authorization",
+      "target": "cost/04_lazy_loaded_command_architecture",
+      "label": "Determines availability via"
+    },
+    {
+      "source": "cost/04_lazy_loaded_command_architecture",
+      "target": "cost/03_dynamic_visibility_logic",
+      "label": "Queries status from"
+    },
+    {
+      "source": "cost/01_command_definition___metadata",
+      "target": "cost/05_cost___quota_management",
+      "label": "Retrieves usage data from"
+    },
+    {
+      "source": "cost/01_command_definition___metadata",
+      "target": "cost/03_dynamic_visibility_logic",
+      "label": "Adapts output based on"
+    }
+  ],
+  "storyPath": [
+    "cost/01_command_definition___metadata",
+    "cost/02_user_context___authorization",
+    "cost/03_dynamic_visibility_logic",
+    "cost/04_lazy_loaded_command_architecture",
+    "cost/05_cost___quota_management"
+  ]
+}

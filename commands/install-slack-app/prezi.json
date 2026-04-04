@@ -1,0 +1,124 @@
+{
+  "projectName": "install-slack-app",
+  "nodes": [
+    {
+      "id": "install-slack-app",
+      "label": "install-slack-app",
+      "type": "module",
+      "summary": "This project creates a specific **command** that allows users to easily *install* the Claude Slack app. It uses a smart registration system to list the feature on a \"menu\" without loading the heavy code until needed. When clicked, it updates the system's **memory** to track usage and attempts to open the installation page in a *web browser*.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "install-slack-app/01_command_metadata_registration",
+          "label": "Command Metadata Registration",
+          "type": "chapter",
+          "summary": "This abstraction acts like a menu entry in a restaurant. It tells the main application what the command is named (\"install-slack-app\"), what it does, and under what conditions it is available (e.g., specific platforms). Crucially, it doesn't contain the actual cooking instructions (the logic); it just points to them. This allows the system to list all available tools without having to load the heavy code for every single one immediately, keeping the application startup fast and organized.",
+          "contentPath": "01_command_metadata_registration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "install-slack-app/02_lazy_module_loading",
+          "label": "Lazy Module Loading",
+          "type": "chapter",
+          "summary": "This pattern is used to optimize performance. Imagine a library where you don't carry every single book to the reading table at once; you only fetch the specific book you need when you're ready to read it. The `load` function uses a dynamic import (`import(...)`) to fetch the implementation file only when the command is actually triggered. This prevents the application from wasting memory loading code for features that the user might never use during a session.",
+          "contentPath": "02_lazy_module_loading.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "install-slack-app/03_command_execution_handler",
+          "label": "Command Execution Handler",
+          "type": "chapter",
+          "summary": "If the metadata is the menu entry, this abstraction is the chef preparing the dish. The `call` function contains the specific imperative logic to execute the command. In this context, it handles the sequence of events: logging analytics, updating configuration settings, and triggering external actions like opening a web browser. It encapsulates the \"how\" of the feature, isolated from the registration logic, ensuring that the code runs only when explicitly invoked by the user or the system.",
+          "contentPath": "03_command_execution_handler.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "install-slack-app/04_persistent_state_management",
+          "label": "Persistent State Management",
+          "type": "chapter",
+          "summary": "This abstraction handles the long-term memory of the application. Using `saveGlobalConfig`, the code modifies a central configuration object that persists across different sessions. It's similar to a scoreboard or a journal that remembers history. In this specific case, it tracks `slackAppInstallCount`, allowing the application to remember how many times the user has attempted this action, potentially for analytics or to change UI behavior based on past interactions.",
+          "contentPath": "04_persistent_state_management.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "install-slack-app/05_standardized_result_protocol",
+          "label": "Standardized Result Protocol",
+          "type": "chapter",
+          "summary": "This defines the contract for how a command communicates its outcome back to the main system. It acts like a standardized report form. Instead of returning random strings or objects, the function returns a `LocalCommandResult` (containing a `type` and `value`). This ensures that no matter what the command does internally, the system knows exactly how to render the output to the user\u2014whether it's a success message indicating the browser opened or a fallback text URL.",
+          "contentPath": "05_standardized_result_protocol.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "install-slack-app/01_command_metadata_registration",
+          "target": "install-slack-app/03_command_execution_handler",
+          "label": "Defines"
+        },
+        {
+          "source": "install-slack-app/03_command_execution_handler",
+          "target": "install-slack-app/02_lazy_module_loading",
+          "label": "Imports"
+        },
+        {
+          "source": "install-slack-app/02_lazy_module_loading",
+          "target": "install-slack-app/05_standardized_result_protocol",
+          "label": "Updates"
+        },
+        {
+          "source": "install-slack-app/02_lazy_module_loading",
+          "target": "install-slack-app/04_persistent_state_management",
+          "label": "Returns"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "install-slack-app/01_command_metadata_registration",
+      "target": "install-slack-app/03_command_execution_handler",
+      "label": "Defines"
+    },
+    {
+      "source": "install-slack-app/03_command_execution_handler",
+      "target": "install-slack-app/02_lazy_module_loading",
+      "label": "Imports"
+    },
+    {
+      "source": "install-slack-app/02_lazy_module_loading",
+      "target": "install-slack-app/05_standardized_result_protocol",
+      "label": "Updates"
+    },
+    {
+      "source": "install-slack-app/02_lazy_module_loading",
+      "target": "install-slack-app/04_persistent_state_management",
+      "label": "Returns"
+    }
+  ],
+  "storyPath": [
+    "install-slack-app/01_command_metadata_registration",
+    "install-slack-app/02_lazy_module_loading",
+    "install-slack-app/03_command_execution_handler",
+    "install-slack-app/04_persistent_state_management",
+    "install-slack-app/05_standardized_result_protocol"
+  ]
+}

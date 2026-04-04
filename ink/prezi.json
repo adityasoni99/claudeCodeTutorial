@@ -1,0 +1,156 @@
+{
+  "projectName": "ink",
+  "nodes": [
+    {
+      "id": "ink",
+      "label": "ink",
+      "type": "module",
+      "summary": "Ink is a library for building **interactive command-line interfaces** using **React**. It mirrors the browser environment by providing a custom **DOM** (powered by the Yoga layout engine), a **Reconciler** to translate React state into terminal operations, and a specialized **Renderer** that paints the UI to `stdout` using efficient **diffing** to ensure high performance and prevent flickering.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "ink/01_core_component_primitives",
+          "label": "Core Component Primitives",
+          "type": "chapter",
+          "summary": "The foundational React components `<Box>` and `<Text>` that developers use to build interfaces. `<Box>` provides Flexbox layout capabilities (analogous to HTML `div` with `display: flex`), while `<Text>` handles string styling (colors, modifiers) and wrapping (analogous to `span`). They abstract away the complexity of ANSI escape codes and Yoga layout integration.",
+          "contentPath": "01_core_component_primitives.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ink/02_ink_dom___layout_engine",
+          "label": "Ink DOM & Layout Engine",
+          "type": "chapter",
+          "summary": "Represents the visual tree of the terminal UI, mirroring the browser's DOM but for the command line. It uses an internal node structure (`InkNode`) that wraps Yoga Layout (a C++ flexbox engine compiled to JS/WASM) to calculate element positions and dimensions. Think of it as the \"skeleton\" of your UI, where nodes hold style data and layout calculations before they are painted.",
+          "contentPath": "02_ink_dom___layout_engine.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ink/03_react_reconciler",
+          "label": "React Reconciler",
+          "type": "chapter",
+          "summary": "The bridge that connects React's virtual DOM to Ink's internal DOM. It implements the `react-reconciler` host config, translating React operations (like creating elements, updating props, or appending children) into specific mutations on Ink's DOM nodes. It acts like a translator, ensuring that when you write JSX, the underlying terminal structure updates efficiently.",
+          "contentPath": "03_react_reconciler.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ink/04_input_processing_pipeline",
+          "label": "Input Processing Pipeline",
+          "type": "chapter",
+          "summary": "Captures raw byte streams from `stdin`, parsing complex ANSI escape sequences into usable keypress and mouse events. It handles edge cases like paste buffers, mouse tracking protocols (SGR/X10), and modifier keys, normalizing them into a consistent event format that React components can consume via hooks like `useInput`.",
+          "contentPath": "04_input_processing_pipeline.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ink/05_frame_renderer",
+          "label": "Frame Renderer",
+          "type": "chapter",
+          "summary": "Responsible for taking the current state of the Ink DOM, triggering layout calculations, and \"painting\" the result into a grid of characters (a Screen buffer). It handles details like text measuring, clipping, and z-ordering. It's similar to a browser's rendering pipeline, producing a snapshot of what the terminal should currently look like.",
+          "contentPath": "05_frame_renderer.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ink/06_output_diffing__logupdate_",
+          "label": "Output Diffing (LogUpdate)",
+          "type": "chapter",
+          "summary": "Manages the actual writing to `stdout`. Instead of clearing the screen and rewriting everything (which causes flickering), it compares the new frame with the previous one and generates the minimal set of ANSI escape sequences needed to update the terminal. It acts like a video codec for text, calculating the \"delta\" between frames to ensure smooth rendering.",
+          "contentPath": "06_output_diffing__logupdate_.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "ink/02_ink_dom___layout_engine",
+          "target": "ink/01_core_component_primitives",
+          "label": "Manipulates DOM"
+        },
+        {
+          "source": "ink/03_react_reconciler",
+          "target": "ink/01_core_component_primitives",
+          "label": "Reads and paints nodes"
+        },
+        {
+          "source": "ink/03_react_reconciler",
+          "target": "ink/02_ink_dom___layout_engine",
+          "label": "Uses for isolated rendering"
+        },
+        {
+          "source": "ink/04_input_processing_pipeline",
+          "target": "ink/03_react_reconciler",
+          "label": "Consumes rendered frames"
+        },
+        {
+          "source": "ink/05_frame_renderer",
+          "target": "ink/02_ink_dom___layout_engine",
+          "label": "Schedules updates"
+        },
+        {
+          "source": "ink/06_output_diffing__logupdate_",
+          "target": "ink/01_core_component_primitives",
+          "label": "Uses style types"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "ink/02_ink_dom___layout_engine",
+      "target": "ink/01_core_component_primitives",
+      "label": "Manipulates DOM"
+    },
+    {
+      "source": "ink/03_react_reconciler",
+      "target": "ink/01_core_component_primitives",
+      "label": "Reads and paints nodes"
+    },
+    {
+      "source": "ink/03_react_reconciler",
+      "target": "ink/02_ink_dom___layout_engine",
+      "label": "Uses for isolated rendering"
+    },
+    {
+      "source": "ink/04_input_processing_pipeline",
+      "target": "ink/03_react_reconciler",
+      "label": "Consumes rendered frames"
+    },
+    {
+      "source": "ink/05_frame_renderer",
+      "target": "ink/02_ink_dom___layout_engine",
+      "label": "Schedules updates"
+    },
+    {
+      "source": "ink/06_output_diffing__logupdate_",
+      "target": "ink/01_core_component_primitives",
+      "label": "Uses style types"
+    }
+  ],
+  "storyPath": [
+    "ink/01_core_component_primitives",
+    "ink/02_ink_dom___layout_engine",
+    "ink/03_react_reconciler",
+    "ink/04_input_processing_pipeline",
+    "ink/05_frame_renderer",
+    "ink/06_output_diffing__logupdate_"
+  ]
+}

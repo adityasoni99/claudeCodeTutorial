@@ -1,0 +1,134 @@
+{
+  "projectName": "hooks",
+  "nodes": [
+    {
+      "id": "hooks",
+      "label": "hooks",
+      "type": "module",
+      "summary": "This project defines a **CLI command** called \"hooks\" that allows users to view and configure settings for various system tools. It employs a *dynamic loading* strategy to import the heavy logic and interactive **React-based UI** only when the command is actually executed. The command integrates with the global **application state** to verify permissions and dynamically retrieve the list of available tools to display.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "hooks/01_command_registry_definition",
+          "label": "Command Registry Definition",
+          "type": "chapter",
+          "summary": "Defines the metadata for a CLI command, such as its name, description, and type. It serves as the entry point that tells the main application that this feature exists and how to handle it.\n\nThink of it like a menu item in a restaurant. The menu lists the name (\"Hooks\") and a description (\"View configurations\"), but it doesn't contain the actual ingredients or the chef\u2014it just points the waiter to the kitchen when ordered.",
+          "contentPath": "01_command_registry_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "hooks/02_dynamic_command_loading",
+          "label": "Dynamic Command Loading",
+          "type": "chapter",
+          "summary": "A mechanism to load the heavy logic of a command only when it is actually executed by the user. Instead of importing everything at startup, the system uses a function to import the module on demand.\n\nIt's like a \"Just-In-Time\" delivery system. Instead of storing every possible spare part in a small workshop (which would clutter the space), you order the specific part from the warehouse only when a customer brings in a car that needs it.",
+          "contentPath": "02_dynamic_command_loading.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "hooks/03_local_jsx_execution",
+          "label": "Local JSX Execution",
+          "type": "chapter",
+          "summary": "The specific implementation of a command that renders a React-based User Interface (TUI) within the terminal. It handles the lifecycle of the command, from initialization to completion (`onDone`).\n\nImagine a pop-up store. The `call` function sets up the store (initializes variables), opens the doors (renders the `HooksConfigMenu` component), and cleans up when the store closes (calls `onDone` to exit).",
+          "contentPath": "03_local_jsx_execution.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "hooks/04_tool_ecosystem_integration",
+          "label": "Tool Ecosystem Integration",
+          "type": "chapter",
+          "summary": "The logic that retrieves available \"tools\" from the system based on the current context. This abstraction bridges the gap between the generic \"hooks\" configuration system and the specific tools installed in the environment.\n\nIt's like a universal remote control setup wizard. The remote (the `HooksConfigMenu`) needs to scan the room to see what devices (TV, Soundbar, DVD Player\u2014aka the `toolNames`) are available before it can configure buttons for them.",
+          "contentPath": "04_tool_ecosystem_integration.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "hooks/05_application_state_context",
+          "label": "Application State Context",
+          "type": "chapter",
+          "summary": "A shared object passed to commands that provides access to global data, such as permissions, configurations, or the state of other tools. It ensures commands don't operate in a vacuum.\n\nThink of it like a security pass combined with a map given to a contractor entering a building. The pass (`appState`) determines which rooms they can enter (`toolPermissionContext`) and what equipment they can use, without them needing to own the building.",
+          "contentPath": "05_application_state_context.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "hooks/01_command_registry_definition",
+          "target": "hooks/02_dynamic_command_loading",
+          "label": "Specifies loading strategy"
+        },
+        {
+          "source": "hooks/02_dynamic_command_loading",
+          "target": "hooks/03_local_jsx_execution",
+          "label": "Loads implementation"
+        },
+        {
+          "source": "hooks/03_local_jsx_execution",
+          "target": "hooks/04_tool_ecosystem_integration",
+          "label": "Accesses global state"
+        },
+        {
+          "source": "hooks/03_local_jsx_execution",
+          "target": "hooks/05_application_state_context",
+          "label": "Retrieves available tools"
+        },
+        {
+          "source": "hooks/05_application_state_context",
+          "target": "hooks/04_tool_ecosystem_integration",
+          "label": "Uses permission context"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "hooks/01_command_registry_definition",
+      "target": "hooks/02_dynamic_command_loading",
+      "label": "Specifies loading strategy"
+    },
+    {
+      "source": "hooks/02_dynamic_command_loading",
+      "target": "hooks/03_local_jsx_execution",
+      "label": "Loads implementation"
+    },
+    {
+      "source": "hooks/03_local_jsx_execution",
+      "target": "hooks/04_tool_ecosystem_integration",
+      "label": "Accesses global state"
+    },
+    {
+      "source": "hooks/03_local_jsx_execution",
+      "target": "hooks/05_application_state_context",
+      "label": "Retrieves available tools"
+    },
+    {
+      "source": "hooks/05_application_state_context",
+      "target": "hooks/04_tool_ecosystem_integration",
+      "label": "Uses permission context"
+    }
+  ],
+  "storyPath": [
+    "hooks/01_command_registry_definition",
+    "hooks/02_dynamic_command_loading",
+    "hooks/03_local_jsx_execution",
+    "hooks/04_tool_ecosystem_integration",
+    "hooks/05_application_state_context"
+  ]
+}

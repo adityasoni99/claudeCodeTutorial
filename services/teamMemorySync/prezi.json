@@ -1,0 +1,92 @@
+{
+  "projectName": "teamMemorySync",
+  "nodes": [
+    {
+      "id": "teammemorysync",
+      "label": "teamMemorySync",
+      "type": "module",
+      "summary": "This project implements a **secure synchronization system** for shared \"team memory\" files, ensuring local notes are automatically backed up to a server. It features a **file watcher** with debounce logic to efficiently batch updates and a **secret scanning engine** that acts as a gatekeeper, preventing sensitive credentials (like API keys) from being written to shared storage. A robust **lifecycle manager** handles startup, shutdown, and **error suppression** to prevent infinite retry loops during permanent failures.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "teammemorysync/01_sync_lifecycle___error_suppression",
+          "label": "Sync Lifecycle & Error Suppression",
+          "type": "chapter",
+          "summary": "Manages the state of the synchronization process, including startup (initial pull), runtime watching, and shutdown. Crucially, it implements an **error suppression logic**: if a permanent failure occurs (like `403 Forbidden` or `no_oauth`), it stops trying to push until a recovery action (like a file deletion or restart) happens. This prevents infinite retry loops, similar to a circuit breaker.",
+          "contentPath": "01_sync_lifecycle___error_suppression.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teammemorysync/02_team_memory_file_watcher",
+          "label": "Team Memory File Watcher",
+          "type": "chapter",
+          "summary": "Monitors the local team memory directory for file changes to synchronize them with the server. It employs a **debounce mechanism** (waiting 2 seconds after the last write) to group rapid edits into a single network push, preventing excessive traffic. It acts like a smart outbox that waits for you to finish writing a batch of notes before dispatching them.",
+          "contentPath": "02_team_memory_file_watcher.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teammemorysync/03_write_protection_guard",
+          "label": "Write Protection Guard",
+          "type": "chapter",
+          "summary": "An interception layer invoked before files are written to disk. It determines if the target file belongs to the \"team memory\" path and runs the Secret Scanner on the content. If secrets are detected, it blocks the write operation, acting as a gatekeeper to keep the shared repository clean of sensitive data.",
+          "contentPath": "03_write_protection_guard.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teammemorysync/04_secret_scanning_engine",
+          "label": "Secret Scanning Engine",
+          "type": "chapter",
+          "summary": "A security utility that detects sensitive credentials (like API keys, tokens, and private keys) in text content. It uses a curated list of high-confidence regular expressions (sourced from `gitleaks`) to identify secrets. This abstraction ensures that private credentials are never accidentally uploaded to the shared team memory.",
+          "contentPath": "04_secret_scanning_engine.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "teammemorysync/03_write_protection_guard",
+          "target": "teammemorysync/01_sync_lifecycle___error_suppression",
+          "label": "Initializes and manages"
+        },
+        {
+          "source": "teammemorysync/04_secret_scanning_engine",
+          "target": "teammemorysync/02_team_memory_file_watcher",
+          "label": "Uses for secret detection"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "teammemorysync/03_write_protection_guard",
+      "target": "teammemorysync/01_sync_lifecycle___error_suppression",
+      "label": "Initializes and manages"
+    },
+    {
+      "source": "teammemorysync/04_secret_scanning_engine",
+      "target": "teammemorysync/02_team_memory_file_watcher",
+      "label": "Uses for secret detection"
+    }
+  ],
+  "storyPath": [
+    "teammemorysync/01_sync_lifecycle___error_suppression",
+    "teammemorysync/02_team_memory_file_watcher",
+    "teammemorysync/03_write_protection_guard",
+    "teammemorysync/04_secret_scanning_engine"
+  ]
+}

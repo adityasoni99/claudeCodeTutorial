@@ -1,0 +1,156 @@
+{
+  "projectName": "constants",
+  "nodes": [
+    {
+      "id": "constants",
+      "label": "constants",
+      "type": "module",
+      "summary": "The project implements the core logic for **Claude Code**, an intelligent CLI tool. It centers on a **Dynamic System Prompt** (the AI's \"brain\") that is assembled in real-time, integrating strict **Tool Governance** (the \"hands\") and adaptive **Output Styling** (the \"voice\"). Supporting these are a structured **XML Messaging Protocol** for reliable communication, **OAuth and Environment Configuration** for identity management, and **Feature Flagging** to safely manage experimental capabilities.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "constants/01_dynamic_system_prompt_construction",
+          "label": "Dynamic System Prompt Construction",
+          "type": "chapter",
+          "summary": "This abstraction governs how the AI's \"brain\" is initialized for every interaction. Instead of a single static text block, the system prompt is assembled dynamically from modular sections (like environment info, safety instructions, and user settings). It distinguishes between static content (cacheable) and dynamic content (recomputed per turn), using memoization to optimize performance.\nThink of it like a mission briefing that is custom-printed for every agent before every assignment, combining standard operating procedures with specific details about the current weather and terrain.",
+          "contentPath": "01_dynamic_system_prompt_construction.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "constants/02_output_styling_and_persona",
+          "label": "Output Styling and Persona",
+          "type": "chapter",
+          "summary": "Controls the \"voice\" and presentation of the AI. This abstraction allows the CLI to switch between different interaction modes\u2014such as a \"Learning\" mode that teaches the user or a \"Default\" concise mode. It manages the static prompts required to induce these behaviors and handles the visual feedback (spinners, icons) to make the CLI feel responsive and human-like.\nImagine a wardrobe and script department that changes the actor's costume and dialogue style depending on whether they are playing the role of a strict engineer or a helpful tutor.",
+          "contentPath": "02_output_styling_and_persona.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "constants/03_tool_governance_and_limits",
+          "label": "Tool Governance and Limits",
+          "type": "chapter",
+          "summary": "Defines the capabilities (\"hands\") of the AI and the safety boundaries surrounding them. This abstraction enumerates available tools (like file editing, shell execution, or web search) while enforcing strict allowlists and denylists for specific modes (e.g., preventing recursive agent spawning). It also manages data volume limits to prevent the context window from being flooded by massive file reads or tool outputs.\nIt acts like a smart toolbox where dangerous tools have safety locks, and the workbench has a weight limit to keep the project manageable.",
+          "contentPath": "03_tool_governance_and_limits.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "constants/04_xml_messaging_protocol",
+          "label": "XML Messaging Protocol",
+          "type": "chapter",
+          "summary": "Defines the structured language used for communication between the AI model and the application runtime. Since the CLI needs to distinguish between conversational text, terminal outputs, tool commands, and background tasks, it uses specific XML tags as a protocol. This abstraction centralizes the tag definitions to ensure the parser and the prompt generator speak the same language.\nIt is similar to a radio protocol code (like \"10-4\" or \"Over\") that allows the system to distinguish between casual chatter and executable orders within a single stream of text.",
+          "contentPath": "04_xml_messaging_protocol.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "constants/05_oauth_and_environment_configuration",
+          "label": "OAuth and Environment Configuration",
+          "type": "chapter",
+          "summary": "Manages the identity and connection context of the application. This abstraction handles the complex logic required to authenticate the user across different environments (Local, Staging, Production) and different platforms (Console vs. Claude.ai). It determines the correct API endpoints, redirect URLs, and client IDs based on the build type and environment variables.\nIt functions like a master keycard system that automatically detects which building (environment) you are entering and grants the appropriate access level, whether you are a developer testing locally or a public user.",
+          "contentPath": "05_oauth_and_environment_configuration.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "constants/06_feature_flagging_and_betas",
+          "label": "Feature Flagging and Betas",
+          "type": "chapter",
+          "summary": "Manages the rollout of experimental capabilities. This abstraction defines specific header strings and flags used to opt-in to newer model behaviors (like \"fast mode,\" \"computer use,\" or specific token handling) before they are generally available. It allows the codebase to support different tiers of functionality for internal developers versus public users.\nThink of it as a switchboard in a laboratory that selectively activates experimental power-ups for specific test subjects while keeping the standard experience stable for everyone else.",
+          "contentPath": "06_feature_flagging_and_betas.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "constants/01_dynamic_system_prompt_construction",
+          "target": "constants/02_output_styling_and_persona",
+          "label": "Instructs on tool use"
+        },
+        {
+          "source": "constants/01_dynamic_system_prompt_construction",
+          "target": "constants/03_tool_governance_and_limits",
+          "label": "Applies persona"
+        },
+        {
+          "source": "constants/01_dynamic_system_prompt_construction",
+          "target": "constants/05_oauth_and_environment_configuration",
+          "label": "Defines protocol"
+        },
+        {
+          "source": "constants/01_dynamic_system_prompt_construction",
+          "target": "constants/06_feature_flagging_and_betas",
+          "label": "Gates content"
+        },
+        {
+          "source": "constants/02_output_styling_and_persona",
+          "target": "constants/06_feature_flagging_and_betas",
+          "label": "Gates capabilities"
+        },
+        {
+          "source": "constants/04_xml_messaging_protocol",
+          "target": "constants/06_feature_flagging_and_betas",
+          "label": "Provides service keys"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "constants/01_dynamic_system_prompt_construction",
+      "target": "constants/02_output_styling_and_persona",
+      "label": "Instructs on tool use"
+    },
+    {
+      "source": "constants/01_dynamic_system_prompt_construction",
+      "target": "constants/03_tool_governance_and_limits",
+      "label": "Applies persona"
+    },
+    {
+      "source": "constants/01_dynamic_system_prompt_construction",
+      "target": "constants/05_oauth_and_environment_configuration",
+      "label": "Defines protocol"
+    },
+    {
+      "source": "constants/01_dynamic_system_prompt_construction",
+      "target": "constants/06_feature_flagging_and_betas",
+      "label": "Gates content"
+    },
+    {
+      "source": "constants/02_output_styling_and_persona",
+      "target": "constants/06_feature_flagging_and_betas",
+      "label": "Gates capabilities"
+    },
+    {
+      "source": "constants/04_xml_messaging_protocol",
+      "target": "constants/06_feature_flagging_and_betas",
+      "label": "Provides service keys"
+    }
+  ],
+  "storyPath": [
+    "constants/01_dynamic_system_prompt_construction",
+    "constants/02_output_styling_and_persona",
+    "constants/03_tool_governance_and_limits",
+    "constants/04_xml_messaging_protocol",
+    "constants/05_oauth_and_environment_configuration",
+    "constants/06_feature_flagging_and_betas"
+  ]
+}

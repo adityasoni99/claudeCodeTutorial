@@ -1,0 +1,124 @@
+{
+  "projectName": "moreright",
+  "nodes": [
+    {
+      "id": "moreright",
+      "label": "moreright",
+      "type": "module",
+      "summary": "This project functions as a **smart extension system** for a chat application, acting like an advanced \"co-pilot\" cartridge plugged into a console. It uses a central **hook** to bridge the external logic with the main app, allowing it to *intercept* user messages before they are sent, perform tasks after the AI responds, and inject custom **visual tools** directly onto the user's screen. It also maintains direct access to the chat's memory, enabling it to modify messages and input automatically.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "moreright/01_feature_hook_interface",
+          "label": "Feature Hook Interface",
+          "type": "chapter",
+          "summary": "The `useMoreRight` function acts as the primary integration point or \"bridge\" between the core chat application and the external \"MoreRight\" logic.\n\nThink of it like an **expansion slot** on a gaming console. The main console (the app) runs normally, but when this hook is plugged in (enabled), it allows the console to communicate with a new cartridge, passing control signals back and forth.",
+          "contentPath": "01_feature_hook_interface.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "moreright/02_query_interception",
+          "label": "Query Interception",
+          "type": "chapter",
+          "summary": "Represented by `onBeforeQuery`, this abstraction allows the system to pause, review, or modify a user's request before it is actually sent to the AI model.\n\nIt's like a **personal editor** standing over your shoulder. Before you hit \"send\" on an email, the editor reads it, potentially suggests changes, or stops you from sending it if it's not ready, returning `true` only when it's safe to proceed.",
+          "contentPath": "02_query_interception.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "moreright/03_lifecycle_event_handling",
+          "label": "Lifecycle Event Handling",
+          "type": "chapter",
+          "summary": "Represented by `onTurnComplete`, this abstraction handles logic that must execute after a conversation exchange (a \"turn\") has finished.\n\nThink of this like a **post-flight inspection**. After the plane (the AI) lands (finishes generating a response), the ground crew checks the logs and performs maintenance to prepare for the next flight, ensuring everything is synchronized.",
+          "contentPath": "03_lifecycle_event_handling.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "moreright/04_ui_overlay_rendering",
+          "label": "UI Overlay Rendering",
+          "type": "chapter",
+          "summary": "The `render` method and `setToolJSX` argument provide a way for the extension to inject its own visual elements into the host application's interface.\n\nIt operates like a **Heads-Up Display (HUD)** in a car windshield. It projects extra information (tools, status, buttons) directly onto the driver's view without them having to look down at a separate dashboard.",
+          "contentPath": "04_ui_overlay_rendering.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "moreright/05_host_state_control",
+          "label": "Host State Control",
+          "type": "chapter",
+          "summary": "Through arguments like `setMessages` and `setInputValue`, this abstraction grants the hook direct write-access to the host application's memory.\n\nIt's similar to a **co-pilot's dual controls**. While the user (pilot) usually flies the plane, this abstraction allows the automated system (co-pilot) to grab the stick, type into the input box, or change the message history if necessary.",
+          "contentPath": "05_host_state_control.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "moreright/01_feature_hook_interface",
+          "target": "moreright/05_host_state_control",
+          "label": "Receives write-access"
+        },
+        {
+          "source": "moreright/01_feature_hook_interface",
+          "target": "moreright/02_query_interception",
+          "label": "Provides handler"
+        },
+        {
+          "source": "moreright/01_feature_hook_interface",
+          "target": "moreright/03_lifecycle_event_handling",
+          "label": "Provides handler"
+        },
+        {
+          "source": "moreright/01_feature_hook_interface",
+          "target": "moreright/04_ui_overlay_rendering",
+          "label": "Facilitates UI injection"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "moreright/01_feature_hook_interface",
+      "target": "moreright/05_host_state_control",
+      "label": "Receives write-access"
+    },
+    {
+      "source": "moreright/01_feature_hook_interface",
+      "target": "moreright/02_query_interception",
+      "label": "Provides handler"
+    },
+    {
+      "source": "moreright/01_feature_hook_interface",
+      "target": "moreright/03_lifecycle_event_handling",
+      "label": "Provides handler"
+    },
+    {
+      "source": "moreright/01_feature_hook_interface",
+      "target": "moreright/04_ui_overlay_rendering",
+      "label": "Facilitates UI injection"
+    }
+  ],
+  "storyPath": [
+    "moreright/01_feature_hook_interface",
+    "moreright/02_query_interception",
+    "moreright/03_lifecycle_event_handling",
+    "moreright/04_ui_overlay_rendering",
+    "moreright/05_host_state_control"
+  ]
+}

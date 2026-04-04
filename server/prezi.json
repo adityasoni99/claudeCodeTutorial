@@ -1,0 +1,102 @@
+{
+  "projectName": "server",
+  "nodes": [
+    {
+      "id": "server",
+      "label": "server",
+      "type": "module",
+      "summary": "This project implements a **Direct Connect** system to establish and manage real-time communication between a client and a remote server. It handles the complete lifecycle, starting with **Session Initialization** via an authenticated HTTP handshake and upgrading to a persistent **WebSocket** connection for continuous data exchange. The system enforces strict **Data Models** for validation and integrates a **Control & Permission Handling** layer to securely gate sensitive actions like tool usage through an approval process.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "server/01_session_data_models",
+          "label": "Session Data Models",
+          "type": "chapter",
+          "summary": "These definitions provide the blueprints for the data flowing through the system. They define what a \"Server\" looks like, the possible states of a session (e.g., 'running', 'stopped'), and how session metadata is stored.\n\nIt is similar to a government ID system or a filing cabinet schema. It ensures that when any part of the codebase references a \"Session,\" it expects the exact same fields\u2014like `session_id`, `work_dir`, and `ws_url`\u2014preventing miscommunication between the client and server.",
+          "contentPath": "01_session_data_models.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "server/02_session_initialization",
+          "label": "Session Initialization",
+          "type": "chapter",
+          "summary": "Before a real-time connection works, a secure handshake must occur. This abstraction handles the initial HTTP POST request to the server.\n\nIt acts like a hotel front desk check-in: you walk up, present your ID (authentication token) and your requirements (current working directory), and the desk clerk validates your credentials. If successful, they hand you a key card (the configuration containing the WebSocket URL and Session ID) so you can proceed to your room (the actual session).",
+          "contentPath": "02_session_initialization.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "server/03_direct_connect_manager",
+          "label": "Direct Connect Manager",
+          "type": "chapter",
+          "summary": "This is the central nervous system for a live session. It establishes and manages a persistent WebSocket connection between the client and the server. \n\nThink of it like a dedicated telephone operator: it dials the number, keeps the line open, listens for incoming speech (messages), routes specific requests (like permissions), and ensures the call ends cleanly if the network drops. It transforms raw WebSocket events into structured application events that the rest of the system can understand.",
+          "contentPath": "03_direct_connect_manager.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "server/04_control___permission_handling",
+          "label": "Control & Permission Handling",
+          "type": "chapter",
+          "summary": "This logic manages the flow of authority within a session. When the server (agent) needs to perform an action, it sends a `control_request`. This abstraction intercepts that request and facilitates the approval process.\n\nIt functions like a security checkpoint. Even if you are inside the building (connected), you cannot enter restricted areas (use tools) without stopping at the checkpoint, showing your badge, and getting explicit clearance (`control_response`) from the security guard (the user or policy).",
+          "contentPath": "04_control___permission_handling.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "server/02_session_initialization",
+          "target": "server/03_direct_connect_manager",
+          "label": "Validates response using"
+        },
+        {
+          "source": "server/02_session_initialization",
+          "target": "server/01_session_data_models",
+          "label": "Generates config for"
+        },
+        {
+          "source": "server/01_session_data_models",
+          "target": "server/04_control___permission_handling",
+          "label": "Delegates permission reques..."
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "server/02_session_initialization",
+      "target": "server/03_direct_connect_manager",
+      "label": "Validates response using"
+    },
+    {
+      "source": "server/02_session_initialization",
+      "target": "server/01_session_data_models",
+      "label": "Generates config for"
+    },
+    {
+      "source": "server/01_session_data_models",
+      "target": "server/04_control___permission_handling",
+      "label": "Delegates permission requests to"
+    }
+  ],
+  "storyPath": [
+    "server/01_session_data_models",
+    "server/02_session_initialization",
+    "server/03_direct_connect_manager",
+    "server/04_control___permission_handling"
+  ]
+}

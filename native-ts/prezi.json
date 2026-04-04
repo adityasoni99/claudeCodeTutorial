@@ -1,0 +1,158 @@
+{
+  "projectName": "native-ts",
+  "nodes": [
+    {
+      "id": "native-ts",
+      "label": "native-ts",
+      "type": "module",
+      "summary": "This project implements high-performance, native-quality utilities in pure TypeScript, removing dependencies on C++ bindings. It features a complete port of the **Yoga flexbox engine** for calculating UI layouts via a node tree and **caching system**, a **fuzzy file searcher** that uses character bitmaps and **smart scoring** for speed, and a terminal-based **diff renderer** that applies **syntax highlighting** and word-level diffing to code changes.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "native-ts/01_yoga_node__the_layout_block_",
+          "label": "Yoga Node (The Layout Block)",
+          "type": "chapter",
+          "summary": "The fundamental unit of the layout engine, acting like a lightweight, mathematical DOM element. Each `Node` holds style inputs (flex-direction, margin, width) and calculates output dimensions (top, left, width, height). It manages a tree structure where parents dictate the constraints of their children. Think of it as a bounding box that knows how to stretch and shrink based on CSS-like rules, but without any actual rendering logic\u2014it simply computes the numbers used by the UI to draw frames.",
+          "contentPath": "01_yoga_node__the_layout_block_.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "native-ts/02_recursive_layout_algorithm",
+          "label": "Recursive Layout Algorithm",
+          "type": "chapter",
+          "summary": "The engine that powers the `Node` tree. Triggered by `calculateLayout`, it performs a recursive pass (via `layoutNode`) to resolve styles into physical pixels. It handles the complex \"negotiation\" of Flexbox: determining main/cross axes, resolving flexible lengths (growing/shrinking), handling wrapping, and positioning children. It uses a \"Measure Mode\" system (Exactly, AtMost, Undefined) to determine if a node should size itself to its content or fit within specific parent bounds.",
+          "contentPath": "02_recursive_layout_algorithm.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "native-ts/03_layout_caching_system",
+          "label": "Layout Caching System",
+          "type": "chapter",
+          "summary": "A critical performance optimization layer within Yoga. Since calculating layout is expensive, nodes use a dirty-checking mechanism (`isDirty`) and a multi-entry cache (`_cIn`, `_cOut`) to store results. If a node is re-visited with the same available space and generation ID, the engine returns the cached result immediately. This prevents the system from re-calculating the entire tree when only a small leaf node changes or when a parent probes a child's size multiple times during flex resolution.",
+          "contentPath": "03_layout_caching_system.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "native-ts/04_fuzzy_file_index",
+          "label": "Fuzzy File Index",
+          "type": "chapter",
+          "summary": "A high-performance search database for file paths. The `FileIndex` class ingests a list of strings and pre-computes metadata for speed, such as lowercase versions of paths and character bitmaps (integers representing which characters exist in a string). These bitmaps allow the searcher to instantly reject paths that don't contain all characters of a search query (O(1) rejection) before running the expensive scoring logic. It also handles async chunking to prevent blocking the main thread during large loads.",
+          "contentPath": "04_fuzzy_file_index.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "native-ts/05_match_scoring_logic",
+          "label": "Match Scoring Logic",
+          "type": "chapter",
+          "summary": "The intelligence behind the fuzzy search. It ranks search results not just by finding substrings, but by calculating a \"score\" based on human intuition. It awards bonuses for matches at word boundaries (after `/` or `_`), consecutive character matches, and CamelCase humps. Conversely, it applies penalties for gaps between matched characters. This logic ensures that if you search \"idx\", `index.ts` appears before `node_modules/x/y/z.ts`.",
+          "contentPath": "05_match_scoring_logic.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "native-ts/06_diff_renderer",
+          "label": "Diff Renderer",
+          "type": "chapter",
+          "summary": "Responsible for visually representing code changes in the terminal. The `ColorDiff` class takes a \"hunk\" (a specific set of changed lines) and renders it with line numbers, `+`/`-` markers, and background colors. It includes a specific \"word diff\" algorithm (`wordDiffStrings`) that identifies exactly which characters changed within a line (e.g., changing `true` to `false`), allowing the renderer to highlight just those words brightly while keeping the rest of the line dim.",
+          "contentPath": "06_diff_renderer.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "native-ts/07_syntax_highlighter_bridge",
+          "label": "Syntax Highlighter Bridge",
+          "type": "chapter",
+          "summary": "A wrapper around `highlight.js` that translates generic tokens into specific ANSI terminal colors based on a requested theme (like Monokai or GitHub). It normalizes the differences between various language grammars and maps abstract scopes (like \"keyword\" or \"string\") to specific RGB values. It also includes logic to detect languages based on filenames (e.g., `Makefile`) or shebangs when the file extension isn't enough.",
+          "contentPath": "07_syntax_highlighter_bridge.md",
+          "x": -800.0,
+          "y": 450.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "native-ts/01_yoga_node__the_layout_block_",
+          "target": "native-ts/02_recursive_layout_algorithm",
+          "label": "Initiates layout calculation"
+        },
+        {
+          "source": "native-ts/02_recursive_layout_algorithm",
+          "target": "native-ts/01_yoga_node__the_layout_block_",
+          "label": "Traverses and resizes"
+        },
+        {
+          "source": "native-ts/02_recursive_layout_algorithm",
+          "target": "native-ts/03_layout_caching_system",
+          "label": "Reads and writes cache"
+        },
+        {
+          "source": "native-ts/04_fuzzy_file_index",
+          "target": "native-ts/05_match_scoring_logic",
+          "label": "Uses heuristics to rank res..."
+        },
+        {
+          "source": "native-ts/07_syntax_highlighter_bridge",
+          "target": "native-ts/06_diff_renderer",
+          "label": "Delegates code colorization"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "native-ts/01_yoga_node__the_layout_block_",
+      "target": "native-ts/02_recursive_layout_algorithm",
+      "label": "Initiates layout calculation"
+    },
+    {
+      "source": "native-ts/02_recursive_layout_algorithm",
+      "target": "native-ts/01_yoga_node__the_layout_block_",
+      "label": "Traverses and resizes"
+    },
+    {
+      "source": "native-ts/02_recursive_layout_algorithm",
+      "target": "native-ts/03_layout_caching_system",
+      "label": "Reads and writes cache"
+    },
+    {
+      "source": "native-ts/04_fuzzy_file_index",
+      "target": "native-ts/05_match_scoring_logic",
+      "label": "Uses heuristics to rank results"
+    },
+    {
+      "source": "native-ts/07_syntax_highlighter_bridge",
+      "target": "native-ts/06_diff_renderer",
+      "label": "Delegates code colorization"
+    }
+  ],
+  "storyPath": [
+    "native-ts/01_yoga_node__the_layout_block_",
+    "native-ts/02_recursive_layout_algorithm",
+    "native-ts/03_layout_caching_system",
+    "native-ts/04_fuzzy_file_index",
+    "native-ts/05_match_scoring_logic",
+    "native-ts/06_diff_renderer",
+    "native-ts/07_syntax_highlighter_bridge"
+  ]
+}

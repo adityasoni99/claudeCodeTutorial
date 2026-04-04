@@ -1,0 +1,156 @@
+{
+  "projectName": "vim",
+  "nodes": [
+    {
+      "id": "vim",
+      "label": "vim",
+      "type": "module",
+      "summary": "This project implements a robust **Vim emulation engine** that processes user keystrokes through a strict **state machine** rather than simple event handlers. It decouples the *intent* (transitions) from the *action* (operators) and the *geometry* (motions), allowing complex commands like \"delete inner word\" to be executed safely via a unified **context interface**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "vim/01_vim_state_machine",
+          "label": "Vim State Machine",
+          "type": "chapter",
+          "summary": "This is the \"brain\" of the editor. Unlike a standard text editor that is always in \"insert\" mode, Vim relies on a strict state machine to interpret keystrokes. This abstraction defines exactly what state the editor is in (e.g., `idle`, `operator` pending, or waiting for a `count`).\n\nThink of it like a manual transmission car gearbox. You cannot shift directly from \"Reverse\" to \"5th Gear\"; you must pass through specific states. Similarly, you can't perform a text deletion without first entering the \"operator\" state by pressing `d`.",
+          "contentPath": "01_vim_state_machine.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "vim/02_input_transition_logic",
+          "label": "Input Transition Logic",
+          "type": "chapter",
+          "summary": "This abstraction acts as the central traffic controller. It takes the current state (from the State Machine) and the latest user keystroke, then decides what happens next. It determines whether to switch to a new state (e.g., waiting for more input) or execute a command immediately.\n\nIt serves as a massive switchboard. If the editor is `idle` and receives `j`, it executes a move. If it receives `d`, it transitions to the `operator` state. It ensures every keystroke is routed to the correct handler.",
+          "contentPath": "02_input_transition_logic.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "vim/03_motion_resolution",
+          "label": "Motion Resolution",
+          "type": "chapter",
+          "summary": "This layer handles the geometry of cursor movement without modifying text. These are \"pure\" functions that calculate where the cursor should land given a specific command (like `w` for word, `$` for end-of-line).\n\nThink of this like a GPS route calculator. It doesn't drive the car; it simply calculates the coordinates of the destination. Whether you are just moving the cursor or deleting text *until* that point, the destination calculation remains the same.",
+          "contentPath": "03_motion_resolution.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "vim/04_operator_execution",
+          "label": "Operator Execution",
+          "type": "chapter",
+          "summary": "These are the \"verbs\" of Vim. While motions define the \"where\" (the range), operators define the \"what\" (delete, change, yank, indent). This abstraction takes a start point and an end point (calculated by motions) and applies a transformation to the text within that range.\n\nImagine a construction crew. The surveyor (Motion) marks the territory with flags. The crew (Operator) then comes in to dig a hole (delete), pour concrete (paste), or landscape (indent) exactly within the flagged area.",
+          "contentPath": "04_operator_execution.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "vim/05_text_objects",
+          "label": "Text Objects",
+          "type": "chapter",
+          "summary": "Text objects allow operators to act on semantic structures rather than just linear ranges. Instead of deleting from point A to point B, this abstraction calculates boundaries for logical units like \"inner word\" (`iw`), \"around paragraph\" (`ap`), or \"inside quotes\" (`i\"`).\n\nIt\u2019s like using a \"magic wand\" selection tool in image editing software. Instead of manually painting a selection pixel-by-pixel, you click once to select an entire distinct object based on its shape or boundaries.",
+          "contentPath": "05_text_objects.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "vim/06_operator_context",
+          "label": "Operator Context",
+          "type": "chapter",
+          "summary": "This is the shared toolbox passed between functions during command execution. Since many Vim functions are pure calculations, they need a way to interact with the \"real world\" (the actual document). The Context object bridges this gap by providing access to the text buffer, cursor position, registers (clipboard), and undo history.\n\nIt acts like a service interface or API wrapper that allows the pure logic engine to safely effect changes on the dirty state of the editor.",
+          "contentPath": "06_operator_context.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "vim/02_input_transition_logic",
+          "target": "vim/01_vim_state_machine",
+          "label": "Transitions between states of"
+        },
+        {
+          "source": "vim/02_input_transition_logic",
+          "target": "vim/04_operator_execution",
+          "label": "Triggers commands from"
+        },
+        {
+          "source": "vim/02_input_transition_logic",
+          "target": "vim/03_motion_resolution",
+          "label": "Calculates navigation using"
+        },
+        {
+          "source": "vim/04_operator_execution",
+          "target": "vim/03_motion_resolution",
+          "label": "Determines action range via"
+        },
+        {
+          "source": "vim/04_operator_execution",
+          "target": "vim/05_text_objects",
+          "label": "Selects semantic units via"
+        },
+        {
+          "source": "vim/04_operator_execution",
+          "target": "vim/06_operator_context",
+          "label": "Applies edits to"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "vim/02_input_transition_logic",
+      "target": "vim/01_vim_state_machine",
+      "label": "Transitions between states of"
+    },
+    {
+      "source": "vim/02_input_transition_logic",
+      "target": "vim/04_operator_execution",
+      "label": "Triggers commands from"
+    },
+    {
+      "source": "vim/02_input_transition_logic",
+      "target": "vim/03_motion_resolution",
+      "label": "Calculates navigation using"
+    },
+    {
+      "source": "vim/04_operator_execution",
+      "target": "vim/03_motion_resolution",
+      "label": "Determines action range via"
+    },
+    {
+      "source": "vim/04_operator_execution",
+      "target": "vim/05_text_objects",
+      "label": "Selects semantic units via"
+    },
+    {
+      "source": "vim/04_operator_execution",
+      "target": "vim/06_operator_context",
+      "label": "Applies edits to"
+    }
+  ],
+  "storyPath": [
+    "vim/01_vim_state_machine",
+    "vim/02_input_transition_logic",
+    "vim/03_motion_resolution",
+    "vim/04_operator_execution",
+    "vim/05_text_objects",
+    "vim/06_operator_context"
+  ]
+}

@@ -1,0 +1,146 @@
+{
+  "projectName": "PowerShellTool",
+  "nodes": [
+    {
+      "id": "powershelltool",
+      "label": "PowerShellTool",
+      "type": "module",
+      "summary": "This project implements a secure **PowerShell execution environment** designed for AI agents. It uses an *Abstract Syntax Tree (AST)* to deeply analyze commands before execution, enforcing strict **security policies** by validating file paths, restricting destructive actions, and detecting malicious patterns like script injection or obfuscation. It also acts as a bridge between the raw shell output and the user, interpreting exit codes and rendering user-friendly progress indicators.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "powershelltool/01_tool_interface___prompting",
+          "label": "Tool Interface & Prompting",
+          "type": "chapter",
+          "summary": "This defines how the tool presents itself to both the AI model and the human user. It generates the system prompt that teaches the AI how to use PowerShell correctly (handling version differences between Desktop and Core) and manages the UI rendering of command output. It acts as the translator and display driver, ensuring the AI knows the rules of engagement and the user sees clean, readable output streams, progress bars, and error messages in the terminal.",
+          "contentPath": "01_tool_interface___prompting.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "powershelltool/02_command_semantics___interpretation",
+          "label": "Command Semantics & Interpretation",
+          "type": "chapter",
+          "summary": "PowerShell and Windows executables have inconsistent ways of signaling success or failure. This abstraction translates these distinct \"dialects\" into a universal standard. For example, `robocopy` returns exit code 1 on success, while `grep` returns 1 on failure. This module ensures the AI understands the *intent* of the result, preventing false alarms where the AI thinks a tool failed when it actually succeeded. It also scans commands for potentially destructive actions (like `rm -Recurse`) to generate user warnings.",
+          "contentPath": "02_command_semantics___interpretation.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "powershelltool/03_permission_orchestration",
+          "label": "Permission Orchestration",
+          "type": "chapter",
+          "summary": "This is the central nervous system of the tool. It acts as the primary gatekeeper that intercepts every command request before execution. Like a security guard at a building entrance, it doesn't check every bag itself but coordinates with specialized specialists (path checkers, security scanners, read-only validators) to make a final \"Allow,\" \"Deny,\" or \"Ask\" decision. It orchestrates the order of operations\u2014checking denial rules first, then parsing the command, then running deep security scans\u2014ensuring no dangerous command slips through due to a loophole in the check order.",
+          "contentPath": "03_permission_orchestration.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "powershelltool/04_path___filesystem_validation",
+          "label": "Path & Filesystem Validation",
+          "type": "chapter",
+          "summary": "This abstraction ensures the AI only touches files within permitted directories. Unlike Bash, where arguments are simple strings, PowerShell commands pass complex objects. This module uses an Abstract Syntax Tree (AST) to surgically extract file paths from cmdlets (like `Get-Content` or `New-Item`). It handles edge cases like glob patterns, relative paths, and specific parameter binding configurations. Think of it as a robotic arm that identifies exactly which box on a shelf is being reached for, ensuring the arm doesn't knock over forbidden items or reach into restricted zones.",
+          "contentPath": "04_path___filesystem_validation.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "powershelltool/05_read_only_command_analysis",
+          "label": "Read-Only Command Analysis",
+          "type": "chapter",
+          "summary": "This component determines if a command is safe to run automatically because it only \"reads\" information without changing the system state. It maintains a strict allowlist of known safe cmdlets (like `Get-ChildItem`) and validates their flags. It's like a library pass that allows you to read any book but prevents you from writing in the margins or tearing out pages. It also handles complex pipeline chains, ensuring that a safe command isn't piped into a dangerous one (e.g., `Get-Process | Stop-Process`).",
+          "contentPath": "05_read_only_command_analysis.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "powershelltool/06_security___threat_detection",
+          "label": "Security & Threat Detection",
+          "type": "chapter",
+          "summary": "This layer acts as an antivirus and intrusion detection system specifically for PowerShell. It scans the command's structure for malicious patterns, such as obfuscated code, download cradles (downloading and executing scripts from the web), and attempts to bypass restrictions using reflection or dynamic command names. It also enforces \"Constrained Language Mode\" rules to prevent the use of dangerous .NET types. It treats the command as a potential weapon, inspecting it for hidden blades or triggers before allowing it to proceed.",
+          "contentPath": "06_security___threat_detection.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "powershelltool/01_tool_interface___prompting",
+          "target": "powershelltool/02_command_semantics___interpretation",
+          "label": "Validates file paths"
+        },
+        {
+          "source": "powershelltool/01_tool_interface___prompting",
+          "target": "powershelltool/03_permission_orchestration",
+          "label": "Checks allowed commands"
+        },
+        {
+          "source": "powershelltool/01_tool_interface___prompting",
+          "target": "powershelltool/04_path___filesystem_validation",
+          "label": "Scans for security threats"
+        },
+        {
+          "source": "powershelltool/02_command_semantics___interpretation",
+          "target": "powershelltool/03_permission_orchestration",
+          "label": "Resolves canonical names"
+        },
+        {
+          "source": "powershelltool/06_security___threat_detection",
+          "target": "powershelltool/05_read_only_command_analysis",
+          "label": "Displays interpreted results"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "powershelltool/01_tool_interface___prompting",
+      "target": "powershelltool/02_command_semantics___interpretation",
+      "label": "Validates file paths"
+    },
+    {
+      "source": "powershelltool/01_tool_interface___prompting",
+      "target": "powershelltool/03_permission_orchestration",
+      "label": "Checks allowed commands"
+    },
+    {
+      "source": "powershelltool/01_tool_interface___prompting",
+      "target": "powershelltool/04_path___filesystem_validation",
+      "label": "Scans for security threats"
+    },
+    {
+      "source": "powershelltool/02_command_semantics___interpretation",
+      "target": "powershelltool/03_permission_orchestration",
+      "label": "Resolves canonical names"
+    },
+    {
+      "source": "powershelltool/06_security___threat_detection",
+      "target": "powershelltool/05_read_only_command_analysis",
+      "label": "Displays interpreted results"
+    }
+  ],
+  "storyPath": [
+    "powershelltool/01_tool_interface___prompting",
+    "powershelltool/02_command_semantics___interpretation",
+    "powershelltool/03_permission_orchestration",
+    "powershelltool/04_path___filesystem_validation",
+    "powershelltool/05_read_only_command_analysis",
+    "powershelltool/06_security___threat_detection"
+  ]
+}

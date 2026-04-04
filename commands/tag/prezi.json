@@ -1,0 +1,124 @@
+{
+  "projectName": "tag",
+  "nodes": [
+    {
+      "id": "tag",
+      "label": "tag",
+      "type": "module",
+      "summary": "This project implements a CLI command called **tag** that allows users to label their current active session with a searchable keyword. It utilizes a *React-based* interface to handle user interactions\u2014such as confirming the removal of an existing tag\u2014and ensures data integrity by sanitizing inputs and persisting changes to the session storage.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "tag/01_command_registration",
+          "label": "Command Registration",
+          "type": "chapter",
+          "summary": "Defines the metadata and lifecycle for a specific CLI feature. It acts like a manifest or a menu entry, telling the main application the command's name, description, when it is enabled, and how to lazy-load its implementation code.",
+          "contentPath": "01_command_registration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tag/02_react_based_terminal_ui",
+          "label": "React-based Terminal UI",
+          "type": "chapter",
+          "summary": "Uses React components (via the `ink` library) to render interactive user interfaces directly in the command-line terminal. It manages UI state and renders elements like text boxes, dialogs, and selection menus, functioning similarly to a web frontend but using text characters instead of HTML pixels.",
+          "contentPath": "02_react_based_terminal_ui.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tag/03_session_state_management",
+          "label": "Session State Management",
+          "type": "chapter",
+          "summary": "Handles the retrieval and persistence of data related to the user's current active session. It acts like a librarian that identifies which conversation log is currently open (`getSessionId`) and writes or updates metadata labels (`saveTag`) associated with that specific log.",
+          "contentPath": "03_session_state_management.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tag/04_input_sanitization",
+          "label": "Input Sanitization",
+          "type": "chapter",
+          "summary": "A security and data integrity layer that cleans user input. It removes invisible or potentially malicious Unicode characters before processing, ensuring that the data stored (like tag names) is clean and predictable, much like filtering water before it enters a pipe system.",
+          "contentPath": "04_input_sanitization.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tag/05_event_telemetry",
+          "label": "Event Telemetry",
+          "type": "chapter",
+          "summary": "A mechanism for tracking user interactions and system events. It records specific actions, such as adding or removing tags, serving as a usage tracker that helps developers understand how features are being utilized in the wild.",
+          "contentPath": "05_event_telemetry.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "tag/01_command_registration",
+          "target": "tag/02_react_based_terminal_ui",
+          "label": "Loads and renders"
+        },
+        {
+          "source": "tag/02_react_based_terminal_ui",
+          "target": "tag/05_event_telemetry",
+          "label": "Sanitizes input arguments"
+        },
+        {
+          "source": "tag/02_react_based_terminal_ui",
+          "target": "tag/03_session_state_management",
+          "label": "Reads and updates session data"
+        },
+        {
+          "source": "tag/02_react_based_terminal_ui",
+          "target": "tag/04_input_sanitization",
+          "label": "Logs user actions"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "tag/01_command_registration",
+      "target": "tag/02_react_based_terminal_ui",
+      "label": "Loads and renders"
+    },
+    {
+      "source": "tag/02_react_based_terminal_ui",
+      "target": "tag/05_event_telemetry",
+      "label": "Sanitizes input arguments"
+    },
+    {
+      "source": "tag/02_react_based_terminal_ui",
+      "target": "tag/03_session_state_management",
+      "label": "Reads and updates session data"
+    },
+    {
+      "source": "tag/02_react_based_terminal_ui",
+      "target": "tag/04_input_sanitization",
+      "label": "Logs user actions"
+    }
+  ],
+  "storyPath": [
+    "tag/01_command_registration",
+    "tag/02_react_based_terminal_ui",
+    "tag/03_session_state_management",
+    "tag/04_input_sanitization",
+    "tag/05_event_telemetry"
+  ]
+}

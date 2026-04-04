@@ -1,0 +1,124 @@
+{
+  "projectName": "dxt",
+  "nodes": [
+    {
+      "id": "dxt",
+      "label": "dxt",
+      "type": "module",
+      "summary": "The `dxt` project is a security-focused utility for managing extension packages. It performs **strict validation** of `manifest.json` files and handles **secure ZIP extraction** to prevent attacks like \"zip bombs\" and path traversal. Additionally, it includes specialized tools for **restoring Unix file permissions** and generating standardized extension IDs, all while using **lazy loading** to minimize memory usage and startup time.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "dxt/01_manifest_validation___parsing",
+          "label": "Manifest Validation & Parsing",
+          "type": "chapter",
+          "summary": "Handles the verification of the DXT `manifest.json` file. It ensures the configuration data adheres to the strict schema defined in `@anthropic-ai/mcpb`.\n\nThink of it as a border control agent for extensions. Before an extension is allowed into the system, this abstraction rigorously checks its \"passport\" (manifest) to ensure all details are correct, valid, and safe, rejecting anything that doesn't follow the rules.",
+          "contentPath": "01_manifest_validation___parsing.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "dxt/02_extension_identity_generation",
+          "label": "Extension Identity Generation",
+          "type": "chapter",
+          "summary": "Standardizes how extensions are uniquely identified within the system by combining and sanitizing the author's name and the extension's name.\n\nThis is similar to a library cataloging system. Regardless of how an author writes their name or book title, this system converts it into a standardized, lowercase, hyphenated \"call number\" (ID) so the system can always find and reference it consistently.",
+          "contentPath": "02_extension_identity_generation.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "dxt/03_secure_archive_extraction",
+          "label": "Secure Archive Extraction",
+          "type": "chapter",
+          "summary": "Manages the decompression of ZIP files with a heavy focus on security. It implements checks for \"zip bombs\" (highly compressed data that expands dangerously), file size limits, and path traversal attacks.\n\nIt acts like a hazardous materials team opening a suspicious package. Before and during the opening process, it constantly measures the contents to ensure they won't explode in size or contain items trying to escape their designated container.",
+          "contentPath": "03_secure_archive_extraction.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "dxt/04_zip_mode_restoration",
+          "label": "Zip Mode Restoration",
+          "type": "chapter",
+          "summary": "A low-level utility that manually parses ZIP binary headers to recover Unix file permissions (specifically executable bits) that standard extraction tools often discard.\n\nIt is like an art restorer who ignores the frame and looks directly at the canvas to find hidden details. While standard tools just dump the files, this abstraction reads the raw binary \"notes\" left by the creator to remember which files should be runnable programs.",
+          "contentPath": "04_zip_mode_restoration.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "dxt/05_performance_optimization__lazy_loading_",
+          "label": "Performance Optimization (Lazy Loading)",
+          "type": "chapter",
+          "summary": "A structural pattern used throughout the codebase to minimize startup time and memory footprint. Heavy dependencies (like validation schemas and compression tables) are only imported at the exact moment they are needed.\n\nIt functions like a \"Just-In-Time\" manufacturing line. Instead of piling up all possible tools and parts (libraries) on the factory floor at 8 AM, the system only fetches specific heavy machinery from the warehouse the moment a specific order arrives.",
+          "contentPath": "05_performance_optimization__lazy_loading_.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "dxt/01_manifest_validation___parsing",
+          "target": "dxt/05_performance_optimization__lazy_loading_",
+          "label": "Uses"
+        },
+        {
+          "source": "dxt/02_extension_identity_generation",
+          "target": "dxt/05_performance_optimization__lazy_loading_",
+          "label": "Uses"
+        },
+        {
+          "source": "dxt/01_manifest_validation___parsing",
+          "target": "dxt/04_zip_mode_restoration",
+          "label": "Provides manifest data"
+        },
+        {
+          "source": "dxt/03_secure_archive_extraction",
+          "target": "dxt/02_extension_identity_generation",
+          "label": "Augments"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "dxt/01_manifest_validation___parsing",
+      "target": "dxt/05_performance_optimization__lazy_loading_",
+      "label": "Uses"
+    },
+    {
+      "source": "dxt/02_extension_identity_generation",
+      "target": "dxt/05_performance_optimization__lazy_loading_",
+      "label": "Uses"
+    },
+    {
+      "source": "dxt/01_manifest_validation___parsing",
+      "target": "dxt/04_zip_mode_restoration",
+      "label": "Provides manifest data"
+    },
+    {
+      "source": "dxt/03_secure_archive_extraction",
+      "target": "dxt/02_extension_identity_generation",
+      "label": "Augments"
+    }
+  ],
+  "storyPath": [
+    "dxt/01_manifest_validation___parsing",
+    "dxt/02_extension_identity_generation",
+    "dxt/03_secure_archive_extraction",
+    "dxt/04_zip_mode_restoration",
+    "dxt/05_performance_optimization__lazy_loading_"
+  ]
+}

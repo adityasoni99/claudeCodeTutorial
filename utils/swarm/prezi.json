@@ -1,0 +1,156 @@
+{
+  "projectName": "swarm",
+  "nodes": [
+    {
+      "id": "swarm",
+      "label": "swarm",
+      "type": "module",
+      "summary": "This project implements a **hierarchical multi-agent system** (\"swarm\") where a leader agent can spawn and coordinate autonomous *teammate agents* to perform tasks in parallel. It abstracts the physical execution environment, allowing teammates to run as isolated **in-process tasks**, **tmux panes**, or **iTerm2 splits** through a unified interface. The system ensures safe collaboration via a **distributed permission system** that routes tool approval requests from workers to the leader, while persisting team state to disk to maintain continuity across sessions.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "swarm/01_in_process_teammate_runtime",
+          "label": "In-Process Teammate Runtime",
+          "type": "chapter",
+          "summary": "This is the \"virtual machine\" for running agents inside the main process. It manages context isolation (so agents don't confuse their state with the leader), handles the agent execution loop (prompt -> think -> tool -> response), and integrates with the main application's state while pretending to be an independent entity.",
+          "contentPath": "01_in_process_teammate_runtime.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "swarm/02_teammate_executor_adapter",
+          "label": "Teammate Executor Adapter",
+          "type": "chapter",
+          "summary": "Acting as a universal adapter, this layer normalizes how the main application interacts with teammates, regardless of whether they are separate processes in a terminal pane or internal threads. It provides a standard API (`spawn`, `kill`, `sendMessage`) so the core logic doesn't need to know if it's talking to a tmux pane or an in-memory task.",
+          "contentPath": "02_teammate_executor_adapter.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "swarm/03_execution_backends",
+          "label": "Execution Backends",
+          "type": "chapter",
+          "summary": "This abstraction defines *where* a teammate runs. The system supports multiple environments: `TmuxBackend` (panes in tmux), `ITermBackend` (native split panes in iTerm2), and `InProcessBackend` (internal Node.js tasks). It abstracts the complex, low-level details of manipulating terminal windows or spawning isolated contexts behind a unified interface (`PaneBackend`).",
+          "contentPath": "03_execution_backends.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "swarm/04_environment_layout_management",
+          "label": "Environment Layout Management",
+          "type": "chapter",
+          "summary": "This abstraction handles the physical layout of the terminal workspace. It determines how windows are split, assigns colors to teammates for visual distinction, and manages the \"Swarm View.\" It ensures that when a new agent is spawned, it visually appears in the correct location based on the active backend (tmux vs iTerm2).",
+          "contentPath": "04_environment_layout_management.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "swarm/05_distributed_permission_system",
+          "label": "Distributed Permission System",
+          "type": "chapter",
+          "summary": "Because teammates run autonomously but share security constraints, this system bridges the gap between a worker requesting an action and the leader granting it. It functions like a purchase order system: a worker files a request (e.g., to run a shell command) via a shared file/mailbox, the leader approves it via UI, and the approval syncs back to the worker to unblock execution.",
+          "contentPath": "05_distributed_permission_system.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "swarm/06_team_state_persistence",
+          "label": "Team State Persistence",
+          "type": "chapter",
+          "summary": "This layer acts as the \"HR Database\" for the swarm. It manages the `config.json` files on disk that define who belongs to a team, their roles, active status, and associated metadata (like pane IDs). This persistence ensures that if the application restarts, the team structure remains intact and can be rehydrated/reconnected.",
+          "contentPath": "06_team_state_persistence.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "swarm/02_teammate_executor_adapter",
+          "target": "swarm/01_in_process_teammate_runtime",
+          "label": "Adapts and controls"
+        },
+        {
+          "source": "swarm/02_teammate_executor_adapter",
+          "target": "swarm/05_distributed_permission_system",
+          "label": "Spawns internal agents"
+        },
+        {
+          "source": "swarm/06_team_state_persistence",
+          "target": "swarm/01_in_process_teammate_runtime",
+          "label": "Configures terminal panes"
+        },
+        {
+          "source": "swarm/05_distributed_permission_system",
+          "target": "swarm/03_execution_backends",
+          "label": "Requests tool approvals"
+        },
+        {
+          "source": "swarm/03_execution_backends",
+          "target": "swarm/04_environment_layout_management",
+          "label": "Reads team configuration"
+        },
+        {
+          "source": "swarm/05_distributed_permission_system",
+          "target": "swarm/04_environment_layout_management",
+          "label": "Updates member state"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "swarm/02_teammate_executor_adapter",
+      "target": "swarm/01_in_process_teammate_runtime",
+      "label": "Adapts and controls"
+    },
+    {
+      "source": "swarm/02_teammate_executor_adapter",
+      "target": "swarm/05_distributed_permission_system",
+      "label": "Spawns internal agents"
+    },
+    {
+      "source": "swarm/06_team_state_persistence",
+      "target": "swarm/01_in_process_teammate_runtime",
+      "label": "Configures terminal panes"
+    },
+    {
+      "source": "swarm/05_distributed_permission_system",
+      "target": "swarm/03_execution_backends",
+      "label": "Requests tool approvals"
+    },
+    {
+      "source": "swarm/03_execution_backends",
+      "target": "swarm/04_environment_layout_management",
+      "label": "Reads team configuration"
+    },
+    {
+      "source": "swarm/05_distributed_permission_system",
+      "target": "swarm/04_environment_layout_management",
+      "label": "Updates member state"
+    }
+  ],
+  "storyPath": [
+    "swarm/01_in_process_teammate_runtime",
+    "swarm/02_teammate_executor_adapter",
+    "swarm/03_execution_backends",
+    "swarm/04_environment_layout_management",
+    "swarm/05_distributed_permission_system",
+    "swarm/06_team_state_persistence"
+  ]
+}

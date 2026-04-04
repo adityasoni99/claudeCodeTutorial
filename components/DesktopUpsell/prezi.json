@@ -1,0 +1,124 @@
+{
+  "projectName": "DesktopUpsell",
+  "nodes": [
+    {
+      "id": "desktopupsell",
+      "label": "DesktopUpsell",
+      "type": "module",
+      "summary": "This project implements a smart **promotional dialog** displayed during the startup of a command-line application. It uses a **terminal-based UI** to invite users to try a desktop version of the tool, ensuring the message is only shown to eligible users by checking **remote feature flags** and the user's local history. The system handles user interaction (like dismissing the message) and records engagement via *telemetry* to track the feature's effectiveness.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "desktopupsell/01_terminal_ui_rendering__ink_",
+          "label": "Terminal UI Rendering (Ink)",
+          "type": "chapter",
+          "summary": "The project uses a library called Ink to build user interfaces. It provides components like `Box`, `Text`, and custom widgets like `Select` and `PermissionDialog` that look and feel like React web code but render inside a command-line window.\nIt functions as a translator. It takes standard React concepts\u2014components, hooks, and layouts\u2014and translates them into the raw text characters and escape codes necessary to draw boxes, text, and interactive menus on a black-and-white terminal screen.",
+          "contentPath": "01_terminal_ui_rendering__ink_.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "desktopupsell/02_feature_gating___targeting_logic",
+          "label": "Feature Gating & Targeting Logic",
+          "type": "chapter",
+          "summary": "This abstraction determines eligibility for specific flows. The function `shouldShowDesktopUpsellStartup` checks multiple layers: hardware compatibility (`isSupportedPlatform`), remote permission (feature flags), and local user preference.\nIt acts like a sophisticated \"Doorman\" or Bouncer. Before letting a feature appear on screen, it checks the user's ID (Operating System), checks if the club is open (Feature Flags), and ensures the user hasn't explicitly asked to be left alone (Dismissal Config).",
+          "contentPath": "02_feature_gating___targeting_logic.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "desktopupsell/03_dynamic_configuration__feature_flags_",
+          "label": "Dynamic Configuration (Feature Flags)",
+          "type": "chapter",
+          "summary": "This abstraction allows the application to modify its behavior remotely without requiring the user to update the software. In this file, `getDynamicConfig_CACHED_MAY_BE_STALE` is used to fetch the `tengu_desktop_upsell` config.\nIt acts like a remote control for the application. Even after the code is installed on a user's computer, developers can flip switches on a server to turn specific features (like the startup dialog) on or off, ensuring experimental features are released gradually.",
+          "contentPath": "03_dynamic_configuration__feature_flags_.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "desktopupsell/04_global_user_state_persistence",
+          "label": "Global User State Persistence",
+          "type": "chapter",
+          "summary": "This system manages the \"long-term memory\" of the CLI. Using `getGlobalConfig` and `saveGlobalConfig`, the code persists small pieces of data, such as `desktopUpsellSeenCount` or `desktopUpsellDismissed`.\nThink of it as a notebook the application keeps in the user's pocket. It records history\u2014like \"the user has already seen this message 3 times\"\u2014so the application can make smart decisions (like stopping the upsell) to avoid being annoying, rather than treating every startup like the first time.",
+          "contentPath": "04_global_user_state_persistence.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "desktopupsell/05_analytics___telemetry",
+          "label": "Analytics & Telemetry",
+          "type": "chapter",
+          "summary": "This abstraction is used to track user engagement and system behavior. The code uses `logEvent` to record specific actions, such as when the upsell dialog is displayed to a user (`tengu_desktop_upsell_shown`).\nIt serves as the application's nervous system, sending feedback signals to the developers. Just as a store manager counts how many customers stop at a promotional display versus walking past it, this system helps the team understand if a feature is useful or if it is being ignored.",
+          "contentPath": "05_analytics___telemetry.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "desktopupsell/04_global_user_state_persistence",
+          "target": "desktopupsell/01_terminal_ui_rendering__ink_",
+          "label": "Checks remote enablement"
+        },
+        {
+          "source": "desktopupsell/04_global_user_state_persistence",
+          "target": "desktopupsell/02_feature_gating___targeting_logic",
+          "label": "Verifies dismissal history"
+        },
+        {
+          "source": "desktopupsell/03_dynamic_configuration__feature_flags_",
+          "target": "desktopupsell/02_feature_gating___targeting_logic",
+          "label": "Updates seen count"
+        },
+        {
+          "source": "desktopupsell/03_dynamic_configuration__feature_flags_",
+          "target": "desktopupsell/05_analytics___telemetry",
+          "label": "Logs impression events"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "desktopupsell/04_global_user_state_persistence",
+      "target": "desktopupsell/01_terminal_ui_rendering__ink_",
+      "label": "Checks remote enablement"
+    },
+    {
+      "source": "desktopupsell/04_global_user_state_persistence",
+      "target": "desktopupsell/02_feature_gating___targeting_logic",
+      "label": "Verifies dismissal history"
+    },
+    {
+      "source": "desktopupsell/03_dynamic_configuration__feature_flags_",
+      "target": "desktopupsell/02_feature_gating___targeting_logic",
+      "label": "Updates seen count"
+    },
+    {
+      "source": "desktopupsell/03_dynamic_configuration__feature_flags_",
+      "target": "desktopupsell/05_analytics___telemetry",
+      "label": "Logs impression events"
+    }
+  ],
+  "storyPath": [
+    "desktopupsell/01_terminal_ui_rendering__ink_",
+    "desktopupsell/02_feature_gating___targeting_logic",
+    "desktopupsell/03_dynamic_configuration__feature_flags_",
+    "desktopupsell/04_global_user_state_persistence",
+    "desktopupsell/05_analytics___telemetry"
+  ]
+}

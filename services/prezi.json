@@ -1,0 +1,208 @@
+{
+  "projectName": "services",
+  "nodes": [
+    {
+      "id": "services",
+      "label": "services",
+      "type": "module",
+      "summary": "The **services** project implements the core cognitive architecture of an AI agent. It manages the agent's limited **Context Window** through intelligent compaction and maintains persistent **Memory** by extracting key insights from conversations. The system orchestrates a **Tool Execution Pipeline** that connects to external capabilities via **MCP** and **LSP**, while a unified **API Client** handles cloud connectivity and **Telemetry** provides comprehensive system observability.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "services/01_api_client___connectivity",
+          "label": "API Client & Connectivity",
+          "type": "chapter",
+          "summary": "This layer handles the actual communication with the AI providers. It acts as a universal adapter, managing authentication (OAuth/API Keys), choosing the right provider (Anthropic, AWS Bedrock, GCP Vertex), and enforcing rate limits. It abstracts away the complexity of different cloud endpoints and protocols, allowing the rest of the application to just ask for a \"completion\" without worrying about how the connection is made.",
+          "contentPath": "01_api_client___connectivity.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "services/02_memory___knowledge_extraction",
+          "label": "Memory & Knowledge Extraction",
+          "type": "chapter",
+          "summary": "While Compaction handles immediate context, this system acts as the AI's long-term notebook. It runs in the background (using \"forked agents\" or sub-processes) to analyze the conversation and extract durable facts, project structure, and key decisions into markdown files. It's like having a secretary who listens to a meeting and files away the important minutes so the main participants don't have to keep everything in their heads.",
+          "contentPath": "02_memory___knowledge_extraction.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "services/03_context_compaction",
+          "label": "Context Compaction",
+          "type": "chapter",
+          "summary": "This system manages the limited \"attention span\" (context window) of the AI model. Just as a zip file compresses data, compaction takes a long conversation history and summarizes older parts to free up space for new messages. It uses token estimation to detect when the conversation is getting too full, effectively trading granular detail from the past for the ability to continue the conversation indefinitely without hitting memory limits.",
+          "contentPath": "03_context_compaction.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "services/04_tool_execution_pipeline",
+          "label": "Tool Execution Pipeline",
+          "type": "chapter",
+          "summary": "This abstraction acts as the \"hands\" of the AI. When the model wants to perform an action (like reading a file or running a command), this pipeline handles the logistics. It orchestrates the execution flow\u2014determining if tools can run in parallel or must run sequentially, validating inputs, checking user permissions (security), and capturing the output to send back to the model. It bridges the gap between the AI's intent and the operating system's reality.",
+          "contentPath": "04_tool_execution_pipeline.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "services/05_model_context_protocol__mcp_",
+          "label": "Model Context Protocol (MCP)",
+          "type": "chapter",
+          "summary": "MCP is the \"USB port\" for the AI agent. It allows the application to connect to external tools and data sources (like database connectors or other APIs) using a standardized interface. This system manages the configuration, connection lifecycle, and discovery of these external servers, enabling the AI to extend its capabilities beyond built-in tools without changing the core codebase.",
+          "contentPath": "05_model_context_protocol__mcp_.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "services/06_language_server_integration__lsp_",
+          "label": "Language Server Integration (LSP)",
+          "type": "chapter",
+          "summary": "This system gives the AI the \"brain\" of a code editor (IDE). By managing Language Server Protocol clients, it allows the AI to perform advanced code analysis\u2014like finding definitions, checking syntax errors, or understanding type signatures\u2014just like a developer does in VS Code. It manages the lifecycle of these background servers and routes file-specific requests to the correct language handler.",
+          "contentPath": "06_language_server_integration__lsp_.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "services/07_telemetry___observability",
+          "label": "Telemetry & Observability",
+          "type": "chapter",
+          "summary": "The \"flight recorder\" of the application. It captures what is happening inside the system, from API errors to feature usage. It includes internal logging for debugging and external event logging for analytics. This abstraction ensures that when things go wrong (or right), there is a trace of the event, complete with metadata about the environment and state, usually batched to reduce network overhead.",
+          "contentPath": "07_telemetry___observability.md",
+          "x": -800.0,
+          "y": 450.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "services/01_api_client___connectivity",
+          "target": "services/03_context_compaction",
+          "label": "Reads memory content"
+        },
+        {
+          "source": "services/01_api_client___connectivity",
+          "target": "services/04_tool_execution_pipeline",
+          "label": "Uses API for token counting"
+        },
+        {
+          "source": "services/01_api_client___connectivity",
+          "target": "services/07_telemetry___observability",
+          "label": "Logs compaction events"
+        },
+        {
+          "source": "services/02_memory___knowledge_extraction",
+          "target": "services/05_model_context_protocol__mcp_",
+          "label": "Integrates MCP tools"
+        },
+        {
+          "source": "services/02_memory___knowledge_extraction",
+          "target": "services/07_telemetry___observability",
+          "label": "Logs tool usage"
+        },
+        {
+          "source": "services/03_context_compaction",
+          "target": "services/01_api_client___connectivity",
+          "label": "Checks compaction config"
+        },
+        {
+          "source": "services/03_context_compaction",
+          "target": "services/07_telemetry___observability",
+          "label": "Logs extraction events"
+        },
+        {
+          "source": "services/04_tool_execution_pipeline",
+          "target": "services/07_telemetry___observability",
+          "label": "Logs auth & limits"
+        },
+        {
+          "source": "services/05_model_context_protocol__mcp_",
+          "target": "services/07_telemetry___observability",
+          "label": "Logs configuration events"
+        },
+        {
+          "source": "services/06_language_server_integration__lsp_",
+          "target": "services/07_telemetry___observability",
+          "label": "Logs server errors"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "services/01_api_client___connectivity",
+      "target": "services/03_context_compaction",
+      "label": "Reads memory content"
+    },
+    {
+      "source": "services/01_api_client___connectivity",
+      "target": "services/04_tool_execution_pipeline",
+      "label": "Uses API for token counting"
+    },
+    {
+      "source": "services/01_api_client___connectivity",
+      "target": "services/07_telemetry___observability",
+      "label": "Logs compaction events"
+    },
+    {
+      "source": "services/02_memory___knowledge_extraction",
+      "target": "services/05_model_context_protocol__mcp_",
+      "label": "Integrates MCP tools"
+    },
+    {
+      "source": "services/02_memory___knowledge_extraction",
+      "target": "services/07_telemetry___observability",
+      "label": "Logs tool usage"
+    },
+    {
+      "source": "services/03_context_compaction",
+      "target": "services/01_api_client___connectivity",
+      "label": "Checks compaction config"
+    },
+    {
+      "source": "services/03_context_compaction",
+      "target": "services/07_telemetry___observability",
+      "label": "Logs extraction events"
+    },
+    {
+      "source": "services/04_tool_execution_pipeline",
+      "target": "services/07_telemetry___observability",
+      "label": "Logs auth & limits"
+    },
+    {
+      "source": "services/05_model_context_protocol__mcp_",
+      "target": "services/07_telemetry___observability",
+      "label": "Logs configuration events"
+    },
+    {
+      "source": "services/06_language_server_integration__lsp_",
+      "target": "services/07_telemetry___observability",
+      "label": "Logs server errors"
+    }
+  ],
+  "storyPath": [
+    "services/01_api_client___connectivity",
+    "services/02_memory___knowledge_extraction",
+    "services/03_context_compaction",
+    "services/04_tool_execution_pipeline",
+    "services/05_model_context_protocol__mcp_",
+    "services/06_language_server_integration__lsp_",
+    "services/07_telemetry___observability"
+  ]
+}

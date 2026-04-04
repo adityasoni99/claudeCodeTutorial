@@ -1,0 +1,146 @@
+{
+  "projectName": "SkillTool",
+  "nodes": [
+    {
+      "id": "skilltool",
+      "label": "SkillTool",
+      "type": "module",
+      "summary": "The **SkillTool** project serves as a \"universal remote\" that enables an AI agent to discover and execute specialized **skills** (represented as slash commands). It manages complexity by isolating heavy tasks in temporary **sub-agents** (forked execution) and ensures safety through a robust permission system. Additionally, it optimizes the context window by dynamically budgeting the prompt size for available skills and supports loading *remote* skills from the cloud on demand.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "skilltool/01_the_skilltool_interface",
+          "label": "The SkillTool Interface",
+          "type": "chapter",
+          "summary": "This is the primary entry point that exposes \"skills\" (slash commands) to the AI agent as a tool it can invoke. It defines the input schema (skill name and arguments) and the output schema.\nThink of it as a \"Universal Remote Control\" for the AI. The AI doesn't need to know how to execute every specific command internally; it just needs to know which button on the remote to press (`SkillTool`) and what channel number to enter (the skill name), and this abstraction handles the actual switching and signal transmission.",
+          "contentPath": "01_the_skilltool_interface.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skilltool/02_skill_user_interface__ui_",
+          "label": "Skill User Interface (UI)",
+          "type": "chapter",
+          "summary": "React components responsible for rendering the state of a skill execution to the user. It handles different states like \"Initializing,\" showing progress bars for sub-agents, or displaying the final success/failure message.\nIt's like the digital display on a washing machine. It hides the complex mechanical churning happening inside (the code execution) and simply shows you a \"Washing...\" progress bar or a \"Cycle Complete\" light so you know what's happening without opening the lid.",
+          "contentPath": "02_skill_user_interface__ui_.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skilltool/03_dynamic_prompt_construction___budgeting",
+          "label": "Dynamic Prompt Construction & Budgeting",
+          "type": "chapter",
+          "summary": "Logic that generates the system prompt telling the AI which skills are available. Crucially, it calculates a \"token budget\" to ensure the list of skills doesn't consume too much of the context window, truncating descriptions if necessary.\nIt acts like a dynamic restaurant menu. If the paper is large, every dish gets a paragraph description. If the paper is small (tight context limit), the menu automatically condenses to just list the names of the dishes so everything still fits on the page.",
+          "contentPath": "03_dynamic_prompt_construction___budgeting.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skilltool/04_permission___safety_layer",
+          "label": "Permission & Safety Layer",
+          "type": "chapter",
+          "summary": "A system within `checkPermissions` that evaluates whether a skill requires user approval before running. It uses allowlists (`SAFE_SKILL_PROPERTIES`) and checks for deny rules to determine if the action is safe.\nThink of this as a nightclub bouncer. Some guests (safe, simple skills) are on the VIP list and walk right in. Others (complex or unknown skills) get stopped at the door, and the bouncer has to ask the manager (the user) for permission before letting them through.",
+          "contentPath": "04_permission___safety_layer.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skilltool/05_forked_execution_strategy",
+          "label": "Forked Execution Strategy",
+          "type": "chapter",
+          "summary": "A mechanism to run complex skills in an isolated sub-agent context (`executeForkedSkill`). Instead of running a skill in the main conversation loop, it spawns a temporary agent with its own token budget and history.\nImagine you are working on a project and need a specific, messy task done. Instead of doing it at your own desk (cluttering your workspace), you hire a contractor to do it in their own workshop. They do the work and just bring you back the finished result, keeping your desk clean.",
+          "contentPath": "05_forked_execution_strategy.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "skilltool/06_remote_skill_loading",
+          "label": "Remote Skill Loading",
+          "type": "chapter",
+          "summary": "An experimental flow that allows the tool to fetch \"canonical\" skills from a remote source (like a cloud bucket) rather than using local commands. It retrieves markdown definitions (`SKILL.md`) and injects them directly into the conversation.\nThis is like streaming a movie versus watching a DVD. Instead of relying only on the physical discs (local commands) you have on your shelf, this abstraction lets you look up a title in the cloud and stream the content immediately, even if you didn't have it beforehand.",
+          "contentPath": "06_remote_skill_loading.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "skilltool/01_the_skilltool_interface",
+          "target": "skilltool/03_dynamic_prompt_construction___budgeting",
+          "label": "Generates system prompt"
+        },
+        {
+          "source": "skilltool/01_the_skilltool_interface",
+          "target": "skilltool/05_forked_execution_strategy",
+          "label": "Validates execution safety"
+        },
+        {
+          "source": "skilltool/01_the_skilltool_interface",
+          "target": "skilltool/02_skill_user_interface__ui_",
+          "label": "Delegates isolated execution"
+        },
+        {
+          "source": "skilltool/01_the_skilltool_interface",
+          "target": "skilltool/04_permission___safety_layer",
+          "label": "Loads remote content"
+        },
+        {
+          "source": "skilltool/01_the_skilltool_interface",
+          "target": "skilltool/06_remote_skill_loading",
+          "label": "Renders execution state"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "skilltool/01_the_skilltool_interface",
+      "target": "skilltool/03_dynamic_prompt_construction___budgeting",
+      "label": "Generates system prompt"
+    },
+    {
+      "source": "skilltool/01_the_skilltool_interface",
+      "target": "skilltool/05_forked_execution_strategy",
+      "label": "Validates execution safety"
+    },
+    {
+      "source": "skilltool/01_the_skilltool_interface",
+      "target": "skilltool/02_skill_user_interface__ui_",
+      "label": "Delegates isolated execution"
+    },
+    {
+      "source": "skilltool/01_the_skilltool_interface",
+      "target": "skilltool/04_permission___safety_layer",
+      "label": "Loads remote content"
+    },
+    {
+      "source": "skilltool/01_the_skilltool_interface",
+      "target": "skilltool/06_remote_skill_loading",
+      "label": "Renders execution state"
+    }
+  ],
+  "storyPath": [
+    "skilltool/01_the_skilltool_interface",
+    "skilltool/02_skill_user_interface__ui_",
+    "skilltool/03_dynamic_prompt_construction___budgeting",
+    "skilltool/04_permission___safety_layer",
+    "skilltool/05_forked_execution_strategy",
+    "skilltool/06_remote_skill_loading"
+  ]
+}

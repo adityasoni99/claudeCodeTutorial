@@ -1,0 +1,124 @@
+{
+  "projectName": "AskUserQuestionTool",
+  "nodes": [
+    {
+      "id": "askuserquestiontool",
+      "label": "AskUserQuestionTool",
+      "type": "module",
+      "summary": "This project enables an AI agent to proactively **ask the user** multiple-choice questions to gather requirements or offer choices. It acts as a bridge between the AI and the interface by enforcing strict *data schemas*, handling rich content like **HTML previews** for options, and rendering the user's answers as a permanent record in the chat.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "askuserquestiontool/01_data_schemas",
+          "label": "Data Schemas",
+          "type": "chapter",
+          "summary": "Strict Zod definitions (`inputSchema`, `questionSchema`) that define the structure of the interaction. They enforce constraints like requiring 2-4 options per question, ensuring unique labels, and restricting chip width. This acts as a gatekeeper, ensuring the AI produces structured data the UI can reliably render.",
+          "contentPath": "01_data_schemas.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "askuserquestiontool/02_tool_definition",
+          "label": "Tool Definition",
+          "type": "chapter",
+          "summary": "The central object `AskUserQuestionTool` constructed via `buildTool`. It acts as the bridge between the AI agent and the user interface. It aggregates the input schemas, prompt instructions, validation logic, permission checks, and execution handlers into a single unit that the system can register and invoke when the AI wants to ask a question.",
+          "contentPath": "02_tool_definition.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "askuserquestiontool/03_prompt_configuration",
+          "label": "Prompt Configuration",
+          "type": "chapter",
+          "summary": "Text constants that program the AI's behavior regarding this tool. These instructions define *when* to use the tool (gathering requirements, offering choices) versus when *not* to use it (plan approval), and provide specific formatting rules for the \"preview\" feature based on the available rendering format.",
+          "contentPath": "03_prompt_configuration.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "askuserquestiontool/04_preview_feature_logic",
+          "label": "Preview Feature Logic",
+          "type": "chapter",
+          "summary": "The subsystem handling the optional visualization of choices. It consists of specific prompt instructions telling the AI how to format previews (HTML/Markdown) and validation logic (`validateHtmlPreview`) that ensures the provided content is a safe HTML fragment (no scripts or full documents) suitable for side-by-side rendering.",
+          "contentPath": "04_preview_feature_logic.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "askuserquestiontool/05_result_rendering",
+          "label": "Result Rendering",
+          "type": "chapter",
+          "summary": "The `AskUserQuestionResultMessage` React component. It is responsible for displaying the permanent record of the interaction in the chat history. Once a user answers, this component takes the structured answer data and renders it as a clean, read-only list of questions and selected answers.",
+          "contentPath": "05_result_rendering.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "askuserquestiontool/01_data_schemas",
+          "target": "askuserquestiontool/02_tool_definition",
+          "label": "Enforces structure via"
+        },
+        {
+          "source": "askuserquestiontool/01_data_schemas",
+          "target": "askuserquestiontool/04_preview_feature_logic",
+          "label": "Retrieves instructions from"
+        },
+        {
+          "source": "askuserquestiontool/01_data_schemas",
+          "target": "askuserquestiontool/03_prompt_configuration",
+          "label": "Validates content with"
+        },
+        {
+          "source": "askuserquestiontool/01_data_schemas",
+          "target": "askuserquestiontool/05_result_rendering",
+          "label": "Renders output via"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "askuserquestiontool/01_data_schemas",
+      "target": "askuserquestiontool/02_tool_definition",
+      "label": "Enforces structure via"
+    },
+    {
+      "source": "askuserquestiontool/01_data_schemas",
+      "target": "askuserquestiontool/04_preview_feature_logic",
+      "label": "Retrieves instructions from"
+    },
+    {
+      "source": "askuserquestiontool/01_data_schemas",
+      "target": "askuserquestiontool/03_prompt_configuration",
+      "label": "Validates content with"
+    },
+    {
+      "source": "askuserquestiontool/01_data_schemas",
+      "target": "askuserquestiontool/05_result_rendering",
+      "label": "Renders output via"
+    }
+  ],
+  "storyPath": [
+    "askuserquestiontool/01_data_schemas",
+    "askuserquestiontool/02_tool_definition",
+    "askuserquestiontool/03_prompt_configuration",
+    "askuserquestiontool/04_preview_feature_logic",
+    "askuserquestiontool/05_result_rendering"
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "projectName": "shared",
+  "nodes": [
+    {
+      "id": "shared",
+      "label": "shared",
+      "type": "module",
+      "summary": "This project enables the creation and management of **multi-agent teams** where \"teammates\" are spawned to perform tasks alongside the user. It orchestrates the **lifecycle** of these agents by assigning them unique identities and colors, and dynamically selecting the appropriate **execution backend** (such as a split-pane tmux window or an internal Node.js process). Additionally, it includes a telemetry layer that observes shell output to **track Git operations** and usage metrics without interrupting the workflow.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "shared/01_team_context___identity_management",
+          "label": "Team Context & Identity Management",
+          "type": "chapter",
+          "summary": "The logic responsible for maintaining the consistency of the team's state. When an agent is spawned, it must be assigned a unique ID, sanitized name, and color. It is then registered in the global application state (`AppState`) and persistent storage (`teamFile`). This ensures the \"leader\" agent and the UI can track, visualize, and communicate with the new teammate.\nIt's like an HR records system that ensures no two employees have the same ID, assigns them a department color, and updates the company directory so everyone knows who the new person is.",
+          "contentPath": "01_team_context___identity_management.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "shared/02_agent_spawning_orchestrator",
+          "label": "Agent Spawning Orchestrator",
+          "type": "chapter",
+          "summary": "The central mechanism for creating new \"teammate\" agents. It acts as a dispatcher (specifically `spawnTeammate`) that determines *how* an agent should be instantiated based on configuration and environment. It handles the setup of the agent's environment variables, command-line arguments, and initial instructions before handing off to a specific backend handler.\nIt's like a hiring manager who onboards new employees, determining where they sit and giving them their ID badge and first assignment, regardless of their specific role.",
+          "contentPath": "02_agent_spawning_orchestrator.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "shared/03_execution_backend_strategies",
+          "label": "Execution Backend Strategies",
+          "type": "chapter",
+          "summary": "The specific implementations for running an agent's lifecycle. The code distinguishes between different \"backends\": `split-pane` (sharing a tmux window), `separate-window` (new tmux window), and `in-process` (running within the same Node.js runtime). This abstraction isolates the low-level details of process management (CLI commands vs. internal threads) from the high-level request to \"create an agent.\"\nIt's like choosing a workstation: some employees get a desk in a shared open-plan office (split-pane), some get a private office (separate window), and others are virtual assistants inside the computer (in-process).",
+          "contentPath": "03_execution_backend_strategies.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "shared/04_command_telemetry___git_tracking",
+          "label": "Command Telemetry & Git Tracking",
+          "type": "chapter",
+          "summary": "A utility layer that parses shell commands and their output to detect specific user actions, focusing on Git operations (commits, pushes, PR creations). It uses regular expressions to identify commands and extract metadata (like branch names or PR numbers) for analytics and usage metrics, without interfering with the actual execution.\nIt's like an automated observer in a workshop that notes down whenever a specific tool is used (e.g., \"Hammer used for 5 minutes\"), helping to generate usage reports without stopping the work.",
+          "contentPath": "04_command_telemetry___git_tracking.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "shared/01_team_context___identity_management",
+          "target": "shared/02_agent_spawning_orchestrator",
+          "label": "Delegates execution to"
+        },
+        {
+          "source": "shared/01_team_context___identity_management",
+          "target": "shared/03_execution_backend_strategies",
+          "label": "Registers identities in"
+        },
+        {
+          "source": "shared/02_agent_spawning_orchestrator",
+          "target": "shared/04_command_telemetry___git_tracking",
+          "label": "Output monitored by"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "shared/01_team_context___identity_management",
+      "target": "shared/02_agent_spawning_orchestrator",
+      "label": "Delegates execution to"
+    },
+    {
+      "source": "shared/01_team_context___identity_management",
+      "target": "shared/03_execution_backend_strategies",
+      "label": "Registers identities in"
+    },
+    {
+      "source": "shared/02_agent_spawning_orchestrator",
+      "target": "shared/04_command_telemetry___git_tracking",
+      "label": "Output monitored by"
+    }
+  ],
+  "storyPath": [
+    "shared/01_team_context___identity_management",
+    "shared/02_agent_spawning_orchestrator",
+    "shared/03_execution_backend_strategies",
+    "shared/04_command_telemetry___git_tracking"
+  ]
+}

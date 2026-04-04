@@ -1,0 +1,144 @@
+{
+  "projectName": "context",
+  "nodes": [
+    {
+      "id": "context",
+      "label": "context",
+      "type": "module",
+      "summary": "The project implements a **context inspection tool** that allows users to visualize how much of the AI's memory (token window) is currently occupied. It employs a **Dual-Mode Command Strategy** to automatically switch between a rich, graphical *Interactive TUI* for active sessions and a static *Markdown report* for headless or script-based usage. To ensure accuracy, it passes chat history through a **Model-View Transformation** pipeline so the reported statistics match exactly what the AI model sees.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "context/01_dual_mode_command_strategy",
+          "label": "Dual-Mode Command Strategy",
+          "type": "chapter",
+          "summary": "Handles the registration of the `context` command, dynamically switching between two implementations based on the environment.\nIt's like a smart switch that detects if a monitor is attached; if yes, it launches the graphical interface (`context.tsx`), otherwise, it defaults to a text-based report (`context-noninteractive.ts`) for scripts or headless modes.",
+          "contentPath": "01_dual_mode_command_strategy.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "context/02_interactive_visualization__tui_",
+          "label": "Interactive Visualization (TUI)",
+          "type": "chapter",
+          "summary": "The rendering logic for the interactive session, utilizing React and Ink to draw a graphical representation of context usage.\nIt's like a dashboard gauge in a car, converting raw data into a visual grid (via `ContextVisualization`) and rendering it to an ANSI string to preserve colors in the terminal output.",
+          "contentPath": "02_interactive_visualization__tui_.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "context/03_headless_reporting__markdown_",
+          "label": "Headless Reporting (Markdown)",
+          "type": "chapter",
+          "summary": "The implementation for non-interactive sessions that outputs context data as a structured Markdown table.\nIt's like a printed itemized receipt, providing a detailed breakdown of token usage (by tools, agents, files, etc.) in a format that is easy to read in logs or plain text environments where graphical dashboards aren't possible.",
+          "contentPath": "03_headless_reporting__markdown_.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "context/04_context_analysis_integration",
+          "label": "Context Analysis Integration",
+          "type": "chapter",
+          "summary": "The connection point between the command logic and the core analysis utility (`analyzeContextUsage`).\nIt functions like an accountant's worksheet, taking the processed messages and organizing the token usage into specific categories (e.g., System Prompts, Tools, User Messages) to calculate the percentage of the context window used.",
+          "contentPath": "04_context_analysis_integration.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "context/05_model_view_transformation",
+          "label": "Model-View Transformation",
+          "type": "chapter",
+          "summary": "A pipeline that transforms the raw chat history into the exact sequence of messages the AI model will receive.\nIt acts like a prep chef cleaning ingredients before cooking; it applies operations like \"micro-compaction\" (removing whitespace) and \"context collapse\" (summarizing old messages) so the token counts displayed to the user match exactly what the API sees.",
+          "contentPath": "05_model_view_transformation.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "context/01_dual_mode_command_strategy",
+          "target": "context/03_headless_reporting__markdown_",
+          "label": "Activates for interactive s..."
+        },
+        {
+          "source": "context/01_dual_mode_command_strategy",
+          "target": "context/04_context_analysis_integration",
+          "label": "Activates for non-interacti..."
+        },
+        {
+          "source": "context/03_headless_reporting__markdown_",
+          "target": "context/02_interactive_visualization__tui_",
+          "label": "Prepares raw messages"
+        },
+        {
+          "source": "context/04_context_analysis_integration",
+          "target": "context/02_interactive_visualization__tui_",
+          "label": "Prepares raw messages"
+        },
+        {
+          "source": "context/03_headless_reporting__markdown_",
+          "target": "context/05_model_view_transformation",
+          "label": "Calculates token usage"
+        },
+        {
+          "source": "context/04_context_analysis_integration",
+          "target": "context/05_model_view_transformation",
+          "label": "Calculates token usage"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "context/01_dual_mode_command_strategy",
+      "target": "context/03_headless_reporting__markdown_",
+      "label": "Activates for interactive sessions"
+    },
+    {
+      "source": "context/01_dual_mode_command_strategy",
+      "target": "context/04_context_analysis_integration",
+      "label": "Activates for non-interactive sessions"
+    },
+    {
+      "source": "context/03_headless_reporting__markdown_",
+      "target": "context/02_interactive_visualization__tui_",
+      "label": "Prepares raw messages"
+    },
+    {
+      "source": "context/04_context_analysis_integration",
+      "target": "context/02_interactive_visualization__tui_",
+      "label": "Prepares raw messages"
+    },
+    {
+      "source": "context/03_headless_reporting__markdown_",
+      "target": "context/05_model_view_transformation",
+      "label": "Calculates token usage"
+    },
+    {
+      "source": "context/04_context_analysis_integration",
+      "target": "context/05_model_view_transformation",
+      "label": "Calculates token usage"
+    }
+  ],
+  "storyPath": [
+    "context/01_dual_mode_command_strategy",
+    "context/02_interactive_visualization__tui_",
+    "context/03_headless_reporting__markdown_",
+    "context/04_context_analysis_integration",
+    "context/05_model_view_transformation"
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "projectName": "privacy-settings",
+  "nodes": [
+    {
+      "id": "privacy-settings",
+      "label": "privacy-settings",
+      "type": "module",
+      "summary": "This project implements a **privacy control system** (internally named \"Grove\") that allows users to manage their data settings. It features a **command-based entry point** that lazily loads the necessary logic only when needed. A central *workflow orchestrator* coordinates fetching user data from the backend, determining whether to show an onboarding screen or the main settings dialog, and logging key user interactions for analytics.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "privacy-settings/01_command_definition",
+          "label": "Command Definition",
+          "type": "chapter",
+          "summary": "This abstraction defines how the privacy settings feature allows itself to be discovered and executed by the main application. It acts like a menu item registration, specifying the command's unique name (`privacy-settings`), a human-readable description, and conditions for when it should be enabled (e.g., checking if the user is a consumer subscriber). It also handles \"lazy loading,\" ensuring the heavy code is only imported when the user actually triggers the command.",
+          "contentPath": "01_command_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "privacy-settings/02_workflow_orchestrator",
+          "label": "Workflow Orchestrator",
+          "type": "chapter",
+          "summary": "Located in the `call` function, this is the central brain of the feature. It manages the lifecycle of the user interaction: checking if the user is qualified, fetching necessary configuration, deciding which screen to show, and handling the cleanup after the user finishes. It's like a director on a movie set, telling the actors (components) when to appear and ensuring the scene (data state) is set correctly before the camera rolls.",
+          "contentPath": "02_workflow_orchestrator.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "privacy-settings/03_grove_service_integration",
+          "label": "Grove Service Integration",
+          "type": "chapter",
+          "summary": "This layer handles communication with the backend regarding \"Grove\" (the internal project name for these privacy controls). It abstracts away the complexity of network requests. Instead of raw fetch calls, the code uses helper functions like `getGroveSettings` and `isQualifiedForGrove` to retrieve the user's current status and policy configurations. It ensures the local application is synchronized with the server's truth.",
+          "contentPath": "03_grove_service_integration.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "privacy-settings/04_conditional_ui_rendering",
+          "label": "Conditional UI Rendering",
+          "type": "chapter",
+          "summary": "This logic determines which specific interface the user sees based on their current state. If a user has already accepted terms, they see the `PrivacySettingsDialog` to manage preferences. If they are new, they see the `GroveDialog` for initial onboarding. It acts like a switchboard, routing the user to the correct experience so they don't see introductory terms repeatedly or settings they can't yet control.",
+          "contentPath": "04_conditional_ui_rendering.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "privacy-settings/05_telemetry_and_analytics",
+          "label": "Telemetry and Analytics",
+          "type": "chapter",
+          "summary": "This abstraction is responsible for observing and recording user actions. Using `logEvent`, it tracks specific interactions, such as toggling the \"Help improve Claude\" setting. It ensures that when a user makes a decision, a structured record (containing the new state and location) is sent to the analytics system, allowing the team to understand usage patterns and feature adoption.",
+          "contentPath": "05_telemetry_and_analytics.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "privacy-settings/01_command_definition",
+          "target": "privacy-settings/02_workflow_orchestrator",
+          "label": "Lazily loads and executes"
+        },
+        {
+          "source": "privacy-settings/02_workflow_orchestrator",
+          "target": "privacy-settings/03_grove_service_integration",
+          "label": "Retrieves user state from"
+        },
+        {
+          "source": "privacy-settings/02_workflow_orchestrator",
+          "target": "privacy-settings/04_conditional_ui_rendering",
+          "label": "Determines and displays"
+        },
+        {
+          "source": "privacy-settings/02_workflow_orchestrator",
+          "target": "privacy-settings/05_telemetry_and_analytics",
+          "label": "Logs user actions to"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "privacy-settings/01_command_definition",
+      "target": "privacy-settings/02_workflow_orchestrator",
+      "label": "Lazily loads and executes"
+    },
+    {
+      "source": "privacy-settings/02_workflow_orchestrator",
+      "target": "privacy-settings/03_grove_service_integration",
+      "label": "Retrieves user state from"
+    },
+    {
+      "source": "privacy-settings/02_workflow_orchestrator",
+      "target": "privacy-settings/04_conditional_ui_rendering",
+      "label": "Determines and displays"
+    },
+    {
+      "source": "privacy-settings/02_workflow_orchestrator",
+      "target": "privacy-settings/05_telemetry_and_analytics",
+      "label": "Logs user actions to"
+    }
+  ],
+  "storyPath": [
+    "privacy-settings/01_command_definition",
+    "privacy-settings/02_workflow_orchestrator",
+    "privacy-settings/03_grove_service_integration",
+    "privacy-settings/04_conditional_ui_rendering",
+    "privacy-settings/05_telemetry_and_analytics"
+  ]
+}

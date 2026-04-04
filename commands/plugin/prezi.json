@@ -1,0 +1,134 @@
+{
+  "projectName": "plugin",
+  "nodes": [
+    {
+      "id": "plugin",
+      "label": "plugin",
+      "type": "module",
+      "summary": "This project implements a comprehensive **CLI and Terminal UI** for managing the lifecycle of plugins. It acts as a central hub to **discover, install, and configure** plugins from various marketplaces, ensuring they are correctly set up via interactive **wizards** and validated against strict **schemas** to maintain ecosystem health.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "plugin/01_command_interface",
+          "label": "Command Interface",
+          "type": "chapter",
+          "summary": "This abstraction acts as the entry point and router for the CLI tool. Think of it as a receptionist that takes raw user input strings and determines the user's intent. It parses arguments to distinguish between actions like \"install,\" \"manage,\" or \"validate,\" and directs the application to render the appropriate React view or execute the specific logic.",
+          "contentPath": "01_command_interface.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plugin/02_marketplace_operations",
+          "label": "Marketplace Operations",
+          "type": "chapter",
+          "summary": "This abstraction handles the external \"supply chain\" of plugins. It manages the logic and UI for adding new plugin sources (marketplaces), parsing various input formats (like GitHub URLs or local paths), and displaying critical trust warnings to ensure users are aware of the risks before installing third-party code.",
+          "contentPath": "02_marketplace_operations.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plugin/03_configuration_system",
+          "label": "Configuration System",
+          "type": "chapter",
+          "summary": "This system manages the \"setup wizard\" experience for plugins. When a plugin requires user input (like API keys or preferences), this abstraction orchestrates the flow. It intelligently determines which options are unconfigured\u2014whether global or specific to a \"channel\" (server)\u2014and presents an interactive dialog to collect and save these values securely.",
+          "contentPath": "03_configuration_system.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plugin/04_ui_rendering_components",
+          "label": "UI Rendering Components",
+          "type": "chapter",
+          "summary": "These are the visual building blocks used to construct the terminal interface. They define how individual items\u2014such as installed plugins or MCP servers\u2014are displayed in a list. This includes logic for rendering status icons (success ticks, error crosses), handling indentation for hierarchy, and displaying contextual shortcut hints.",
+          "contentPath": "04_ui_rendering_components.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "plugin/05_validation___diagnostics",
+          "label": "Validation & Diagnostics",
+          "type": "chapter",
+          "summary": "Acting as the \"health inspector\" for the ecosystem, this abstraction ensures plugins and manifests are correctly structure. It scans files for schema violations or syntax errors. It also includes a centralized error formatting layer that translates cryptic internal error codes into human-readable guidance, helping users troubleshoot issues like network failures or invalid configurations.",
+          "contentPath": "05_validation___diagnostics.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "plugin/01_command_interface",
+          "target": "plugin/03_configuration_system",
+          "label": "Executes validation logic"
+        },
+        {
+          "source": "plugin/01_command_interface",
+          "target": "plugin/04_ui_rendering_components",
+          "label": "Routes marketplace commands"
+        },
+        {
+          "source": "plugin/01_command_interface",
+          "target": "plugin/02_marketplace_operations",
+          "label": "Triggers setup wizard"
+        },
+        {
+          "source": "plugin/04_ui_rendering_components",
+          "target": "plugin/05_validation___diagnostics",
+          "label": "Uses display helpers"
+        },
+        {
+          "source": "plugin/01_command_interface",
+          "target": "plugin/05_validation___diagnostics",
+          "label": "Renders plugin lists"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "plugin/01_command_interface",
+      "target": "plugin/03_configuration_system",
+      "label": "Executes validation logic"
+    },
+    {
+      "source": "plugin/01_command_interface",
+      "target": "plugin/04_ui_rendering_components",
+      "label": "Routes marketplace commands"
+    },
+    {
+      "source": "plugin/01_command_interface",
+      "target": "plugin/02_marketplace_operations",
+      "label": "Triggers setup wizard"
+    },
+    {
+      "source": "plugin/04_ui_rendering_components",
+      "target": "plugin/05_validation___diagnostics",
+      "label": "Uses display helpers"
+    },
+    {
+      "source": "plugin/01_command_interface",
+      "target": "plugin/05_validation___diagnostics",
+      "label": "Renders plugin lists"
+    }
+  ],
+  "storyPath": [
+    "plugin/01_command_interface",
+    "plugin/02_marketplace_operations",
+    "plugin/03_configuration_system",
+    "plugin/04_ui_rendering_components",
+    "plugin/05_validation___diagnostics"
+  ]
+}

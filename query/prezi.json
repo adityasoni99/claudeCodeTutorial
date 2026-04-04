@@ -1,0 +1,102 @@
+{
+  "projectName": "query",
+  "nodes": [
+    {
+      "id": "query",
+      "label": "query",
+      "type": "module",
+      "summary": "This project implements a robust **execution runtime** for an AI agent, designed to manage the lifecycle of user queries safely and efficiently. It utilizes **immutable configuration** snapshots to ensure consistent behavior and employs a *token budget system* to intelligently monitor resource usage and prevent infinite loops. Additionally, it features a **dependency injection** layer for modular testing and *post-turn lifecycle hooks* that validate the agent's state and handle background tasks before a session concludes.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "query/01_immutable_query_configuration",
+          "label": "Immutable Query Configuration",
+          "type": "chapter",
+          "summary": "This abstraction represents the \"mission parameters\" sealed at the start of a user query. It creates a read-only snapshot of the environment, session IDs, and feature flags (like statsig gates or fast mode settings).\n\nBy snapshotting these values once at the entry point, the system ensures that the agent's behavior remains consistent throughout the lifecycle of a single query, even if external environment variables or flags fluctuate during execution. It separates static configuration data from mutable execution state.",
+          "contentPath": "01_immutable_query_configuration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "query/02_token_budget_control",
+          "label": "Token Budget Control",
+          "type": "chapter",
+          "summary": "This abstraction acts as the \"fuel gauge\" and \"trip computer\" for the agent's execution loop. It manages the consumption of tokens to prevent infinite loops or excessive costs. \n\nInstead of a simple hard limit, it uses intelligent heuristics\u2014like checking for \"diminishing returns\" (when the agent makes little progress over several turns)\u2014to decide whether to nudge the agent to continue or force a stop. It ensures the agent uses its \"energy\" efficiently to complete tasks without burning through resources aimlessly.",
+          "contentPath": "02_token_budget_control.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "query/03_dependency_injection_interface",
+          "label": "Dependency Injection Interface",
+          "type": "chapter",
+          "summary": "This pattern serves as the \"plugboard\" for the query engine. Instead of the main logic importing heavy external dependencies (like the actual LLM API client, compaction algorithms, or UUID generators) directly, it accepts a `QueryDeps` object.\n\nThis allows the codebase to swap \"real\" tools for \"fake\" ones easily. In production, it plugs in the live API; in testing, it plugs in mocks. This separation ensures the complex query logic can be tested in isolation without making expensive or non-deterministic network calls.",
+          "contentPath": "03_dependency_injection_interface.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "query/04_post_turn_lifecycle_hooks",
+          "label": "Post-Turn Lifecycle Hooks",
+          "type": "chapter",
+          "summary": "This system functions like a pilot's post-flight checklist. After the AI model generates a response (or attempts to stop), this logic intervenes to ensure the system is in a valid state before actually concluding the turn.\n\nIt executes a series of \"hooks\" that can block the stop action if critical errors exist, or trigger background processes like memory extraction, auto-dreaming, and job classification. It effectively creates a middleware layer that sanitizes the agent's behavior and maintains global application consistency between interaction turns.",
+          "contentPath": "04_post_turn_lifecycle_hooks.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "query/03_dependency_injection_interface",
+          "target": "query/01_immutable_query_configuration",
+          "label": "Configures constraints for"
+        },
+        {
+          "source": "query/04_post_turn_lifecycle_hooks",
+          "target": "query/01_immutable_query_configuration",
+          "label": "Generates usage tracked by"
+        },
+        {
+          "source": "query/01_immutable_query_configuration",
+          "target": "query/02_token_budget_control",
+          "label": "Triggers validation upon stop"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "query/03_dependency_injection_interface",
+      "target": "query/01_immutable_query_configuration",
+      "label": "Configures constraints for"
+    },
+    {
+      "source": "query/04_post_turn_lifecycle_hooks",
+      "target": "query/01_immutable_query_configuration",
+      "label": "Generates usage tracked by"
+    },
+    {
+      "source": "query/01_immutable_query_configuration",
+      "target": "query/02_token_budget_control",
+      "label": "Triggers validation upon stop"
+    }
+  ],
+  "storyPath": [
+    "query/01_immutable_query_configuration",
+    "query/02_token_budget_control",
+    "query/03_dependency_injection_interface",
+    "query/04_post_turn_lifecycle_hooks"
+  ]
+}

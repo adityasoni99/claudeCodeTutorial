@@ -1,0 +1,166 @@
+{
+  "projectName": "compact",
+  "nodes": [
+    {
+      "id": "compact",
+      "label": "compact",
+      "type": "module",
+      "summary": "The **compact** project serves as an intelligent memory management system for long-running AI sessions. Acting like an automated garbage collector, it monitors the *context window* and prevents \"out of memory\" errors by using **Auto-Compact** to trigger cleanup. The system employs **Conversation Summarization** to \"zip\" old message history into concise summaries and **Micro-Compaction** to prune unnecessary data, while ensuring critical information is preserved via **Context Rehydration** so the AI never loses track of its active files or tasks.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "compact/01_automated_context_management__auto_compact_",
+          "label": "Automated Context Management (Auto-Compact)",
+          "type": "chapter",
+          "summary": "A background monitor that acts like a garbage collector for the context window. It checks token usage against model-specific limits before every turn. If the conversation grows too large, it automatically triggers the summarization process, preventing \"prompt too long\" errors and ensuring the session can continue indefinitely without manual intervention.",
+          "contentPath": "01_automated_context_management__auto_compact_.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "compact/02_session_memory_optimization",
+          "label": "Session Memory Optimization",
+          "type": "chapter",
+          "summary": "An alternative, high-performance compaction strategy. Instead of asking the model to generate a new summary from scratch (which costs time and tokens), it reuses a background-maintained summary stored on disk (\"Session Memory\"). It creates a \"virtual\" summary by truncating the message history and pointing to the existing persistent memory file.",
+          "contentPath": "02_session_memory_optimization.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "compact/03_conversation_summarization__compaction_",
+          "label": "Conversation Summarization (Compaction)",
+          "type": "chapter",
+          "summary": "The core engine that reduces conversation history into a concise summary to free up context window space. It employs specialized prompts to capture user intent, technical details, and file changes. Think of it as \"zipping\" a long log file into a readme; the history is replaced by a single boundary message and the summary, while keeping recent messages intact.",
+          "contentPath": "03_conversation_summarization__compaction_.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "compact/04_message_grouping___boundaries",
+          "label": "Message Grouping & Boundaries",
+          "type": "chapter",
+          "summary": "A utility layer ensuring conversation history is sliced safely. It groups messages into logical \"API rounds\" (e.g., a User prompt followed by Assistant thought and Tool use) to prevent cutting the history in the middle of a dependent sequence (like separating a Tool Call from its Tool Result), which would cause API errors.",
+          "contentPath": "04_message_grouping___boundaries.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "compact/05_micro_compaction___pruning",
+          "label": "Micro-Compaction & Pruning",
+          "type": "chapter",
+          "summary": "A lightweight strategy for reclaiming space without performing a full summary. It surgically removes token-heavy elements\u2014like old tool outputs, images, or large text blocks\u2014either by modifying the local message history or by sending instructions to the API to \"forget\" specific cache blocks. It's like clearing your browser cache rather than reinstalling the OS.",
+          "contentPath": "05_micro_compaction___pruning.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "compact/06_context_rehydration___cleanup",
+          "label": "Context Rehydration & Cleanup",
+          "type": "chapter",
+          "summary": "The recovery phase that runs immediately after compaction. Since summarization wipes the conversation history, this component clears internal caches and then intelligently re-injects critical \"short-term memory\"\u2014such as recently read files, active plans, and defined skills\u2014so the agent doesn't lose track of its immediate work or environment.",
+          "contentPath": "06_context_rehydration___cleanup.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "compact/02_session_memory_optimization",
+          "target": "compact/01_automated_context_management__auto_compact_",
+          "label": "Triggers"
+        },
+        {
+          "source": "compact/02_session_memory_optimization",
+          "target": "compact/03_conversation_summarization__compaction_",
+          "label": "Attempts optimization first"
+        },
+        {
+          "source": "compact/01_automated_context_management__auto_compact_",
+          "target": "compact/05_micro_compaction___pruning",
+          "label": "Restores state using"
+        },
+        {
+          "source": "compact/01_automated_context_management__auto_compact_",
+          "target": "compact/06_context_rehydration___cleanup",
+          "label": "Uses for safe slicing"
+        },
+        {
+          "source": "compact/01_automated_context_management__auto_compact_",
+          "target": "compact/04_message_grouping___boundaries",
+          "label": "Uses token estimation from"
+        },
+        {
+          "source": "compact/03_conversation_summarization__compaction_",
+          "target": "compact/01_automated_context_management__auto_compact_",
+          "label": "Uses formatting utils from"
+        },
+        {
+          "source": "compact/05_micro_compaction___pruning",
+          "target": "compact/04_message_grouping___boundaries",
+          "label": "Resets state of"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "compact/02_session_memory_optimization",
+      "target": "compact/01_automated_context_management__auto_compact_",
+      "label": "Triggers"
+    },
+    {
+      "source": "compact/02_session_memory_optimization",
+      "target": "compact/03_conversation_summarization__compaction_",
+      "label": "Attempts optimization first"
+    },
+    {
+      "source": "compact/01_automated_context_management__auto_compact_",
+      "target": "compact/05_micro_compaction___pruning",
+      "label": "Restores state using"
+    },
+    {
+      "source": "compact/01_automated_context_management__auto_compact_",
+      "target": "compact/06_context_rehydration___cleanup",
+      "label": "Uses for safe slicing"
+    },
+    {
+      "source": "compact/01_automated_context_management__auto_compact_",
+      "target": "compact/04_message_grouping___boundaries",
+      "label": "Uses token estimation from"
+    },
+    {
+      "source": "compact/03_conversation_summarization__compaction_",
+      "target": "compact/01_automated_context_management__auto_compact_",
+      "label": "Uses formatting utils from"
+    },
+    {
+      "source": "compact/05_micro_compaction___pruning",
+      "target": "compact/04_message_grouping___boundaries",
+      "label": "Resets state of"
+    }
+  ],
+  "storyPath": [
+    "compact/01_automated_context_management__auto_compact_",
+    "compact/02_session_memory_optimization",
+    "compact/03_conversation_summarization__compaction_",
+    "compact/04_message_grouping___boundaries",
+    "compact/05_micro_compaction___pruning",
+    "compact/06_context_rehydration___cleanup"
+  ]
+}

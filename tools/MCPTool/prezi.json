@@ -1,0 +1,102 @@
+{
+  "projectName": "MCPTool",
+  "nodes": [
+    {
+      "id": "mcptool",
+      "label": "MCPTool",
+      "type": "module",
+      "summary": "This project implements a flexible **Universal Tool Adapter** that allows an AI assistant to connect with any external service using the **Model Context Protocol (MCP)**, functioning like a universal power plug for different software tools. It includes a smart **Result Visualization Engine** that automatically formats outputs\u2014using an **Intelligent JSON Unwrapper** to translate complex data into readable text\u2014and an **Interaction Classifier** that categorizes actions (like searching or reading) to keep the chat interface clean.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "mcptool/01_universal_tool_adapter",
+          "label": "Universal Tool Adapter",
+          "type": "chapter",
+          "summary": "Acts as the generic wrapper for any Model Context Protocol (MCP) tool. Unlike specific tools hardcoded for one task, this adapter creates a standardized interface (input/output schemas, permissions) that allows the application to communicate with *any* dynamic MCP server.\n\nThink of it as a universal power adapter that lets you plug devices from any country (MCP servers) into your wall socket (the application).",
+          "contentPath": "01_universal_tool_adapter.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcptool/02_interaction_classifier",
+          "label": "Interaction Classifier",
+          "type": "chapter",
+          "summary": "A logic layer that categorizes tool calls into \"Search\", \"Read\", or \"Action\" based on their names against known provider lists (Slack, GitHub, etc.). This helps the UI decide whether to auto-collapse verbose outputs to keep the chat history clean.\n\nImagine a mail sorter who puts catalogs into a folder (collapsed) while placing important personal letters directly on your desk (expanded).",
+          "contentPath": "02_interaction_classifier.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcptool/03_result_visualization_engine",
+          "label": "Result Visualization Engine",
+          "type": "chapter",
+          "summary": "Handles how tool execution results are displayed to the user. It supports rich content like images and progress bars, and includes safety mechanisms like warning about excessive token usage.\n\nIt's like a smart monitor that automatically adjusts its settings based on whether you are looking at a photo (images), reading a document (text), or waiting for a download (progress bars).",
+          "contentPath": "03_result_visualization_engine.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcptool/04_intelligent_json_unwrapper",
+          "label": "Intelligent JSON Unwrapper",
+          "type": "chapter",
+          "summary": "A set of heuristics designed to make raw JSON outputs human-readable in the chat. It attempts to \"flatten\" small nested objects into simple lists or extract the main text content from JSON wrappers (e.g., extracting a message body from a JSON API response).\n\nIt's like a translator that takes a complex legal document (raw JSON) and summarizes the key points for you in plain language, stripping away the formatting syntax.",
+          "contentPath": "04_intelligent_json_unwrapper.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "mcptool/01_universal_tool_adapter",
+          "target": "mcptool/02_interaction_classifier",
+          "label": "Delegates result rendering to"
+        },
+        {
+          "source": "mcptool/02_interaction_classifier",
+          "target": "mcptool/04_intelligent_json_unwrapper",
+          "label": "Uses parsing logic from"
+        },
+        {
+          "source": "mcptool/03_result_visualization_engine",
+          "target": "mcptool/01_universal_tool_adapter",
+          "label": "Classifies operations of"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "mcptool/01_universal_tool_adapter",
+      "target": "mcptool/02_interaction_classifier",
+      "label": "Delegates result rendering to"
+    },
+    {
+      "source": "mcptool/02_interaction_classifier",
+      "target": "mcptool/04_intelligent_json_unwrapper",
+      "label": "Uses parsing logic from"
+    },
+    {
+      "source": "mcptool/03_result_visualization_engine",
+      "target": "mcptool/01_universal_tool_adapter",
+      "label": "Classifies operations of"
+    }
+  ],
+  "storyPath": [
+    "mcptool/01_universal_tool_adapter",
+    "mcptool/02_interaction_classifier",
+    "mcptool/03_result_visualization_engine",
+    "mcptool/04_intelligent_json_unwrapper"
+  ]
+}

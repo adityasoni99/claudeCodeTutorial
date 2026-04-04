@@ -1,0 +1,134 @@
+{
+  "projectName": "policyLimits",
+  "nodes": [
+    {
+      "id": "policylimits",
+      "label": "policyLimits",
+      "type": "module",
+      "summary": "This project implements a **Fail-Open Policy Enforcer** to manage feature restrictions for enterprise users, ensuring that network issues do not block critical work. It uses a **Resilient API Fetcher** to retrieve configuration rules, leveraging *ETag caching* and **local persistence** to minimize network traffic. A **Lifecycle Manager** orchestrates background polling and initialization to keep permissions fresh, while an **Eligibility Checker** ensures that policies are only applied to specific authentication tiers.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "policylimits/01_policy_eligibility_checker",
+          "label": "Policy Eligibility Checker",
+          "type": "chapter",
+          "summary": "Determines if the current user session requires policy enforcement logic. It filters users based on authentication method (API Key vs. OAuth) and subscription tier (e.g., Enterprise/Team). This acts as a gatekeeper, ensuring that individual users or third-party providers bypass the policy system entirely.",
+          "contentPath": "01_policy_eligibility_checker.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "policylimits/02_fail_open_policy_enforcer",
+          "label": "Fail-Open Policy Enforcer",
+          "type": "chapter",
+          "summary": "The primary interface for checking if a feature is allowed (`isPolicyAllowed`). It follows a \"fail-open\" design, meaning if the policy server is unreachable or the policy is unknown, the action is permitted by default to prevent blocking user work. The only exception is when strict privacy modes (essential traffic) are active, where missing data might block features like telemetry.",
+          "contentPath": "02_fail_open_policy_enforcer.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "policylimits/03_caching___persistence_layer",
+          "label": "Caching & Persistence Layer",
+          "type": "chapter",
+          "summary": "Manages the local storage of policy data to minimize network traffic. It defines the JSON schema for the response and uses file-based persistence with ETag checksums. This ensures the client only processes updates when the server indicates the rules have actually changed, acting like a smart local cache.",
+          "contentPath": "03_caching___persistence_layer.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "policylimits/04_resilient_api_fetcher",
+          "label": "Resilient API Fetcher",
+          "type": "chapter",
+          "summary": "Handles the reliable retrieval of policy configurations from the remote server. It encapsulates authentication header injection, error classification, and exponential backoff retry logic. It treats 404s as \"no restrictions\" and handles 304 (Not Modified) responses to optimize performance.",
+          "contentPath": "04_resilient_api_fetcher.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "policylimits/05_lifecycle_manager__loading___polling_",
+          "label": "Lifecycle Manager (Loading & Polling)",
+          "type": "chapter",
+          "summary": "Orchestrates the timing of policy data synchronization. It manages the initial load sequence (using a promise to ensure critical systems wait for policies) and establishes a background polling loop to keep permissions fresh during long-running sessions without blocking the main thread.",
+          "contentPath": "05_lifecycle_manager__loading___polling_.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "policylimits/01_policy_eligibility_checker",
+          "target": "policylimits/02_fail_open_policy_enforcer",
+          "label": "Reads restrictions"
+        },
+        {
+          "source": "policylimits/01_policy_eligibility_checker",
+          "target": "policylimits/03_caching___persistence_layer",
+          "label": "Verifies user applicability"
+        },
+        {
+          "source": "policylimits/05_lifecycle_manager__loading___polling_",
+          "target": "policylimits/04_resilient_api_fetcher",
+          "label": "Triggers data retrieval"
+        },
+        {
+          "source": "policylimits/05_lifecycle_manager__loading___polling_",
+          "target": "policylimits/03_caching___persistence_layer",
+          "label": "Checks before polling"
+        },
+        {
+          "source": "policylimits/04_resilient_api_fetcher",
+          "target": "policylimits/02_fail_open_policy_enforcer",
+          "label": "Validates against ETag"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "policylimits/01_policy_eligibility_checker",
+      "target": "policylimits/02_fail_open_policy_enforcer",
+      "label": "Reads restrictions"
+    },
+    {
+      "source": "policylimits/01_policy_eligibility_checker",
+      "target": "policylimits/03_caching___persistence_layer",
+      "label": "Verifies user applicability"
+    },
+    {
+      "source": "policylimits/05_lifecycle_manager__loading___polling_",
+      "target": "policylimits/04_resilient_api_fetcher",
+      "label": "Triggers data retrieval"
+    },
+    {
+      "source": "policylimits/05_lifecycle_manager__loading___polling_",
+      "target": "policylimits/03_caching___persistence_layer",
+      "label": "Checks before polling"
+    },
+    {
+      "source": "policylimits/04_resilient_api_fetcher",
+      "target": "policylimits/02_fail_open_policy_enforcer",
+      "label": "Validates against ETag"
+    }
+  ],
+  "storyPath": [
+    "policylimits/01_policy_eligibility_checker",
+    "policylimits/02_fail_open_policy_enforcer",
+    "policylimits/03_caching___persistence_layer",
+    "policylimits/04_resilient_api_fetcher",
+    "policylimits/05_lifecycle_manager__loading___polling_"
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "projectName": "TodoWriteTool",
+  "nodes": [
+    {
+      "id": "todowritetool",
+      "label": "TodoWriteTool",
+      "type": "module",
+      "summary": "The `TodoWriteTool` enables an AI agent to **create and manage a structured checklist** of tasks during complex coding sessions. It acts as a persistent memory aid, ensuring workflows are broken down into **trackable steps** (pending, in_progress, completed) that are saved to the application's state. Additionally, it features a *quality assurance mechanism* that nudges the agent to perform verification if it attempts to finish a large batch of tasks without explicit testing steps.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "todowritetool/01_task_structure___states",
+          "label": "Task Structure & States",
+          "type": "chapter",
+          "summary": "The enforced format for every item on the list. The tool requires tasks to have specific states (`pending`, `in_progress`, `completed`) and two distinct descriptions: `content` (imperative, e.g., \"Run tests\") and `activeForm` (continuous, e.g., \"Running tests\").\nIt acts like a strict form or template. You can't just scribble notes; you must fill out the form exactly so the system knows precisely what is happening now versus what needs to happen next.",
+          "contentPath": "01_task_structure___states.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "todowritetool/02_state_persistence",
+          "label": "State Persistence",
+          "type": "chapter",
+          "summary": "The logic responsible for saving the todo list into the application's memory (`appState`). It identifies the correct scope (using `agentId` or `sessionId`) and updates the global store so the list is remembered across different turns of conversation.\nIt acts like a persistent whiteboard in a meeting room. Even if the conversation pauses or moves to a new topic, the checklist remains written on the board so the team (the agent) knows exactly where they left off.",
+          "contentPath": "02_state_persistence.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "todowritetool/03_tool_definition",
+          "label": "Tool Definition",
+          "type": "chapter",
+          "summary": "This is the core configuration that registers the functionality as a tool usable by the AI agent. It utilizes `buildTool` to bind the tool's name, description, input/output schemas, and execution logic together.\nThink of it as defining a specific \"skill\" for the AI character. Just as a carpenter has a skill for \"hammering\" with specific inputs (nail, wood) and actions, this defines the AI's skill to \"write todos\" with specific rules and state updates.",
+          "contentPath": "03_tool_definition.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "todowritetool/04_usage_guidelines__prompt_",
+          "label": "Usage Guidelines (Prompt)",
+          "type": "chapter",
+          "summary": "A detailed set of instructions text that guides the AI on *when* and *how* to use the tool. It explicitly categorizes scenarios into \"When to Use\" (complex, multi-step tasks) and \"When NOT to Use\" (trivial one-liners).\nIt serves as the \"Standard Operating Procedure\" or \"Employee Handbook\" for the agent. It prevents the AI from becoming overly bureaucratic for simple requests (like \"print hello\") while ensuring it stays organized for complex engineering tasks.",
+          "contentPath": "04_usage_guidelines__prompt_.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "todowritetool/05_verification_nudge",
+          "label": "Verification Nudge",
+          "type": "chapter",
+          "summary": "A quality assurance mechanism embedded in the tool's logic. If the agent completes a large batch of tasks (3 or more) without explicitly including a \"verification\" step, the tool appends a warning message to the output.\nThis is like a senior engineer reviewing a pull request who notices a lot of code changes but no tests. They nudge the developer, saying, \"You've done a lot of work, but you haven't proven it works yet. Please verify before finishing.\"",
+          "contentPath": "05_verification_nudge.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "todowritetool/01_task_structure___states",
+          "target": "todowritetool/02_state_persistence",
+          "label": "Configures prompt with"
+        },
+        {
+          "source": "todowritetool/01_task_structure___states",
+          "target": "todowritetool/05_verification_nudge",
+          "label": "Validates inputs with"
+        },
+        {
+          "source": "todowritetool/01_task_structure___states",
+          "target": "todowritetool/03_tool_definition",
+          "label": "Executes logic for"
+        },
+        {
+          "source": "todowritetool/01_task_structure___states",
+          "target": "todowritetool/04_usage_guidelines__prompt_",
+          "label": "Implements check for"
+        },
+        {
+          "source": "todowritetool/02_state_persistence",
+          "target": "todowritetool/05_verification_nudge",
+          "label": "Explains rules for"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "todowritetool/01_task_structure___states",
+      "target": "todowritetool/02_state_persistence",
+      "label": "Configures prompt with"
+    },
+    {
+      "source": "todowritetool/01_task_structure___states",
+      "target": "todowritetool/05_verification_nudge",
+      "label": "Validates inputs with"
+    },
+    {
+      "source": "todowritetool/01_task_structure___states",
+      "target": "todowritetool/03_tool_definition",
+      "label": "Executes logic for"
+    },
+    {
+      "source": "todowritetool/01_task_structure___states",
+      "target": "todowritetool/04_usage_guidelines__prompt_",
+      "label": "Implements check for"
+    },
+    {
+      "source": "todowritetool/02_state_persistence",
+      "target": "todowritetool/05_verification_nudge",
+      "label": "Explains rules for"
+    }
+  ],
+  "storyPath": [
+    "todowritetool/01_task_structure___states",
+    "todowritetool/02_state_persistence",
+    "todowritetool/03_tool_definition",
+    "todowritetool/04_usage_guidelines__prompt_",
+    "todowritetool/05_verification_nudge"
+  ]
+}

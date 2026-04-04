@@ -1,0 +1,102 @@
+{
+  "projectName": "autofix-pr",
+  "nodes": [
+    {
+      "id": "autofix-pr",
+      "label": "autofix-pr",
+      "type": "module",
+      "summary": "This code defines a **placeholder** (or *stub*) module for the `autofix-pr` application. It establishes a structural contract that tells the system the feature exists and has a specific **identity**, but ensures it remains **inactive** and **hidden** from the user interface until it is ready for real implementation.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "autofix-pr/01_feature_definition_stub",
+          "label": "Feature Definition Stub",
+          "type": "chapter",
+          "summary": "Represents the structural contract (interface) for a module or feature within the application.\nThink of it as a \"placeholder\" or a \"dummy prop\" on a movie set. It doesn't perform any real action yet, but it holds the space and looks correct so the rest of the system knows how to interact with it (expecting a name, visibility status, and enabled state).",
+          "contentPath": "01_feature_definition_stub.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "autofix-pr/02_component_identity",
+          "label": "Component Identity",
+          "type": "chapter",
+          "summary": "Provides a unique label for the module so the system can reference it.\nIt serves as a \"nametag\" (`name: 'stub'`). This allows the main application to catalogue this specific piece of code, distinguishing it from other plugins or features in the registry.",
+          "contentPath": "02_component_identity.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "autofix-pr/03_activation_control",
+          "label": "Activation Control",
+          "type": "chapter",
+          "summary": "Defines the logic that determines if a feature should be running or active.\nIt acts like a \"master switch\" for the feature. In this specific file, the switch is permanently taped to the \"Off\" position (`isEnabled: () => false`), ensuring the system knows not to execute any logic associated with this component.",
+          "contentPath": "03_activation_control.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "autofix-pr/04_visibility_state",
+          "label": "Visibility State",
+          "type": "chapter",
+          "summary": "Controls whether the feature is displayed to the end-user in the UI (User Interface).\nIt is like an \"invisibility cloak.\" The configuration `isHidden: true` tells the application that while this code exists in the background, it should be completely hidden from menus or lists, likely because it is unfinished or a test stub.",
+          "contentPath": "04_visibility_state.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "autofix-pr/01_feature_definition_stub",
+          "target": "autofix-pr/04_visibility_state",
+          "label": "Assigns module name"
+        },
+        {
+          "source": "autofix-pr/01_feature_definition_stub",
+          "target": "autofix-pr/02_component_identity",
+          "label": "Sets execution status"
+        },
+        {
+          "source": "autofix-pr/01_feature_definition_stub",
+          "target": "autofix-pr/03_activation_control",
+          "label": "Configures UI display"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "autofix-pr/01_feature_definition_stub",
+      "target": "autofix-pr/04_visibility_state",
+      "label": "Assigns module name"
+    },
+    {
+      "source": "autofix-pr/01_feature_definition_stub",
+      "target": "autofix-pr/02_component_identity",
+      "label": "Sets execution status"
+    },
+    {
+      "source": "autofix-pr/01_feature_definition_stub",
+      "target": "autofix-pr/03_activation_control",
+      "label": "Configures UI display"
+    }
+  ],
+  "storyPath": [
+    "autofix-pr/01_feature_definition_stub",
+    "autofix-pr/02_component_identity",
+    "autofix-pr/03_activation_control",
+    "autofix-pr/04_visibility_state"
+  ]
+}

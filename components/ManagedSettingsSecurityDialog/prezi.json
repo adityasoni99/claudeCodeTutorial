@@ -1,0 +1,102 @@
+{
+  "projectName": "ManagedSettingsSecurityDialog",
+  "nodes": [
+    {
+      "id": "managedsettingssecuritydialog",
+      "label": "ManagedSettingsSecurityDialog",
+      "type": "module",
+      "summary": "This project acts as a **security gatekeeper** for sensitive system configurations. It uses a scanner to identify *risky settings* (like shell commands or unsafe environment variables) and compares them against previous states to avoid unnecessary alerts. When actual security threats are detected, it blocks execution with a **consent dialog**, forcing the user to explicitly review and approve the changes.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "managedsettingssecuritydialog/01_configuration_change_detection",
+          "label": "Configuration Change Detection",
+          "type": "chapter",
+          "summary": "A logic layer designed to minimize user friction (alert fatigue). Instead of prompting for approval on every run, it compares the current \"dangerous\" settings against the previously approved state. If the risk profile hasn't changed (or has become safer), it bypasses the prompt. It acts like a file integrity monitor, alerting the user only when the security posture is modified.",
+          "contentPath": "01_configuration_change_detection.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "managedsettingssecuritydialog/02_security_risk_assessment",
+          "label": "Security Risk Assessment",
+          "type": "chapter",
+          "summary": "This abstraction acts as a scanner that inspects configuration objects for potential security threats. It identifies specific \"dangerous\" patterns\u2014such as shell execution commands, unknown environment variables, or arbitrary code hooks\u2014that could compromise the system. It functions like a security checkpoint, separating benign settings from those that require elevated trust or explicit user approval before they can be applied.",
+          "contentPath": "02_security_risk_assessment.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "managedsettingssecuritydialog/03_security_consent_dialog",
+          "label": "Security Consent Dialog",
+          "type": "chapter",
+          "summary": "The user interface component responsible for enforcing the \"human-in-the-loop\" security policy. It presents the risks identified by the assessment layer in a terminal-based dialog, requiring the user to explicitly accept the trusted state of their organization's managed settings. It serves as a final gatekeeper, similar to a \"Run as Administrator\" prompt, ensuring no risky configuration is active without user knowledge.",
+          "contentPath": "03_security_consent_dialog.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "managedsettingssecuritydialog/04_environment_variable_filtering",
+          "label": "Environment Variable Filtering",
+          "type": "chapter",
+          "summary": "A specialized filtering mechanism within the risk assessment logic. It relies on a strict allowlist (`SAFE_ENV_VARS`) to evaluate environment variables. Any variable not explicitly marked as safe is treated as \"dangerous\" by default. This follows the principle of least privilege, assuming all external inputs are potential threats unless proven otherwise.",
+          "contentPath": "04_environment_variable_filtering.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "managedsettingssecuritydialog/01_configuration_change_detection",
+          "target": "managedsettingssecuritydialog/04_environment_variable_filtering",
+          "label": "Filters inputs using"
+        },
+        {
+          "source": "managedsettingssecuritydialog/02_security_risk_assessment",
+          "target": "managedsettingssecuritydialog/01_configuration_change_detection",
+          "label": "Displays risks from"
+        },
+        {
+          "source": "managedsettingssecuritydialog/03_security_consent_dialog",
+          "target": "managedsettingssecuritydialog/01_configuration_change_detection",
+          "label": "Monitors changes using"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "managedsettingssecuritydialog/01_configuration_change_detection",
+      "target": "managedsettingssecuritydialog/04_environment_variable_filtering",
+      "label": "Filters inputs using"
+    },
+    {
+      "source": "managedsettingssecuritydialog/02_security_risk_assessment",
+      "target": "managedsettingssecuritydialog/01_configuration_change_detection",
+      "label": "Displays risks from"
+    },
+    {
+      "source": "managedsettingssecuritydialog/03_security_consent_dialog",
+      "target": "managedsettingssecuritydialog/01_configuration_change_detection",
+      "label": "Monitors changes using"
+    }
+  ],
+  "storyPath": [
+    "managedsettingssecuritydialog/01_configuration_change_detection",
+    "managedsettingssecuritydialog/02_security_risk_assessment",
+    "managedsettingssecuritydialog/03_security_consent_dialog",
+    "managedsettingssecuritydialog/04_environment_variable_filtering"
+  ]
+}

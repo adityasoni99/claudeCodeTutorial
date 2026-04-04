@@ -1,0 +1,124 @@
+{
+  "projectName": "heapdump",
+  "nodes": [
+    {
+      "id": "heapdump",
+      "label": "heapdump",
+      "type": "module",
+      "summary": "This project implements a specific **CLI command** aimed at debugging memory issues by creating a *heap dump* (a snapshot of memory) on the user's Desktop. It utilizes a **lazy loading** architecture to ensure the heavy logic is only imported when the command is actually run, and it follows a strict protocol to ensure the results are returned in a **standardized text format**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "heapdump/01_command_definition",
+          "label": "Command Definition",
+          "type": "chapter",
+          "summary": "This abstraction defines the identity and configuration of a specific feature within the system. It acts like a manifest or a menu entry, specifying the command's name, description, and behavioral flags (like visibility or support for non-interactive modes). It serves as the contract that allows the main application to register and discover the feature without needing to load its implementation logic immediately.",
+          "contentPath": "01_command_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "heapdump/02_lazy_module_loading",
+          "label": "Lazy Module Loading",
+          "type": "chapter",
+          "summary": "A performance pattern used to defer the loading of code until it is strictly necessary. The command definition provides a `load` function that uses a dynamic import to fetch the implementation file. This is analogous to a library keeping specialized books in a separate archive and only retrieving them when a patron specifically requests them, optimizing startup time and memory usage.",
+          "contentPath": "02_lazy_module_loading.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "heapdump/03_command_execution_handler",
+          "label": "Command Execution Handler",
+          "type": "chapter",
+          "summary": "Represents the actual \"worker\" logic that runs when the command is invoked. It functions like the kitchen in a restaurant: once an order (command) is placed, this logic coordinates the necessary actions. In this specific context, it handles the asynchronous execution of a heap dump and processes the outcome to determine if it should report a success path or an error message.",
+          "contentPath": "03_command_execution_handler.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "heapdump/04_service_layer_delegation",
+          "label": "Service Layer Delegation",
+          "type": "chapter",
+          "summary": "The practice of separating the command's interface from the complex, low-level system operations. The command handler does not implement the heap dump logic itself but delegates it to an imported service (`performHeapDump`). This is like a manager assigning a specialized task to a technician, keeping the command layer clean and focused purely on request orchestration and response formatting.",
+          "contentPath": "04_service_layer_delegation.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "heapdump/05_standardized_output_protocol",
+          "label": "Standardized Output Protocol",
+          "type": "chapter",
+          "summary": "A consistent structure for returning data from command executions. The handler wraps its result in a specific object shape (e.g., `{ type: 'text', value: ... }`), regardless of whether the operation succeeded or failed. This acts like a standardized shipping container, ensuring the calling system receives a predictable package it knows how to open, parse, and display to the user.",
+          "contentPath": "05_standardized_output_protocol.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "heapdump/01_command_definition",
+          "target": "heapdump/03_command_execution_handler",
+          "label": "Uses strategy"
+        },
+        {
+          "source": "heapdump/03_command_execution_handler",
+          "target": "heapdump/02_lazy_module_loading",
+          "label": "Dynamically imports"
+        },
+        {
+          "source": "heapdump/02_lazy_module_loading",
+          "target": "heapdump/04_service_layer_delegation",
+          "label": "Delegates logic to"
+        },
+        {
+          "source": "heapdump/02_lazy_module_loading",
+          "target": "heapdump/05_standardized_output_protocol",
+          "label": "Conforms to"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "heapdump/01_command_definition",
+      "target": "heapdump/03_command_execution_handler",
+      "label": "Uses strategy"
+    },
+    {
+      "source": "heapdump/03_command_execution_handler",
+      "target": "heapdump/02_lazy_module_loading",
+      "label": "Dynamically imports"
+    },
+    {
+      "source": "heapdump/02_lazy_module_loading",
+      "target": "heapdump/04_service_layer_delegation",
+      "label": "Delegates logic to"
+    },
+    {
+      "source": "heapdump/02_lazy_module_loading",
+      "target": "heapdump/05_standardized_output_protocol",
+      "label": "Conforms to"
+    }
+  ],
+  "storyPath": [
+    "heapdump/01_command_definition",
+    "heapdump/02_lazy_module_loading",
+    "heapdump/03_command_execution_handler",
+    "heapdump/04_service_layer_delegation",
+    "heapdump/05_standardized_output_protocol"
+  ]
+}

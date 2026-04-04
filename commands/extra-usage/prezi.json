@@ -1,0 +1,124 @@
+{
+  "projectName": "extra-usage",
+  "nodes": [
+    {
+      "id": "extra-usage",
+      "label": "extra-usage",
+      "type": "module",
+      "summary": "This project implements a **CLI command** designed to help users manage billing limits or request **extra usage credits** directly from their terminal. It intelligently detects the environment to switch between a rich *interactive UI* (which handles re-authentication) and a simple *headless text mode* suitable for automated scripts.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "extra-usage/01_command_registration",
+          "label": "Command Registration",
+          "type": "chapter",
+          "summary": "Defines the CLI command's identity and availability rules. It acts like a manifest or router, checking environment variables and session state (interactive vs. non-interactive) to decide if the command should be enabled. It also handles lazy-loading the actual implementation code only when the command is invoked.",
+          "contentPath": "01_command_registration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "extra-usage/02_interactive_vs__headless_modes",
+          "label": "Interactive vs. Headless Modes",
+          "type": "chapter",
+          "summary": "The architectural pattern of separating UI implementations based on the environment. The interactive mode uses React components for a rich user experience (e.g., re-login flows), while the non-interactive (headless) mode returns simple text, ensuring the tool functions correctly in scripts or CI/CD environments.",
+          "contentPath": "02_interactive_vs__headless_modes.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "extra-usage/03_core_workflow_engine",
+          "label": "Core Workflow Engine",
+          "type": "chapter",
+          "summary": "The central business logic (`runExtraUsage`) that powers the command. It decouples the \"what\" from the \"how\" by performing checks (subscription type, billing access) and actions (API requests, browser opening) and returning a UI-agnostic result object. This allows the same logic to drive both interactive and text-only interfaces.",
+          "contentPath": "03_core_workflow_engine.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "extra-usage/04_admin_request_state_machine",
+          "label": "Admin Request State Machine",
+          "type": "chapter",
+          "summary": "A specific logic flow for Team or Enterprise users who cannot manage billing directly. It functions like a state machine: checking if the feature is already enabled, checking eligibility, looking for existing pending requests, and finally creating a new request if necessary, handling various edge cases along the way.",
+          "contentPath": "04_admin_request_state_machine.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "extra-usage/05_session_refresh_strategy",
+          "label": "Session Refresh Strategy",
+          "type": "chapter",
+          "summary": "A mechanism to synchronize local state with server-side changes. In the interactive flow, after directing a user to the browser to modify billing settings, the command triggers a re-login sequence (`<Login />`). This ensures that the CLI immediately obtains a fresh token with updated permissions or usage limits.",
+          "contentPath": "05_session_refresh_strategy.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "extra-usage/01_command_registration",
+          "target": "extra-usage/03_core_workflow_engine",
+          "label": "Loads appropriate implement..."
+        },
+        {
+          "source": "extra-usage/03_core_workflow_engine",
+          "target": "extra-usage/02_interactive_vs__headless_modes",
+          "label": "Delegates business logic"
+        },
+        {
+          "source": "extra-usage/02_interactive_vs__headless_modes",
+          "target": "extra-usage/04_admin_request_state_machine",
+          "label": "Executes request flow"
+        },
+        {
+          "source": "extra-usage/03_core_workflow_engine",
+          "target": "extra-usage/05_session_refresh_strategy",
+          "label": "Triggers re-authentication"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "extra-usage/01_command_registration",
+      "target": "extra-usage/03_core_workflow_engine",
+      "label": "Loads appropriate implementation"
+    },
+    {
+      "source": "extra-usage/03_core_workflow_engine",
+      "target": "extra-usage/02_interactive_vs__headless_modes",
+      "label": "Delegates business logic"
+    },
+    {
+      "source": "extra-usage/02_interactive_vs__headless_modes",
+      "target": "extra-usage/04_admin_request_state_machine",
+      "label": "Executes request flow"
+    },
+    {
+      "source": "extra-usage/03_core_workflow_engine",
+      "target": "extra-usage/05_session_refresh_strategy",
+      "label": "Triggers re-authentication"
+    }
+  ],
+  "storyPath": [
+    "extra-usage/01_command_registration",
+    "extra-usage/02_interactive_vs__headless_modes",
+    "extra-usage/03_core_workflow_engine",
+    "extra-usage/04_admin_request_state_machine",
+    "extra-usage/05_session_refresh_strategy"
+  ]
+}

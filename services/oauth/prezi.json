@@ -1,0 +1,124 @@
+{
+  "projectName": "oauth",
+  "nodes": [
+    {
+      "id": "oauth",
+      "label": "oauth",
+      "type": "module",
+      "summary": "This project implements a secure **OAuth 2.0 authentication flow** specifically designed for a Command Line Interface (CLI). It acts as a concierge that manages the entire login journey: generating **PKCE security keys**, spinning up a *local web server* to catch browser redirects, exchanging authorization codes for access tokens, and finally fetching the user's **profile and subscription details** to verify their identity.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "oauth/01_oauth_flow_orchestrator",
+          "label": "OAuth Flow Orchestrator",
+          "type": "chapter",
+          "summary": "This is the central entry point for the authentication process. It acts as the \"concierge\" for the entire login experience. It initializes the security parameters, spins up the local listener, directs the user to open their browser, and waits for the result.\n\nThink of it like a travel agent who books your flight, arranges your taxi, and waits for you to confirm you've arrived safely. It coordinates the manual steps (browser interaction) with the automated steps (code exchange) to produce a usable authentication token at the end.",
+          "contentPath": "01_oauth_flow_orchestrator.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "oauth/02_local_callback_listener",
+          "label": "Local Callback Listener",
+          "type": "chapter",
+          "summary": "Since web browsers cannot communicate directly with a Command Line Interface (CLI) tool, this abstraction spins up a temporary HTTP server on `localhost`. Its sole purpose is to catch the \"redirect\" from the OAuth provider after the user logs in.\n\nImagine a temporary catcher's mitt. When the authorization server \"throws\" the authorization code back to your computer via a URL redirect, this listener catches the ball so the application can process it, then immediately closes down once the catch is made.",
+          "contentPath": "02_local_callback_listener.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "oauth/03_api_client___token_management",
+          "label": "API Client & Token Management",
+          "type": "chapter",
+          "summary": "This abstraction handles the low-level HTTP communication with the authorization server. It constructs the complex URLs needed for login, swaps temporary authorization codes for long-lived access tokens, and handles token refreshing when they expire.\n\nIt acts like a specialized translator or lawyer who knows exactly which forms to file and what specific language to use to get the \"passport\" (access token) needed to travel within the application's ecosystem. It abstracts away the raw REST API calls into distinct actions.",
+          "contentPath": "03_api_client___token_management.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "oauth/04_profile___identity_resolution",
+          "label": "Profile & Identity Resolution",
+          "type": "chapter",
+          "summary": "Once a user is authenticated, the system needs to understand who they are (e.g., their subscription tier, billing status, or user ID). This layer fetches user details using either the new OAuth tokens or legacy API keys.\n\nThink of this as the ID card scanner at a secure building. Possessing a key (token) lets you in the door, but this system scans the key to display your picture, name, and clearance level (Free vs. Pro tier) on the security guard's monitor.",
+          "contentPath": "04_profile___identity_resolution.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "oauth/05_pkce_security__crypto_",
+          "label": "PKCE Security (Crypto)",
+          "type": "chapter",
+          "summary": "This module implements \"Proof Key for Code Exchange\" (PKCE), a security standard required for public clients like CLI tools. It generates cryptographically random \"verifiers\" and \"challenges\" to prevent interception attacks.\n\nIt works like a baggage claim check. Before you start the process, you create a secret ticket (verifier). To finalize the transaction and pick up your luggage (token), you must present the matching ticket stub, proving you are the same person who started the process, not an impostor.",
+          "contentPath": "05_pkce_security__crypto_.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "oauth/01_oauth_flow_orchestrator",
+          "target": "oauth/05_pkce_security__crypto_",
+          "label": "Generates security keys"
+        },
+        {
+          "source": "oauth/01_oauth_flow_orchestrator",
+          "target": "oauth/02_local_callback_listener",
+          "label": "Instantiates and manages"
+        },
+        {
+          "source": "oauth/01_oauth_flow_orchestrator",
+          "target": "oauth/03_api_client___token_management",
+          "label": "Exchanges code for tokens"
+        },
+        {
+          "source": "oauth/03_api_client___token_management",
+          "target": "oauth/04_profile___identity_resolution",
+          "label": "Fetches user details"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "oauth/01_oauth_flow_orchestrator",
+      "target": "oauth/05_pkce_security__crypto_",
+      "label": "Generates security keys"
+    },
+    {
+      "source": "oauth/01_oauth_flow_orchestrator",
+      "target": "oauth/02_local_callback_listener",
+      "label": "Instantiates and manages"
+    },
+    {
+      "source": "oauth/01_oauth_flow_orchestrator",
+      "target": "oauth/03_api_client___token_management",
+      "label": "Exchanges code for tokens"
+    },
+    {
+      "source": "oauth/03_api_client___token_management",
+      "target": "oauth/04_profile___identity_resolution",
+      "label": "Fetches user details"
+    }
+  ],
+  "storyPath": [
+    "oauth/01_oauth_flow_orchestrator",
+    "oauth/02_local_callback_listener",
+    "oauth/03_api_client___token_management",
+    "oauth/04_profile___identity_resolution",
+    "oauth/05_pkce_security__crypto_"
+  ]
+}

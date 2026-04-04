@@ -1,0 +1,114 @@
+{
+  "projectName": "ui",
+  "nodes": [
+    {
+      "id": "ui",
+      "label": "ui",
+      "type": "module",
+      "summary": "This project builds specialized **interactive UI components** for terminal applications, enabling rich data visualization in a command-line interface. It features a **hierarchical tree explorer** that allows users to navigate and expand nested structures (like folders), as well as a *smart ordered list* system that automatically handles numbering and alignment for its items.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "ui/01_hierarchical_tree_selector",
+          "label": "Hierarchical Tree Selector",
+          "type": "chapter",
+          "summary": "A UI component designed to interact with nested data structures, similar to a file explorer in a code editor. It wraps a standard selection list but adds the ability to drill down into folders (parent nodes) or select individual files (leaf nodes). It manages the complexity of displaying depth and relationships in a flat terminal interface.",
+          "contentPath": "01_hierarchical_tree_selector.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ui/02_tree_navigation___expansion_strategy",
+          "label": "Tree Navigation & Expansion Strategy",
+          "type": "chapter",
+          "summary": "A specialized interaction model handling keyboard inputs for hierarchical data. Unlike a simple list where you just move Up and Down, this abstraction intercepts Left and Right arrow keys to manipulate the tree state. It handles the logic of \"Right to expand\" and \"Left to collapse or jump to parent,\" enabling intuitive traversal through deep hierarchies without using a mouse.",
+          "contentPath": "02_tree_navigation___expansion_strategy.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ui/03_recursive_tree_flattening",
+          "label": "Recursive Tree Flattening",
+          "type": "chapter",
+          "summary": "The internal engine within the tree selector that transforms complex, nested data (trees) into a linear list (array) that can be easily rendered. Imagine taking a stack of folders inside folders and spreading them out on a table in a single line, but only showing the contents of folders that are currently open. This abstraction recalculates the visible list whenever a user expands or collapses a node.",
+          "contentPath": "03_recursive_tree_flattening.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ui/04_auto_numbering_list_container",
+          "label": "Auto-Numbering List Container",
+          "type": "chapter",
+          "summary": "A container component that manages the sequencing of a list. Like a smart cataloger, it counts its valid children and assigns them a sequential number (marker). It also handles formatting details, such as calculating how much padding is needed so that \"1.\" and \"10.\" align perfectly. It uses React Context to broadcast these assigned numbers to the specific items.",
+          "contentPath": "04_auto_numbering_list_container.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "ui/05_context_aware_list_item",
+          "label": "Context-Aware List Item",
+          "type": "chapter",
+          "summary": "A list item component that doesn't know its own order but relies on its parent to tell it. It \"tunes in\" to a context channel provided by the parent list to receive its specific marker (e.g., \"1.\", \"2.\"). This decoupling allows you to reorder items in the code without ever having to manually update the numbers displayed on screen.",
+          "contentPath": "05_context_aware_list_item.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "ui/01_hierarchical_tree_selector",
+          "target": "ui/02_tree_navigation___expansion_strategy",
+          "label": "Uses to flatten data"
+        },
+        {
+          "source": "ui/01_hierarchical_tree_selector",
+          "target": "ui/03_recursive_tree_flattening",
+          "label": "Uses for navigation"
+        },
+        {
+          "source": "ui/04_auto_numbering_list_container",
+          "target": "ui/05_context_aware_list_item",
+          "label": "Provides numbering context"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "ui/01_hierarchical_tree_selector",
+      "target": "ui/02_tree_navigation___expansion_strategy",
+      "label": "Uses to flatten data"
+    },
+    {
+      "source": "ui/01_hierarchical_tree_selector",
+      "target": "ui/03_recursive_tree_flattening",
+      "label": "Uses for navigation"
+    },
+    {
+      "source": "ui/04_auto_numbering_list_container",
+      "target": "ui/05_context_aware_list_item",
+      "label": "Provides numbering context"
+    }
+  ],
+  "storyPath": [
+    "ui/01_hierarchical_tree_selector",
+    "ui/02_tree_navigation___expansion_strategy",
+    "ui/03_recursive_tree_flattening",
+    "ui/04_auto_numbering_list_container",
+    "ui/05_context_aware_list_item"
+  ]
+}

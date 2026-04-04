@@ -1,0 +1,80 @@
+{
+  "projectName": "memory",
+  "nodes": [
+    {
+      "id": "memory",
+      "label": "memory",
+      "type": "module",
+      "summary": "This project functions as a smart **memory management system** that categorizes data into specific buckets like *User*, *Project*, or *Local* based on the context. It intelligently validates whether it is running inside a **Git repository** to allow project-specific storage and uses build-time configuration to dynamically enable advanced features like **Team Memory**.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "memory/01_memory_taxonomy",
+          "label": "Memory Taxonomy",
+          "type": "chapter",
+          "summary": "This abstraction defines the specific categories or \"buckets\" where the system stores information. It establishes a standard set of types\u2014such as User, Project, Local, Managed, and AutoMem\u2014to organize data effectively.\n\nThink of this like a physical filing system in an office. You have a personal drawer for your own notes (User), a shared cabinet for specific client work (Project), and automated in-trays for system reports (AutoMem). This classification ensures that when the system tries to \"remember\" something, it puts it in the correct box so it can be found later in the right context.",
+          "contentPath": "01_memory_taxonomy.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "memory/02_repository_awareness",
+          "label": "Repository Awareness",
+          "type": "chapter",
+          "summary": "This logic determines if the application is currently operating within the boundaries of a version-controlled project (specifically Git). It relies on synchronous filesystem checks to validate the environment.\n\nImagine a construction crew arriving at a site. Before they start building, they check the survey markers to ensure they are actually on the correct property (the Git repo) and not just on an empty lot (an arbitrary folder). This ensures that project-specific memory operations are only attempted when a valid project structure actually exists.",
+          "contentPath": "02_repository_awareness.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "memory/03_feature_gating",
+          "label": "Feature Gating",
+          "type": "chapter",
+          "summary": "This abstraction handles the conditional inclusion of advanced capabilities based on build-time configuration. Specifically, it uses Bun's bundling features to determine if the \"TeamMem\" (Team Memory) module should be active.\n\nIt is similar to buying a car with optional packages. The base model works for everyone, but the \"Team Package\" is only installed at the factory if specifically ordered. This allows the codebase to remain lean by keeping specialized or experimental features hidden unless the environment is explicitly configured to support them.",
+          "contentPath": "03_feature_gating.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "memory/03_feature_gating",
+          "target": "memory/01_memory_taxonomy",
+          "label": "Conditionally extends types"
+        },
+        {
+          "source": "memory/01_memory_taxonomy",
+          "target": "memory/02_repository_awareness",
+          "label": "Requires environment valida..."
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "memory/03_feature_gating",
+      "target": "memory/01_memory_taxonomy",
+      "label": "Conditionally extends types"
+    },
+    {
+      "source": "memory/01_memory_taxonomy",
+      "target": "memory/02_repository_awareness",
+      "label": "Requires environment validation"
+    }
+  ],
+  "storyPath": [
+    "memory/01_memory_taxonomy",
+    "memory/02_repository_awareness",
+    "memory/03_feature_gating"
+  ]
+}

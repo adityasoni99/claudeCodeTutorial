@@ -1,0 +1,124 @@
+{
+  "projectName": "agents",
+  "nodes": [
+    {
+      "id": "agents",
+      "label": "agents",
+      "type": "module",
+      "summary": "This project defines a modular **command** feature named \"agents\" that enables users to manage agent configurations. It utilizes a *lazy loading* strategy to defer code execution until requested, ensuring the application starts quickly. When activated, the system securely retrieves **application state** and permissions to dynamically render a *React user interface* for interaction.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "agents/01_command_registry_definition",
+          "label": "Command Registry Definition",
+          "type": "chapter",
+          "summary": "This abstraction defines the metadata and entry point for a specific feature (in this case, \"agents\"). It tells the system what the command is named, what it does, and how to load its logic.\nIt's like an entry in a restaurant menu: it lists the name of the dish (\"agents\"), a short description, and tells the kitchen which recipe card to pull when someone orders it.",
+          "contentPath": "01_command_registry_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agents/02_lazy_module_loading",
+          "label": "Lazy Module Loading",
+          "type": "chapter",
+          "summary": "This pattern defers the loading of heavy code (like the `agents.tsx` file) until the command is actually requested by the user.\nIt's like keeping your winter coat in the attic during summer. You don't carry it around in your backpack every day; you only go get it when it starts snowing, keeping your daily load (application startup time) light.",
+          "contentPath": "02_lazy_module_loading.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agents/03_local_jsx_execution_handler",
+          "label": "Local JSX Execution Handler",
+          "type": "chapter",
+          "summary": "This is the core logic function that executes when the command is triggered. It is responsible for gathering necessary data and returning a React element to be rendered.\nIt's like the head chef receiving an order. They don't grow the ingredients themselves; they gather them from the pantry (context), prepare the workspace, and then plating the final dish (returning the React component) for the customer.",
+          "contentPath": "03_local_jsx_execution_handler.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agents/04_context_aware_state_injection",
+          "label": "Context-Aware State Injection",
+          "type": "chapter",
+          "summary": "This mechanism allows a command to access the broader application state, such as user permissions or global configuration, without hardcoding dependencies.\nIt's like a specialized ID card or key ring given to an employee. It grants them access to specific rooms (state) and tools (permissions) necessary to do their job within the larger building (application).",
+          "contentPath": "04_context_aware_state_injection.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "agents/05_react_component_integration",
+          "label": "React Component Integration",
+          "type": "chapter",
+          "summary": "This abstraction separates the *logic* of the command (data fetching, state retrieval) from the *presentation* (the visual UI). The `call` function passes processed data (`tools`) and control callbacks (`onDone`) into a visual component (`AgentsMenu`).\nIt's like the difference between a screenwriter and a set designer. The script (this file) determines what characters (data) are in the scene, but the set designer (`AgentsMenu`) determines exactly how the stage looks.",
+          "contentPath": "05_react_component_integration.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "agents/01_command_registry_definition",
+          "target": "agents/04_context_aware_state_injection",
+          "label": "Configures deferred load"
+        },
+        {
+          "source": "agents/04_context_aware_state_injection",
+          "target": "agents/02_lazy_module_loading",
+          "label": "Dynamically imports"
+        },
+        {
+          "source": "agents/02_lazy_module_loading",
+          "target": "agents/03_local_jsx_execution_handler",
+          "label": "Retrieves app state"
+        },
+        {
+          "source": "agents/02_lazy_module_loading",
+          "target": "agents/05_react_component_integration",
+          "label": "Renders interface"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "agents/01_command_registry_definition",
+      "target": "agents/04_context_aware_state_injection",
+      "label": "Configures deferred load"
+    },
+    {
+      "source": "agents/04_context_aware_state_injection",
+      "target": "agents/02_lazy_module_loading",
+      "label": "Dynamically imports"
+    },
+    {
+      "source": "agents/02_lazy_module_loading",
+      "target": "agents/03_local_jsx_execution_handler",
+      "label": "Retrieves app state"
+    },
+    {
+      "source": "agents/02_lazy_module_loading",
+      "target": "agents/05_react_component_integration",
+      "label": "Renders interface"
+    }
+  ],
+  "storyPath": [
+    "agents/01_command_registry_definition",
+    "agents/02_lazy_module_loading",
+    "agents/03_local_jsx_execution_handler",
+    "agents/04_context_aware_state_injection",
+    "agents/05_react_component_integration"
+  ]
+}

@@ -1,0 +1,144 @@
+{
+  "projectName": "Settings",
+  "nodes": [
+    {
+      "id": "settings",
+      "label": "Settings",
+      "type": "module",
+      "summary": "This project implements a centralized **Settings and Status dashboard** for a terminal application, organizing information into navigatable tabs like *Status*, *Config*, and *Usage*. It leverages a specialized library to render rich **Terminal UI** components (such as progress bars and flexible layouts) and manages user interactions through a context-aware **keybinding system** for navigation and commands.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "settings/01_settings_container",
+          "label": "Settings Container",
+          "type": "chapter",
+          "summary": "The central hub for the application's configuration and information interface. It acts as a modal dialog manager that organizes different views (Status, Config, Usage) into tabs. It handles high-level concerns like terminal window resizing, global escape key handling for closing the dialog, and conditional rendering based on the active tab. It functions like the \"Control Panel\" or \"Settings\" app on a phone.",
+          "contentPath": "01_settings_container.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "settings/02_system_status___diagnostics",
+          "label": "System Status & Diagnostics",
+          "type": "chapter",
+          "summary": "A dashboard that aggregates and renders read-only runtime information. It compiles data from various sources\u2014such as the current session ID, working directory, MCP (Model Context Protocol) client status, and theme\u2014to present a comprehensive snapshot of the application's environment. It also runs asynchronous diagnostic checks to report on system health, similar to a \"System Information\" tool or a vehicle's dashboard cluster.",
+          "contentPath": "02_system_status___diagnostics.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "settings/03_usage___quota_monitoring",
+          "label": "Usage & Quota Monitoring",
+          "type": "chapter",
+          "summary": "A visualization component dedicated to tracking API resource consumption. It fetches utilization data asynchronously and renders progress bars (LimitBars) to display current usage against rate limits (e.g., tokens per minute, monthly budget). It includes logic for handling loading states, displaying errors, and allowing users to retry fetch operations, acting like a data usage meter on a cellular plan.",
+          "contentPath": "03_usage___quota_monitoring.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "settings/04_terminal_ui_composition__ink_",
+          "label": "Terminal UI Composition (Ink)",
+          "type": "chapter",
+          "summary": "The usage of the `ink` library to construct a rich User Interface within a terminal emulator. Instead of HTML tags, React components like `<Box>`, `<Text>`, `<Pane>`, and `<Tabs>` are used to manage layout (using Flexbox principles), styling, and structure. This allows for complex, interactive visual elements in a text-only environment, effectively treating the command line as a rendering canvas.",
+          "contentPath": "04_terminal_ui_composition__ink_.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "settings/05_keybinding___interaction_system",
+          "label": "Keybinding & Interaction System",
+          "type": "chapter",
+          "summary": "A mechanism for handling user input via keyboard shortcuts in the CLI. Hooks like `useKeybinding` attach specific actions (like closing a modal, switching tabs, or retrying a network request) to keystrokes. This abstraction manages context-awareness, ensuring that shortcuts only trigger when the appropriate UI component is active, similar to event listeners in a web browser but optimized for keyboard-first navigation.",
+          "contentPath": "05_keybinding___interaction_system.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "settings/01_settings_container",
+          "target": "settings/02_system_status___diagnostics",
+          "label": "Orchestrates and displays"
+        },
+        {
+          "source": "settings/01_settings_container",
+          "target": "settings/03_usage___quota_monitoring",
+          "label": "Orchestrates and displays"
+        },
+        {
+          "source": "settings/01_settings_container",
+          "target": "settings/05_keybinding___interaction_system",
+          "label": "Binds escape shortcut"
+        },
+        {
+          "source": "settings/02_system_status___diagnostics",
+          "target": "settings/04_terminal_ui_composition__ink_",
+          "label": "Composes layout with"
+        },
+        {
+          "source": "settings/03_usage___quota_monitoring",
+          "target": "settings/04_terminal_ui_composition__ink_",
+          "label": "Composes layout with"
+        },
+        {
+          "source": "settings/03_usage___quota_monitoring",
+          "target": "settings/05_keybinding___interaction_system",
+          "label": "Binds retry shortcut"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "settings/01_settings_container",
+      "target": "settings/02_system_status___diagnostics",
+      "label": "Orchestrates and displays"
+    },
+    {
+      "source": "settings/01_settings_container",
+      "target": "settings/03_usage___quota_monitoring",
+      "label": "Orchestrates and displays"
+    },
+    {
+      "source": "settings/01_settings_container",
+      "target": "settings/05_keybinding___interaction_system",
+      "label": "Binds escape shortcut"
+    },
+    {
+      "source": "settings/02_system_status___diagnostics",
+      "target": "settings/04_terminal_ui_composition__ink_",
+      "label": "Composes layout with"
+    },
+    {
+      "source": "settings/03_usage___quota_monitoring",
+      "target": "settings/04_terminal_ui_composition__ink_",
+      "label": "Composes layout with"
+    },
+    {
+      "source": "settings/03_usage___quota_monitoring",
+      "target": "settings/05_keybinding___interaction_system",
+      "label": "Binds retry shortcut"
+    }
+  ],
+  "storyPath": [
+    "settings/01_settings_container",
+    "settings/02_system_status___diagnostics",
+    "settings/03_usage___quota_monitoring",
+    "settings/04_terminal_ui_composition__ink_",
+    "settings/05_keybinding___interaction_system"
+  ]
+}

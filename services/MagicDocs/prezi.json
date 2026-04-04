@@ -1,0 +1,134 @@
+{
+  "projectName": "MagicDocs",
+  "nodes": [
+    {
+      "id": "magicdocs",
+      "label": "MagicDocs",
+      "type": "module",
+      "summary": "**MagicDocs** acts as an automated, background archivist for your software project. It passively watches for files marked with a special **header** and, during pauses in your conversation, activates a *silent* **sub-agent** to update them. This ensures your documentation stays in sync with the latest code insights without interrupting your workflow or polluting the main conversation history.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "magicdocs/01_magic_doc_identification",
+          "label": "Magic Doc Identification",
+          "type": "chapter",
+          "summary": "This abstraction determines which files the system should automatically maintain. It scans file content for a specific header pattern (`# MAGIC DOC: [title]`) and optional italicized instructions immediately following it. It maintains a registry (map) of these files.\n\nThink of it like a \"living document\" sticker placed on a physical file folder. When the system sees this sticker, it knows this isn't just a static text file, but a document that needs to be constantly observed and updated as the project evolves.",
+          "contentPath": "01_magic_doc_identification.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "magicdocs/02_update_lifecycle_hooks",
+          "label": "Update Lifecycle Hooks",
+          "type": "chapter",
+          "summary": "This defines *when* the documentation updates happen. The system uses a `registerPostSamplingHook` to trigger updates only after the main assistant has finished generating a response and the conversation is \"idle\" (no pending tool calls). It also uses a file read listener to discover new Magic Docs dynamically.\n\nIt operates like a janitorial schedule. The cleaning crew (the updater) doesn't come in while everyone is working and moving furniture around. They wait until the office is quiet and the work is done for the moment before they come in to tidy up.",
+          "contentPath": "02_update_lifecycle_hooks.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "magicdocs/03_the_magic_docs_sub_agent",
+          "label": "The Magic Docs Sub-Agent",
+          "type": "chapter",
+          "summary": "Instead of using the main conversational AI to update documentation (which would distract from the user's task), the system spins up a specialized, \"forked\" sub-agent. This agent is configured with a specific model and a restricted set of tools (only file editing).\n\nImagine a silent scribe or archivist sitting in the corner of a meeting room. While you (the user) and the main assistant discuss and code, this scribe listens quietly. When the discussion pauses, the scribe steps in to update the records without interrupting the flow of the main meeting.",
+          "contentPath": "03_the_magic_docs_sub_agent.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "magicdocs/04_dynamic_prompt_templating",
+          "label": "Dynamic Prompt Templating",
+          "type": "chapter",
+          "summary": "This abstraction constructs the specific instructions given to the sub-agent. It loads a template (either a default or a user-customized markdown file) and dynamically substitutes variables like `{{docContents}}`, `{{docTitle}}`, and `{{customInstructions}}` found in the file header.\n\nThink of this as a \"Mad Libs\" style work order. The system takes a standard form letter (\"Please update the document...\") and fills in the blanks with the specific details of the current file (\"...titled 'API Specs', currently containing 'XYZ', following these rules...\").",
+          "contentPath": "04_dynamic_prompt_templating.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "magicdocs/05_context_isolation",
+          "label": "Context Isolation",
+          "type": "chapter",
+          "summary": "To ensure the documentation update doesn't interfere with the main session's state, the system creates a \"forked\" context. It clones the `FileStateCache` and isolates the tool execution environment. This ensures that when the sub-agent reads or edits files, it doesn't mess up the memory or cache of the main assistant.\n\nIt's like giving the archivist a photocopy of the documents to work on. Even if they spill coffee or make notes on their copy, the original documents on the main desk remain pristine until the final approved changes are merged back in.",
+          "contentPath": "05_context_isolation.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "magicdocs/03_the_magic_docs_sub_agent",
+          "target": "magicdocs/01_magic_doc_identification",
+          "label": "Triggers detection"
+        },
+        {
+          "source": "magicdocs/03_the_magic_docs_sub_agent",
+          "target": "magicdocs/02_update_lifecycle_hooks",
+          "label": "Activates"
+        },
+        {
+          "source": "magicdocs/04_dynamic_prompt_templating",
+          "target": "magicdocs/02_update_lifecycle_hooks",
+          "label": "Isolates environment"
+        },
+        {
+          "source": "magicdocs/01_magic_doc_identification",
+          "target": "magicdocs/05_context_isolation",
+          "label": "Supplies metadata"
+        },
+        {
+          "source": "magicdocs/05_context_isolation",
+          "target": "magicdocs/02_update_lifecycle_hooks",
+          "label": "Instructs"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "magicdocs/03_the_magic_docs_sub_agent",
+      "target": "magicdocs/01_magic_doc_identification",
+      "label": "Triggers detection"
+    },
+    {
+      "source": "magicdocs/03_the_magic_docs_sub_agent",
+      "target": "magicdocs/02_update_lifecycle_hooks",
+      "label": "Activates"
+    },
+    {
+      "source": "magicdocs/04_dynamic_prompt_templating",
+      "target": "magicdocs/02_update_lifecycle_hooks",
+      "label": "Isolates environment"
+    },
+    {
+      "source": "magicdocs/01_magic_doc_identification",
+      "target": "magicdocs/05_context_isolation",
+      "label": "Supplies metadata"
+    },
+    {
+      "source": "magicdocs/05_context_isolation",
+      "target": "magicdocs/02_update_lifecycle_hooks",
+      "label": "Instructs"
+    }
+  ],
+  "storyPath": [
+    "magicdocs/01_magic_doc_identification",
+    "magicdocs/02_update_lifecycle_hooks",
+    "magicdocs/03_the_magic_docs_sub_agent",
+    "magicdocs/04_dynamic_prompt_templating",
+    "magicdocs/05_context_isolation"
+  ]
+}

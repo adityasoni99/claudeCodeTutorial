@@ -1,0 +1,134 @@
+{
+  "projectName": "BashTool",
+  "nodes": [
+    {
+      "id": "bashtool",
+      "label": "BashTool",
+      "type": "module",
+      "summary": "A secure execution environment for shell commands that acts as a **smart wrapper** around the system shell. It employs a central **security guard** to orchestrate permissions, validate paths against filesystem boundaries, and perform deep inspection of commands to prevent dangerous operations. The system also includes semantic parsing and a rich **user interface** to provide clear feedback and interpret command outcomes safely.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "bashtool/01_tool_interface___feedback",
+          "label": "Tool Interface & Feedback",
+          "type": "chapter",
+          "summary": "This layer manages how the tool presents itself to both the AI model and the human user. It defines the system prompt (telling the AI how to use Bash safely) and renders the visual output components (stdout/stderr streams, progress bars, and warnings). It serves as the frontend dashboard, ensuring the AI knows the rules of engagement (via the prompt) and the user receives clear, formatted feedback on what the tool is actually doing in their terminal.",
+          "contentPath": "01_tool_interface___feedback.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bashtool/02_command_semantics___parsing",
+          "label": "Command Semantics & Parsing",
+          "type": "chapter",
+          "summary": "This abstraction handles the translation between raw shell execution and meaningful program states. It interprets what \"success\" means for different tools (e.g., understanding that `grep` returning 1 isn't a system error, just \"no matches found\") and handles specialized parsing for tools like `sed` to render them as file edits. It acts as a translator and interpreter, converting raw exit codes and cryptic syntax into structured data that the application and the user can easily understand.",
+          "contentPath": "02_command_semantics___parsing.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bashtool/03_permission_orchestration",
+          "label": "Permission Orchestration",
+          "type": "chapter",
+          "summary": "This is the central \"security guard\" of the BashTool. It orchestrates the decision-making process for whether a command is allowed to execute. It acts as the main entry point that coordinates various checks\u2014such as parsing the command tree (AST), checking against user-defined allow/deny rules, handling specific modes (like \"Accept Edits\"), and delegating to specialized validators. Think of it as the chief security officer who gathers reports from different departments (Path, Safety, Mode) before stamping \"Approved\" or \"Denied\" on a request.",
+          "contentPath": "03_permission_orchestration.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bashtool/04_path___filesystem_constraints",
+          "label": "Path & Filesystem Constraints",
+          "type": "chapter",
+          "summary": "This layer enforces boundaries on where commands can operate within the filesystem. It parses commands that touch files (like `cd`, `ls`, `cp`, `mv`) to ensure they only access allowed working directories. It handles complex logic like output redirection (`>`) and resolves relative paths to prevent \"jailbreaks\" (accessing files outside the project). Think of it as an electric fence system; it doesn't care *what* you are doing, only *where* you are standing, ensuring the tool never wanders into restricted system areas or protected files.",
+          "contentPath": "04_path___filesystem_constraints.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "bashtool/05_read_only___safety_analysis",
+          "label": "Read-Only & Safety Analysis",
+          "type": "chapter",
+          "summary": "This abstraction focuses on deep inspection of command arguments to determine if they are safe (read-only) or potentially dangerous (write/execute). It contains extensive allowlists of safe flags for common tools (like `git`, `grep`, `ls`) and regex patterns to detect dangerous operations (like `rm -rf` or command injection). It acts like a TSA luggage scanner, disassembling every flag and argument of a command to ensure it doesn't contain forbidden items like network exploits, system modifications, or unexpected destructive behavior.",
+          "contentPath": "05_read_only___safety_analysis.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "bashtool/01_tool_interface___feedback",
+          "target": "bashtool/03_permission_orchestration",
+          "label": "Enforces filesystem boundaries"
+        },
+        {
+          "source": "bashtool/01_tool_interface___feedback",
+          "target": "bashtool/02_command_semantics___parsing",
+          "label": "Delegates safety checks"
+        },
+        {
+          "source": "bashtool/03_permission_orchestration",
+          "target": "bashtool/02_command_semantics___parsing",
+          "label": "Validates operation safety"
+        },
+        {
+          "source": "bashtool/02_command_semantics___parsing",
+          "target": "bashtool/03_permission_orchestration",
+          "label": "Reuses path extraction logic"
+        },
+        {
+          "source": "bashtool/05_read_only___safety_analysis",
+          "target": "bashtool/04_path___filesystem_constraints",
+          "label": "Parses commands for display"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "bashtool/01_tool_interface___feedback",
+      "target": "bashtool/03_permission_orchestration",
+      "label": "Enforces filesystem boundaries"
+    },
+    {
+      "source": "bashtool/01_tool_interface___feedback",
+      "target": "bashtool/02_command_semantics___parsing",
+      "label": "Delegates safety checks"
+    },
+    {
+      "source": "bashtool/03_permission_orchestration",
+      "target": "bashtool/02_command_semantics___parsing",
+      "label": "Validates operation safety"
+    },
+    {
+      "source": "bashtool/02_command_semantics___parsing",
+      "target": "bashtool/03_permission_orchestration",
+      "label": "Reuses path extraction logic"
+    },
+    {
+      "source": "bashtool/05_read_only___safety_analysis",
+      "target": "bashtool/04_path___filesystem_constraints",
+      "label": "Parses commands for display"
+    }
+  ],
+  "storyPath": [
+    "bashtool/01_tool_interface___feedback",
+    "bashtool/02_command_semantics___parsing",
+    "bashtool/03_permission_orchestration",
+    "bashtool/04_path___filesystem_constraints",
+    "bashtool/05_read_only___safety_analysis"
+  ]
+}

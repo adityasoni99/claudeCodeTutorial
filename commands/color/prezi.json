@@ -1,0 +1,124 @@
+{
+  "projectName": "color",
+  "nodes": [
+    {
+      "id": "color",
+      "label": "color",
+      "type": "module",
+      "summary": "This project enables users to **personalize** their workspace by changing the command prompt's color. It uses a *smart loading system* that keeps the application fast by only fetching the code when the user actually asks for a color change. Once a command is issued, the system instantly updates the screen's appearance and **automatically saves** the preference so it is remembered the next time the user logs in.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "color/01_command_definition___metadata",
+          "label": "Command Definition & Metadata",
+          "type": "chapter",
+          "summary": "This abstraction separates the \"identity\" of a command from its actual code. In `index.ts`, the command declares its name, description, and argument hints, but it doesn't contain the heavy logic.\n\nThink of this like a **Restaurant Menu**. The menu lists the name of the dish and a description so you can order it, but it doesn't contain the actual ingredients or the chef cooking in the kitchen (which happens in the implementation file). This keeps the system lightweight until an order is actually placed.",
+          "contentPath": "01_command_definition___metadata.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "color/02_lazy_loading_strategy",
+          "label": "Lazy Loading Strategy",
+          "type": "chapter",
+          "summary": "The codebase uses a dynamic import pattern (`load: () => import(...)`) to improve startup performance. Instead of loading every possible command when the application starts, it only loads the specific code file when the user actually types that command.\n\nIt is like **Streaming a Movie**. You don't download the entire 2-hour file before you start watching; the system loads the specific parts you need right now. This ensures the application opens instantly, rather than waiting for every feature to load at once.",
+          "contentPath": "02_lazy_loading_strategy.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "color/03_command_execution_interface",
+          "label": "Command Execution Interface",
+          "type": "chapter",
+          "summary": "The `call` function serves as the standard entry point for running logic. It receives callbacks (`onDone`) and context (`ToolUseContext`) to interact with the system. It creates a standardized way for the system to run any tool, regardless of what that tool does.\n\nThink of this like a **Universal USB Port**. It doesn't matter if you plug in a mouse, a keyboard, or a printer; as long as the device fits the standard plug (the `call` signature), the computer knows how to power it and talk to it.",
+          "contentPath": "03_command_execution_interface.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "color/04_state_management__appstate_",
+          "label": "State Management (AppState)",
+          "type": "chapter",
+          "summary": "This abstraction handles the immediate, in-memory representation of the application. In `color.ts`, `context.setAppState` is used to update the UI color immediately after the command runs.\n\nImagine a **Digital Dashboard**. When you flip a switch to turn on a light, the dashboard icon lights up instantly to reflect the current reality. This state is temporary and lives in the computer's RAM, allowing the interface to react instantly to user input without needing to reload or read from a slow hard drive.",
+          "contentPath": "04_state_management__appstate_.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "color/05_session_persistence",
+          "label": "Session Persistence",
+          "type": "chapter",
+          "summary": "While State Management handles the \"now,\" Persistence handles the \"forever.\" The code uses helpers like `saveAgentColor` and `getTranscriptPath` to write settings to a file on the disk.\n\nThis is like **Writing in a Diary**. If you just think a thought (State), it might vanish when you sleep (close the app). But if you write it down in a diary (Persistence), that information is retrieved and restored exactly as you left it when you wake up the next day (start a new session).",
+          "contentPath": "05_session_persistence.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "color/01_command_definition___metadata",
+          "target": "color/02_lazy_loading_strategy",
+          "label": "Defines import strategy"
+        },
+        {
+          "source": "color/02_lazy_loading_strategy",
+          "target": "color/05_session_persistence",
+          "label": "Loads implementation"
+        },
+        {
+          "source": "color/05_session_persistence",
+          "target": "color/03_command_execution_interface",
+          "label": "Updates immediate state"
+        },
+        {
+          "source": "color/05_session_persistence",
+          "target": "color/04_state_management__appstate_",
+          "label": "Saves settings permanently"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "color/01_command_definition___metadata",
+      "target": "color/02_lazy_loading_strategy",
+      "label": "Defines import strategy"
+    },
+    {
+      "source": "color/02_lazy_loading_strategy",
+      "target": "color/05_session_persistence",
+      "label": "Loads implementation"
+    },
+    {
+      "source": "color/05_session_persistence",
+      "target": "color/03_command_execution_interface",
+      "label": "Updates immediate state"
+    },
+    {
+      "source": "color/05_session_persistence",
+      "target": "color/04_state_management__appstate_",
+      "label": "Saves settings permanently"
+    }
+  ],
+  "storyPath": [
+    "color/01_command_definition___metadata",
+    "color/02_lazy_loading_strategy",
+    "color/03_command_execution_interface",
+    "color/04_state_management__appstate_",
+    "color/05_session_persistence"
+  ]
+}

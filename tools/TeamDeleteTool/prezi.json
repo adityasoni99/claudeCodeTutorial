@@ -1,0 +1,124 @@
+{
+  "projectName": "TeamDeleteTool",
+  "nodes": [
+    {
+      "id": "teamdeletetool",
+      "label": "TeamDeleteTool",
+      "type": "module",
+      "summary": "This project implements a **TeamDelete** capability, acting as a housekeeping utility for AI agent sessions. It is responsible for *safely* dismantling teams by verifying no agents are active, removing associated file directories, and clearing the application's \"mental\" context to prepare for new tasks.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "teamdeletetool/01_tool_definition",
+          "label": "Tool Definition",
+          "type": "chapter",
+          "summary": "This is the structural blueprint for creating an AI capability. It packages the logic, metadata, and configuration into a standardized `Tool` object that the agent system can register and understand.\nThink of it as a \"skill cartridge\" inserted into a game console. It defines the skill's name, what inputs it requires (schema), and the code to execute when the button is pressed.",
+          "contentPath": "01_tool_definition.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teamdeletetool/02_safety_validation",
+          "label": "Safety Validation",
+          "type": "chapter",
+          "summary": "A guardrail mechanism ensuring the tool only runs when it is safe to do so. It checks the status of other team members to prevent deleting a team that is still actively working.\nIt is analogous to a safety interlock on a microwave that prevents it from turning on while the door is open, protecting the system from accidental damage or data loss.",
+          "contentPath": "02_safety_validation.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teamdeletetool/03_resource_cleanup",
+          "label": "Resource Cleanup",
+          "type": "chapter",
+          "summary": "The core function of this tool, responsible for physically removing data from the file system. It targets specific directories associated with a team and its tasks to free up resources.\nIt acts like a cleanup crew that comes in after a party (the swarm session) to throw away trash and dismantle temporary decorations, ensuring the house is clean for the next event.",
+          "contentPath": "03_resource_cleanup.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teamdeletetool/04_global_state_management",
+          "label": "Global State Management",
+          "type": "chapter",
+          "summary": "Logic that manipulates the running application's in-memory state (`appState`). Unlike file cleanup, this handles the \"mental\" reset of the application, clearing the current team context and message inbox.\nIt's like wiping a whiteboard clean at the end of a meeting. Even if the meeting notes are filed away (or deleted), you still need to clear the board so the next group has a fresh workspace.",
+          "contentPath": "04_global_state_management.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "teamdeletetool/05_user_interface_integration",
+          "label": "User Interface Integration",
+          "type": "chapter",
+          "summary": "Defines how the tool's usage and results are visually rendered in the chat stream. It parses the tool's output to determine what (if anything) should be shown to the user.\nThink of this as the \"display driver\" for the tool. In this specific case, it often suppresses the success message to avoid cluttering the chat, acting like a silent background process notification.",
+          "contentPath": "05_user_interface_integration.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "teamdeletetool/01_tool_definition",
+          "target": "teamdeletetool/03_resource_cleanup",
+          "label": "Validates execution"
+        },
+        {
+          "source": "teamdeletetool/01_tool_definition",
+          "target": "teamdeletetool/02_safety_validation",
+          "label": "Triggers deletion"
+        },
+        {
+          "source": "teamdeletetool/01_tool_definition",
+          "target": "teamdeletetool/04_global_state_management",
+          "label": "Resets context"
+        },
+        {
+          "source": "teamdeletetool/01_tool_definition",
+          "target": "teamdeletetool/05_user_interface_integration",
+          "label": "Defines rendering"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "teamdeletetool/01_tool_definition",
+      "target": "teamdeletetool/03_resource_cleanup",
+      "label": "Validates execution"
+    },
+    {
+      "source": "teamdeletetool/01_tool_definition",
+      "target": "teamdeletetool/02_safety_validation",
+      "label": "Triggers deletion"
+    },
+    {
+      "source": "teamdeletetool/01_tool_definition",
+      "target": "teamdeletetool/04_global_state_management",
+      "label": "Resets context"
+    },
+    {
+      "source": "teamdeletetool/01_tool_definition",
+      "target": "teamdeletetool/05_user_interface_integration",
+      "label": "Defines rendering"
+    }
+  ],
+  "storyPath": [
+    "teamdeletetool/01_tool_definition",
+    "teamdeletetool/02_safety_validation",
+    "teamdeletetool/03_resource_cleanup",
+    "teamdeletetool/04_global_state_management",
+    "teamdeletetool/05_user_interface_integration"
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "projectName": "mcp",
+  "nodes": [
+    {
+      "id": "mcp",
+      "label": "mcp",
+      "type": "module",
+      "summary": "This project provides a robust **input validation system** designed to bridge the gap between strict technical schemas and messy human input. It features a *smart validation pipeline* that can verify standard data types while also using **AI-powered parsing** to convert natural language (like \"next Monday\") into precise machine-readable formats.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "mcp/01_hybrid_asynchronous_validation",
+          "label": "Hybrid Asynchronous Validation",
+          "type": "chapter",
+          "summary": "A two-step validation pipeline designed for user convenience. It behaves like a helpful assistant: first, it attempts a fast, synchronous check (e.g., \"Is this a valid date string?\"). If that fails, rather than rejecting the input immediately, it attempts an asynchronous \"repair\" using the AI parser. This allows the system to accept natural language inputs while ultimately storing strict data types.",
+          "contentPath": "01_hybrid_asynchronous_validation.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcp/02_schema_based_input_validation",
+          "label": "Schema-Based Input Validation",
+          "type": "chapter",
+          "summary": "The gatekeeper for data integrity. It takes abstract schema definitions (describing types like strings, integers, or booleans) and dynamically builds rigorous validation logic using the Zod library. It enforces constraints such as numeric ranges, string lengths, and specific formats (email, URI), ensuring that raw user input matches the expected structure before it is processed further.",
+          "contentPath": "02_schema_based_input_validation.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcp/03_natural_language_date_time_parsing",
+          "label": "Natural Language Date/Time Parsing",
+          "type": "chapter",
+          "summary": "Acts as a smart translator for temporal data. While systems require strict ISO 8601 timestamps (e.g., `2023-10-05T14:00:00Z`), humans prefer relative terms like \"tomorrow\" or \"next Monday\". This abstraction uses an LLM (Haiku) to interpret these natural language inputs, combining them with the current system time and timezone context to resolve them into precise, machine-readable formats.",
+          "contentPath": "03_natural_language_date_time_parsing.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcp/04_enum_and_selection_normalization",
+          "label": "Enum and Selection Normalization",
+          "type": "chapter",
+          "summary": "Standardizes how restricted choices are handled. Schemas can define lists of allowed values in various formats (legacy `enum`, `oneOf`, or `anyOf` for multi-selects). This abstraction smooths over these differences, providing a consistent interface to extract valid values and their corresponding display labels, ensuring drop-downs and choice validations work uniformly regardless of the underlying schema structure.",
+          "contentPath": "04_enum_and_selection_normalization.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "mcp/03_natural_language_date_time_parsing",
+          "target": "mcp/02_schema_based_input_validation",
+          "label": "Delegates core validation"
+        },
+        {
+          "source": "mcp/03_natural_language_date_time_parsing",
+          "target": "mcp/01_hybrid_asynchronous_validation",
+          "label": "Requests AI parsing"
+        },
+        {
+          "source": "mcp/02_schema_based_input_validation",
+          "target": "mcp/04_enum_and_selection_normalization",
+          "label": "Retrieves allowed values"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "mcp/03_natural_language_date_time_parsing",
+      "target": "mcp/02_schema_based_input_validation",
+      "label": "Delegates core validation"
+    },
+    {
+      "source": "mcp/03_natural_language_date_time_parsing",
+      "target": "mcp/01_hybrid_asynchronous_validation",
+      "label": "Requests AI parsing"
+    },
+    {
+      "source": "mcp/02_schema_based_input_validation",
+      "target": "mcp/04_enum_and_selection_normalization",
+      "label": "Retrieves allowed values"
+    }
+  ],
+  "storyPath": [
+    "mcp/01_hybrid_asynchronous_validation",
+    "mcp/02_schema_based_input_validation",
+    "mcp/03_natural_language_date_time_parsing",
+    "mcp/04_enum_and_selection_normalization"
+  ]
+}

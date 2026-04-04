@@ -1,0 +1,432 @@
+{
+  "projectName": "claudeCode",
+  "nodes": [
+    {
+      "id": "claudecode",
+      "label": "claudeCode",
+      "type": "module",
+      "summary": "`claudeCode` is an advanced AI CLI tool designed to act as an **autonomous software engineer**. It features a robust **Query Engine** that orchestrates conversation loops, manages state, and executes a diverse suite of tools including file editing, terminal commands, and **Computer Use**. The system emphasizes safety and control through a granular **Permission & Security System** (enhanced by an **Auto-Mode Classifier**), detailed **Cost Tracking**, and deep **Git Integration** for context-aware coding assistance.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "claudecode/01_state_management",
+          "label": "State Management",
+          "type": "chapter",
+          "summary": "A central store holding application state including tasks, permissions, settings, plugins, and active teammates.",
+          "contentPath": "01_state_management.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecode/02_ink_ui_framework",
+          "label": "Ink UI Framework",
+          "type": "chapter",
+          "summary": "Terminal UI built using React and ink, featuring a custom renderer for layout and rich interactive components.",
+          "contentPath": "02_ink_ui_framework.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecode/03_query_engine",
+          "label": "Query Engine",
+          "type": "chapter",
+          "summary": "The brain of the application that manages conversation loops, state persistence, tool execution, context management, and message submission.",
+          "contentPath": "03_query_engine.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecode/04_fileedittool",
+          "label": "FileEditTool",
+          "type": "chapter",
+          "summary": "Performs atomic edits, handles large files, and integrates with LSP for validation.",
+          "contentPath": "04_fileedittool.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecode/05_git_integration",
+          "label": "Git Integration",
+          "type": "chapter",
+          "summary": "Extensive utilities for resolving git roots, worktrees, and shallow clones.",
+          "contentPath": "05_git_integration.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecode/06_bashtool",
+          "label": "BashTool",
+          "type": "chapter",
+          "summary": "Executes shell commands.",
+          "contentPath": "06_bashtool.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecode/07_shell_safety_checks",
+          "label": "Shell Safety Checks",
+          "type": "chapter",
+          "summary": "Specific checks for destructive commands and sandbox execution.",
+          "contentPath": "07_shell_safety_checks.md",
+          "x": -800.0,
+          "y": 450.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecode/08_permission___security_system",
+          "label": "Permission & Security System",
+          "type": "chapter",
+          "summary": "A granular permission system governing agent actions, supporting various modes like default, auto, and strict.",
+          "contentPath": "08_permission___security_system.md",
+          "x": -100.0,
+          "y": 450.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecode/09_rule_matching",
+          "label": "Rule Matching",
+          "type": "chapter",
+          "summary": "Scopes permissions by tool, command prefix, or wildcard patterns.",
+          "contentPath": "09_rule_matching.md",
+          "x": 600.0,
+          "y": 450.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecode/10_auto_mode_classifier",
+          "label": "Auto-Mode Classifier",
+          "type": "chapter",
+          "summary": "A smaller model classifier to judge if a tool call is safe to auto-approve.",
+          "contentPath": "10_auto_mode_classifier.md",
+          "x": -800.0,
+          "y": 950.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecode/11_notebookedittool",
+          "label": "NotebookEditTool",
+          "type": "chapter",
+          "summary": "Handles Jupyter notebooks.",
+          "contentPath": "11_notebookedittool.md",
+          "x": -100.0,
+          "y": 950.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecode/12_websearchtool",
+          "label": "WebSearchTool",
+          "type": "chapter",
+          "summary": "Allows the agent to search the web for up-to-date information.",
+          "contentPath": "12_websearchtool.md",
+          "x": 600.0,
+          "y": 950.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecode/13_feature_gating",
+          "label": "Feature Gating",
+          "type": "chapter",
+          "summary": "Uses bun bundle feature flagging for compile-time configuration.",
+          "contentPath": "13_feature_gating.md",
+          "x": -800.0,
+          "y": 1450.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecode/14_model_context_protocol__mcp_",
+          "label": "Model Context Protocol (MCP)",
+          "type": "chapter",
+          "summary": "First-class support allowing connection to external data sources and tools via WebSocket or stdio.",
+          "contentPath": "14_model_context_protocol__mcp_.md",
+          "x": -100.0,
+          "y": 1450.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecode/15_agenttool",
+          "label": "AgentTool",
+          "type": "chapter",
+          "summary": "Allows the main agent to spawn sub-agents with specific system prompts and toolsets.",
+          "contentPath": "15_agenttool.md",
+          "x": 600.0,
+          "y": 1450.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecode/16_teammates",
+          "label": "Teammates",
+          "type": "chapter",
+          "summary": "In-process teammates spawned to perform tasks in the background while the user interacts with the main session.",
+          "contentPath": "16_teammates.md",
+          "x": -800.0,
+          "y": 1950.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecode/17_unique_features",
+          "label": "Unique Features",
+          "type": "chapter",
+          "summary": "Includes Buddy System, Kairos, Ultraplan, Auto-Dream, and Remote Bridge.",
+          "contentPath": "17_unique_features.md",
+          "x": -100.0,
+          "y": 1950.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecode/18_computer_use",
+          "label": "Computer Use",
+          "type": "chapter",
+          "summary": "Implementation for macOS allowing screenshots, mouse movement, and typing.",
+          "contentPath": "18_computer_use.md",
+          "x": 600.0,
+          "y": 1950.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "claudecode/19_cost_tracking",
+          "label": "Cost Tracking",
+          "type": "chapter",
+          "summary": "Detailed tracking of token usage and USD cost per session.",
+          "contentPath": "19_cost_tracking.md",
+          "x": -800.0,
+          "y": 2450.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "claudecode/01_state_management",
+          "target": "claudecode/17_unique_features",
+          "label": "Tracks usage"
+        },
+        {
+          "source": "claudecode/02_ink_ui_framework",
+          "target": "claudecode/03_query_engine",
+          "label": "Observes state"
+        },
+        {
+          "source": "claudecode/02_ink_ui_framework",
+          "target": "claudecode/07_shell_safety_checks",
+          "label": "Displays warnings"
+        },
+        {
+          "source": "claudecode/04_fileedittool",
+          "target": "claudecode/11_notebookedittool",
+          "label": "Verifies permissions"
+        },
+        {
+          "source": "claudecode/04_fileedittool",
+          "target": "claudecode/18_computer_use",
+          "label": "Computes diffs"
+        },
+        {
+          "source": "claudecode/05_git_integration",
+          "target": "claudecode/11_notebookedittool",
+          "label": "Verifies permissions"
+        },
+        {
+          "source": "claudecode/06_bashtool",
+          "target": "claudecode/07_shell_safety_checks",
+          "label": "Validates commands"
+        },
+        {
+          "source": "claudecode/08_permission___security_system",
+          "target": "claudecode/19_cost_tracking",
+          "label": "Checks availability"
+        },
+        {
+          "source": "claudecode/09_rule_matching",
+          "target": "claudecode/11_notebookedittool",
+          "label": "Requires permission"
+        },
+        {
+          "source": "claudecode/10_auto_mode_classifier",
+          "target": "claudecode/11_notebookedittool",
+          "label": "Requires permission"
+        },
+        {
+          "source": "claudecode/11_notebookedittool",
+          "target": "claudecode/12_websearchtool",
+          "label": "Evaluates rules"
+        },
+        {
+          "source": "claudecode/11_notebookedittool",
+          "target": "claudecode/13_feature_gating",
+          "label": "Delegates decisions"
+        },
+        {
+          "source": "claudecode/13_feature_gating",
+          "target": "claudecode/01_state_management",
+          "label": "Runs side queries"
+        },
+        {
+          "source": "claudecode/14_model_context_protocol__mcp_",
+          "target": "claudecode/10_auto_mode_classifier",
+          "label": "Initializes servers"
+        },
+        {
+          "source": "claudecode/14_model_context_protocol__mcp_",
+          "target": "claudecode/15_agenttool",
+          "label": "Spawns sub-agents"
+        },
+        {
+          "source": "claudecode/15_agenttool",
+          "target": "claudecode/03_query_engine",
+          "label": "Registers tasks"
+        },
+        {
+          "source": "claudecode/16_teammates",
+          "target": "claudecode/15_agenttool",
+          "label": "Utilizes background agents"
+        },
+        {
+          "source": "claudecode/17_unique_features",
+          "target": "claudecode/03_query_engine",
+          "label": "Persists session data"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "claudecode/01_state_management",
+      "target": "claudecode/17_unique_features",
+      "label": "Tracks usage"
+    },
+    {
+      "source": "claudecode/02_ink_ui_framework",
+      "target": "claudecode/03_query_engine",
+      "label": "Observes state"
+    },
+    {
+      "source": "claudecode/02_ink_ui_framework",
+      "target": "claudecode/07_shell_safety_checks",
+      "label": "Displays warnings"
+    },
+    {
+      "source": "claudecode/04_fileedittool",
+      "target": "claudecode/11_notebookedittool",
+      "label": "Verifies permissions"
+    },
+    {
+      "source": "claudecode/04_fileedittool",
+      "target": "claudecode/18_computer_use",
+      "label": "Computes diffs"
+    },
+    {
+      "source": "claudecode/05_git_integration",
+      "target": "claudecode/11_notebookedittool",
+      "label": "Verifies permissions"
+    },
+    {
+      "source": "claudecode/06_bashtool",
+      "target": "claudecode/07_shell_safety_checks",
+      "label": "Validates commands"
+    },
+    {
+      "source": "claudecode/08_permission___security_system",
+      "target": "claudecode/19_cost_tracking",
+      "label": "Checks availability"
+    },
+    {
+      "source": "claudecode/09_rule_matching",
+      "target": "claudecode/11_notebookedittool",
+      "label": "Requires permission"
+    },
+    {
+      "source": "claudecode/10_auto_mode_classifier",
+      "target": "claudecode/11_notebookedittool",
+      "label": "Requires permission"
+    },
+    {
+      "source": "claudecode/11_notebookedittool",
+      "target": "claudecode/12_websearchtool",
+      "label": "Evaluates rules"
+    },
+    {
+      "source": "claudecode/11_notebookedittool",
+      "target": "claudecode/13_feature_gating",
+      "label": "Delegates decisions"
+    },
+    {
+      "source": "claudecode/13_feature_gating",
+      "target": "claudecode/01_state_management",
+      "label": "Runs side queries"
+    },
+    {
+      "source": "claudecode/14_model_context_protocol__mcp_",
+      "target": "claudecode/10_auto_mode_classifier",
+      "label": "Initializes servers"
+    },
+    {
+      "source": "claudecode/14_model_context_protocol__mcp_",
+      "target": "claudecode/15_agenttool",
+      "label": "Spawns sub-agents"
+    },
+    {
+      "source": "claudecode/15_agenttool",
+      "target": "claudecode/03_query_engine",
+      "label": "Registers tasks"
+    },
+    {
+      "source": "claudecode/16_teammates",
+      "target": "claudecode/15_agenttool",
+      "label": "Utilizes background agents"
+    },
+    {
+      "source": "claudecode/17_unique_features",
+      "target": "claudecode/03_query_engine",
+      "label": "Persists session data"
+    }
+  ],
+  "storyPath": [
+    "claudecode/01_state_management",
+    "claudecode/02_ink_ui_framework",
+    "claudecode/03_query_engine",
+    "claudecode/04_fileedittool",
+    "claudecode/05_git_integration",
+    "claudecode/06_bashtool",
+    "claudecode/07_shell_safety_checks",
+    "claudecode/08_permission___security_system",
+    "claudecode/09_rule_matching",
+    "claudecode/10_auto_mode_classifier",
+    "claudecode/11_notebookedittool",
+    "claudecode/12_websearchtool",
+    "claudecode/13_feature_gating",
+    "claudecode/14_model_context_protocol__mcp_",
+    "claudecode/15_agenttool",
+    "claudecode/16_teammates",
+    "claudecode/17_unique_features",
+    "claudecode/18_computer_use",
+    "claudecode/19_cost_tracking"
+  ]
+}

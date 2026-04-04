@@ -1,0 +1,178 @@
+{
+  "projectName": "design-system",
+  "nodes": [
+    {
+      "id": "design-system",
+      "label": "design-system",
+      "type": "module",
+      "summary": "This project is a **CLI design system** built to create rich, interactive terminal user interfaces using React. It creates a consistent visual style through a central **theming engine** that manages colors and layouts for components like *tabs*, *dialogs*, and *lists*. It also standardizes user interactions by providing reusable abstractions for **keyboard navigation**, shortcuts, and status feedback.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "design-system/01_theming_context___utilities",
+          "label": "Theming Context & Utilities",
+          "type": "chapter",
+          "summary": "The central nervous system for the application's visual style. It manages the active theme state (e.g., 'dark', 'auto') and detects system preferences. It provides this context to the rest of the component tree, ensuring consistent styling across the application. It includes utilities to manually resolve specific color values when needed outside of React components.",
+          "contentPath": "01_theming_context___utilities.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "design-system/02_theme_aware_primitives",
+          "label": "Theme-Aware Primitives",
+          "type": "chapter",
+          "summary": "Smart wrappers around the base Ink `Text` and `Box` components. Instead of accepting raw color values (like hex codes), these components accept semantic theme keys (e.g., `success`, `warning`, `borderColor`). They automatically resolve these keys to the correct colors based on the current active theme, abstracting style details away from business logic.",
+          "contentPath": "02_theme_aware_primitives.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "design-system/03_structural_containers",
+          "label": "Structural Containers",
+          "type": "chapter",
+          "summary": "Components responsible for the high-level layout and boundaries of the CLI interface. `Pane` defines a standard screen area with a top border, while `Dialog` acts as a modal overlay for confirmations or alerts. `Divider` provides visual separation. These ensure consistent padding, borders, and visual hierarchy across different screens.",
+          "contentPath": "03_structural_containers.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "design-system/04_interactive_list_picker",
+          "label": "Interactive List Picker",
+          "type": "chapter",
+          "summary": "A high-level abstraction for rendering searchable, selectable lists. It handles complex interactions like fuzzy filtering, keyboard navigation (up/down arrows), scroll window management, and selection states. It utilizes `ListItem` to render individual rows with support for focus indicators (cursors) and selection markers.",
+          "contentPath": "04_interactive_list_picker.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "design-system/05_tabbed_interface",
+          "label": "Tabbed Interface",
+          "type": "chapter",
+          "summary": "Manages multiple views within a single screen context. It handles the logic for switching active tabs, rendering the tab headers, and managing keyboard focus navigation between the tabs and their content. It ensures that complex layouts (like settings screens) can be organized without cluttering the terminal window.",
+          "contentPath": "05_tabbed_interface.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "design-system/06_status___feedback_elements",
+          "label": "Status & Feedback Elements",
+          "type": "chapter",
+          "summary": "A collection of visual components designed to communicate the application's state to the user. This includes icons for specific statuses (success checks, error crosses), loading spinners with text, and progress bars. They standardize how feedback is presented, ensuring users instantly recognize operation results.",
+          "contentPath": "06_status___feedback_elements.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "design-system/07_keyboard_interaction_hints",
+          "label": "Keyboard Interaction Hints",
+          "type": "chapter",
+          "summary": "Since CLI applications rely on keyboard shortcuts rather than buttons, this abstraction provides a standardized way to display available actions. It renders hints (e.g., \"Press Enter to confirm\") often found at the bottom of dialogs or lists, guiding users on how to interact with the current view.",
+          "contentPath": "07_keyboard_interaction_hints.md",
+          "x": -800.0,
+          "y": 450.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "design-system/02_theme_aware_primitives",
+          "target": "design-system/01_theming_context___utilities",
+          "label": "Consumes theme context"
+        },
+        {
+          "source": "design-system/03_structural_containers",
+          "target": "design-system/04_interactive_list_picker",
+          "label": "Wraps content in Pane"
+        },
+        {
+          "source": "design-system/03_structural_containers",
+          "target": "design-system/07_keyboard_interaction_hints",
+          "label": "Displays navigation hints"
+        },
+        {
+          "source": "design-system/04_interactive_list_picker",
+          "target": "design-system/07_keyboard_interaction_hints",
+          "label": "Displays dialog actions"
+        },
+        {
+          "source": "design-system/04_interactive_list_picker",
+          "target": "design-system/01_theming_context___utilities",
+          "label": "Uses theme definitions"
+        },
+        {
+          "source": "design-system/05_tabbed_interface",
+          "target": "design-system/01_theming_context___utilities",
+          "label": "Uses theme colors"
+        },
+        {
+          "source": "design-system/06_status___feedback_elements",
+          "target": "design-system/01_theming_context___utilities",
+          "label": "Uses theme colors"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "design-system/02_theme_aware_primitives",
+      "target": "design-system/01_theming_context___utilities",
+      "label": "Consumes theme context"
+    },
+    {
+      "source": "design-system/03_structural_containers",
+      "target": "design-system/04_interactive_list_picker",
+      "label": "Wraps content in Pane"
+    },
+    {
+      "source": "design-system/03_structural_containers",
+      "target": "design-system/07_keyboard_interaction_hints",
+      "label": "Displays navigation hints"
+    },
+    {
+      "source": "design-system/04_interactive_list_picker",
+      "target": "design-system/07_keyboard_interaction_hints",
+      "label": "Displays dialog actions"
+    },
+    {
+      "source": "design-system/04_interactive_list_picker",
+      "target": "design-system/01_theming_context___utilities",
+      "label": "Uses theme definitions"
+    },
+    {
+      "source": "design-system/05_tabbed_interface",
+      "target": "design-system/01_theming_context___utilities",
+      "label": "Uses theme colors"
+    },
+    {
+      "source": "design-system/06_status___feedback_elements",
+      "target": "design-system/01_theming_context___utilities",
+      "label": "Uses theme colors"
+    }
+  ],
+  "storyPath": [
+    "design-system/01_theming_context___utilities",
+    "design-system/02_theme_aware_primitives",
+    "design-system/03_structural_containers",
+    "design-system/04_interactive_list_picker",
+    "design-system/05_tabbed_interface",
+    "design-system/06_status___feedback_elements",
+    "design-system/07_keyboard_interaction_hints"
+  ]
+}

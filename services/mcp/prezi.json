@@ -1,0 +1,156 @@
+{
+  "projectName": "mcp",
+  "nodes": [
+    {
+      "id": "mcp",
+      "label": "mcp",
+      "type": "module",
+      "summary": "This project implements a robust integration layer for the **Model Context Protocol (MCP)**, acting as a dynamic \"switchboard\" that connects the AI assistant to various external tools and servers. It manages the *lifecycle of connections* (auto-reconnecting and handling errors), merges **configuration settings** from local and enterprise scopes, and enforces strict **security** via OAuth and permission gating. Additionally, it handles *real-time notifications* from external channels (like Slack) and normalizes data to ensure consistent communication across the system.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "mcp/01_configuration_hierarchy___loading",
+          "label": "Configuration Hierarchy & Loading",
+          "type": "chapter",
+          "summary": "This system acts as the \"settings registry\" that decides which servers should exist. It merges configurations from multiple layers (Enterprise, User, Project, and Local scopes), similar to how CSS rules cascade. It handles file I/O, validates JSON schemas, expands environment variables, and deduplicates servers to ensure the most specific configuration wins. It also includes fetching dynamic configurations from sources like Claude.ai.",
+          "contentPath": "01_configuration_hierarchy___loading.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcp/02_authentication___security__oauth_xaa_",
+          "label": "Authentication & Security (OAuth/XAA)",
+          "type": "chapter",
+          "summary": "This is the \"passport control\" of the system. It manages the complex flows required to authenticate with protected MCP servers. It handles standard OAuth (browser pop-ups), token storage, and refreshing. It also implements \"XAA\" (Cross-App Access), an enterprise feature that allows a single identity provider login to silently authorize multiple MCP servers without repeated prompts, acting like a master key for your tools.",
+          "contentPath": "02_authentication___security__oauth_xaa_.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcp/03_connection_lifecycle_management",
+          "label": "Connection Lifecycle Management",
+          "type": "chapter",
+          "summary": "This is the engine room of the MCP integration. It acts like a dynamic switchboard operator that monitors the configuration and manages the active connections to various MCP servers. It handles the \"reconnection loop\" (trying again if a server disconnects), manages the state of tools and resources, and provides hooks for the UI to toggle servers on or off. It ensures that what is defined in your settings is what is actually running.",
+          "contentPath": "03_connection_lifecycle_management.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcp/04_channel_notifications___permissions",
+          "label": "Channel Notifications & Permissions",
+          "type": "chapter",
+          "summary": "This acts as a \"message bridge\" with a strict security guard. It allows external communication channels (like Slack or Discord connected via MCP) to push messages into the Claude interface. Crucially, it manages the permissions for these channels, intercepting user replies to authorization prompts to ensure that an external tool cannot spoof a user granting permission to execute dangerous commands.",
+          "contentPath": "04_channel_notifications___permissions.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcp/05_normalization___identification_utilities",
+          "label": "Normalization & Identification Utilities",
+          "type": "chapter",
+          "summary": "This is the \"translator\" layer that ensures consistency across the system. Because tool names and server names can come from various sources (filenames, user input, external APIs), this layer enforces strict naming conventions (sanitizing characters, handling prefixes like `mcp__`). It also provides utilities to identify which server a specific tool command belongs to.",
+          "contentPath": "05_normalization___identification_utilities.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "mcp/06_transport_layer",
+          "label": "Transport Layer",
+          "type": "chapter",
+          "summary": "These files define the \"pipes\" through which data flows between the client and the servers. While standard MCP uses Stdio or SSE, this codebase adds specialized transports for running servers inside the same process (In-Process) or bridging communication between the SDK and the CLI. It ensures that JSON-RPC messages are reliably delivered regardless of where the server is actually running.",
+          "contentPath": "06_transport_layer.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "mcp/01_configuration_hierarchy___loading",
+          "target": "mcp/02_authentication___security__oauth_xaa_",
+          "label": "Loads active configuration"
+        },
+        {
+          "source": "mcp/01_configuration_hierarchy___loading",
+          "target": "mcp/04_channel_notifications___permissions",
+          "label": "Gates channel events"
+        },
+        {
+          "source": "mcp/01_configuration_hierarchy___loading",
+          "target": "mcp/06_transport_layer",
+          "label": "Filters tools by server"
+        },
+        {
+          "source": "mcp/02_authentication___security__oauth_xaa_",
+          "target": "mcp/03_connection_lifecycle_management",
+          "label": "Authenticates API fetching"
+        },
+        {
+          "source": "mcp/01_configuration_hierarchy___loading",
+          "target": "mcp/03_connection_lifecycle_management",
+          "label": "Triggers authentication flows"
+        },
+        {
+          "source": "mcp/01_configuration_hierarchy___loading",
+          "target": "mcp/05_normalization___identification_utilities",
+          "label": "Establishes connection tran..."
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "mcp/01_configuration_hierarchy___loading",
+      "target": "mcp/02_authentication___security__oauth_xaa_",
+      "label": "Loads active configuration"
+    },
+    {
+      "source": "mcp/01_configuration_hierarchy___loading",
+      "target": "mcp/04_channel_notifications___permissions",
+      "label": "Gates channel events"
+    },
+    {
+      "source": "mcp/01_configuration_hierarchy___loading",
+      "target": "mcp/06_transport_layer",
+      "label": "Filters tools by server"
+    },
+    {
+      "source": "mcp/02_authentication___security__oauth_xaa_",
+      "target": "mcp/03_connection_lifecycle_management",
+      "label": "Authenticates API fetching"
+    },
+    {
+      "source": "mcp/01_configuration_hierarchy___loading",
+      "target": "mcp/03_connection_lifecycle_management",
+      "label": "Triggers authentication flows"
+    },
+    {
+      "source": "mcp/01_configuration_hierarchy___loading",
+      "target": "mcp/05_normalization___identification_utilities",
+      "label": "Establishes connection transport"
+    }
+  ],
+  "storyPath": [
+    "mcp/01_configuration_hierarchy___loading",
+    "mcp/02_authentication___security__oauth_xaa_",
+    "mcp/03_connection_lifecycle_management",
+    "mcp/04_channel_notifications___permissions",
+    "mcp/05_normalization___identification_utilities",
+    "mcp/06_transport_layer"
+  ]
+}

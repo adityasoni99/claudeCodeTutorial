@@ -1,0 +1,178 @@
+{
+  "projectName": "sandbox",
+  "nodes": [
+    {
+      "id": "sandbox",
+      "label": "sandbox",
+      "type": "module",
+      "summary": "This project acts as a **security guard** for the Claude CLI, ensuring that generated commands run inside a safe, isolated container (the *sandbox*). It translates user-friendly settings into strict execution rules, checks if the computer has the necessary **tools and environment** to run safely, and cleans up any dangerous files left behind after a task is finished.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "sandbox/01_sandbox_adapter_manager",
+          "label": "Sandbox Adapter Manager",
+          "type": "chapter",
+          "summary": "This is the central nervous system of the sandbox integration. It serves as an Adapter pattern that wraps the lower-level `@anthropic-ai/sandbox-runtime` library. It exposes a unified interface (`SandboxManager`) to the rest of the Claude CLI.\nThink of it as a translator or a diplomat: the Claude CLI speaks in terms of \"Settings\" and \"User Intent,\" while the runtime engine speaks in strict \"Config Objects\" and \"Bubblewrap arguments.\" This manager translates high-level requests into low-level execution instructions while managing the lifecycle (initialization, resetting, and updating) of the sandbox.",
+          "contentPath": "01_sandbox_adapter_manager.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sandbox/02_environment___dependency_checking",
+          "label": "Environment & Dependency Checking",
+          "type": "chapter",
+          "summary": "A suite of checks to determine if the host operating system is capable of running the sandbox. It verifies platforms (macOS vs Linux vs WSL) and checks for required binaries like `bubblewrap` or `socat`.\nThink of this as the pre-flight checklist for a pilot. Before taking off (starting the sandbox), it checks if the engine is working, if the fuel is loaded, and if the weather is clear (supported OS). If the checklist fails, it grounds the flight and explains why.",
+          "contentPath": "02_environment___dependency_checking.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sandbox/03_configuration_translation",
+          "label": "Configuration Translation",
+          "type": "chapter",
+          "summary": "Logic dedicated to converting user-facing settings (from `settings.json` or policy files) into a strict runtime configuration object. The function `convertToSandboxRuntimeConfig` is the workhorse here.\nIt acts like a compiler. It takes \"source code\" (user settings like `sandbox.network.allowedDomains` or complex permission rules) and compiles it into \"machine code\" (a `SandboxRuntimeConfig` object) that the underlying sandbox engine can execute. It handles merging permissions, resolving denied paths, and applying policy overrides.",
+          "contentPath": "03_configuration_translation.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sandbox/04_path_resolution___normalization",
+          "label": "Path Resolution & Normalization",
+          "type": "chapter",
+          "summary": "A specialized logic layer for handling file paths within the sandbox context. Unlike standard OS path resolution, this system handles Claude-specific conventions, such as using `//` for absolute paths and `/` for paths relative to the settings file.\nImagine a GPS that accepts different coordinate systems. If a user types `//bin`, this system knows it means the literal root directory. If they type `/my-project`, it knows to look relative to the current configuration file. It ensures that permission rules match the actual files on the disk regardless of how they are written.",
+          "contentPath": "04_path_resolution___normalization.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sandbox/05_command_execution_wrapping",
+          "label": "Command Execution Wrapping",
+          "type": "chapter",
+          "summary": "The mechanism responsible for taking a raw command (like `npm install`) and wrapping it inside the sandbox environment (e.g., `bwrap ... npm install`).\nThink of this as placing a hazardous letter inside a biohazard safety box before opening it. The `wrapWithSandbox` function ensures that when the command actually runs, it does so inside the protective container defined by the configuration, preventing it from touching anything outside the box unless explicitly allowed.",
+          "contentPath": "05_command_execution_wrapping.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sandbox/06_security_scrubbing___mitigation",
+          "label": "Security Scrubbing & Mitigation",
+          "type": "chapter",
+          "summary": "Specific routines designed to clean up potential security exploits or dangerous artifacts left behind by sandboxed processes. Specifically, `scrubBareGitRepoFiles` handles a known attack vector involving Git bare repositories.\nIt acts like a hazmat cleanup crew. After a sandboxed experiment is finished, this crew sweeps the area to ensure the experiment didn't leave behind any \"traps\" (like a malicious `.git` file) that could trick the host system later.",
+          "contentPath": "06_security_scrubbing___mitigation.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "sandbox/07_ui_presentation_utilities",
+          "label": "UI Presentation Utilities",
+          "type": "chapter",
+          "summary": "A lightweight utility layer responsible for formatting sandbox-related messages for the user interface. Currently focuses on cleaning up error messages.\nIt acts like a copy editor. When the system generates raw error logs containing technical XML tags (like `<sandbox_violations>`), this utility strips them out to present a clean, readable message to the human user.",
+          "contentPath": "07_ui_presentation_utilities.md",
+          "x": -800.0,
+          "y": 450.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "sandbox/01_sandbox_adapter_manager",
+          "target": "sandbox/02_environment___dependency_checking",
+          "label": "Generates config via"
+        },
+        {
+          "source": "sandbox/01_sandbox_adapter_manager",
+          "target": "sandbox/06_security_scrubbing___mitigation",
+          "label": "Validates system with"
+        },
+        {
+          "source": "sandbox/01_sandbox_adapter_manager",
+          "target": "sandbox/04_path_resolution___normalization",
+          "label": "Delegates execution to"
+        },
+        {
+          "source": "sandbox/01_sandbox_adapter_manager",
+          "target": "sandbox/05_command_execution_wrapping",
+          "label": "Triggers cleanup via"
+        },
+        {
+          "source": "sandbox/02_environment___dependency_checking",
+          "target": "sandbox/03_configuration_translation",
+          "label": "Normalizes paths using"
+        },
+        {
+          "source": "sandbox/02_environment___dependency_checking",
+          "target": "sandbox/05_command_execution_wrapping",
+          "label": "Identifies threats for"
+        },
+        {
+          "source": "sandbox/07_ui_presentation_utilities",
+          "target": "sandbox/01_sandbox_adapter_manager",
+          "label": "Cleans output from"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "sandbox/01_sandbox_adapter_manager",
+      "target": "sandbox/02_environment___dependency_checking",
+      "label": "Generates config via"
+    },
+    {
+      "source": "sandbox/01_sandbox_adapter_manager",
+      "target": "sandbox/06_security_scrubbing___mitigation",
+      "label": "Validates system with"
+    },
+    {
+      "source": "sandbox/01_sandbox_adapter_manager",
+      "target": "sandbox/04_path_resolution___normalization",
+      "label": "Delegates execution to"
+    },
+    {
+      "source": "sandbox/01_sandbox_adapter_manager",
+      "target": "sandbox/05_command_execution_wrapping",
+      "label": "Triggers cleanup via"
+    },
+    {
+      "source": "sandbox/02_environment___dependency_checking",
+      "target": "sandbox/03_configuration_translation",
+      "label": "Normalizes paths using"
+    },
+    {
+      "source": "sandbox/02_environment___dependency_checking",
+      "target": "sandbox/05_command_execution_wrapping",
+      "label": "Identifies threats for"
+    },
+    {
+      "source": "sandbox/07_ui_presentation_utilities",
+      "target": "sandbox/01_sandbox_adapter_manager",
+      "label": "Cleans output from"
+    }
+  ],
+  "storyPath": [
+    "sandbox/01_sandbox_adapter_manager",
+    "sandbox/02_environment___dependency_checking",
+    "sandbox/03_configuration_translation",
+    "sandbox/04_path_resolution___normalization",
+    "sandbox/05_command_execution_wrapping",
+    "sandbox/06_security_scrubbing___mitigation",
+    "sandbox/07_ui_presentation_utilities"
+  ]
+}

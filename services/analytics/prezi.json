@@ -1,0 +1,166 @@
+{
+  "projectName": "analytics",
+  "nodes": [
+    {
+      "id": "analytics",
+      "label": "analytics",
+      "type": "module",
+      "summary": "This project implements a robust **telemetry and analytics system** designed to track application usage and health. It acts as a centralized hub that accepts events via a public **facade**, enriches them with *sanitized* user and system context, and intelligently routes them to specific destinations like **Datadog** (for real-time monitoring) or an internal **first-party pipeline** (for detailed data analysis). The entire system is remotely managed via **dynamic configuration**, allowing the team to control sampling rates and toggle features on the fly.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "analytics/01_public_analytics_facade",
+          "label": "Public Analytics Facade",
+          "type": "chapter",
+          "summary": "The main entry point for the rest of the application to log events. It acts like a \"mailbox\" where the application drops events without worrying about how they are delivered. If the backend isn't ready yet (during startup), this abstraction buffers the events in a queue and drains them automatically once the system is fully attached.",
+          "contentPath": "01_public_analytics_facade.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "analytics/02_the_analytics_sink__router_",
+          "label": "The Analytics Sink (Router)",
+          "type": "chapter",
+          "summary": "The central traffic controller that sits behind the public facade. Once initialized, it receives events and decides where they should go. It routes traffic to specific destinations (like Datadog or the internal 1st-party system), applies sampling rules (randomly dropping common events to save space), and checks \"killswitches\" to see if logging should be stopped entirely.",
+          "contentPath": "02_the_analytics_sink__router_.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "analytics/03_metadata___context_enrichment",
+          "label": "Metadata & Context Enrichment",
+          "type": "chapter",
+          "summary": "The \"identity card\" generator for every event. Before an event is sent, this system attaches vital context: Who is the user? What OS are they on? What version of the CLI is running? It also handles data sanitization, ensuring PII (Personally Identifiable Information) like specific file paths or custom tool names are stripped out or hashed before leaving the user's machine.",
+          "contentPath": "03_metadata___context_enrichment.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "analytics/04_first_party__internal__telemetry_pipeline",
+          "label": "First-Party (Internal) Telemetry Pipeline",
+          "type": "chapter",
+          "summary": "A robust, custom-built system for sending high-fidelity data to internal servers. Unlike standard logging, this uses a \"store-and-forward\" mechanism. It writes events to a file on the disk first, then attempts to upload them in batches. This ensures that if the internet cuts out or the process crashes, the events aren't lost\u2014they are retried the next time the application runs.",
+          "contentPath": "04_first_party__internal__telemetry_pipeline.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "analytics/05_datadog_integration",
+          "label": "Datadog Integration",
+          "type": "chapter",
+          "summary": "A specific channel for sending operational logs to Datadog (a monitoring service). Unlike the internal pipeline, this is optimized for real-time visibility into errors and system health. It includes logic to \"bucket\" users (grouping them anonymously) to track how many unique users are affected by bugs without tracking specific user identities.",
+          "contentPath": "05_datadog_integration.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "analytics/06_dynamic_configuration__growthbook_",
+          "label": "Dynamic Configuration (GrowthBook)",
+          "type": "chapter",
+          "summary": "The \"remote control\" for the application. It wraps the GrowthBook SDK to manage feature flags and remote configuration. This system allows the team to turn analytics on/off, change sampling rates, or enable new features for specific users without requiring them to download a new version of the software. It handles caching and periodic refreshing of these settings.",
+          "contentPath": "06_dynamic_configuration__growthbook_.md",
+          "x": 600.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "analytics/01_public_analytics_facade",
+          "target": "analytics/02_the_analytics_sink__router_",
+          "label": "Forwards queued events to"
+        },
+        {
+          "source": "analytics/02_the_analytics_sink__router_",
+          "target": "analytics/05_datadog_integration",
+          "label": "Routes operational logs to"
+        },
+        {
+          "source": "analytics/02_the_analytics_sink__router_",
+          "target": "analytics/04_first_party__internal__telemetry_pipeline",
+          "label": "Routes analytics data to"
+        },
+        {
+          "source": "analytics/02_the_analytics_sink__router_",
+          "target": "analytics/06_dynamic_configuration__growthbook_",
+          "label": "Checks killswitches via"
+        },
+        {
+          "source": "analytics/04_first_party__internal__telemetry_pipeline",
+          "target": "analytics/03_metadata___context_enrichment",
+          "label": "Enriches events using"
+        },
+        {
+          "source": "analytics/05_datadog_integration",
+          "target": "analytics/03_metadata___context_enrichment",
+          "label": "Enriches events using"
+        },
+        {
+          "source": "analytics/04_first_party__internal__telemetry_pipeline",
+          "target": "analytics/06_dynamic_configuration__growthbook_",
+          "label": "Fetches sampling config from"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "analytics/01_public_analytics_facade",
+      "target": "analytics/02_the_analytics_sink__router_",
+      "label": "Forwards queued events to"
+    },
+    {
+      "source": "analytics/02_the_analytics_sink__router_",
+      "target": "analytics/05_datadog_integration",
+      "label": "Routes operational logs to"
+    },
+    {
+      "source": "analytics/02_the_analytics_sink__router_",
+      "target": "analytics/04_first_party__internal__telemetry_pipeline",
+      "label": "Routes analytics data to"
+    },
+    {
+      "source": "analytics/02_the_analytics_sink__router_",
+      "target": "analytics/06_dynamic_configuration__growthbook_",
+      "label": "Checks killswitches via"
+    },
+    {
+      "source": "analytics/04_first_party__internal__telemetry_pipeline",
+      "target": "analytics/03_metadata___context_enrichment",
+      "label": "Enriches events using"
+    },
+    {
+      "source": "analytics/05_datadog_integration",
+      "target": "analytics/03_metadata___context_enrichment",
+      "label": "Enriches events using"
+    },
+    {
+      "source": "analytics/04_first_party__internal__telemetry_pipeline",
+      "target": "analytics/06_dynamic_configuration__growthbook_",
+      "label": "Fetches sampling config from"
+    }
+  ],
+  "storyPath": [
+    "analytics/01_public_analytics_facade",
+    "analytics/02_the_analytics_sink__router_",
+    "analytics/03_metadata___context_enrichment",
+    "analytics/04_first_party__internal__telemetry_pipeline",
+    "analytics/05_datadog_integration",
+    "analytics/06_dynamic_configuration__growthbook_"
+  ]
+}

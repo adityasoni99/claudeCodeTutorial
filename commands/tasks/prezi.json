@@ -1,0 +1,124 @@
+{
+  "projectName": "tasks",
+  "nodes": [
+    {
+      "id": "tasks",
+      "label": "tasks",
+      "type": "module",
+      "summary": "This project creates a **command** named `tasks` (or `bashes`) that allows users to view and manage background processes. Instead of loading everything at once, it uses a **lazy loading** strategy to fetch the necessary code only when requested, seamlessly launching an interactive **React-based interface** to handle the user's actions.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "tasks/01_command_definition___registration",
+          "label": "Command Definition & Registration",
+          "type": "chapter",
+          "summary": "This abstraction defines the identity of a feature within the system. It acts like a \"business card\" or a menu entry for the command. It tells the main application what the command is called (e.g., \"tasks\"), what aliases it accepts (e.g., \"bashes\"), and provides a human-readable description.\n\nThink of it like registering a new app on your phone's home screen; the system needs to know the app's name and icon before it can launch it. This file sets up that metadata so the system recognizes the command exists.",
+          "contentPath": "01_command_definition___registration.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tasks/02_lazy_loading_architecture",
+          "label": "Lazy Loading Architecture",
+          "type": "chapter",
+          "summary": "This pattern allows the application to load the heavy logic of a command only when the user actually asks for it, rather than loading everything at startup.\n\nImagine a library where books are kept in a separate warehouse. Instead of keeping every single book on the front desk (which would clutter the space), the librarian only fetches a specific book when you request it. This makes the initial startup of the application much faster and consumes less memory until the specific \"tasks\" feature is needed.",
+          "contentPath": "02_lazy_loading_architecture.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tasks/03_react_based_command_handler",
+          "label": "React-based Command Handler",
+          "type": "chapter",
+          "summary": "This represents the bridge between a command-line style trigger and a graphical user interface (GUI). Instead of executing a script that outputs text to a terminal, this handler initializes a React component environment.\n\nIt acts like a TV remote button that, instead of just changing a number on a display, turns on a full graphical menu on the screen. The `call` function is the specific signal that says, \"Stop processing text, and start rendering this interactive window.\"",
+          "contentPath": "03_react_based_command_handler.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tasks/04_ui_component_delegation",
+          "label": "UI Component Delegation",
+          "type": "chapter",
+          "summary": "This abstraction separates the *logic of launching* the command from the *visual presentation* of the command. The entry file doesn't draw the UI itself; it immediately hands off responsibility to a specialized component (the `BackgroundTasksDialog`).\n\nIt is similar to a receptionist at a doctor's office. The receptionist (the `call` function) greets you and checks you in, but immediately escorts you to the doctor (the `BackgroundTasksDialog`) for the actual procedure. This keeps the entry point clean and focused solely on initialization.",
+          "contentPath": "04_ui_component_delegation.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "tasks/05_context___lifecycle_injection",
+          "label": "Context & Lifecycle Injection",
+          "type": "chapter",
+          "summary": "This abstraction manages the flow of data and control between the main application and the specific tool. It passes down essential objects like `context` (data needed to run) and `onDone` (a way to signal completion).\n\nThink of this as a manager assigning a job to a contractor. The manager gives the contractor a blueprint (`context`) and a radio (`onDone`) to call in when the job is finished. This ensures the isolated task knows what to do and how to tell the main system it is finished without being tightly coupled.",
+          "contentPath": "05_context___lifecycle_injection.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "tasks/01_command_definition___registration",
+          "target": "tasks/02_lazy_loading_architecture",
+          "label": "Configures"
+        },
+        {
+          "source": "tasks/02_lazy_loading_architecture",
+          "target": "tasks/03_react_based_command_handler",
+          "label": "Dynamically imports"
+        },
+        {
+          "source": "tasks/03_react_based_command_handler",
+          "target": "tasks/04_ui_component_delegation",
+          "label": "Propagates"
+        },
+        {
+          "source": "tasks/03_react_based_command_handler",
+          "target": "tasks/05_context___lifecycle_injection",
+          "label": "Renders"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "tasks/01_command_definition___registration",
+      "target": "tasks/02_lazy_loading_architecture",
+      "label": "Configures"
+    },
+    {
+      "source": "tasks/02_lazy_loading_architecture",
+      "target": "tasks/03_react_based_command_handler",
+      "label": "Dynamically imports"
+    },
+    {
+      "source": "tasks/03_react_based_command_handler",
+      "target": "tasks/04_ui_component_delegation",
+      "label": "Propagates"
+    },
+    {
+      "source": "tasks/03_react_based_command_handler",
+      "target": "tasks/05_context___lifecycle_injection",
+      "label": "Renders"
+    }
+  ],
+  "storyPath": [
+    "tasks/01_command_definition___registration",
+    "tasks/02_lazy_loading_architecture",
+    "tasks/03_react_based_command_handler",
+    "tasks/04_ui_component_delegation",
+    "tasks/05_context___lifecycle_injection"
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "projectName": "shell",
+  "nodes": [
+    {
+      "id": "shell",
+      "label": "shell",
+      "type": "module",
+      "summary": "This project acts as a **universal adapter and security guard** that allows an AI agent to safely execute terminal commands across different environments (like **Bash** and **PowerShell**). It standardizes how commands are run, strictly enforces a **read-only policy** to prevent accidental code changes (e.g., blocking `git commit`), and intelligently **parses complex commands** to understand the user's true intent before execution.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "shell/01_shell_provider_pattern",
+          "label": "Shell Provider Pattern",
+          "type": "chapter",
+          "summary": "A polymorphic interface that unifies how different shells (Bash vs. PowerShell) execute commands. It acts like a universal adapter: the core system sends a generic request to \"run this command,\" and the specific provider handles the translation into shell-specific syntax, argument quoting, and environment setup. This allows the agent to switch between shells seamlessly without changing the core execution logic.",
+          "contentPath": "01_shell_provider_pattern.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "shell/02_read_only_command_safety",
+          "label": "Read-Only Command Safety",
+          "type": "chapter",
+          "summary": "A security layer that acts as a bouncer for shell commands. It maintains a strict \"guest list\" of safe, read-only commands (like `git status` or `docker ps`) and inspects every flag and argument. If a command attempts to modify state (like `git commit` or writing to a file), this layer detects it so the agent knows to ask the user for permission. It prevents the AI from accidentally altering or deleting code without approval.",
+          "contentPath": "02_read_only_command_safety.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "shell/03_semantic_prefix_extraction",
+          "label": "Semantic Prefix Extraction",
+          "type": "chapter",
+          "summary": "A system that determines the \"true identity\" of a complex command. It strips away noise like file paths, flags, and arguments to find the core intent (the prefix). For example, it understands that `git -C /app status --short` is fundamentally a `git status` command. This uses two strategies: deterministic parsing based on CLI specs (Fig) and, if that fails, an LLM-based inference to categorize the command for permission checks.",
+          "contentPath": "03_semantic_prefix_extraction.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "shell/04_powershell_runtime_layer",
+          "label": "PowerShell Runtime Layer",
+          "type": "chapter",
+          "summary": "A specialized abstraction for handling the unique complexities of PowerShell on Windows and Linux. Unlike Bash, PowerShell requires specific handling for binary detection (Core vs. Desktop), command encoding (using Base64 to avoid escaping issues), and exit code tracking. This layer ensures that PowerShell behaves reliably and predictably, mimicking the POSIX-like behavior the agent expects.",
+          "contentPath": "04_powershell_runtime_layer.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "shell/04_powershell_runtime_layer",
+          "target": "shell/01_shell_provider_pattern",
+          "label": "Implements interface"
+        },
+        {
+          "source": "shell/03_semantic_prefix_extraction",
+          "target": "shell/02_read_only_command_safety",
+          "label": "Categorizes commands for"
+        },
+        {
+          "source": "shell/04_powershell_runtime_layer",
+          "target": "shell/03_semantic_prefix_extraction",
+          "label": "Reuses parsing logic"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "shell/04_powershell_runtime_layer",
+      "target": "shell/01_shell_provider_pattern",
+      "label": "Implements interface"
+    },
+    {
+      "source": "shell/03_semantic_prefix_extraction",
+      "target": "shell/02_read_only_command_safety",
+      "label": "Categorizes commands for"
+    },
+    {
+      "source": "shell/04_powershell_runtime_layer",
+      "target": "shell/03_semantic_prefix_extraction",
+      "label": "Reuses parsing logic"
+    }
+  ],
+  "storyPath": [
+    "shell/01_shell_provider_pattern",
+    "shell/02_read_only_command_safety",
+    "shell/03_semantic_prefix_extraction",
+    "shell/04_powershell_runtime_layer"
+  ]
+}

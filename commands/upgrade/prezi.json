@@ -1,0 +1,124 @@
+{
+  "projectName": "upgrade",
+  "nodes": [
+    {
+      "id": "upgrade",
+      "label": "upgrade",
+      "type": "module",
+      "summary": "This project implements a **CLI command** that enables users to upgrade their service plan directly from the terminal. It uses a *lazy-loading* mechanism to keep startup fast and performs **verification checks** to ensure only eligible users run the process. The core workflow facilitates a **hybrid interaction** by opening a web browser for the transaction and managing re-authentication in the console.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "upgrade/01_command_registration___metadata",
+          "label": "Command Registration & Metadata",
+          "type": "chapter",
+          "summary": "This abstraction defines how a new capability is introduced to the system. Located in `index.ts`, it acts like a menu entry in a restaurant. It tells the application the command's name, description, availability rules (e.g., checking environment variables or subscription types), and provides a `load` function. This separation ensures the system knows *about* the command without needing to load all its heavy logic immediately.",
+          "contentPath": "01_command_registration___metadata.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "upgrade/02_hybrid_browser_cli_workflow",
+          "label": "Hybrid Browser-CLI Workflow",
+          "type": "chapter",
+          "summary": "The upgrade process bridges the gap between the terminal and the web. Since payment processing happens in a browser, this abstraction handles the handoff: it pauses the CLI context, opens a specific URL (`openBrowser`), and then immediately transitions the CLI into a re-authentication state (using the `Login` component). This ensures that once the user finishes on the web, the CLI captures the new account status. It's like a receptionist directing you to fill out a form at a desk and waiting for you to return to update the system.",
+          "contentPath": "02_hybrid_browser_cli_workflow.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "upgrade/03_localjsx_command_execution",
+          "label": "LocalJSX Command Execution",
+          "type": "chapter",
+          "summary": "Found in the `call` function, this is the \"engine\" that runs when the command is triggered. Unlike simple scripts, it operates within a React-like context (`LocalJSX`), allowing it to return UI components (like `<Login />`) to the terminal. It manages the entire lifecycle of the operation: checking preconditions, performing side effects, and rendering the appropriate interface based on the result. It's like a mini-interactive app running inside the console.",
+          "contentPath": "03_localjsx_command_execution.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "upgrade/04_subscription_state_verification",
+          "label": "Subscription State Verification",
+          "type": "chapter",
+          "summary": "This logic acts as a gatekeeper, determining if the upgrade action is necessary or allowed. It inspects the user's current status by analyzing OAuth tokens for specific flags like `organization_type` and `rate_limit_tier`. It ensures users who are already on the highest plan (\"Max 20x\") or on incompatible plans (Enterprise) don't run the upgrade flow unnecessarily. It's similar to a ticket collector checking not just if you have a ticket, but if you're already in the VIP section.",
+          "contentPath": "04_subscription_state_verification.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "upgrade/05_lazy_module_loading",
+          "label": "Lazy Module Loading",
+          "type": "chapter",
+          "summary": "Implemented in the `load` function of the command definition, this pattern uses dynamic imports (`import()`) to fetch the command's logic only when needed. This is a performance optimization that keeps the application's initial startup fast and memory footprint low. It is analogous to a library where books are kept in the stacks and only brought to the reading desk when a patron specifically requests one.",
+          "contentPath": "05_lazy_module_loading.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "upgrade/01_command_registration___metadata",
+          "target": "upgrade/05_lazy_module_loading",
+          "label": "Defines loading strategy"
+        },
+        {
+          "source": "upgrade/05_lazy_module_loading",
+          "target": "upgrade/02_hybrid_browser_cli_workflow",
+          "label": "Dynamically imports"
+        },
+        {
+          "source": "upgrade/02_hybrid_browser_cli_workflow",
+          "target": "upgrade/03_localjsx_command_execution",
+          "label": "Verifies eligibility"
+        },
+        {
+          "source": "upgrade/02_hybrid_browser_cli_workflow",
+          "target": "upgrade/04_subscription_state_verification",
+          "label": "Executes upgrade flow"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "upgrade/01_command_registration___metadata",
+      "target": "upgrade/05_lazy_module_loading",
+      "label": "Defines loading strategy"
+    },
+    {
+      "source": "upgrade/05_lazy_module_loading",
+      "target": "upgrade/02_hybrid_browser_cli_workflow",
+      "label": "Dynamically imports"
+    },
+    {
+      "source": "upgrade/02_hybrid_browser_cli_workflow",
+      "target": "upgrade/03_localjsx_command_execution",
+      "label": "Verifies eligibility"
+    },
+    {
+      "source": "upgrade/02_hybrid_browser_cli_workflow",
+      "target": "upgrade/04_subscription_state_verification",
+      "label": "Executes upgrade flow"
+    }
+  ],
+  "storyPath": [
+    "upgrade/01_command_registration___metadata",
+    "upgrade/02_hybrid_browser_cli_workflow",
+    "upgrade/03_localjsx_command_execution",
+    "upgrade/04_subscription_state_verification",
+    "upgrade/05_lazy_module_loading"
+  ]
+}

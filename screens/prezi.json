@@ -1,0 +1,134 @@
+{
+  "projectName": "screens",
+  "nodes": [
+    {
+      "id": "screens",
+      "label": "screens",
+      "type": "module",
+      "summary": "This project builds the **interactive terminal screens** for an AI assistant application. It features a robust *session recovery system* that allows users to pick up conversations exactly where they left off, restoring message history and active agents. Additionally, it includes a **Diagnostic \"Doctor\"** utility that scans the environment to validate configurations, permissions, and tool health.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "screens/01_terminal_ui_rendering",
+          "label": "Terminal UI Rendering",
+          "type": "chapter",
+          "summary": "Translates React component logic into a text-based terminal interface. It uses the `ink` library to treat the command line like a browser DOM, allowing developers to build rich, interactive layouts with components like `Box`, `Text`, and `Spinner` instead of just printing raw text lines.",
+          "contentPath": "01_terminal_ui_rendering.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "screens/02_application_state_management",
+          "label": "Application State Management",
+          "type": "chapter",
+          "summary": "The central nervous system for the frontend, storing global data like active agent definitions, tool permissions, and plugin errors. It uses hooks (e.g., `useAppState`) to share this information across distinct screens, ensuring components like the Session Picker or Doctor have instant access to the current system configuration.",
+          "contentPath": "02_application_state_management.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "screens/03_agent___tool_configuration",
+          "label": "Agent & Tool Configuration",
+          "type": "chapter",
+          "summary": "Defines the \"personalities\" and \"equipment\" available to the system. It handles loading agent definitions (roles) and registering tools (functions or MCP servers). This abstraction ensures that whether checking health or resuming a chat, the system knows which agents are active and what capabilities they possess.",
+          "contentPath": "03_agent___tool_configuration.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "screens/04_session_persistence___recovery",
+          "label": "Session Persistence & Recovery",
+          "type": "chapter",
+          "summary": "Manages the lifecycle of user conversations, acting like a \"save game\" system. It handles listing past sessions, verifying they match the current project context, and rehydrating the full state\u2014including messages, file history, and agent settings. This allows users to pick up complex tasks exactly where they left off without losing context.",
+          "contentPath": "04_session_persistence___recovery.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "screens/05_diagnostic_system",
+          "label": "Diagnostic System",
+          "type": "chapter",
+          "summary": "Serves as the application's internal mechanic. It performs a battery of health checks on the environment, inspecting dependencies, permissions, and configurations. It aggregates warnings and errors into a report, helping users identify and fix \"under-the-hood\" issues that might prevent the AI assistant from running correctly.",
+          "contentPath": "05_diagnostic_system.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "screens/01_terminal_ui_rendering",
+          "target": "screens/04_session_persistence___recovery",
+          "label": "Renders interface"
+        },
+        {
+          "source": "screens/01_terminal_ui_rendering",
+          "target": "screens/03_agent___tool_configuration",
+          "label": "Hydrates global state"
+        },
+        {
+          "source": "screens/02_application_state_management",
+          "target": "screens/04_session_persistence___recovery",
+          "label": "Displays health report"
+        },
+        {
+          "source": "screens/02_application_state_management",
+          "target": "screens/05_diagnostic_system",
+          "label": "Validates settings"
+        },
+        {
+          "source": "screens/03_agent___tool_configuration",
+          "target": "screens/05_diagnostic_system",
+          "label": "Stores active agents"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "screens/01_terminal_ui_rendering",
+      "target": "screens/04_session_persistence___recovery",
+      "label": "Renders interface"
+    },
+    {
+      "source": "screens/01_terminal_ui_rendering",
+      "target": "screens/03_agent___tool_configuration",
+      "label": "Hydrates global state"
+    },
+    {
+      "source": "screens/02_application_state_management",
+      "target": "screens/04_session_persistence___recovery",
+      "label": "Displays health report"
+    },
+    {
+      "source": "screens/02_application_state_management",
+      "target": "screens/05_diagnostic_system",
+      "label": "Validates settings"
+    },
+    {
+      "source": "screens/03_agent___tool_configuration",
+      "target": "screens/05_diagnostic_system",
+      "label": "Stores active agents"
+    }
+  ],
+  "storyPath": [
+    "screens/01_terminal_ui_rendering",
+    "screens/02_application_state_management",
+    "screens/03_agent___tool_configuration",
+    "screens/04_session_persistence___recovery",
+    "screens/05_diagnostic_system"
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "projectName": "oauth-refresh",
+  "nodes": [
+    {
+      "id": "oauth-refresh",
+      "label": "oauth-refresh",
+      "type": "module",
+      "summary": "This project serves as a **placeholder** for a future feature within the system. It establishes a *standard definition* that is currently hardcoded to be **disabled** and **hidden**, ensuring that the incomplete functionality remains inactive and invisible to users.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "oauth-refresh/01_feature_definition_stub",
+          "label": "Feature Definition Stub",
+          "type": "chapter",
+          "summary": "This abstraction represents the structural contract for a feature or module within the application. It acts as a placeholder, defining standard properties like identity (`name`), visibility (`isHidden`), and capability (`isEnabled`).\n\nThink of it like a \"Coming Soon\" storefront in a shopping mall. The space is allocated, and the sign (interface) matches the rest of the mall so management (the system) knows it exists, but the doors are locked and the windows are covered because the actual shop (logic) isn't built or open for business yet.",
+          "contentPath": "01_feature_definition_stub.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "oauth-refresh/02_activation_logic",
+          "label": "Activation Logic",
+          "type": "chapter",
+          "summary": "This concept handles the determination of whether a feature can execute. In this specific context, the logic is implemented as a function that strictly returns `false`.\n\nIt acts like a master kill switch or a hardcoded safety fuse. No matter what the external environment or user permissions are, this specific implementation ensures the circuit is broken and the feature remains completely dormant and inaccessible.",
+          "contentPath": "02_activation_logic.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "oauth-refresh/01_feature_definition_stub",
+          "target": "oauth-refresh/02_activation_logic",
+          "label": "Encapsulates"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "oauth-refresh/01_feature_definition_stub",
+      "target": "oauth-refresh/02_activation_logic",
+      "label": "Encapsulates"
+    }
+  ],
+  "storyPath": [
+    "oauth-refresh/01_feature_definition_stub",
+    "oauth-refresh/02_activation_logic"
+  ]
+}

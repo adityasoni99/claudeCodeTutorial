@@ -1,0 +1,124 @@
+{
+  "projectName": "HelpV2",
+  "nodes": [
+    {
+      "id": "helpv2",
+      "label": "HelpV2",
+      "type": "module",
+      "summary": "The project implements an interactive **Help System** for a CLI tool that acts as a modal window manager. It organizes documentation into a **General** tab for high-level information and multiple **Command** tabs that list executable actions. The system automatically partitions these actions using a **categorization strategy** (e.g., Built-in vs. Custom) and employs a **responsive layout** mechanism to dynamically adapt the interface to the user's terminal size.",
+      "contentPath": "index.md",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 2000,
+      "height": 1500,
+      "children": [
+        {
+          "id": "helpv2/01_help_system_container",
+          "label": "Help System Container",
+          "type": "chapter",
+          "summary": "The central component (`HelpV2`) that acts as the entry point for the help interface. It functions like a window manager, setting up the layout pane, tab navigation (General vs. Commands), and calculating the available screen real estate. It also manages the lifecycle of the help view, handling exit signals (Escape, Ctrl+C) and dismissing the modal.",
+          "contentPath": "01_help_system_container.md",
+          "x": -800.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "helpv2/02_general_info_panel",
+          "label": "General Info Panel",
+          "type": "chapter",
+          "summary": "A static landing page (`General`) for the help dialog. It serves as the \"Introduction\" chapter, displaying the tool's mission statement and a summary of global keyboard shortcuts (via `PromptInputHelpMenu`). It provides high-level context without the density of the command lists.",
+          "contentPath": "02_general_info_panel.md",
+          "x": -100.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "helpv2/03_command_categorization_strategy",
+          "label": "Command Categorization Strategy",
+          "type": "chapter",
+          "summary": "The logic used to organize commands into logical buckets for the user. Instead of overwhelming the user with one massive list, the system splits commands into \"Built-in\" (core features), \"Custom\" (user scripts), and potentially \"Internal\" (ant-only) lists. This filtering happens before the data is passed to the renderer.",
+          "contentPath": "03_command_categorization_strategy.md",
+          "x": 600.0,
+          "y": -550.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "helpv2/04_command_catalog_renderer",
+          "label": "Command Catalog Renderer",
+          "type": "chapter",
+          "summary": "A specialized view component (`Commands`) responsible for listing executable CLI commands. It acts like a smart directory: it takes a list of command objects, filters out duplicates, sorts them alphabetically, and renders them in a scrollable, selectable list. It automatically truncates descriptions to fit the terminal width to maintain readability.",
+          "contentPath": "04_command_catalog_renderer.md",
+          "x": -800.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        },
+        {
+          "id": "helpv2/05_responsive_terminal_layout",
+          "label": "Responsive Terminal Layout",
+          "type": "chapter",
+          "summary": "The mechanism for adapting the UI to the user's terminal size. The system uses hooks like `useTerminalSize` and `useIsInsideModal` to determine if the help dialog is running full-screen or as a modal pop-up. It dynamically adjusts height and column counts to ensure content doesn't overflow or look cramped.",
+          "contentPath": "05_responsive_terminal_layout.md",
+          "x": -100.0,
+          "y": -50.0,
+          "width": 600,
+          "height": 400
+        }
+      ],
+      "edges": [
+        {
+          "source": "helpv2/01_help_system_container",
+          "target": "helpv2/04_command_catalog_renderer",
+          "label": "Displays"
+        },
+        {
+          "source": "helpv2/01_help_system_container",
+          "target": "helpv2/02_general_info_panel",
+          "label": "Renders"
+        },
+        {
+          "source": "helpv2/01_help_system_container",
+          "target": "helpv2/03_command_categorization_strategy",
+          "label": "Uses to filter"
+        },
+        {
+          "source": "helpv2/05_responsive_terminal_layout",
+          "target": "helpv2/01_help_system_container",
+          "label": "Configures dimensions"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "helpv2/01_help_system_container",
+      "target": "helpv2/04_command_catalog_renderer",
+      "label": "Displays"
+    },
+    {
+      "source": "helpv2/01_help_system_container",
+      "target": "helpv2/02_general_info_panel",
+      "label": "Renders"
+    },
+    {
+      "source": "helpv2/01_help_system_container",
+      "target": "helpv2/03_command_categorization_strategy",
+      "label": "Uses to filter"
+    },
+    {
+      "source": "helpv2/05_responsive_terminal_layout",
+      "target": "helpv2/01_help_system_container",
+      "label": "Configures dimensions"
+    }
+  ],
+  "storyPath": [
+    "helpv2/01_help_system_container",
+    "helpv2/02_general_info_panel",
+    "helpv2/03_command_categorization_strategy",
+    "helpv2/04_command_catalog_renderer",
+    "helpv2/05_responsive_terminal_layout"
+  ]
+}
