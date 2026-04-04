@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 6: Plugin Management — cli/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">cli/06_plugin_management.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">💻 cli/ · 06_plugin_management.md</div>
+  <h1 class="chapter-title-h1">Chapter 6: Plugin Management</h1>
+  <div class="chapter-meta"><span>📄 cli/06_plugin_management.md</span></div>
+</div>
+<h1 id="chapter-6-plugin-management">Chapter 6: Plugin Management</h1>
+<p>
+In the previous chapter, <a href="05<em>ccr</em>state_synchronization.md">CCR State Synchronization</a>, we built a reliable "highway" ensuring our connection to the AI remains stable and synchronized.
+</p>
+<p>
+Now that we have a stable connection, we want to make the AI more useful. A basic AI is like a fresh smartphone: it has a great operating system, but it becomes truly powerful when you install <strong>Apps</strong>.
+</p>
+<p>
+In this project, these apps are called <strong>Plugins</strong>.
+</p>
+<h2 id="motivation-the-app-store-logic">Motivation: The App Store Logic</h2>
+<p>
+Imagine you want the AI to interact with your specific database or control your smart home lights. The AI model (in the cloud) doesn't know how to talk to your local lightbulbs natively.
+</p>
+<p>
+We need a way to:
+</p>
+<ol>
+<li><strong>Find</strong> a tool (Plugin) that knows how to talk to lightbulbs.</li>
+</ol>
+<ol>
+<li><strong>Install</strong> it safely on your computer.</li>
+</ol>
+<ol>
+<li><strong>Enable</strong> the AI to use it.</li>
+</ol>
+<p>
+The <strong>Plugin Management</strong> system handles this lifecycle. It acts exactly like an "App Store" and "Package Manager" for the CLI.
+</p>
+<h2 id="key-concept-1-the-marketplace">Key Concept 1: The Marketplace</h2>
+<p>
+Before we can install anything, we need to know where to look. We call these sources <strong>Marketplaces</strong>.
+</p>
+<p>
+A Marketplace can be:
+</p>
+<ul>
+<li>A <strong>GitHub Repository</strong> (e.g., <code>owner/cool-plugins</code>).</li>
+<li>A <strong>Local Directory</strong> (e.g., <code>./my-plugins</code>).</li>
+</ul>
+<h3 id="adding-a-source">Adding a Source</h3>
+<p>
+The handler <code>marketplaceAddHandler</code> takes a user's input (like a URL) and registers it as a valid source of plugins.
+</p>
+<pre data-lang="typescript"><code>// handlers/plugins.ts (Simplified)
+
+export async function marketplaceAddHandler(source: string, options: any) {
+  // 1. Parse the input (is it a URL? a path?)
+  const parsed = await parseMarketplaceInput(source);
+  
+  // 2. Add it to the system and download the catalog
+  const { name } = await addMarketplaceSource(parsed, (msg) =&gt; console.log(msg));
+
+  // 3. Save this choice to the user's settings
+  saveMarketplaceToSettings(name, { source: parsed }, 'user');
+  
+  console.log(`Successfully added marketplace: ${name}`);
+}
+</code></pre>
+<p>
+<em>Explanation:</em> The code figures out if you gave it a GitHub link or a local folder. It then downloads the "catalog" (list of available plugins) and saves this source so it remembers it next time you restart.
+</p>
+<h2 id="key-concept-2-installation-and-validation">Key Concept 2: Installation and Validation</h2>
+<p>
+When you run <code>claude plugin install &lt;name&gt;</code>, the CLI doesn't just blindly download files. It performs a safety check called <strong>Validation</strong>.
+</p>
+<p>
+Plugins are defined by a <code>manifest</code> (usually a JSON file) that describes what the plugin does.
+</p>
+<h3 id="the-installation-flow">The Installation Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant Handler as Plugin Handler
+    participant Validator as Validator
+    participant Disk as Local Storage
+
+    User-&gt;&gt;Handler: "install weather-tool"
+    Handler-&gt;&gt;Validator: Check Manifest
+    
+    alt Invalid
+        Validator--&gt;&gt;Handler: Error (Missing fields)
+        Handler--&gt;&gt;User: "Installation Failed"
+    else Valid
+        Validator--&gt;&gt;Handler: Looks good!
+        Handler-&gt;&gt;Disk: Download &amp; Save Files
+        Handler-&gt;&gt;Disk: Mark as "Enabled"
+        Handler--&gt;&gt;User: "Success!"
+    end</div></div>
+<h3 id="the-code-installing">The Code: Installing</h3>
+<p>
+The <code>pluginInstallHandler</code> coordinates this process.
+</p>
+<pre data-lang="typescript"><code>// handlers/plugins.ts (Simplified)
+
+export async function pluginInstallHandler(plugin: string, options: any) {
+  // 1. Determine where to install (User vs Project scope)
+  const scope = options.scope || 'user';
+
+  // 2. Log analytics (tracking popularity of plugins)
+  logEvent('tengu_plugin_install_command', { 
+    scope: scope 
+  });
+
+  // 3. Trigger the heavy lifting
+  await installPlugin(plugin, scope);
+}
+</code></pre>
+<p>
+<em>Explanation:</em> The handler is lightweight. It checks your preferences (Scope) and then delegates the complex work to <code>installPlugin</code>. This keeps the command-line interface responsive and clean.
+</p>
+<h2 id="key-concept-3-scopes-who-can-use-this">Key Concept 3: Scopes (Who can use this?)</h2>
+<p>
+Not all plugins should be available everywhere.
+</p>
+<ul>
+<li><strong>User Scope:</strong> Available to <em>you</em> in every folder (e.g., a Calculator).</li>
+<li><strong>Project Scope:</strong> Available only in <em>this specific project</em> (e.g., a specific database tool for a work project).</li>
+</ul>
+<p>
+This logic is enforced during commands like %%INLINE<em>7%%, %%INLINE</em>8%%, and <code>install</code>.
+</p>
+<pre data-lang="typescript"><code>// handlers/plugins.ts (Simplified Logic)
+
+export async function pluginDisableHandler(plugin: string, options: any) {
+  // Check if the user wants to disable EVERYTHING
+  if (options.all) {
+    await disableAllPlugins();
+    return;
+  }
+
+  // Otherwise, disable just the specific plugin
+  await disablePlugin(plugin, options.scope || 'user');
+}
+</code></pre>
+<p>
+<em>Explanation:</em> The system allows granular control. You can turn off a plugin globally (<code>disableAllPlugins</code>) if you suspect a bug, or just remove it from your current user profile.
+</p>
+<h2 id="key-concept-4-listing-and-status">Key Concept 4: Listing and Status</h2>
+<p>
+How do you know what is installed? The <code>plugin list</code> command merges data from two sources:
+</p>
+<ol>
+<li><strong>Disk:</strong> What files physically exist?</li>
+</ol>
+<ol>
+<li><strong>Memory:</strong> What is currently loaded and running?</li>
+</ol>
+<p>
+This is crucial because a plugin might be <em>installed</em> but <em>crashed</em>.
+</p>
+<pre data-lang="typescript"><code>// handlers/plugins.ts (Simplified)
+
+export async function pluginListHandler(options: any) {
+  // 1. Get list of what is physically on disk
+  const installedData = loadInstalledPluginsV2();
+  
+  // 2. Get list of what is actually running (or failed to load)
+  const { enabled, errors } = await loadAllPlugins();
+
+  // 3. Print the status for each
+  for (const pluginId of Object.keys(installedData.plugins)) {
+    console.log(`Plugin: ${pluginId}`);
+    // Check if it has errors
+    const hasError = errors.find(e =&gt; e.source === pluginId);
+    console.log(`Status: ${hasError ? 'Failed' : 'Active'}`);
+  }
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This handler is a "dashboard." It cross-references the list of files on your hard drive with the live status of the application to tell you if your plugins are healthy.
+</p>
+<h2 id="putting-it-together-the-user-journey">Putting it together: The User Journey</h2>
+<ol>
+<li><strong>Add Marketplace:</strong> <code>claude marketplace add owner/repo</code></li>
+<ul>
+<li><em>Result:</em> The CLI knows where to look for tools.</li>
+</ul>
+</ol>
+<ol>
+<li><strong>List Available:</strong> <code>claude plugin list --available</code></li>
+<ul>
+<li><em>Result:</em> You see a list of tools you can download.</li>
+</ul>
+</ol>
+<ol>
+<li><strong>Install:</strong> <code>claude plugin install weather-tool</code></li>
+<ul>
+<li><em>Result:</em> The code is downloaded, validated, and saved to your <code>user</code> scope.</li>
+</ul>
+</ol>
+<ol>
+<li><strong>Use:</strong> The AI (connected via <a href="01<em>remote</em>i<em>o</em>bridge.md">Remote I/O Bridge</a>) can now "see" this tool and uses it to answer questions about the weather.</li>
+</ol>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+<strong>Plugin Management</strong> turns the CLI from a simple chat interface into an extensible platform. It handles the logistics of finding, checking, and loading external code safely.
+</p>
+<p>
+But wait—what exactly <em>is</em> the code inside a plugin? How does the plugin define "I can check the weather" in a way the AI understands?
+</p>
+<p>
+Most plugins in this ecosystem use a standard called <strong>MCP (Model Context Protocol)</strong>.
+</p>
+<p>
+<a href="07<em>mcp</em>integration.md">Next Chapter: MCP Integration</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="cli.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">cli/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#motivation-the-app-store-logic">Motivation: The App Store Logic</a></li>
+<li style="padding-left:0px"><a href="#key-concept-1-the-marketplace">Key Concept 1: The Marketplace</a></li>
+<li style="padding-left:10px"><a href="#adding-a-source">Adding a Source</a></li>
+<li style="padding-left:0px"><a href="#key-concept-2-installation-and-validation">Key Concept 2: Installation and Validation</a></li>
+<li style="padding-left:10px"><a href="#the-installation-flow">The Installation Flow</a></li>
+<li style="padding-left:10px"><a href="#the-code-installing">The Code: Installing</a></li>
+<li style="padding-left:0px"><a href="#key-concept-3-scopes-who-can-use-this">Key Concept 3: Scopes (Who can use this?)</a></li>
+<li style="padding-left:0px"><a href="#key-concept-4-listing-and-status">Key Concept 4: Listing and Status</a></li>
+<li style="padding-left:0px"><a href="#putting-it-together-the-user-journey">Putting it together: The User Journey</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

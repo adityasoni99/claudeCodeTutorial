@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: Worker Lifecycle Management — coordinator/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">coordinator/02_worker_lifecycle_management.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🎯 coordinator/ · 02_worker_lifecycle_management.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: Worker Lifecycle Management</h1>
+  <div class="chapter-meta"><span>📄 coordinator/02_worker_lifecycle_management.md</span></div>
+</div>
+<h1 id="chapter-2-worker-lifecycle-management">Chapter 2: Worker Lifecycle Management</h1>
+<p>
+In the previous chapter, <a href="01<em>coordinator</em>role.md">Coordinator Role</a>, we introduced the Coordinator as a "Project Manager" who delegates work. Now, we will look at <strong>how</strong> that delegation actually happens.
+</p>
+<p>
+In this chapter, we will learn how to hire, direct, and dismiss the sub-agents known as <strong>Workers</strong>.
+</p>
+<h2 id="the-motivation-the-pizza-shop-analogy">The Motivation: The Pizza Shop Analogy</h2>
+<p>
+Imagine you are running a pizza shop.
+</p>
+<ol>
+<li><strong>Spawning:</strong> You hire a chef to make a pepperoni pizza.</li>
+</ol>
+<ol>
+<li><strong>Async Work:</strong> You don't stand over their shoulder. You go help a customer at the front counter while they bake.</li>
+</ol>
+<ol>
+<li><strong>Notification:</strong> The chef rings a bell: "Pizza is ready!"</li>
+</ol>
+<ol>
+<li><strong>Continuation:</strong> You tell that <em>same</em> chef: "Great, now slice it into 8 pieces."</li>
+</ol>
+<ol>
+<li><strong>Stopping:</strong> If the customer cancels, you tell the chef: "Stop baking!"</li>
+</ol>
+<p>
+Without <strong>Lifecycle Management</strong>, you would have to hire a brand new chef just to slice the pizza, which is inefficient because the new chef doesn't know where the pizza is.
+</p>
+<h2 id="core-concepts">Core Concepts</h2>
+<p>
+The Coordinator manages workers using three specific tools. Think of these as the buttons on a manager's control panel.
+</p>
+<h3 id="1-spawning-inline-0">1. Spawning (<code>AgentTool</code>)</h3>
+<p>
+This is the "Hire" button. You use this when you have a specific task that requires a fresh perspective or a new set of skills.
+</p>
+<p>
+<strong>Input (Coordinator calls tool):</strong>
+</p>
+<pre data-lang="javascript"><code>// Spawn a worker to research a bug
+AgentTool({
+  subagent_type: "worker",
+  description: "Investigate auth bug",
+  prompt: "Search src/auth for null pointer exceptions..."
+})
+</code></pre>
+<p>
+<strong>Output:</strong>
+ 
+The system returns a %%INLINE<em>1%% (e.g., %%INLINE</em>2%%). The Coordinator must remember this ID to talk to this worker later.
+</p>
+<h3 id="2-monitoring-async-notifications">2. Monitoring (Async Notifications)</h3>
+<p>
+Workers run in parallel. When a worker finishes, the Coordinator receives a <strong>Task Notification</strong>. This isn't a tool the Coordinator uses; it's a message the Coordinator <em>receives</em>.
+</p>
+<p>
+<strong>Input (System sends to Coordinator):</strong>
+</p>
+<pre data-lang="xml"><code>&lt;task-notification&gt;
+  &lt;task-id&gt;agent-123&lt;/task-id&gt;
+  &lt;status&gt;completed&lt;/status&gt;
+  &lt;result&gt;Found the bug in file X...&lt;/result&gt;
+&lt;/task-notification&gt;
+</code></pre>
+<p>
+We will dive deeper into the specific format of these messages in <a href="03<em>task</em>notification_protocol.md">Task Notification Protocol</a>.
+</p>
+<h3 id="3-continuing-inline-3">3. Continuing (<code>SendMessageTool</code>)</h3>
+<p>
+This is the "Reply" button. If a worker has done good work (e.g., found a file) and you want them to do the next step (fix the file), you continue the conversation. This preserves their <strong>Context</strong>.
+</p>
+<p>
+<strong>Input (Coordinator calls tool):</strong>
+</p>
+<pre data-lang="javascript"><code>// Tell existing agent 'agent-123' to apply a fix
+SendMessageTool({
+  to: "agent-123",
+  message: "Great find. Now edit that file to add a null check."
+})
+</code></pre>
+<h3 id="4-stopping-inline-4">4. Stopping (<code>TaskStopTool</code>)</h3>
+<p>
+This is the "Halt" button. If a user changes their mind, or if a worker is taking too long/hallucinating, the Coordinator can force them to stop.
+</p>
+<p>
+<strong>Input (Coordinator calls tool):</strong>
+</p>
+<pre data-lang="javascript"><code>// Stop the worker immediately
+TaskStopTool({
+  task_id: "agent-123"
+})
+</code></pre>
+<h2 id="implementation-under-the-hood">Implementation: Under the Hood</h2>
+<p>
+How does the system handle these lifecycle events? Let's look at the flow of a typical "Research and Fix" cycle.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant C as Coordinator
+    participant S as System
+    participant W as Worker (Agent-123)
+
+    Note over C: 1. Spawn a new worker
+    C-&gt;&gt;S: AgentTool(prompt="Find bug")
+    S--&gt;&gt;C: Returns "agent-123"
+    
+    Note over W: 2. Worker runs async
+    S-&gt;&gt;W: Start Task
+    W-&gt;&gt;W: Reads Code...
+    W--&gt;&gt;S: "I found it!"
+
+    Note over C: 3. Notification arrives
+    S-&gt;&gt;C: &lt;task-notification id="agent-123"&gt;...
+    
+    Note over C: 4. Continue same worker
+    C-&gt;&gt;S: SendMessageTool(to="agent-123", msg="Fix it")
+    S-&gt;&gt;W: New message added to context</div></div>
+<h3 id="defining-the-tools">Defining the Tools</h3>
+<p>
+The Coordinator knows these tools exist because they are injected into its System Prompt (as seen in <code>coordinatorMode.ts</code>).
+</p>
+<p>
+Here is a simplified view of how the tools are defined in the code constants:
+</p>
+<pre data-lang="typescript"><code>// From tools/AgentTool/constants.ts
+export const AGENT_TOOL_NAME = 'AgentTool'
+
+// From tools/SendMessageTool/constants.ts
+export const SEND_MESSAGE_TOOL_NAME = 'SendMessageTool'
+
+// From tools/TaskStopTool/prompt.ts
+export const TASK_STOP_TOOL_NAME = 'TaskStopTool'
+</code></pre>
+<h3 id="the-managers-handbook-when-to-spawn-vs-continue">The "Manager's Handbook": When to Spawn vs. Continue</h3>
+<p>
+The logic for choosing between %%INLINE<em>6%% (Spawn) and %%INLINE</em>7%% (Continue) is critical for efficient lifecycle management.
+</p>
+<h4 id="scenario-a-high-context-overlap-continue">Scenario A: High Context Overlap -> <strong>Continue</strong></h4>
+<p>
+If a worker just spent 5 minutes reading documentation to understand a library, you should use <code>SendMessageTool</code> to ask them to write the code. They already have the documentation in their "memory" (context).
+</p>
+<pre data-lang="typescript"><code>// GOOD: Reusing the expert
+SendMessageTool({
+  to: "agent-researcher",
+  message: "Based on the docs you read, write the connection function."
+})
+</code></pre>
+<h4 id="scenario-b-new-domain-spawn-fresh">Scenario B: New Domain -> <strong>Spawn Fresh</strong></h4>
+<p>
+If you just finished fixing a CSS bug and now need to fix a Database bug, spawn a new worker. The CSS context is "noise" that might confuse the Database worker.
+</p>
+<pre data-lang="typescript"><code>// GOOD: Clean slate for a new task
+AgentTool({
+  subagent_type: "worker",
+  prompt: "Check the SQL migration files for errors."
+})
+</code></pre>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>Workers are Independent</strong>: They run asynchronously and report back when done.</li>
+</ol>
+<ol>
+<li><strong>Lifecycle Tools</strong>:</li>
+<ul>
+<li><code>AgentTool</code>: Hire a new worker (Spawn).</li>
+<li><code>SendMessageTool</code>: Give new instructions to an existing worker (Continue).</li>
+<li><code>TaskStopTool</code>: Cancel a task (Stop).</li>
+</ul>
+</ol>
+<ol>
+<li><strong>Management Strategy</strong>: Reuse workers when they have relevant context; spawn new ones to keep context clean.</li>
+</ol>
+<p>
+Now that we know how to start and stop workers, we need to understand exactly <em>how</em> they talk back to us. How does the Coordinator know a worker finished?
+</p>
+<p>
+<a href="03<em>task</em>notification_protocol.md">Next Chapter: Task Notification Protocol</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="coordinator.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">coordinator/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-the-pizza-shop-analogy">The Motivation: The Pizza Shop Analogy</a></li>
+<li style="padding-left:0px"><a href="#core-concepts">Core Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-spawning-inline-0">1. Spawning (%%INLINE_0%%)</a></li>
+<li style="padding-left:10px"><a href="#2-monitoring-async-notifications">2. Monitoring (Async Notifications)</a></li>
+<li style="padding-left:10px"><a href="#3-continuing-inline-3">3. Continuing (%%INLINE_3%%)</a></li>
+<li style="padding-left:10px"><a href="#4-stopping-inline-4">4. Stopping (%%INLINE_4%%)</a></li>
+<li style="padding-left:0px"><a href="#implementation-under-the-hood">Implementation: Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#defining-the-tools">Defining the Tools</a></li>
+<li style="padding-left:10px"><a href="#the-managers-handbook-when-to-spawn-vs-continue">The "Manager's Handbook": When to Spawn vs. Continue</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

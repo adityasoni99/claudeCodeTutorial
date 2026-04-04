@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: Task & Team Coordination — tools/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">tools/02_task___team_coordination.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🔧 tools/ · 02_task___team_coordination.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: Task & Team Coordination</h1>
+  <div class="chapter-meta"><span>📄 tools/02_task___team_coordination.md</span></div>
+</div>
+<h1 id="chapter-2-task-team-coordination">Chapter 2: Task & Team Coordination</h1>
+<p>
+In the previous chapter, <a href="01<em>recursive</em>agent_runtime.md">Recursive Agent Runtime</a>, we learned how an AI can spawn "Sub-Agents" to help do work.
+</p>
+<p>
+However, simply spawning agents isn't enough. If you hire three contractors to build a house but don't give them a blueprint or a schedule, you end up with three kitchens and no roof.
+</p>
+<p>
+This chapter introduces the <strong>Task & Team Coordination</strong> layer. This is the shared "brain" that keeps all agents—parents and children—aligned on what needs to be done.
+</p>
+<h2 id="the-problem-the-lost-agent">The Problem: The "Lost Agent"</h2>
+<p>
+Imagine a scenario: You ask the AI to "Refactor the entire database layer."
+</p>
+<ol>
+<li>The Main Agent spawns a "Researcher" to check dependencies.</li>
+</ol>
+<ol>
+<li>The Main Agent spawns a "Coder" to write new SQL files.</li>
+</ol>
+<ol>
+<li>The Main Agent spawns a "Tester" to update unit tests.</li>
+</ol>
+<p>
+Without a shared plan:
+</p>
+<ul>
+<li>The <strong>Coder</strong> might change a file that the <strong>Tester</strong> is currently reading.</li>
+<li>The <strong>Tester</strong> runs tests before the <strong>Coder</strong> is finished.</li>
+<li>The <strong>Main Agent</strong> forgets which files have been touched.</li>
+</ul>
+<h2 id="the-solution-the-shared-whiteboard">The Solution: The Shared "Whiteboard"</h2>
+<p>
+To solve this, the system uses a persistent <strong>Task Board</strong> (similar to Trello or Jira) and organizes agents into <strong>Teams</strong>.
+</p>
+<ol>
+<li><strong>The Team:</strong> A group of agents working in a specific context (a project).</li>
+</ol>
+<ol>
+<li><strong>The Task:</strong> A single unit of work (e.g., "Update user-schema.sql").</li>
+</ol>
+<ol>
+<li><strong>The State:</strong> Tasks have statuses (%%INLINE<em>0%%, %%INLINE</em>1%%, <code>completed</code>) and dependencies (Task B blocks Task A).</li>
+</ol>
+<h2 id="how-it-works-the-workflow">How It Works: The Workflow</h2>
+<p>
+When an AI starts a complex job, it doesn't just start coding. It follows this workflow:
+</p>
+<ol>
+<li><strong>Create a Team:</strong> Establish a workspace.</li>
+</ol>
+<ol>
+<li><strong>Plan:</strong> Break the goal into small Tasks.</li>
+</ol>
+<ol>
+<li><strong>Execute:</strong> Agents pick up tasks, mark them <code>in_progress</code>, and complete them.</li>
+</ol>
+<ol>
+<li><strong>Update:</strong> If a task is blocked, the agent marks it.</li>
+</ol>
+<h3 id="step-1-creating-a-team">Step 1: Creating a Team</h3>
+<p>
+The agent uses the <code>TeamCreate</code> tool. This sets up a "Headquarters" for the project.
+</p>
+<pre data-lang="javascript"><code>// Input to TeamCreate tool
+{
+  "team_name": "database-refactor",
+  "description": "Migrating the user database to PostgreSQL",
+  "agent_type": "tech-lead"
+}
+</code></pre>
+<h3 id="step-2-creating-tasks">Step 2: Creating Tasks</h3>
+<p>
+Once the team exists, the agent breaks the problem down using <code>TaskCreate</code>.
+</p>
+<pre data-lang="javascript"><code>// Input to TaskCreate tool
+{
+  "subject": "Create migration script",
+  "description": "Write the SQL to alter the users table.",
+  "activeForm": "Writing SQL", // What is the agent doing right now?
+  "metadata": { "priority": "high" }
+}
+</code></pre>
+<h3 id="step-3-seeing-the-board">Step 3: Seeing the Board</h3>
+<p>
+Any agent (Main or Sub) can look at the board using <code>TaskList</code>. This ensures everyone sees the same truth.
+</p>
+<pre data-lang="text"><code># Output from TaskList tool
+#1 [completed] Analyze current schema (Alice)
+#2 [in_progress] Create migration script (Bob)
+#3 [pending] Update unit tests [blocked by #2]
+</code></pre>
+<p>
+<em>Note how Task #3 is blocked. The system knows the Tester shouldn't start yet.</em>
+</p>
+<h2 id="internal-implementation">Internal Implementation</h2>
+<p>
+How does this work under the hood? It's not magic memory inside the AI model. It is a file-system based database.
+</p>
+<h3 id="the-coordination-flow">The Coordination Flow</h3>
+<p>
+Here is how agents interact with the system:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Lead as Team Lead
+    participant Runtime as Task System
+    participant Worker as Sub-Agent (Worker)
+
+    Note over Lead, Worker: 1. Setup Phase
+    Lead-&gt;&gt;Runtime: Tool: TeamCreate("GameDev")
+    Lead-&gt;&gt;Runtime: Tool: TaskCreate("Write Physics Engine")
+    
+    Note over Lead, Worker: 2. Delegation Phase
+    Lead-&gt;&gt;Worker: Spawns Sub-Agent
+    Worker-&gt;&gt;Runtime: Tool: TaskList
+    Runtime--&gt;&gt;Worker: "Task #1: Write Physics (Pending)"
+    
+    Note over Lead, Worker: 3. Execution Phase
+    Worker-&gt;&gt;Runtime: Tool: TaskUpdate(#1, status="in_progress")
+    Worker-&gt;&gt;Worker: Writes Code...
+    Worker-&gt;&gt;Runtime: Tool: TaskUpdate(#1, status="completed")
+    
+    Note over Lead, Worker: 4. Verification
+    Runtime--&gt;&gt;Lead: Notification: Task #1 Done</div></div>
+<h3 id="1-creating-the-team-inline-7">1. Creating the Team (<code>TeamCreateTool.ts</code>)</h3>
+<p>
+When <code>TeamCreate</code> is called, we write a JSON file to disk. This file acts as the roster.
+</p>
+<pre data-lang="typescript"><code>// Simplified from TeamCreateTool.ts
+export const TeamCreateTool = buildTool({
+  name: "TeamCreate",
+  async call({ team_name, description, agent_type }, context) {
+    
+    // 1. Define the Team Leader
+    const leadAgentId = formatAgentId("team-lead", team_name);
+    
+    // 2. Create the Team File object
+    const teamFile = {
+      name: team_name,
+      description: description,
+      leadAgentId: leadAgentId,
+      members: [] // Other agents will be added here later
+    };
+
+    // 3. Save it to disk (The "Headquarters")
+    await writeTeamFileAsync(team_name, teamFile);
+    
+    // 4. Initialize an empty Task List for this team
+    await ensureTasksDir(sanitizeName(team_name));
+
+    return { team_name, lead_agent_id: leadAgentId };
+  }
+});
+</code></pre>
+<p>
+<em>Explanation:</em> We simply create a structured file. This file persists even if the AI crashes or is restarted. <code>ensureTasksDir</code> creates a folder where the sticky notes (tasks) will live.
+</p>
+<h3 id="2-creating-a-task-inline-10">2. Creating a Task (<code>TaskCreateTool.ts</code>)</h3>
+<p>
+Creating a task is just adding a file to that directory.
+</p>
+<pre data-lang="typescript"><code>// Simplified from TaskCreateTool.ts
+export const TaskCreateTool = buildTool({
+  name: "TaskCreate",
+  async call({ subject, description }, context) {
+    
+    // 1. Create the task object in the database
+    // getTaskListId() figures out which Team we are currently in
+    const taskId = await createTask(getTaskListId(), {
+      subject,
+      description,
+      status: 'pending',
+      blocks: [],     // Who does this task block?
+      blockedBy: []   // Who blocks this task?
+    });
+
+    // 2. Return the ID so the agent can reference it
+    return { 
+      data: { task: { id: taskId, subject } } 
+    };
+  }
+});
+</code></pre>
+<p>
+<em>Explanation:</em> The system handles the ID generation (e.g., "1", "2", "3"). It automatically links the task to the current active Team.
+</p>
+<h3 id="3-updating-and-completing-inline-11">3. Updating and Completing (<code>TaskUpdateTool.ts</code>)</h3>
+<p>
+This is the most complex part. When a task is updated, we might need to notify people or unblock other tasks.
+</p>
+<pre data-lang="typescript"><code>// Simplified from TaskUpdateTool.ts
+export const TaskUpdateTool = buildTool({
+  name: "TaskUpdate",
+  async call({ taskId, status, owner }, context) {
+    
+    // 1. Get current task data
+    const existingTask = await getTask(getTaskListId(), taskId);
+
+    // 2. Update status (e.g. pending -&gt; completed)
+    if (status &amp;&amp; status !== existingTask.status) {
+       await updateTask(getTaskListId(), taskId, { status });
+       
+       // 3. If assigned to a new owner, send them a "Mailbox" message
+       if (owner) {
+         await writeToMailbox(owner, {
+           type: 'task_assignment',
+           text: `You have been assigned task #${taskId}`
+         });
+       }
+    }
+
+    // 4. Check for logic gaps (The "Nudge")
+    // If an agent closes 3 tasks but none were "Verification", 
+    // the system warns them to double-check their work.
+    let verificationNudgeNeeded = checkForVerificationGap(status);
+
+    return { 
+      success: true, 
+      verificationNudgeNeeded 
+    };
+  }
+});
+</code></pre>
+<p>
+<em>Explanation:</em>
+</p>
+<ol>
+<li><strong>State Change:</strong> We update the JSON file for the task.</li>
+</ol>
+<ol>
+<li><strong>Notification:</strong> If ownership changes, we use <code>writeToMailbox</code>. This concepts connects directly to the next chapter.</li>
+</ol>
+<ol>
+<li><strong>The Nudge:</strong> Notice the <code>verificationNudgeNeeded</code>. This is a "safety rail." If an agent blindly marks tasks as done without verifying, the tool output basically says, <em>"Hey, you finished a lot of work but didn't run any tests. Are you sure?"</em></li>
+</ol>
+<h2 id="summary">Summary</h2>
+<p>
+The <strong>Task & Team Coordination</strong> layer turns a chaotic group of AI agents into a disciplined workforce.
+</p>
+<ol>
+<li><strong>Teams</strong> give agents a shared identity and workspace.</li>
+</ol>
+<ol>
+<li><strong>Tasks</strong> provide a shared definition of "Done."</li>
+</ol>
+<ol>
+<li><strong>Status Updates</strong> allow agents to react to each other's progress (e.g., unblocking a task).</li>
+</ol>
+<p>
+Now that our agents have a plan and a team, they need a way to talk to each other about the work. How do they send those "Mailbox" messages we saw in the code?
+</p>
+<p>
+<a href="03<em>communication</em>channels.md">Next Chapter: Communication Channels</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="tools.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">tools/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-lost-agent">The Problem: The "Lost Agent"</a></li>
+<li style="padding-left:0px"><a href="#the-solution-the-shared-whiteboard">The Solution: The Shared "Whiteboard"</a></li>
+<li style="padding-left:0px"><a href="#how-it-works-the-workflow">How It Works: The Workflow</a></li>
+<li style="padding-left:10px"><a href="#step-1-creating-a-team">Step 1: Creating a Team</a></li>
+<li style="padding-left:10px"><a href="#step-2-creating-tasks">Step 2: Creating Tasks</a></li>
+<li style="padding-left:10px"><a href="#step-3-seeing-the-board">Step 3: Seeing the Board</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#the-coordination-flow">The Coordination Flow</a></li>
+<li style="padding-left:10px"><a href="#1-creating-the-team-inline-7">1. Creating the Team (%%INLINE_7%%)</a></li>
+<li style="padding-left:10px"><a href="#2-creating-a-task-inline-10">2. Creating a Task (%%INLINE_10%%)</a></li>
+<li style="padding-left:10px"><a href="#3-updating-and-completing-inline-11">3. Updating and Completing (%%INLINE_11%%)</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

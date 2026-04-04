@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 1: Immutable Query Configuration — query/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">query/01_immutable_query_configuration.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⚙️ query/ · 01_immutable_query_configuration.md</div>
+  <h1 class="chapter-title-h1">Chapter 1: Immutable Query Configuration</h1>
+  <div class="chapter-meta"><span>📄 query/01_immutable_query_configuration.md</span></div>
+</div>
+<h1 id="chapter-1-immutable-query-configuration">Chapter 1: Immutable Query Configuration</h1>
+<p>
+Welcome to the <strong>Query</strong> project tutorial! In this series, we will build a robust system for managing AI agent interactions.
+</p>
+<p>
+We start with the foundation: <strong>consistency</strong>.
+</p>
+<h2 id="the-motivation-why-snapshot">The Motivation: Why Snapshot?</h2>
+<p>
+Imagine you are playing a video game. You start a mission on "Easy Mode." Halfway through the level, someone secretly flips a switch on the console, and suddenly the game switches to "Hard Mode" while you are still playing. The enemies change behavior instantly, but your character is still geared for Easy Mode. Chaos ensues!
+</p>
+<p>
+This happens in software too. An AI agent might start a task with one set of settings (like "Fast Mode" enabled), but if we read the settings directly from the environment every time the agent takes a step, a mid-run change could break the logic.
+</p>
+<p>
+<strong>The Solution:</strong> We take a "Snapshot" of the settings the moment the mission starts. We seal these settings in an <strong>Immutable Query Configuration</strong>. The agent looks at this snapshot, not the changing outside world.
+</p>
+<h3 id="central-use-case-fast-mode-consistency">Central Use Case: "Fast Mode" Consistency</h3>
+<p>
+Let's say we have a feature flag called <code>fastModeEnabled</code>.
+</p>
+<ol>
+<li><strong>Without Snapshot:</strong> The agent checks <code>process.env</code> every time it generates a sentence. If the env var changes mid-sentence, the behavior becomes erratic.</li>
+</ol>
+<ol>
+<li><strong>With Snapshot:</strong> We read <code>process.env</code> <strong>once</strong> at the start. We write down "Fast Mode is ON" in our config object. Even if the server restarts or flags update, this specific agent query will finish its job thinking Fast Mode is ON.</li>
+</ol>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+Before looking at code, let's define the terms:
+</p>
+<ol>
+<li><strong>Immutable:</strong> Once created, it cannot be changed. It is read-only.</li>
+</ol>
+<ol>
+<li><strong>Snapshot:</strong> A picture of the data at a specific moment in time.</li>
+</ol>
+<ol>
+<li><strong>Configuration vs. State:</strong></li>
+<ul>
+<li><strong>Configuration:</strong> The rules of the game (Static).</li>
+<li><strong>State:</strong> The score and player position (Mutable/Changing).</li>
+</ul>
+</ol>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+In our system, we use a specific TypeScript type called <code>QueryConfig</code> to hold this snapshot.
+</p>
+<h3 id="step-1-defining-the-snapshot-shape">Step 1: Defining the Snapshot Shape</h3>
+<p>
+First, we define what data we want to lock in. We separate standard identifiers (like Session IDs) from "Gates" (feature flags).
+</p>
+<pre data-lang="typescript"><code>// config.ts
+import type { SessionId } from '../types/ids.js'
+
+export type QueryConfig = {
+  // A unique ID for this specific interaction
+  sessionId: SessionId 
+
+  // Feature flags (Gates) that change behavior
+  gates: {
+    streamingToolExecution: boolean
+    emitToolUseSummaries: boolean
+    isAnt: boolean
+    fastModeEnabled: boolean
+  }
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This <code>type</code> acts like a form template. It says: "To run a query, you need to fill out this specific form with these specific details."
+</p>
+<h3 id="step-2-taking-the-snapshot">Step 2: Taking the Snapshot</h3>
+<p>
+We create a factory function %%INLINE<em>5%% that reads the messy outside world (environment variables, analytics services) and packages them into a clean %%INLINE</em>6%% object.
+</p>
+<pre data-lang="typescript"><code>// config.ts - Part 1: The Setup
+import { getSessionId } from '../bootstrap/state.js'
+import { isEnvTruthy } from '../utils/envUtils.js'
+
+export function buildQueryConfig(): QueryConfig {
+  return {
+    sessionId: getSessionId(), // Grab the ID right now
+    gates: {
+      // We will fill these in the next snippet...
+      streamingToolExecution: false, 
+      emitToolUseSummaries: false,
+      isAnt: false,
+      fastModeEnabled: false,
+    },
+  }
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This function is the "Camera." When you call %%INLINE<em>7%%, you are pressing the shutter button. It captures the current %%INLINE</em>8%%.
+</p>
+<h3 id="step-3-snapshotting-feature-flags">Step 3: Snapshotting Feature Flags</h3>
+<p>
+Now let's fill in the <code>gates</code>. This is where we safely convert volatile environment variables into static booleans.
+</p>
+<pre data-lang="typescript"><code>// config.ts - Part 2: filling the gates
+    gates: {
+      // Check Statsig or Env vars ONE time here
+      streamingToolExecution: checkStatsigFeatureGate('streaming_tool'),
+      
+      emitToolUseSummaries: isEnvTruthy(
+        process.env.CLAUDE_CODE_EMIT_TOOL_USE_SUMMARIES,
+      ),
+
+      isAnt: process.env.USER_TYPE === 'ant',
+
+      // Lock in Fast Mode status
+      fastModeEnabled: !isEnvTruthy(process.env.DISABLE_FAST_MODE),
+    },
+</code></pre>
+<p>
+<em>Explanation:</em> We call functions like %%INLINE<em>10%%. If the environment variable is "true" right now, %%INLINE</em>11%% becomes <code>true</code> forever for this object.
+</p>
+<h2 id="under-the-hood">Under the Hood</h2>
+<p>
+What actually happens when a user asks a question?
+</p>
+<ol>
+<li><strong>Request Arrives:</strong> The user sends a prompt.</li>
+</ol>
+<ol>
+<li><strong>Snapshot:</strong> The system immediately calls <code>buildQueryConfig</code>.</li>
+</ol>
+<ol>
+<li><strong>Sealing:</strong> The resulting object is passed to the main query loop.</li>
+</ol>
+<ol>
+<li><strong>Execution:</strong> The loop runs many times (thinking, calling tools, thinking again). It refers to the snapshot object every time it needs to know a setting.</li>
+</ol>
+<h3 id="visual-flow">Visual Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant U as User
+    participant S as System Entry
+    participant C as Config Snapshot
+    participant L as Loop (Agent)
+
+    U-&gt;&gt;S: Sends Query ("Hello")
+    S-&gt;&gt;S: Reads Env Vars &amp; Flags
+    S-&gt;&gt;C: Creates Immutable Config
+    C--&gt;&gt;S: Returns { fastMode: true }
+    S-&gt;&gt;L: Start Loop(State, Config)
+    
+    Note right of L: Step 1: Check Config.fastMode (True)
+    Note right of L: Step 2: Check Config.fastMode (True)
+    
+    loop Every Step
+        L-&gt;&gt;L: Uses SAME Config object
+    end</div></div>
+<h3 id="why-separate-config-from-state">Why Separate Config from State?</h3>
+<p>
+You might wonder why we don't just put <code>fastModeEnabled</code> inside the Agent's state (memory).
+</p>
+<p>
+The Agent's <strong>State</strong> changes constantly—it adds messages, updates token counts, and tracks tool outputs. If we mix <em>static</em> settings with <em>changing</em> state, debugging becomes a nightmare.
+</p>
+<p>
+By keeping <code>QueryConfig</code> separate, we can easily write tests:
+</p>
+<blockquote><p><em>"Given <strong>Config X</strong> and <strong>State Y</strong>, the agent should do <strong>Z</strong>."</em></p></blockquote>
+<p>
+This approach makes the function "Pure" (predictable), which is essential for stable AI behavior.
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>Consistency is King:</strong> We don't want an agent's personality or rules to change mid-sentence.</li>
+</ol>
+<ol>
+<li><strong>Snapshotting:</strong> We read environment variables once at the start and lock them into a <code>QueryConfig</code> object.</li>
+</ol>
+<ol>
+<li><strong>Immutability:</strong> Once created, this config object never changes for the duration of the query.</li>
+</ol>
+<p>
+Now that we have our "Mission Parameters" set, we need to make sure the agent doesn't talk too much and run out of resources.
+</p>
+<p>
+<a href="02<em>token</em>budget_control.md">Next Chapter: Token Budget Control</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="query.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">query/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-why-snapshot">The Motivation: Why Snapshot?</a></li>
+<li style="padding-left:10px"><a href="#central-use-case-fast-mode-consistency">Central Use Case: "Fast Mode" Consistency</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:10px"><a href="#step-1-defining-the-snapshot-shape">Step 1: Defining the Snapshot Shape</a></li>
+<li style="padding-left:10px"><a href="#step-2-taking-the-snapshot">Step 2: Taking the Snapshot</a></li>
+<li style="padding-left:10px"><a href="#step-3-snapshotting-feature-flags">Step 3: Snapshotting Feature Flags</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood">Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#visual-flow">Visual Flow</a></li>
+<li style="padding-left:10px"><a href="#why-separate-config-from-state">Why Separate Config from State?</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

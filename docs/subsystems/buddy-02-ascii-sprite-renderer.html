@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: ASCII Sprite Renderer — buddy/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">buddy/02_ascii_sprite_renderer.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">👥 buddy/ · 02_ascii_sprite_renderer.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: ASCII Sprite Renderer</h1>
+  <div class="chapter-meta"><span>📄 buddy/02_ascii_sprite_renderer.md</span></div>
+</div>
+<h1 id="chapter-2-ascii-sprite-renderer">Chapter 2: ASCII Sprite Renderer</h1>
+<p>
+In the previous chapter, <a href="01<em>deterministic</em>generation<strong>soul</strong><em>bones</em>.md">Deterministic Generation (Soul & Bones)</a>, we learned how to conjure a unique digital soul from nothing but a User ID.
+</p>
+<p>
+We have the <strong>Bones</strong>:
+</p>
+<pre data-lang="json"><code>{ "species": "duck", "eye": "◉", "hat": "tophat" }
+</code></pre>
+<p>
+But currently, our friend is invisible. It's just data sitting in memory. To bring it to life in the terminal, we need a graphics engine. Since we are in a text-based environment, our "pixels" are characters.
+</p>
+<p>
+Welcome to the <strong>ASCII Sprite Renderer</strong>.
+</p>
+<h2 id="the-concept-the-costume-department">The Concept: The Costume Department</h2>
+<p>
+Drawing every possible combination of species, eyes, and hats by hand would take forever.
+</p>
+<ul>
+<li>18 Species</li>
+<li>6 Eye types</li>
+<li>8 Hat types</li>
+<li><strong>Total:</strong> 864 unique drawings!</li>
+</ul>
+<p>
+Instead of drawing 864 images, we use a <strong>Paper Doll</strong> system (or a Puppet).
+</p>
+<ol>
+<li><strong>The Template:</strong> We draw the "body" of the Duck once.</li>
+</ol>
+<ol>
+<li><strong>The Placeholder:</strong> We leave a special mark <code>{E}</code> where the eyes should go.</li>
+</ol>
+<ol>
+<li><strong>The Assembly:</strong> When the program runs, we swap %%INLINE<em>1%% with the actual eye trait (like %%INLINE</em>2%% or <code>^</code>).</li>
+</ol>
+<h2 id="key-concepts">Key Concepts</h2>
+<h3 id="1-the-raw-template">1. The Raw Template</h3>
+<p>
+A "Sprite" in <code>buddy</code> isn't a single string; it is an <strong>Array of Strings</strong>. Each string is one horizontal line on your terminal screen.
+</p>
+<p>
+Here is the raw template for the %%INLINE<em>5%% species found in %%INLINE</em>6%%:
+</p>
+<pre data-lang="typescript"><code>const duckFrames = [
+  '            ',      // Line 0: Reserved for Hats
+  '    __      ',
+  '  &lt;({E} )___  ',    // Look at the {E}!
+  '   (  ._&gt;   ',
+  '    `--´    ',
+]
+</code></pre>
+<h3 id="2-the-substitution">2. The Substitution</h3>
+<p>
+The magic happens with a simple string replacement. If your <strong>Bones</strong> say your eyes are <code>◉</code>, the renderer looks at line 2:
+</p>
+<ul>
+<li><strong>Before:</strong> <code>' &lt;({E} )___ '</code></li>
+<li><strong>After:</strong> <code>' &lt;(◉ )___ '</code></li>
+</ul>
+<h3 id="3-frames-animation">3. Frames (Animation)</h3>
+<p>
+To make the creature feel alive, we don't just store one image. We store 2 or 3 "Frames."
+</p>
+<ul>
+<li><strong>Frame 0:</strong> Standing still.</li>
+<li><strong>Frame 1:</strong> Wiggling a wing or closing the beak.</li>
+</ul>
+<p>
+The renderer decides which frame to return based on the current time (we will cover the timing logic in <a href="03<em>live</em>component<em>_</em>animation.md">Live Component & Animation</a>).
+</p>
+<hr>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+The renderer is a pure function. It takes data in, and spits text out.
+</p>
+<h3 id="the-input">The Input</h3>
+<p>
+You provide the <strong>Bones</strong> (which tell us the Species and Eye type) and a <strong>Frame Number</strong> (0, 1, or 2).
+</p>
+<pre data-lang="typescript"><code>import { renderSprite } from './sprites'
+
+const myBones = {
+  species: 'duck',
+  eye: '◉',
+  hat: 'none'
+  // ... other stats
+}
+
+// Get the visual for the first frame
+const lines = renderSprite(myBones, 0)
+</code></pre>
+<h3 id="the-output">The Output</h3>
+<p>
+The variable <code>lines</code> is now an array of strings, ready to be printed to the console:
+</p>
+<pre data-lang="text"><code>    __      
+  &lt;(◉ )___  
+   (  ._&gt;   
+    `--´    
+</code></pre>
+<hr>
+<h2 id="under-the-hood-implementation">Under the Hood: Implementation</h2>
+<p>
+How does the code actually assemble the puppet?
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant App
+    participant Renderer
+    participant Templates
+    
+    App-&gt;&gt;Renderer: renderSprite(duckBones, frame: 0)
+    Renderer-&gt;&gt;Templates: Get 'duck' frames
+    Templates--&gt;&gt;Renderer: Returns raw strings ["...{E}..."]
+    Renderer-&gt;&gt;Renderer: Replace "{E}" with "◉"
+    Renderer-&gt;&gt;Renderer: Check for Hat (tophat)
+    Renderer-&gt;&gt;Renderer: Overwrite Line 0 with Hat Art
+    Renderer--&gt;&gt;App: Returns final array of strings</div></div>
+<h3 id="1-the-sprite-library">1. The Sprite Library</h3>
+<p>
+In %%INLINE<em>11%%, we store all our templates in a big object called %%INLINE</em>12%%.
+</p>
+<pre data-lang="typescript"><code>// sprites.ts
+const BODIES: Record&lt;Species, string[][]&gt; = {
+  duck: [ /* frame 1 */, /* frame 2 */ ],
+  cat:  [ /* frame 1 */, /* frame 2 */ ],
+  robot: [ /* frame 1 */, /* frame 2 */ ],
+  // ...
+}
+</code></pre>
+<h3 id="2-the-inline-13-function">2. The <code>renderSprite</code> Function</h3>
+<p>
+This is the core logic. We've simplified it here to show the logic clearly.
+</p>
+<pre data-lang="typescript"><code>export function renderSprite(bones: CompanionBones, frame = 0): string[] {
+  // 1. Find the raw templates for this species
+  const frames = BODIES[bones.species]
+  
+  // 2. Select the specific frame (using modulo to loop safely)
+  const rawLines = frames[frame % frames.length]
+
+  // 3. Inject the soul (Replace eyes)
+  return rawLines.map(line =&gt; line.replaceAll('{E}', bones.eye))
+}
+</code></pre>
+<h3 id="3-handling-hats">3. Handling Hats</h3>
+<p>
+Hats are a special layer. Every sprite is designed with a specific height (5 lines). <strong>Line 0</strong> is usually empty space, specifically reserved for a hat.
+</p>
+<p>
+If the user has a hat, we overwrite that empty first line.
+</p>
+<pre data-lang="typescript"><code>// sprites.ts (continued)
+const HAT_LINES = {
+  crown: '   \\^^^/    ',
+  tophat: '   [___]    ',
+  // ...
+}
+
+// Inside renderSprite...
+if (bones.hat !== 'none') {
+  // Overwrite the top empty line with the hat art
+  lines[0] = HAT_LINES[bones.hat]
+}
+</code></pre>
+<p>
+<em>This is why consistency matters in the templates! If the Duck was 4 lines tall and the Robot was 6 lines tall, the hat would float in the air or crush the Robot's head.</em>
+</p>
+<h2 id="why-this-approach">Why this approach?</h2>
+<ol>
+<li><strong>Memory Efficient:</strong> We don't store "Duck with Star Eyes" and "Duck with Circle Eyes" as separate images. We combine them on the fly.</li>
+</ol>
+<ol>
+<li><strong>Extensible:</strong> Adding a new eye type immediately works for all 18 species.</li>
+</ol>
+<ol>
+<li><strong>Simple Animation:</strong> By treating animation as a list of strings (<code>string[][]</code>), switching frames is just an array index lookup.</li>
+</ol>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+We now have a <strong>Generator</strong> (Chapter 1) that creates the math, and a <strong>Renderer</strong> (Chapter 2) that creates the art.
+</p>
+<p>
+However, <code>renderSprite</code> is just a function. If we run it once, we get a static image. To make our buddy blink, wiggle, and react to us, we need to run this function repeatedly in a loop.
+</p>
+<p>
+In the next chapter, we will build the engine that drives this loop.
+</p>
+<p>
+<a href="03<em>live</em>component<em>_</em>animation.md">Next: Live Component & Animation</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="buddy.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">buddy/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-concept-the-costume-department">The Concept: The Costume Department</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-raw-template">1. The Raw Template</a></li>
+<li style="padding-left:10px"><a href="#2-the-substitution">2. The Substitution</a></li>
+<li style="padding-left:10px"><a href="#3-frames-animation">3. Frames (Animation)</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:10px"><a href="#the-input">The Input</a></li>
+<li style="padding-left:10px"><a href="#the-output">The Output</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-implementation">Under the Hood: Implementation</a></li>
+<li style="padding-left:10px"><a href="#1-the-sprite-library">1. The Sprite Library</a></li>
+<li style="padding-left:10px"><a href="#2-the-inline-13-function">2. The %%INLINE_13%% Function</a></li>
+<li style="padding-left:10px"><a href="#3-handling-hats">3. Handling Hats</a></li>
+<li style="padding-left:0px"><a href="#why-this-approach">Why this approach?</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

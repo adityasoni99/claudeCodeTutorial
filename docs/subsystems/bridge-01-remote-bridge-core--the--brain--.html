@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 1: Remote Bridge Core (The "Brain") — bridge/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">bridge/01_remote_bridge_core__the__brain__.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🌉 bridge/ · 01_remote_bridge_core__the__brain__.md</div>
+  <h1 class="chapter-title-h1">Chapter 1: Remote Bridge Core (The "Brain")</h1>
+  <div class="chapter-meta"><span>📄 bridge/01_remote_bridge_core__the__brain__.md</span></div>
+</div>
+<h1 id="chapter-1-remote-bridge-core-the-brain">Chapter 1: Remote Bridge Core (The "Brain")</h1>
+<p>
+Welcome to the <strong>Bridge</strong> project! If you've ever wondered how a terminal application (like Claude Code) can talk to a web interface in real-time, you are in the right place.
+</p>
+<p>
+We begin our journey with the <strong>Remote Bridge Core</strong>, often called "The Brain."
+</p>
+<h3 id="what-is-the-brain">What is the "Brain"?</h3>
+<p>
+Imagine you want to control your computer from your phone. You need a central system that:
+</p>
+<ol>
+<li><strong>Dials the connection</strong> to the server.</li>
+</ol>
+<ol>
+<li><strong>Keeps the line open</strong> so commands can flow instantly.</li>
+</ol>
+<ol>
+<li><strong>Renews the security keys</strong> so the connection doesn't drop.</li>
+</ol>
+<ol>
+<li><strong>Hangs up</strong> cleanly when you are done.</li>
+</ol>
+<p>
+In the Bridge project, this is the <strong>Remote Bridge Core</strong>. It is the central controller for the "Env-less" (v2) connection.
+</p>
+<blockquote><p><strong>Old vs. New:</strong> In older versions (v1), the system acted like a mailman, checking a mailbox every few seconds ("polling") to see if there was work. The new <strong>Env-less Core</strong> acts like a telephone operator, establishing a direct, streaming line that stays open.</p></blockquote>
+<h3 id="the-central-use-case">The Central Use Case</h3>
+<p>
+Let's say a user starts a session in their terminal. They want this session to appear on a web dashboard so they can monitor it remotely.
+</p>
+<p>
+<strong>The Goal:</strong> Initialize a session, get a secure ID, and connect the wires.
+</p>
+<h3 id="key-concepts">Key Concepts</h3>
+<p>
+Before we look at code, let's understand the three pillars of the Core:
+</p>
+<ol>
+<li><strong>The Session ID:</strong> This is the unique ticket number for the conversation. The Core asks the server, "Can I start a new session?" and gets this ID back.</li>
+</ol>
+<ol>
+<li><strong>The Worker JWT:</strong> Think of this as a temporary ID badge. It allows the Core to talk to the session. The Core is responsible for refreshing this badge before it expires.</li>
+</ol>
+<ol>
+<li><strong>The Transport:</strong> This is the actual "pipe" that sends data. The Core sets it up but delegates the heavy lifting of moving bytes to <a href="03<em>unified</em>transport<em>layer<strong>the</strong>pipe</em>_.md">Unified Transport Layer (The "Pipe")</a>.</li>
+</ol>
+<h3 id="how-to-use-the-brain">How to Use the "Brain"</h3>
+<p>
+The main entry point is a function called <code>initEnvLessBridgeCore</code>. It takes configuration (like your API URL and OAuth token) and returns a set of controls.
+</p>
+<h4 id="input">Input</h4>
+<p>
+You provide the basics: "Who am I?" (Auth Token) and "Where is the server?" (Base URL).
+</p>
+<h4 id="output">Output</h4>
+<p>
+You get a <strong>Handle</strong>. This is like a remote control with buttons like %%INLINE<em>1%% or %%INLINE</em>2%%.
+</p>
+<h4 id="simplified-usage-example">Simplified Usage Example</h4>
+<pre data-lang="typescript"><code>// Ideally, this is how you start the brain
+const bridgeHandle = await initEnvLessBridgeCore({
+  baseUrl: "https://api.anthropic.com",
+  getAccessToken: () =&gt; "my-secret-oauth-token",
+  title: "My Terminal Session",
+  // What to do when the server sends a message
+  onInboundMessage: (msg) =&gt; console.log("Received:", msg)
+});
+
+// Now we can use the handle!
+bridgeHandle.writeMessages([{ role: "user", content: "Hello!" }]);
+</code></pre>
+<h3 id="the-setup-workflow">The Setup Workflow</h3>
+<p>
+What happens internally when we call that function? It follows a strict "Handshake" protocol.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant App as Terminal App
+    participant Core as Bridge Core (The Brain)
+    participant Server as Cloud Server
+    participant Trans as Transport Layer
+
+    Note over App, Server: Initialization Phase
+    App-&gt;&gt;Core: Start Bridge
+    Core-&gt;&gt;Server: 1. Create Session (POST /sessions)
+    Server--&gt;&gt;Core: Return Session ID (cse_123)
+    
+    Core-&gt;&gt;Server: 2. Get Credentials (POST /bridge)
+    Server--&gt;&gt;Core: Return Worker JWT &amp; Expiry
+
+    Note over Core, Trans: Connection Phase
+    Core-&gt;&gt;Trans: 3. Connect(Session ID, JWT)
+    Trans--&gt;&gt;Core: Connected!
+    
+    Note over App, Core: Running Phase
+    App-&gt;&gt;Core: writeMessages(...)
+    Core-&gt;&gt;Trans: Send Data</div></div>
+<h3 id="internal-implementation-step-by-step">Internal Implementation: Step-by-Step</h3>
+<p>
+Let's look at how %%INLINE<em>3%% implements this logic. We will break it down into the 4 main steps handled by the function %%INLINE</em>4%%.
+</p>
+<h4 id="step-1-create-the-session">Step 1: Create the Session</h4>
+<p>
+First, we need to register the session with the server. We don't need a complex environment setup (hence "Env-less"), just a valid OAuth token.
+</p>
+<pre data-lang="typescript"><code>// remoteBridgeCore.ts
+// 1. Create session (POST /v1/code/sessions)
+const createdSessionId = await withRetry(
+  () =&gt; createCodeSession(baseUrl, accessToken, title, timeout, tags),
+  'createCodeSession',
+  cfg,
+);
+
+if (!createdSessionId) return null; // Failed to start
+</code></pre>
+<p>
+<strong>Explanation:</strong> We ask the server to create a "Code Session". If successful, we get an ID (e.g., <code>cse_xyz</code>). If this fails, the bridge cannot start.
+</p>
+<h4 id="step-2-get-the-keys-credentials">Step 2: Get the "Keys" (Credentials)</h4>
+<p>
+Now that we have a Session ID, we need the specific credentials to join it as a "worker" (the entity that executes code).
+</p>
+<pre data-lang="typescript"><code>// remoteBridgeCore.ts
+// 2. Fetch bridge credentials (POST /bridge)
+const credentials = await withRetry(
+  () =&gt; fetchRemoteCredentials(sessionId, baseUrl, token, timeout),
+  'fetchRemoteCredentials',
+  cfg,
+);
+
+// Returns: { worker_jwt, expires_in, api_base_url, worker_epoch }
+</code></pre>
+<p>
+<strong>Explanation:</strong> The <code>fetchRemoteCredentials</code> function exchanges our high-level OAuth token for a specific <strong>Worker JWT</strong>. This JWT is short-lived and safer to use for the continuous connection.
+</p>
+<h4 id="step-3-build-the-transport">Step 3: Build the Transport</h4>
+<p>
+The Brain doesn't move the data itself; it hires a specialist. It initializes the Transport layer using the credentials it just fetched.
+</p>
+<pre data-lang="typescript"><code>// remoteBridgeCore.ts
+// 3. Build v2 transport
+transport = await createV2ReplTransport({
+  sessionUrl: buildCCRv2SdkUrl(credentials.api_base_url, sessionId),
+  ingressToken: credentials.worker_jwt,
+  sessionId,
+  // ... other config
+});
+
+transport.connect(); // Turn it on!
+</code></pre>
+<p>
+<strong>Explanation:</strong> Here, the Core hands off the Session ID and JWT to the Transport layer. You'll learn exactly how this %%INLINE<em>7%% works in <a href="03</em>unified<em>transport</em>layer<strong>the</strong>pipe__.md">Unified Transport Layer (The "Pipe")</a>.
+</p>
+<h4 id="step-4-the-refresh-scheduler">Step 4: The Refresh Scheduler</h4>
+<p>
+Security tokens expire. The Brain is smart—it sets an alarm to wake up before the token dies to get a new one.
+</p>
+<pre data-lang="typescript"><code>// remoteBridgeCore.ts
+// 5. JWT refresh scheduler
+const refresh = createTokenRefreshScheduler({
+  refreshBufferMs: cfg.token_refresh_buffer_ms, // e.g., 5 minutes before expiry
+  onRefresh: async (sid, oauthToken) =&gt; {
+    // 1. Get new credentials from server
+    // 2. Rebuild transport with new keys
+    await rebuildTransport(freshCreds, 'proactive_refresh');
+  }
+});
+
+refresh.scheduleFromExpiresIn(sessionId, credentials.expires_in);
+</code></pre>
+<p>
+<strong>Explanation:</strong> This acts like a heartbeat. If the session lasts hours, the Brain ensures the connection never drops due to expired security badges. It coordinates with <a href="05<em>authentication<strong></em>security</strong>the<strong>keycard</strong>.md">Authentication & Security (The "Keycard")</a> to handle 401 errors if things go wrong.
+</p>
+<h3 id="teardown-cleaning-up">Teardown: Cleaning Up</h3>
+<p>
+When the user types <code>exit</code>, the Brain performs a "Graceful Shutdown." It doesn't just cut the cord; it archives the session so history is preserved.
+</p>
+<pre data-lang="typescript"><code>// remoteBridgeCore.ts
+async function teardown() {
+  transport.reportState('idle'); // Tell server we are done
+  
+  // Save the history to the server
+  await archiveSession(sessionId, baseUrl, token, orgUUID, timeout);
+  
+  transport.close(); // Close the websocket/connection
+}
+</code></pre>
+<h3 id="summary">Summary</h3>
+<p>
+The <strong>Remote Bridge Core</strong> is the orchestrator. It:
+</p>
+<ol>
+<li><strong>Negotiates</strong> the creation of the session.</li>
+</ol>
+<ol>
+<li><strong>Acquires</strong> the necessary keys (JWTs).</li>
+</ol>
+<ol>
+<li><strong>Wires up</strong> the transport layer.</li>
+</ol>
+<ol>
+<li><strong>Maintains</strong> the session via token refreshes.</li>
+</ol>
+<p>
+It acts as the container for everything else. Now that we have a running "Brain," we need to understand exactly <em>what</em> creates the context for this session and how different versions of the app work together.
+</p>
+<p>
+<a href="02<em>session</em>lifecycle<strong>_compatibility</strong>the<strong>container</strong>.md">Next Chapter: Session Lifecycle & Compatibility (The "Container")</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="bridge.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">bridge/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:10px"><a href="#what-is-the-brain">What is the "Brain"?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case">The Central Use Case</a></li>
+<li style="padding-left:10px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#how-to-use-the-brain">How to Use the "Brain"</a></li>
+<li style="padding-left:10px"><a href="#the-setup-workflow">The Setup Workflow</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-step-by-step">Internal Implementation: Step-by-Step</a></li>
+<li style="padding-left:10px"><a href="#teardown-cleaning-up">Teardown: Cleaning Up</a></li>
+<li style="padding-left:10px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

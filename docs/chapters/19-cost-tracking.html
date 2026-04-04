@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ch.19 Cost Tracking — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">Ch.19 — Cost Tracking</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-core">CORE</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">Chapter 19 · <span class="tag tag-core">CORE</span></div>
+  <h1 class="chapter-title-h1">Cost Tracking</h1>
+  <div class="chapter-meta">
+    <span>📄 19_cost_tracking.md</span>
+    <span>🏷 Core</span>
+  </div>
+</div>
+<h1 id="chapter-19-cost-tracking">Chapter 19: Cost Tracking</h1>
+<p>
+Welcome to the final chapter of our journey!
+</p>
+<p>
+In the previous <a href="18<em>computer</em>use.md">Computer Use</a> chapter, we gave the AI the power to see your screen and move your mouse. While incredible, sending high-definition screenshots to an AI model consumes a massive amount of data.
+</p>
+<p>
+This leads to a very practical question: <strong>"How much is this costing me?"</strong>
+</p>
+<p>
+Since <code>claudeCode</code> uses commercial AI APIs (like Anthropic's Claude 3.5 Sonnet), every request costs a fraction of a cent. If you run a loop for hours, those fractions add up.
+</p>
+<p>
+<strong>Cost Tracking</strong> is the system's "Taxi Meter." It counts every token used, applies the correct price, and keeps a running total so you never get "Bill Shock."
+</p>
+<h2 id="what-is-cost-tracking">What is Cost Tracking?</h2>
+<p>
+Cost Tracking is a background utility that listens to every interaction with the AI. It captures the "Usage Statistics" returned by the API and converts them into dollars and cents.
+</p>
+<h3 id="the-central-use-case-the-budget-check">The Central Use Case: "The Budget Check"</h3>
+<p>
+Imagine you are using <code>claudeCode</code> to refactor a large project. You've been working for 30 minutes. You want to know:
+</p>
+<ol>
+<li>How much money have I spent so far?</li>
+</ol>
+<ol>
+<li>Which model is costing the most?</li>
+</ol>
+<ol>
+<li>How many tokens did I save using caching?</li>
+</ol>
+<p>
+Without Cost Tracking, you would have to log into your API provider's dashboard and guess which costs came from this specific session.
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+To understand the code, we need to understand how AI billing works.
+</p>
+<h3 id="1-the-token">1. The Token</h3>
+<p>
+AI models don't read words; they read "Tokens" (chunks of characters). Usage is billed per million tokens.
+</p>
+<ul>
+<li><strong>Input Tokens:</strong> What you send to the AI (Code files, chat history).</li>
+<li><strong>Output Tokens:</strong> What the AI writes back (Code fixes, explanations).</li>
+<li><strong>Note:</strong> Output is usually much more expensive than Input.</li>
+</ul>
+<h3 id="2-prompt-caching">2. Prompt Caching</h3>
+<p>
+<code>claudeCode</code> sends your project's file structure with every message. To save money, we use <strong>Prompt Caching</strong>.
+</p>
+<ul>
+<li><strong>Cache Write:</strong> The first time we send the files, we pay a bit more to save them on the server.</li>
+<li><strong>Cache Read:</strong> The next time we send the <em>exact same</em> files, we pay significantly less (often 90% cheaper).</li>
+</ul>
+<p>
+Our tracker must distinguish between "Normal Input," "Cache Write," and "Cache Read" to calculate the price accurately.
+</p>
+<h3 id="3-session-persistence">3. Session Persistence</h3>
+<p>
+If you close <code>claudeCode</code> and open it again tomorrow, you might want to resume where you left off. The Cost Tracker saves your spending history into a config file so the "Taxi Meter" doesn't reset to zero accidentally.
+</p>
+<h2 id="how-to-use-cost-tracking">How to Use Cost Tracking</h2>
+<p>
+As a developer using the <code>claudeCode</code> source, you mostly interact with this module to <strong>display</strong> information.
+</p>
+<h3 id="displaying-the-total">displaying the Total</h3>
+<p>
+The most common function is <code>formatTotalCost()</code>. This generates a pretty string summary of the current session.
+</p>
+<pre data-lang="typescript"><code>import { formatTotalCost } from './cost-tracker';
+
+function showSummary() {
+  // Returns a string like:
+  // "Total cost: $0.45"
+  // "Total duration: 5m 30s"
+  console.log(formatTotalCost());
+}
+</code></pre>
+<h3 id="getting-raw-numbers">Getting Raw Numbers</h3>
+<p>
+If you need to make decisions based on cost (e.g., "Stop if cost > $5.00"), you can get the raw number.
+</p>
+<pre data-lang="typescript"><code>import { getTotalCost } from './cost-tracker';
+
+function checkBudget() {
+  const currentSpend = getTotalCost();
+  
+  if (currentSpend &gt; 5.00) {
+    console.warn("Budget limit reached!");
+  }
+}
+</code></pre>
+<h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
+<p>
+The Cost Tracker is a passive listener. It waits for the <a href="03<em>query</em>engine.md">Query Engine</a> to finish a request, grabs the receipt, and adds it to the pile.
+</p>
+<ol>
+<li><strong>Request:</strong> The app sends a message to Claude.</li>
+</ol>
+<ol>
+<li><strong>Response:</strong> The API returns the text <em>plus</em> a %%INLINE<em>6%% object (e.g., %%INLINE</em>7%%).</li>
+</ol>
+<ol>
+<li><strong>Calculation:</strong> We look up the price of the specific model used (e.g., Claude 3.5 Sonnet).</li>
+</ol>
+<ol>
+<li><strong>Update:</strong> We add the cost to the global <a href="01<em>state</em>management.md">State Management</a> store.</li>
+</ol>
+<ol>
+<li><strong>Persistence:</strong> We save this new total to a JSON file on disk.</li>
+</ol>
+<p>
+Here is the visual flow:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant API as Anthropic API
+    participant Tracker as Cost Tracker
+    participant Store as Global State
+    participant UI as Ink UI
+
+    API--&gt;&gt;Tracker: Response + Usage Data
+    
+    Note over Tracker: Calculate Cost
+    Note over Tracker: (Tokens * Price)
+    
+    Tracker-&gt;&gt;Store: Add to Total ($0.02)
+    Tracker-&gt;&gt;Store: Add to Token Count (500)
+    
+    Tracker-&gt;&gt;UI: Update Display
+    UI--&gt;&gt;User: Shows "$0.15"</div></div>
+<h3 id="internal-implementation-code">Internal Implementation Code</h3>
+<p>
+Let's look at <code>cost-tracker.ts</code> to see how the math happens.
+</p>
+<h4 id="1-adding-the-cost">1. Adding the Cost</h4>
+<p>
+When a request finishes, we call <code>addToTotalSessionCost</code>. This function updates our running counters.
+</p>
+<pre data-lang="typescript"><code>// cost-tracker.ts
+
+export function addToTotalSessionCost(cost, usage, model) {
+  // 1. Update the internal state for the specific model
+  const modelUsage = addToTotalModelUsage(cost, usage, model);
+  
+  // 2. Update the grand total in the global store
+  addToTotalCostState(cost, modelUsage, model);
+
+  // 3. Log analytics for telemetry (optional)
+  getTokenCounter()?.add(usage.input_tokens, { type: 'input' });
+  
+  return cost;
+}
+</code></pre>
+<p>
+<em>Explanation: This acts as the central register. It takes the calculated %%INLINE<em>10%% and the raw %%INLINE</em>11%% numbers and ensures they are stored in the Global State.</em>
+</p>
+<h4 id="2-formatting-the-report">2. Formatting the Report</h4>
+<p>
+We need to present this data clearly. This function builds the summary text you see at the end of a session.
+</p>
+<pre data-lang="typescript"><code>// cost-tracker.ts
+
+export function formatTotalCost() {
+  // Get the USD value nicely formatted (e.g., "$0.12")
+  const costDisplay = formatCost(getTotalCostUSD());
+
+  // Return a multi-line string with stats
+  return `Total cost:            ${costDisplay}\n` +
+         `Total duration (API):  ${formatDuration(getTotalAPIDuration())}\n` +
+         `Total code changes:    ${getTotalLinesAdded()} lines added`;
+}
+</code></pre>
+<p>
+<em>Explanation: <code>formatTotalCost</code> aggregates data from multiple sources (Cost, Duration, Git Lines Changed) into a single readable report.</em>
+</p>
+<h4 id="3-saving-between-sessions">3. Saving Between Sessions</h4>
+<p>
+This ensures your "Meter" is saved to disk.
+</p>
+<pre data-lang="typescript"><code>// cost-tracker.ts
+
+export function saveCurrentSessionCosts(fpsMetrics) {
+  // Updates the project configuration file
+  saveCurrentProjectConfig(current =&gt; ({
+    ...current,
+    lastCost: getTotalCostUSD(),
+    lastTotalInputTokens: getTotalInputTokens(),
+    lastSessionId: getSessionId(), // Verify owner
+  }));
+}
+</code></pre>
+<p>
+<em>Explanation: We save the data into %%INLINE<em>13%%. When you restart the app, %%INLINE</em>14%% (not shown here) reads this back into memory.</em>
+</p>
+<h2 id="why-is-this-important">Why is this important?</h2>
+<p>
+Cost Tracking provides transparency.
+</p>
+<ul>
+<li><strong>Trust:</strong> Users trust the tool more when they can see exactly what it costs.</li>
+<li><strong>Optimization:</strong> By seeing "Cache Write" vs "Cache Read" stats, developers can optimize their prompts to save money.</li>
+<li><strong>Safety:</strong> It prevents runaway scripts (like an infinite loop in <a href="18<em>computer</em>use.md">Computer Use</a>) from draining a bank account unnoticed.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have reached the end of the <code>claudeCode</code> tutorial series!
+</p>
+<p>
+In this final chapter, you learned that <strong>Cost Tracking</strong> is the accounting department of the application. It captures token usage from every API call, calculates the USD cost (accounting for complex things like Caching), and persists this data so the user always knows the price of their productivity.
+</p>
+<h3 id="series-wrap-up">Series Wrap-Up</h3>
+<p>
+We have covered an immense amount of ground:
+</p>
+<ol>
+<li>We built a brain with <strong><a href="01<em>state</em>management.md">State Management</a></strong>.</li>
+</ol>
+<ol>
+<li>We gave it a face with <strong><a href="02<em>ink</em>ui_framework.md">Ink UI Framework</a></strong>.</li>
+</ol>
+<ol>
+<li>We gave it agency with the <strong><a href="03<em>query</em>engine.md">Query Engine</a></strong>.</li>
+</ol>
+<ol>
+<li>We gave it hands to code (<strong><a href="04<em>fileedittool.md">FileEditTool</a></strong>) and run commands (<strong><a href="06</em>bashtool.md">BashTool</a></strong>).</li>
+</ol>
+<ol>
+<li>We secured it with <strong><a href="07<em>shell</em>safety<em>checks.md">Shell Safety Checks</a></strong> and <strong><a href="08</em>permission<em>_</em>security_system.md">Permissions</a></strong>.</li>
+</ol>
+<ol>
+<li>We expanded its mind with <strong><a href="14<em>model</em>context<em>protocol</em><em>mcp</em>.md">MCP</a></strong> and <strong><a href="16_teammates.md">Teammates</a></strong>.</li>
+</ol>
+<ol>
+<li>And finally, we learned to track the bill with <strong>Cost Tracking</strong>.</li>
+</ol>
+<p>
+You now understand the architecture of a modern, agentic AI developer tool. Thank you for reading!
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="18-computer-use.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">Computer Use</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#what-is-cost-tracking">What is Cost Tracking?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case-the-budget-check">The Central Use Case: "The Budget Check"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-token">1. The Token</a></li>
+<li style="padding-left:10px"><a href="#2-prompt-caching">2. Prompt Caching</a></li>
+<li style="padding-left:10px"><a href="#3-session-persistence">3. Session Persistence</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-cost-tracking">How to Use Cost Tracking</a></li>
+<li style="padding-left:10px"><a href="#displaying-the-total">displaying the Total</a></li>
+<li style="padding-left:10px"><a href="#getting-raw-numbers">Getting Raw Numbers</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-how-it-works">Under the Hood: How it Works</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-code">Internal Implementation Code</a></li>
+<li style="padding-left:0px"><a href="#why-is-this-important">Why is this important?</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li>
+<li style="padding-left:10px"><a href="#series-wrap-up">Series Wrap-Up</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

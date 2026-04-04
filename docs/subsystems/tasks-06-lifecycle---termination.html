@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 6: Lifecycle & Termination — tasks/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">tasks/06_lifecycle___termination.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">📋 tasks/ · 06_lifecycle___termination.md</div>
+  <h1 class="chapter-title-h1">Chapter 6: Lifecycle & Termination</h1>
+  <div class="chapter-meta"><span>📄 tasks/06_lifecycle___termination.md</span></div>
+</div>
+<h1 id="chapter-6-lifecycle-termination">Chapter 6: Lifecycle & Termination</h1>
+<p>
+In the <a href="05<em>task</em>visibility<em>_</em>summarization.md">previous chapter</a>, we built a dashboard to see all our running tasks. We learned how to filter them and summarize them into a neat little "Pill" in the footer.
+</p>
+<p>
+But looking at tasks is easy. The hard part is <strong>ending</strong> them.
+</p>
+<h2 id="the-problem-the-zombie-tenant">The Problem: The "Zombie" Tenant</h2>
+<p>
+Imagine you start a task that runs a server: <code>npm start</code>. It listens on port 3000.
+ 
+Then, you delete that task from your dashboard list.
+</p>
+<p>
+If you didn't do it right, the dashboard list is empty, but your computer is <strong>still running the server</strong> in the background. If you try to start a new one, it crashes because "Port 3000 is already in use."
+</p>
+<p>
+This is a <strong>Zombie Task</strong>. It's dead in your application's memory, but alive in the Operating System.
+</p>
+<p>
+We need a standardized way to ensure that when we say "Stop," we mean "Stop, Kill, and Clean Up."
+</p>
+<h2 id="the-solution-the-facility-manager">The Solution: The Facility Manager</h2>
+<p>
+Think of our Lifecycle & Termination system as a <strong>Facility Manager</strong> for an apartment building.
+</p>
+<p>
+When a tenant (Task) gets evicted (Stopped):
+</p>
+<ol>
+<li><strong>Eviction:</strong> The Manager forces them to leave (Kills the process).</li>
+</ol>
+<ol>
+<li><strong>Utilities:</strong> The Manager turns off the lights and water (Stops timers/watchdogs).</li>
+</ol>
+<ol>
+<li><strong>Cleanup:</strong> The Manager clears out the furniture left behind (Deletes temporary log files).</li>
+</ol>
+<p>
+This ensures the "room" (System Resources) is ready for the next tenant.
+</p>
+<h2 id="how-to-use-it-one-function-to-rule-them-all">How to Use It: One Function to Rule Them All</h2>
+<p>
+As a developer using this system, you don't need to know <em>how</em> a specific task works to stop it. You just need its ID.
+</p>
+<p>
+We use a universal function called <code>stopTask</code>.
+</p>
+<pre data-lang="typescript"><code>// Example: The user clicked the "Stop" button in the UI
+try {
+  await stopTask('task-123', context);
+  console.log("Task stopped successfully.");
+} catch (error) {
+  console.error("Could not stop task:", error.message);
+}
+</code></pre>
+<p>
+<strong>What happens here:</strong>
+</p>
+<ol>
+<li><strong>Input:</strong> You provide the ID <code>task-123</code>.</li>
+</ol>
+<ol>
+<li><strong>Processing:</strong> The system figures out if it's a Shell command, an AI Agent, or a Teammate.</li>
+</ol>
+<ol>
+<li><strong>Result:</strong> The task stops running, and the UI updates to show it is stopped.</li>
+</ol>
+<h2 id="internal-implementation">Internal Implementation</h2>
+<p>
+How does <code>stopTask</code> handle the differences between an AI Agent (which is just a network request) and a Shell Command (which is an OS process)?
+</p>
+<h3 id="visual-walkthrough">Visual Walkthrough</h3>
+<p>
+It uses the <strong>Polymorphism</strong> we learned in <a href="01<em>task</em>state_polymorphism.md">Chapter 1</a>.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant U as User
+    participant S as stopTask.ts
+    participant I as Implementation
+    participant OS as Operating System
+
+    U-&gt;&gt;S: stopTask("123")
+    
+    note over S: 1. Safety Checks
+    S-&gt;&gt;S: Is it running? Yes.
+    S-&gt;&gt;S: What type is it? 'local_bash'
+    
+    note over S: 2. Delegate
+    S-&gt;&gt;I: getTaskByType('local_bash').kill()
+    
+    note over I: 3. The "Hitman"
+    I-&gt;&gt;OS: Send SIGKILL to Process
+    I-&gt;&gt;OS: Delete temp log files
+    
+    I--&gt;&gt;S: Done
+    S--&gt;&gt;U: Success</div></div>
+<h3 id="code-deep-dive">Code Deep Dive</h3>
+<p>
+Let's look at the actual code that orchestrates this.
+</p>
+<h4 id="step-1-the-universal-stop-logic">Step 1: The Universal Stop Logic</h4>
+<p>
+In <code>stopTask.ts</code>, we perform checks that apply to <em>every</em> task, regardless of type.
+</p>
+<pre data-lang="typescript"><code>// From stopTask.ts
+export async function stopTask(taskId: string, context: ...): Promise&lt;Result&gt; {
+  const task = appState.tasks[taskId]
+
+  // Check 1: Does it exist?
+  if (!task) throw new StopTaskError('Task not found', 'not_found')
+
+  // Check 2: Is it actually running?
+  if (task.status !== 'running') {
+    throw new StopTaskError('Task is not running', 'not_running')
+  }
+
+  // Check 3: Find the specific "driver" for this task type
+  const taskImpl = getTaskByType(task.type)
+  
+  // Delegate the actual killing to the implementation
+  await taskImpl.kill(taskId, setAppState)
+}
+</code></pre>
+<h4 id="step-2-the-specific-kill-logic-shell">Step 2: The Specific Kill Logic (Shell)</h4>
+<p>
+Now, let's look at what %%INLINE<em>5%% actually does for a <strong>Local Shell Task</strong> (from <a href="02</em>local<em>shell</em>execution.md">Chapter 2</a>). This code lives in <code>LocalShellTask/killShellTasks.ts</code>.
+</p>
+<p>
+It has to do three things: Kill the process, Stop the Watchdog, and Update the State.
+</p>
+<pre data-lang="typescript"><code>// From LocalShellTask/killShellTasks.ts
+export function killTask(taskId: string, setAppState: SetAppStateFn): void {
+  updateTaskState(taskId, setAppState, task =&gt; {
+    // 1. Kill the OS Process (The "Eviction")
+    task.shellCommand?.kill() 
+    
+    // 2. Stop the Watchdog Timer (Turn off utilities)
+    if (task.cleanupTimeoutId) {
+      clearTimeout(task.cleanupTimeoutId)
+    }
+
+    // 3. Mark as dead in the UI
+    return { ...task, status: 'killed', endTime: Date.now() }
+  })
+  
+  // 4. Clean up the hard drive (Remove furniture)
+  void evictTaskOutput(taskId)
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li><code>shellCommand?.kill()</code>: Sends the signal to the Operating System to stop the command immediately.</li>
+<li><code>clearTimeout</code>: Stops the "Stall Watchdog" (from Chapter 2) so it doesn't try to alert us about a dead task.</li>
+<li><code>evictTaskOutput</code>: Deletes the temporary text file where logs were stored.</li>
+</ul>
+<h2 id="advanced-concept-cascading-termination">Advanced Concept: Cascading Termination</h2>
+<p>
+There is one more complex scenario: <strong>Sub-contractors</strong>.
+</p>
+<p>
+In <a href="03<em>background</em>agent_execution.md">Chapter 3</a>, we learned that an Agent can run shell commands.
+ 
+If you fire the Agent (stop the main task), you must also fire the commands it started.
+</p>
+<p>
+If you don't, the Agent stops "thinking," but the <code>npm install</code> it started keeps running forever.
+</p>
+<p>
+We handle this with <code>killShellTasksForAgent</code>.
+</p>
+<pre data-lang="typescript"><code>// From LocalShellTask/killShellTasks.ts
+export function killShellTasksForAgent(agentId: string, ...): void {
+  // Loop through ALL tasks
+  for (const [taskId, task] of Object.entries(tasks)) {
+    
+    // If it's a shell task AND it belongs to this agent...
+    if (isLocalShellTask(task) &amp;&amp; task.agentId === agentId) {
+      
+      // ...kill it too!
+      killTask(taskId, setAppState)
+    }
+  }
+}
+</code></pre>
+<p>
+This ensures that when the "Boss" leaves, the entire department is shut down cleanly.
+</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+In this final chapter, we learned:
+</p>
+<ol>
+<li><strong>Lifecycle Management</strong> is critical to prevent "Zombie" processes.</li>
+</ol>
+<ol>
+<li>We use a <strong>Facility Manager</strong> approach: Evict (Kill), Turn off utilities (Timers), and Cleanup (Files).</li>
+</ol>
+<ol>
+<li><strong><code>stopTask</code></strong> is the polymorphic entry point that handles safety checks.</li>
+</ol>
+<ol>
+<li><strong>Cascading Termination</strong> ensures that sub-tasks are killed when their parent is stopped.</li>
+</ol>
+<h3 id="series-summary">Series Summary</h3>
+<p>
+Congratulations! You have completed the <strong>Tasks</strong> project tutorial. You now understand the full architecture:
+</p>
+<ol>
+<li><strong><a href="01<em>task</em>state_polymorphism.md">Polymorphism</a>:</strong> How we treat different things as "Tasks".</li>
+</ol>
+<ol>
+<li><strong><a href="02<em>local</em>shell_execution.md">Shell Execution</a>:</strong> Running raw commands with watchdogs.</li>
+</ol>
+<ol>
+<li><strong><a href="03<em>background</em>agent_execution.md">Agents</a>:</strong> Running async AI contractors.</li>
+</ol>
+<ol>
+<li><strong><a href="04<em>in</em>process_teammates.md">Teammates</a>:</strong> Interactive co-pilots with memory.</li>
+</ol>
+<ol>
+<li><strong><a href="05<em>task</em>visibility<em>_</em>summarization.md">Visibility</a>:</strong> Seeing what is running.</li>
+</ol>
+<ol>
+<li><strong>Lifecycle:</strong> Cleaning up the mess.</li>
+</ol>
+<p>
+You are now ready to build your own robust, multi-tasking AI applications!
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="tasks.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">tasks/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-zombie-tenant">The Problem: The "Zombie" Tenant</a></li>
+<li style="padding-left:0px"><a href="#the-solution-the-facility-manager">The Solution: The Facility Manager</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it-one-function-to-rule-them-all">How to Use It: One Function to Rule Them All</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#visual-walkthrough">Visual Walkthrough</a></li>
+<li style="padding-left:10px"><a href="#code-deep-dive">Code Deep Dive</a></li>
+<li style="padding-left:0px"><a href="#advanced-concept-cascading-termination">Advanced Concept: Cascading Termination</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li>
+<li style="padding-left:10px"><a href="#series-summary">Series Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

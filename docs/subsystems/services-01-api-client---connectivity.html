@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 1: API Client & Connectivity — services/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">services/01_api_client___connectivity.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⚡ services/ · 01_api_client___connectivity.md</div>
+  <h1 class="chapter-title-h1">Chapter 1: API Client & Connectivity</h1>
+  <div class="chapter-meta"><span>📄 services/01_api_client___connectivity.md</span></div>
+</div>
+<h1 id="chapter-1-api-client-connectivity">Chapter 1: API Client & Connectivity</h1>
+<p>
+Welcome to the first chapter of the <strong>Services</strong> project tutorial!
+</p>
+<p>
+Before we can make an AI "think," "remember," or "act," we first need a reliable way to talk to it. This layer acts as the <strong>Universal Adapter</strong> for our application.
+</p>
+<h2 id="1-the-big-picture-a-universal-adapter">1. The Big Picture: A Universal Adapter</h2>
+<p>
+Imagine you are traveling internationally. Every country has different electrical outlets. If you want to charge your phone, you don't want to rewire the wall; you just want a <strong>universal travel adapter</strong> that fits into any socket and gives you power.
+</p>
+<p>
+In this project, the <strong>API Client</strong> is that adapter.
+</p>
+<p>
+We might need to connect to:
+</p>
+<ol>
+<li><strong>Anthropic's Direct API</strong></li>
+</ol>
+<ol>
+<li><strong>AWS Bedrock</strong></li>
+</ol>
+<ol>
+<li><strong>Google Cloud Vertex AI</strong></li>
+</ol>
+<ol>
+<li><strong>Microsoft Azure (Foundry)</strong></li>
+</ol>
+<p>
+Each of these providers requires different passwords (API keys or OAuth tokens) and speaks a slightly different technical dialect. The <strong>API Client</strong> hides all this complexity. The rest of our app simply asks, <em>"Please send this message to Claude,"</em> and the client handles the rest.
+</p>
+<h3 id="central-use-case">Central Use Case</h3>
+<p>
+<strong>Goal:</strong> The user types "Hello, World!" in the terminal. We want to send this to the fastest available AI model and get a text response, regardless of which cloud provider is running underneath.
+</p>
+<h2 id="2-key-concepts">2. Key Concepts</h2>
+<h3 id="a-authentication-the-badge-vs-the-password">A. Authentication (The Badge vs. The Password)</h3>
+<p>
+We support two main ways to prove who we are:
+</p>
+<ol>
+<li><strong>API Keys:</strong> Like a secret password (<code>sk-ant-...</code>). Simple and direct.</li>
+</ol>
+<ol>
+<li><strong>OAuth:</strong> Like an ID badge. You log in via a browser, and we get a "token" that expires and refreshes automatically. This is used for Claude.ai subscribers.</li>
+</ol>
+<h3 id="b-provider-selection">B. Provider Selection</h3>
+<p>
+The system checks environment variables (like <code>CLAUDE_CODE_USE_BEDROCK</code>) to decide which "Cloud Cloud" to call. It initializes the correct software development kit (SDK) for that specific cloud.
+</p>
+<h3 id="c-rate-limiting-the-traffic-light">C. Rate Limiting (The Traffic Light)</h3>
+<p>
+AI services have limits on how much you can talk to them per minute or hour. Our client checks these limits <em>before</em> making a request to avoid getting errors.
+</p>
+<hr>
+<h2 id="3-using-the-client">3. Using the Client</h2>
+<p>
+To use this layer, you generally don't create a <code>new Client()</code> manually. Instead, you ask a helper function to build one for you.
+</p>
+<h3 id="step-1-getting-the-client">Step 1: Getting the Client</h3>
+<p>
+This function looks at your configuration and gives you a ready-to-use object.
+</p>
+<pre data-lang="typescript"><code>// From services/api/client.ts
+import { getAnthropicClient } from './api/client.js'
+
+// Ask for a client ready to talk to a specific model
+const client = await getAnthropicClient({
+  maxRetries: 3,
+  model: 'claude-3-5-sonnet-20240620',
+  source: 'tutorial_demo' 
+})
+</code></pre>
+<p>
+<em>Explanation: We request a client. We don't need to pass API keys here; <code>getAnthropicClient</code> automatically finds them in the system config.</em>
+</p>
+<h3 id="step-2-making-a-request">Step 2: Making a Request</h3>
+<p>
+Now that we have the <code>client</code>, we can send a message.
+</p>
+<pre data-lang="typescript"><code>const response = await client.messages.create({
+  model: 'claude-3-5-sonnet-20240620',
+  max_tokens: 1024,
+  messages: [{ role: 'user', content: 'Hello!' }]
+})
+
+console.log(response.content[0].text)
+</code></pre>
+<p>
+<em>Explanation: This looks standard, but under the hood, this request might be routing through AWS, Google, or Anthropic directly depending on your setup.</em>
+</p>
+<hr>
+<h2 id="4-under-the-hood-how-it-works">4. Under the Hood: How It Works</h2>
+<p>
+When you call <code>getAnthropicClient</code>, a series of checks happens instantly to configure your connection.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant App as Application
+    participant Factory as Client Factory
+    participant Auth as Auth System
+    participant Limits as Rate Limiter
+    participant Cloud as Cloud Provider
+
+    App-&gt;&gt;Factory: "I need a client for Claude 3.5"
+    Factory-&gt;&gt;Auth: "Do we have a valid token?"
+    Auth--&gt;&gt;Factory: "Yes, here is the Access Token"
+    
+    Factory-&gt;&gt;Factory: Check Env Vars (AWS? GCP?)
+    
+    App-&gt;&gt;Factory: client.messages.create(...)
+    Factory-&gt;&gt;Limits: "Do we have quota left?"
+    Limits--&gt;&gt;Factory: "Green light"
+    
+    Factory-&gt;&gt;Cloud: Send HTTP Request
+    Cloud--&gt;&gt;App: Return AI Response</div></div>
+<h3 id="internal-implementation-details">Internal Implementation Details</h3>
+<p>
+Let's look at the actual code that makes this "Universal Adapter" work.
+</p>
+<h4 id="1-the-factory-function-inline-6">1. The Factory Function (<code>api/client.ts</code>)</h4>
+<p>
+This is the heart of the connectivity layer. It decides which SDK to load.
+</p>
+<pre data-lang="typescript"><code>// services/api/client.ts (Simplified)
+export async function getAnthropicClient({ apiKey, model }) {
+  // 1. Check for specific cloud flags
+  if (process.env.CLAUDE_CODE_USE_BEDROCK) {
+    const { AnthropicBedrock } = await import('@anthropic-ai/bedrock-sdk')
+    return new AnthropicBedrock({ /* AWS credentials */ })
+  }
+  
+  if (process.env.CLAUDE_CODE_USE_VERTEX) {
+    const { AnthropicVertex } = await import('@anthropic-ai/vertex-sdk')
+    return new AnthropicVertex({ /* Google credentials */ })
+  }
+
+  // 2. Default to standard Anthropic API
+  return new Anthropic({ apiKey: getAnthropicApiKey() })
+}
+</code></pre>
+<p>
+<em>Explanation: This function acts like a railway switch. If it sees the <code>BEDROCK</code> flag, it switches tracks to AWS. Otherwise, it defaults to the standard API.</em>
+</p>
+<h4 id="2-handling-oauth-refresh-inline-8">2. Handling OAuth Refresh (<code>oauth/client.ts</code>)</h4>
+<p>
+If we are using OAuth (the "ID Badge"), the badge might expire. We handle this automatically so the user isn't interrupted.
+</p>
+<pre data-lang="typescript"><code>// services/oauth/client.ts
+export async function refreshOAuthToken(refreshToken: string) {
+  // Call the token URL to trade an old token for a new one
+  const response = await axios.post(getOauthConfig().TOKEN_URL, {
+    grant_type: 'refresh_token',
+    refresh_token: refreshToken,
+    client_id: getOauthConfig().CLIENT_ID,
+  })
+
+  // Returns new access token + new expiration date
+  return {
+    accessToken: response.data.access_token,
+    expiresAt: Date.now() + response.data.expires_in * 1000
+  }
+}
+</code></pre>
+<p>
+<em>Explanation: Before every request, we check if the token is valid. If it's about to expire, this function quietly runs in the background to keep the connection alive.</em>
+</p>
+<h4 id="3-checking-limits-inline-9">3. Checking Limits (<code>claudeAiLimits.ts</code>)</h4>
+<p>
+We don't want to hit a wall. We check our "gas tank" (quota) frequently.
+</p>
+<pre data-lang="typescript"><code>// services/claudeAiLimits.ts
+export async function checkQuotaStatus(): Promise&lt;void&gt; {
+  // Make a tiny, cheap request to check headers
+  try {
+    const raw = await makeTestQuery()
+    // Read the "remaining-requests" headers from the response
+    extractQuotaStatusFromHeaders(raw.headers)
+  } catch (error) {
+    // If we get a 429 (Too Many Requests), we stop traffic
+    if (error.status === 429) {
+      emitStatusChange({ status: 'rejected' })
+    }
+  }
+}
+</code></pre>
+<p>
+<em>Explanation: This layer acts as a safety guard. It parses special headers returned by the API (like <code>anthropic-ratelimit-unified-reset</code>) to calculate if we need to slow down.</em>
+</p>
+<h2 id="5-summary">5. Summary</h2>
+<p>
+We have established a robust communication line.
+</p>
+<ol>
+<li><strong>Universal Adapter:</strong> We don't care if it's AWS, GCP, or Direct; the code works the same.</li>
+</ol>
+<ol>
+<li><strong>Auto-Auth:</strong> Passwords and Tokens are managed for us.</li>
+</ol>
+<ol>
+<li><strong>Safety:</strong> Rate limits are monitored to prevent crashes.</li>
+</ol>
+<p>
+Now that we can receive raw text from the AI, we need to make sure the AI remembers what we said five minutes ago. Raw text has no memory!
+</p>
+<p>
+<a href="02<em>memory</em><em>_knowledge</em>extraction.md">Next Chapter: Memory & Knowledge Extraction</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="services.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">services/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#1-the-big-picture-a-universal-adapter">1. The Big Picture: A Universal Adapter</a></li>
+<li style="padding-left:10px"><a href="#central-use-case">Central Use Case</a></li>
+<li style="padding-left:0px"><a href="#2-key-concepts">2. Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#a-authentication-the-badge-vs-the-password">A. Authentication (The Badge vs. The Password)</a></li>
+<li style="padding-left:10px"><a href="#b-provider-selection">B. Provider Selection</a></li>
+<li style="padding-left:10px"><a href="#c-rate-limiting-the-traffic-light">C. Rate Limiting (The Traffic Light)</a></li>
+<li style="padding-left:0px"><a href="#3-using-the-client">3. Using the Client</a></li>
+<li style="padding-left:10px"><a href="#step-1-getting-the-client">Step 1: Getting the Client</a></li>
+<li style="padding-left:10px"><a href="#step-2-making-a-request">Step 2: Making a Request</a></li>
+<li style="padding-left:0px"><a href="#4-under-the-hood-how-it-works">4. Under the Hood: How It Works</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-details">Internal Implementation Details</a></li>
+<li style="padding-left:0px"><a href="#5-summary">5. Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

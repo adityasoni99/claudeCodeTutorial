@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: Voice State Manager — context/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">context/04_voice_state_manager.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">💬 context/ · 04_voice_state_manager.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: Voice State Manager</h1>
+  <div class="chapter-meta"><span>📄 context/04_voice_state_manager.md</span></div>
+</div>
+<h1 id="chapter-4-voice-state-manager">Chapter 4: Voice State Manager</h1>
+<p>
+Welcome back! In the previous chapter, <a href="03<em>message</em>handling<em>_</em>queues.md">Message Handling & Queues</a>, we learned how to let different parts of our application talk to each other using a "Mailbox."
+</p>
+<p>
+Now we face a performance challenge. We want to add <strong>Voice Input</strong> to our terminal. This introduces a specific problem: Audio data changes <em>extremely</em> fast.
+</p>
+<h2 id="the-problem-the-town-crier">The Problem: "The Town Crier"</h2>
+<p>
+In standard React, when you update state, the component re-renders. If that component is high up in the tree (like <code>AppRoot</code>), the <strong>entire application</strong> re-renders.
+</p>
+<p>
+Imagine your microphone hardware. It reports the volume level (to draw a visualizer) about <strong>60 times per second</strong>.
+</p>
+<p>
+If we treat this volume level like normal state:
+</p>
+<ol>
+<li>Microphone says: "Volume is 10%."</li>
+</ol>
+<ol>
+<li>App says: "State changed! <strong>Redraw the entire screen!</strong>"</li>
+</ol>
+<ol>
+<li>Microphone says: "Volume is 12%."</li>
+</ol>
+<ol>
+<li>App says: "State changed! <strong>Redraw the entire screen!</strong>"</li>
+</ol>
+<p>
+<strong>The Result:</strong> Your app freezes, the fans spin up, and the UI becomes unresponsive because it is trying to rebuild the whole world 60 times a second.
+</p>
+<p>
+This chapter introduces the <strong>Voice State Manager</strong>, a specialized store designed to handle high-frequency updates without slowing down the rest of the app.
+</p>
+<hr>
+<h2 id="the-solution-the-sidecar-store">The Solution: The "Sidecar" Store</h2>
+<p>
+We need a place to store data that lives <em>outside</em> the main React tree.
+</p>
+<p>
+Think of the <strong>Voice State Manager</strong> as a "Sidecar" attached to your motorcycle (the App).
+</p>
+<ul>
+<li>The Sidecar holds the noisy, fast-changing data (Volume, Status, Transcript).</li>
+<li>The Motorcycle (Main App) drives smoothly, ignoring the Sidecar most of the time.</li>
+<li>Only specific passengers (like a <code>VolumeBar</code> component) look at the Sidecar.</li>
+</ul>
+<h3 id="key-concept-selectors">Key Concept: Selectors</h3>
+<p>
+To make this work, components must be picky. They shouldn't listen to <em>all</em> voice changes. They should <strong>Select</strong> only what they need.
+</p>
+<ul>
+<li><strong>Status Icon:</strong> Only cares if <code>voiceState</code> changes (Idle -> Recording). It ignores volume changes.</li>
+<li><strong>Volume Bar:</strong> Only cares if <code>voiceAudioLevels</code> changes. It ignores transcript changes.</li>
+</ul>
+<hr>
+<h2 id="usage-example-building-a-voice-ui">Usage Example: Building a Voice UI</h2>
+<p>
+Let's build a simple UI that shows a status text ("Listening...") and a volume number.
+</p>
+<h3 id="1-reading-state-with-selectors">1. Reading State with Selectors</h3>
+<p>
+We use the hook <code>useVoiceState</code>. Crucially, we pass it a <strong>Selector Function</strong>. This function tells the store exactly which piece of data we care about.
+</p>
+<pre data-lang="tsx"><code>import { useVoiceState } from './voice';
+
+function StatusLabel() {
+  // Only re-render when 'voiceState' changes
+  // Ignore volume updates!
+  const status = useVoiceState(s =&gt; s.voiceState);
+
+  return &lt;Text&gt;Status: {status}&lt;/Text&gt;;
+}
+</code></pre>
+<p>
+<strong>What happens?</strong>
+ 
+Even if the microphone volume changes 500 times, %%INLINE<em>5%% will <strong>not</strong> re-render. It stays asleep until %%INLINE</em>6%% flips from 'idle' to 'recording'.
+</p>
+<h3 id="2-handling-high-frequency-data">2. Handling High Frequency Data</h3>
+<p>
+Now let's look at the component that <em>does</em> want the high-speed data.
+</p>
+<pre data-lang="tsx"><code>import { useVoiceState } from './voice';
+
+function VolumeMeter() {
+  // I WANT the high frequency updates!
+  const levels = useVoiceState(s =&gt; s.voiceAudioLevels);
+  const volume = levels[0] || 0; // Get first channel
+
+  return &lt;Text&gt;Volume: {volume}&lt;/Text&gt;;
+}
+</code></pre>
+<p>
+<strong>What happens?</strong>
+ 
+<code>VolumeMeter</code> will re-render constantly (60fps) to animate the volume. However, because it is isolated, it <strong>only</strong> redraws this one tiny text element. The rest of your heavy application stays completely still.
+</p>
+<h3 id="3-updating-the-state">3. Updating the State</h3>
+<p>
+To change the state (e.g., when the user presses a key to start recording), we use <code>useSetVoiceState</code>.
+</p>
+<pre data-lang="tsx"><code>import { useSetVoiceState } from './voice';
+
+function RecordButton() {
+  // This hook is stable. It never causes re-renders.
+  const setVoice = useSetVoiceState();
+
+  return (
+    &lt;Button onPress={() =&gt; {
+      // Direct update to the sidecar store
+      setVoice({ voiceState: 'recording' });
+    }}&gt;
+      Record
+    &lt;/Button&gt;
+  );
+}
+</code></pre>
+<hr>
+<h2 id="internal-implementation-under-the-hood">Internal Implementation: Under the Hood</h2>
+<p>
+How does this "Sidecar" actually work? It uses a pattern called <strong>External Store Subscription</strong>.
+</p>
+<h3 id="the-flow">The Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Mic as Microphone
+    participant Store as VoiceStore (Sidecar)
+    participant VolComp as VolumeComponent
+    participant MainApp as Main Application
+
+    Mic-&gt;&gt;Store: Volume = 50%
+    Note right of Store: Updates internal value.
+    
+    Store-&gt;&gt;VolComp: "Hey, volume changed!"
+    VolComp-&gt;&gt;VolComp: Re-renders (Fast)
+    
+    Store--X MainApp: (No notification sent)
+    Note right of MainApp: Ignores update. No lag.</div></div>
+<h3 id="code-walkthrough">Code Walkthrough</h3>
+<p>
+Let's examine %%INLINE<em>9%%. It relies on a powerful React hook called %%INLINE</em>10%%.
+</p>
+<h4 id="1-the-store-container">1. The Store Container</h4>
+<p>
+First, we create a plain JavaScript object to hold our state. This is not a React component; it's just data.
+</p>
+<pre data-lang="tsx"><code>// voice.tsx (Simplified)
+const DEFAULT_STATE = {
+  voiceState: 'idle',
+  voiceAudioLevels: [],
+  // ... other fields
+};
+
+// Create a standalone store (not inside React yet)
+export const VoiceContext = createContext(null);
+</code></pre>
+<h4 id="2-the-provider">2. The Provider</h4>
+<p>
+The Provider initializes the store once. Notice it uses <code>useState</code> with an initializer function to ensure the store is created exactly once.
+</p>
+<pre data-lang="tsx"><code>// voice.tsx
+export function VoiceProvider({ children }) {
+  // Create the store ONCE. 
+  // This state holds the store ITSELF, not the voice data.
+  const [store] = useState(() =&gt; createStore(DEFAULT_STATE));
+
+  return (
+    &lt;VoiceContext.Provider value={store}&gt;
+      {children}
+    &lt;/VoiceContext.Provider&gt;
+  );
+}
+</code></pre>
+<h4 id="3-the-magic-hook-inline-12">3. The Magic Hook (<code>useVoiceState</code>)</h4>
+<p>
+This is where the magic happens. We use <code>useSyncExternalStore</code>. This React hook is designed specifically to subscribe to data sources outside of React.
+</p>
+<pre data-lang="tsx"><code>// voice.tsx
+export function useVoiceState(selector) {
+  const store = useVoiceStore();
+  
+  // 1. Grab current snapshot
+  const getSnapshot = () =&gt; selector(store.getState());
+
+  // 2. Subscribe to changes
+  // React will only re-render if selector(newState) !== selector(oldState)
+  return useSyncExternalStore(store.subscribe, getSnapshot);
+}
+</code></pre>
+<p>
+<strong>Why is this code special?</strong>
+ 
+The <code>selector</code> logic runs <em>inside</em> React's internal checking loop. React checks: "Did the specific piece of data this component wants change?"
+</p>
+<ul>
+<li>If <strong>No</strong>: React does nothing.</li>
+<li>If <strong>Yes</strong>: React schedules a re-render for <em>just that component</em>.</li>
+</ul>
+<hr>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we solved the "High Frequency Update" problem.
+</p>
+<ol>
+<li><strong>The Challenge:</strong> Updating global state 60 times a second kills performance.</li>
+</ol>
+<ol>
+<li><strong>The Solution:</strong> We moved voice data into a specialized <strong>Voice State Manager</strong> (Sidecar).</li>
+</ol>
+<ol>
+<li><strong>The Technique:</strong> We used <strong>Selectors</strong> to ensure components only re-render when the specific data they care about changes, keeping the rest of the UI snappy.</li>
+</ol>
+<p>
+Now that we can record audio and manage high-speed data, we need a way to show the user what is happening across the entire app (errors, success messages, loading states).
+</p>
+<p>
+<a href="05<em>notification</em>pipeline.md">Next Chapter: Notification Pipeline</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="context.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">context/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-town-crier">The Problem: "The Town Crier"</a></li>
+<li style="padding-left:0px"><a href="#the-solution-the-sidecar-store">The Solution: The "Sidecar" Store</a></li>
+<li style="padding-left:10px"><a href="#key-concept-selectors">Key Concept: Selectors</a></li>
+<li style="padding-left:0px"><a href="#usage-example-building-a-voice-ui">Usage Example: Building a Voice UI</a></li>
+<li style="padding-left:10px"><a href="#1-reading-state-with-selectors">1. Reading State with Selectors</a></li>
+<li style="padding-left:10px"><a href="#2-handling-high-frequency-data">2. Handling High Frequency Data</a></li>
+<li style="padding-left:10px"><a href="#3-updating-the-state">3. Updating the State</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-under-the-hood">Internal Implementation: Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#the-flow">The Flow</a></li>
+<li style="padding-left:10px"><a href="#code-walkthrough">Code Walkthrough</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: Session Initialization — server/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">server/02_session_initialization.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🖧 server/ · 02_session_initialization.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: Session Initialization</h1>
+  <div class="chapter-meta"><span>📄 server/02_session_initialization.md</span></div>
+</div>
+<h1 id="chapter-2-session-initialization">Chapter 2: Session Initialization</h1>
+<p>
+Welcome to Chapter 2! In the previous chapter, <a href="01<em>session</em>data_models.md">Session Data Models</a>, we learned the "vocabulary" (Zod schemas and Types) that our server uses.
+</p>
+<p>
+Now, we are going to learn how to start a conversation using that vocabulary.
+</p>
+<h2 id="the-problem-the-hotel-check-in">The Problem: The Hotel Check-In</h2>
+<p>
+Imagine you want to stay at a secure hotel. You can't just run straight to a room and jump on the bed. You have to go to the front desk first.
+</p>
+<p>
+<strong>Session Initialization</strong> is exactly like a hotel check-in:
+</p>
+<ol>
+<li><strong>You approach the desk:</strong> You connect to the HTTP server.</li>
+</ol>
+<ol>
+<li><strong>You show ID:</strong> You provide an authentication token.</li>
+</ol>
+<ol>
+<li><strong>You state your needs:</strong> You tell them where you want to work (<code>cwd</code> - current working directory).</li>
+</ol>
+<ol>
+<li><strong>You get a Key Card:</strong> If everything is valid, the server gives you a Session ID and a WebSocket URL.</li>
+</ol>
+<p>
+Without this step, the real-time connection (WebSocket) cannot happen because the server wouldn't know who you are or where you are working.
+</p>
+<hr>
+<h2 id="the-solution-inline-1">The Solution: <code>createDirectConnectSession</code></h2>
+<p>
+We solve this with a specific function located in <code>createDirectConnectSession.ts</code>. Its job is to perform the "HTTP Handshake" before the real work begins.
+</p>
+<p>
+Let's break down how to implement this function step-by-step.
+</p>
+<h3 id="step-1-preparing-the-credentials">Step 1: Preparing the Credentials</h3>
+<p>
+First, we need to pack our "ID card" into the HTTP headers. We use a standard called "Bearer Token" for authorization.
+</p>
+<pre data-lang="typescript"><code>// Inside createDirectConnectSession function
+const headers: Record&lt;string, string&gt; = {
+  'content-type': 'application/json',
+}
+
+// If a password (token) is required, add it here
+if (authToken) {
+  headers['authorization'] = `Bearer ${authToken}`
+}
+</code></pre>
+<ul>
+<li><strong>Translation:</strong> We are preparing an envelope. We stamp it with %%INLINE<em>3%% so the server knows how to read it. If we have a password (%%INLINE</em>4%%), we write it on the outside of the envelope.</li>
+</ul>
+<h3 id="step-2-the-http-request">Step 2: The HTTP Request</h3>
+<p>
+Next, we send the request to the server. We use <code>fetch</code> (standard in modern JavaScript/Node) to send a POST request.
+</p>
+<pre data-lang="typescript"><code>// Sending the request to the server
+resp = await fetch(`${serverUrl}/sessions`, {
+  method: 'POST',
+  headers,
+  // We send the Current Working Directory (cwd)
+  body: jsonStringify({
+    cwd,
+    // (Optional logic for permissions omitted for brevity)
+  }),
+})
+</code></pre>
+<ul>
+<li><strong>Translation:</strong> This is the act of handing your request to the front desk clerk. We tell them: "Here is my token, and I want to open a session in this specific folder (<code>cwd</code>)."</li>
+</ul>
+<h3 id="step-3-checking-the-response-the-key-card">Step 3: Checking the Response (The Key Card)</h3>
+<p>
+Once the server replies, we can't blindly trust it. We need to verify that the "Key Card" works. This is where we use the <strong>Zod Schema</strong> we defined in Chapter 1.
+</p>
+<pre data-lang="typescript"><code>// Parse the JSON response
+const json = await resp.json()
+
+// Validate it against our strict rules
+const result = connectResponseSchema().safeParse(json)
+
+if (!result.success) {
+  throw new DirectConnectError(
+    `Invalid session response: ${result.error.message}`,
+  )
+}
+</code></pre>
+<ul>
+<li><strong>Translation:</strong> We open the package the server sent back. We use %%INLINE<em>7%% (from <a href="01</em>session<em>data</em>models.md">Session Data Models</a>) to check: <em>Does this actually contain a Session ID and a WebSocket URL?</em> If not, we throw an error immediately.</li>
+</ul>
+<hr>
+<h2 id="visualizing-the-flow">Visualizing the Flow</h2>
+<p>
+Before we look at the return values, let's visualize this handshake.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant C as Client (Function)
+    participant S as Server API
+
+    Note over C: Prepare Headers (Auth)
+    C-&gt;&gt;S: POST /sessions { cwd: "/projects/my-app" }
+    
+    Note over S: Verify Token &amp; Create Process
+    S--&gt;&gt;C: 200 OK { session_id: "123", ws_url: "ws://..." }
+    
+    Note over C: Validate with Zod
+    C-&gt;&gt;C: Check if IDs exist
+    Note over C: Return Config</div></div>
+<ol>
+<li><strong>POST:</strong> The Client asks to start a session.</li>
+</ol>
+<ol>
+<li><strong>200 OK:</strong> The Server agrees and sends details.</li>
+</ol>
+<ol>
+<li><strong>Validate:</strong> The Client ensures the details are correct.</li>
+</ol>
+<hr>
+<h2 id="internal-implementation-handling-errors">Internal Implementation: Handling Errors</h2>
+<p>
+In programming, things often go wrong. The network might be down, or the password might be wrong.
+</p>
+<p>
+To make debugging easier for beginners, we wrap these issues in a specific error type: <code>DirectConnectError</code>.
+</p>
+<pre data-lang="typescript"><code>// From createDirectConnectSession.ts
+export class DirectConnectError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'DirectConnectError'
+  }
+}
+</code></pre>
+<p>
+We use this wrapper to catch generic computer errors and turn them into human-readable messages:
+</p>
+<pre data-lang="typescript"><code>// Catching network errors
+} catch (err) {
+  throw new DirectConnectError(
+    `Failed to connect to server at ${serverUrl}: ${errorMessage(err)}`,
+  )
+}
+</code></pre>
+<p>
+This ensures that if the user sees a crash, they know exactly <em>why</em> (e.g., "Failed to connect") rather than seeing a confusing generic system code.
+</p>
+<hr>
+<h2 id="usage-what-comes-out">Usage: What comes out?</h2>
+<p>
+If the function succeeds, it returns a <code>DirectConnectConfig</code>. This is your "Key Card." It contains everything the next system needs to start talking in real-time.
+</p>
+<p>
+<strong>Example Output:</strong>
+</p>
+<pre data-lang="typescript"><code>return {
+  config: {
+    serverUrl: "http://localhost:3000",
+    sessionId: "sess_abc123",
+    wsUrl: "ws://localhost:3000/ws/sess_abc123",
+    authToken: "secret123",
+  },
+  workDir: "/Users/dev/my-project",
+}
+</code></pre>
+<p>
+This object is passed directly to the <strong>Direct Connect Manager</strong>, which handles the actual websocket connection.
+</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we built the "Check-in" mechanism for our server.
+</p>
+<ol>
+<li>We learned how to <strong>Prepare Headers</strong> with authentication.</li>
+</ol>
+<ol>
+<li>We sent a <strong>POST Request</strong> to ask for a new session.</li>
+</ol>
+<ol>
+<li>We <strong>Validated</strong> the response using the schemas from Chapter 1.</li>
+</ol>
+<ol>
+<li>We handled failure gracefully using <code>DirectConnectError</code>.</li>
+</ol>
+<p>
+Now that we have checked in and have our "Key Card" (the <code>config</code> object), we are ready to go to our room and start working.
+</p>
+<p>
+<a href="03<em>direct</em>connect_manager.md">Next Chapter: Direct Connect Manager</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="server.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">server/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-hotel-check-in">The Problem: The Hotel Check-In</a></li>
+<li style="padding-left:0px"><a href="#the-solution-inline-1">The Solution: %%INLINE_1%%</a></li>
+<li style="padding-left:10px"><a href="#step-1-preparing-the-credentials">Step 1: Preparing the Credentials</a></li>
+<li style="padding-left:10px"><a href="#step-2-the-http-request">Step 2: The HTTP Request</a></li>
+<li style="padding-left:10px"><a href="#step-3-checking-the-response-the-key-card">Step 3: Checking the Response (The Key Card)</a></li>
+<li style="padding-left:0px"><a href="#visualizing-the-flow">Visualizing the Flow</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-handling-errors">Internal Implementation: Handling Errors</a></li>
+<li style="padding-left:0px"><a href="#usage-what-comes-out">Usage: What comes out?</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 1: agents/new-agent-creation/CreateAgentWizard.tsx — components/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">components/01_agents_new_agent_creation_createagentwizard_tsx.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🖥 components/ · 01_agents_new_agent_creation_createagentwizard_tsx.md</div>
+  <h1 class="chapter-title-h1">Chapter 1: agents/new-agent-creation/CreateAgentWizard.tsx</h1>
+  <div class="chapter-meta"><span>📄 components/01_agents_new_agent_creation_createagentwizard_tsx.md</span></div>
+</div>
+<h1 id="chapter-1-agentsnew-agent-creationcreateagentwizardtsx">Chapter 1: agents/new-agent-creation/CreateAgentWizard.tsx</h1>
+<p>
+Welcome to the first chapter of the <strong>components</strong> project tutorial! We are going to start with a very exciting feature: building the tool that allows users to create new AI Agents.
+</p>
+<h2 id="the-motivation-why-do-we-need-a-wizard">The Motivation: Why do we need a Wizard?</h2>
+<p>
+<strong>The Use Case:</strong> Imagine you want to create a helper bot called "Chef Bot." To make Chef Bot work, you need to define many things:
+</p>
+<ol>
+<li>Where does it live?</li>
+</ol>
+<ol>
+<li>What is its name?</li>
+</ol>
+<ol>
+<li>What AI model does it use (e.g., GPT-4)?</li>
+</ol>
+<ol>
+<li>What tools can it use (e.g., Google Search)?</li>
+</ol>
+<ol>
+<li>What is its personality?</li>
+</ol>
+<p>
+<strong>The Problem:</strong> If we put all these settings on one giant form, it would look like a tax return document—scary, confusing, and overwhelming!
+</p>
+<p>
+<strong>The Solution:</strong> We use a <strong>Wizard</strong>.
+ 
+Think of a Wizard like a friendly tour guide. Instead of asking you 20 questions at once, the guide asks, "First, what is the name?" followed by "Great! Now, what tools should it use?" This component, <code>CreateAgentWizard.tsx</code>, is the master blueprint for that tour.
+</p>
+<hr>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+Before we look at code, let's understand the pieces involved.
+</p>
+<ol>
+<li><strong>The Wizard:</strong> This is the overall container. It manages the timeline of creation.</li>
+</ol>
+<ol>
+<li><strong>The Steps:</strong> These are the individual screens (e.g., the screen where you pick a color).</li>
+</ol>
+<ol>
+<li><strong>The Provider:</strong> Think of this as the "backpack" or "memory" of the wizard. It holds onto the data (like the Agent's name) as you move from Step 1 to Step 2.</li>
+</ol>
+<h3 id="analogy-the-sandwich-assembly-line">Analogy: The Sandwich Assembly Line</h3>
+<p>
+Imagine <code>CreateAgentWizard</code> is the manager of a sandwich shop.
+</p>
+<ul>
+<li><strong>The Steps</strong> are the stations: Bread Station -> Meat Station -> Veggie Station -> Sauce Station.</li>
+<li><strong>The Provider</strong> is the tray sliding down the line, holding your sandwich together as it gets built.</li>
+<li>You (the user) just walk down the line making one choice at a time.</li>
+</ul>
+<hr>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+Using this component is actually very simple because it is a self-contained "smart" component. It brings its own logic with it.
+</p>
+<p>
+If you were building the page that lets users create agents, you would simply drop this component into your layout.
+</p>
+<pre data-lang="tsx"><code>import React from 'react';
+// We import the Wizard component
+import CreateAgentWizard from './agents/new-agent-creation/CreateAgentWizard';
+
+const CreatePage = () =&gt; {
+  // We simply place the Wizard in our page
+  return (
+    &lt;div className="page-container"&gt;
+       &lt;CreateAgentWizard /&gt;
+    &lt;/div&gt;
+  );
+};
+</code></pre>
+<p>
+<strong>What happens here?</strong>
+ 
+By simply rendering <code>&lt;CreateAgentWizard /&gt;</code>, the application starts the multi-step process. The user will immediately see the first step of the creation flow.
+</p>
+<hr>
+<h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
+<p>
+Now, let's look inside <code>CreateAgentWizard.tsx</code> to see how it organizes the assembly line.
+</p>
+<h3 id="the-logic-flow">The Logic Flow</h3>
+<p>
+When this component loads, it does two main things:
+</p>
+<ol>
+<li>It defines the <strong>Order of Operations</strong> (which step comes first, second, etc.).</li>
+</ol>
+<ol>
+<li>It wraps everything in a <strong>WizardProvider</strong> so the steps can talk to each other.</li>
+</ol>
+<p>
+Here is a sequence diagram of how the Wizard interacts with the user and the internal logic:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant Wizard as CreateAgentWizard
+    participant Provider as WizardProvider
+
+    User-&gt;&gt;Wizard: Opens Creation Page
+    Wizard-&gt;&gt;Provider: Initialize with Steps (Location, Method, etc.)
+    Provider--&gt;&gt;Wizard: Ready! Current Step: 1 (Location)
+    Wizard-&gt;&gt;User: Shows "Location Step" screen
+    
+    User-&gt;&gt;Wizard: Selects Location -&gt; Clicks Next
+    Wizard-&gt;&gt;Provider: Save Data &amp; Move to Step 2
+    Provider--&gt;&gt;Wizard: Current Step: 2 (Method)
+    Wizard-&gt;&gt;User: Shows "Method Step" screen</div></div>
+<h3 id="implementation-details">Implementation Details</h3>
+<p>
+Let's look at how the code is structured inside. We'll break it down into small pieces.
+</p>
+<h4 id="1-defining-the-steps">1. Defining the Steps</h4>
+<p>
+First, the component needs a list of all the stops on our tour. This is usually an array of objects, where each object represents a screen.
+</p>
+<pre data-lang="tsx"><code>// Inside CreateAgentWizard.tsx
+
+const steps = [
+  { id: 'location', label: 'Location', component: &lt;LocationStep /&gt; },
+  { id: 'method',   label: 'Method',   component: &lt;MethodStep /&gt; },
+  { id: 'identity', label: 'Identity', component: &lt;AgentIdentityStep /&gt; },
+  { id: 'tools',    label: 'Tools',    component: &lt;ToolsStep /&gt; },
+  // ... and so on for Model, Memory, etc.
+];
+</code></pre>
+<p>
+<em>Explanation:</em> We create a list called %%INLINE<em>4%%. Each item has an %%INLINE</em>5%% and the actual <code>component</code> (the React code) that should show up on the screen for that step.
+</p>
+<h4 id="2-the-return-statement-the-wrapper">2. The Return Statement (The Wrapper)</h4>
+<p>
+Finally, the component returns the JSX (UI). It wraps the steps in the <code>WizardProvider</code>.
+</p>
+<pre data-lang="tsx"><code>// The component output
+return (
+  &lt;WizardProvider steps={steps} initialStep={0}&gt;
+    &lt;div className="wizard-layout"&gt;
+        {/* Components here display the current step and buttons */}
+        &lt;WizardStepDisplay /&gt; 
+        &lt;WizardNavigationButtons /&gt;
+    &lt;/div&gt;
+  &lt;/WizardProvider&gt;
+);
+</code></pre>
+<p>
+<em>Explanation:</em>
+</p>
+<ul>
+<li>%%INLINE<em>8%%: This is the "brain." We feed it the %%INLINE</em>9%% list we created above. It handles the logic of "Next," "Back," and saving data.</li>
+<li><code>&lt;WizardStepDisplay /&gt;</code>: This is a placeholder for the part of the code that asks the Provider, "Which component should I show right now?"</li>
+<li><code>&lt;WizardNavigationButtons /&gt;</code>: These are your "Next" and "Previous" buttons.</li>
+</ul>
+<h3 id="summary-of-internal-logic">Summary of Internal Logic</h3>
+<ol>
+<li><strong>Configuration:</strong> The file hardcodes the sequence: Location -> Method -> Generate -> Type -> Prompt -> Description -> Tools -> Model -> Color -> Memory.</li>
+</ol>
+<ol>
+<li><strong>State Management:</strong> It relies on <code>WizardProvider</code> to keep track of the form data (like the agent's name) so it doesn't get lost when you switch to the "Tools" screen.</li>
+</ol>
+<ol>
+<li><strong>Composition:</strong> It combines many smaller components (like %%INLINE<em>13%% or %%INLINE</em>14%%) into one cohesive flow.</li>
+</ol>
+<hr>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+In this chapter, we explored <strong><code>agents/new-agent-creation/CreateAgentWizard.tsx</code></strong>.
+</p>
+<p>
+We learned that:
+</p>
+<ul>
+<li>It acts as a <strong>conductor</strong> for the agent creation process.</li>
+<li>It solves the problem of overwhelming forms by breaking them into a <strong>step-by-step wizard</strong>.</li>
+<li>It uses a <strong>Provider</strong> pattern to manage the list of steps and the data collected along the way.</li>
+</ul>
+<p>
+You now understand the high-level entry point for creating agents!
+</p>
+<p>
+<a href="02<em>coming</em>soon.md">Next Chapter: Coming Soon</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="components.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">components/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-why-do-we-need-a-wizard">The Motivation: Why do we need a Wizard?</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#analogy-the-sandwich-assembly-line">Analogy: The Sandwich Assembly Line</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-how-it-works">Under the Hood: How it Works</a></li>
+<li style="padding-left:10px"><a href="#the-logic-flow">The Logic Flow</a></li>
+<li style="padding-left:10px"><a href="#implementation-details">Implementation Details</a></li>
+<li style="padding-left:10px"><a href="#summary-of-internal-logic">Summary of Internal Logic</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

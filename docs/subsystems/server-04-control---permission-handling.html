@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: Control & Permission Handling — server/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">server/04_control___permission_handling.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🖧 server/ · 04_control___permission_handling.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: Control & Permission Handling</h1>
+  <div class="chapter-meta"><span>📄 server/04_control___permission_handling.md</span></div>
+</div>
+<h1 id="chapter-4-control-permission-handling">Chapter 4: Control & Permission Handling</h1>
+<p>
+Welcome to the final chapter of our beginner's guide!
+</p>
+<p>
+In the previous chapter, <a href="03<em>direct</em>connect_manager.md">Direct Connect Manager</a>, we established a live telephone line with our server. We can hear the agent, and the agent can hear us.
+</p>
+<p>
+However, having a connection isn't enough. Imagine you hire a contractor to renovate your kitchen. You give them a key to the house (the Connection), but you don't want them knocking down load-bearing walls without asking first.
+</p>
+<p>
+<strong>Control & Permission Handling</strong> is that safety mechanism. It forces the agent to stop and ask for permission before using tools or running commands.
+</p>
+<hr>
+<h2 id="the-problem-the-over-eager-agent">The Problem: The Over-Eager Agent</h2>
+<p>
+Autonomous agents are powerful. They can write code, delete files, and install software.
+</p>
+<p>
+If we let them run without supervision, an agent might:
+</p>
+<ol>
+<li>Accidentally delete your project folder.</li>
+</ol>
+<ol>
+<li>Install a massive file that fills your hard drive.</li>
+</ol>
+<ol>
+<li>Get stuck in an infinite loop printing "Hello" forever.</li>
+</ol>
+<p>
+We need a <strong>Security Checkpoint</strong>. Even though the agent is "inside the building" (connected), it cannot enter "restricted areas" (use tools) without showing a badge to the security guard (You).
+</p>
+<hr>
+<h2 id="the-solution-the-request-response-loop">The Solution: The Request-Response Loop</h2>
+<p>
+The logic is simple. It follows a "Mother May I?" protocol.
+</p>
+<ol>
+<li><strong>Stop:</strong> The agent pauses its work.</li>
+</ol>
+<ol>
+<li><strong>Ask:</strong> It sends a special message: <code>control_request</code>.</li>
+</ol>
+<ol>
+<li><strong>Wait:</strong> It sits idly until it hears back.</li>
+</ol>
+<ol>
+<li><strong>Answer:</strong> You (via the Manager) send a <code>control_response</code>.</li>
+</ol>
+<ol>
+<li><strong>Proceed:</strong> The agent acts based on your answer (runs the command or stops).</li>
+</ol>
+<hr>
+<h2 id="visualizing-the-checkpoint">Visualizing the Checkpoint</h2>
+<p>
+Here is how the flow looks when an agent wants to use a tool (like <code>npm install</code>).
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant A as Agent (Server)
+    participant M as Manager
+    participant U as User (You)
+
+    Note over A: Needs to run "npm install"
+    A-&gt;&gt;M: control_request (subtype: "can_use_tool")
+    Note over A: PAUSED (Waiting...)
+    
+    M-&gt;&gt;U: onPermissionRequest() callback
+    
+    Note over U: User thinks... "Is this safe?"
+    U-&gt;&gt;M: Call respondToPermissionRequest("allow")
+    
+    M-&gt;&gt;A: control_response (subtype: "success")
+    Note over A: RESUMED (Runs command)</div></div>
+<hr>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+In <a href="03<em>direct</em>connect<em>manager.md">Direct Connect Manager</a>, we briefly touched on the %%INLINE</em>3%% callback. Now, let's learn how to actually use it.
+</p>
+<h3 id="step-1-receiving-the-request">Step 1: Receiving the Request</h3>
+<p>
+When setting up your Manager, you provide a function to handle requests. This is your "Security Desk."
+</p>
+<pre data-lang="typescript"><code>const callbacks = {
+  onPermissionRequest: (request, requestId) =&gt; {
+    // 1. Inspect what the agent wants
+    console.log("Agent wants to use tool:", request.tool_name)
+    
+    // 2. Make a decision (logic in next step)
+    handleDecision(requestId) 
+  },
+  // ... other callbacks
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li><code>request</code>: Contains details like the command being run or the tool being used.</li>
+<li>%%INLINE<em>5%%: A unique ticket number (e.g., "req</em>123"). You <strong>must</strong> include this when you reply so the agent knows which question you are answering.</li>
+</ul>
+<h3 id="step-2-approving-allowing">Step 2: Approving (Allowing)</h3>
+<p>
+If the request looks safe, we give the "Green Light."
+</p>
+<pre data-lang="typescript"><code>// Giving permission
+manager.respondToPermissionRequest(requestId, {
+  behavior: 'allow' 
+  // You can also modify the input here if you want!
+})
+</code></pre>
+<p>
+<strong>What happens:</strong> The agent receives the "Allow" signal and immediately executes the command it wanted to run.
+</p>
+<h3 id="step-3-blocking-denying">Step 3: Blocking (Denying)</h3>
+<p>
+If the agent tries to do something dangerous (like <code>rm -rf /</code>), we give the "Red Light."
+</p>
+<pre data-lang="typescript"><code>// Denying permission
+manager.respondToPermissionRequest(requestId, {
+  behavior: 'block',
+  message: 'Permission denied: Deleting files is not allowed.'
+})
+</code></pre>
+<p>
+<strong>What happens:</strong> The agent receives the rejection. It <strong>does not</strong> run the command. Instead, it sees your error message (<code>"Permission denied..."</code>) and tries to think of a different solution.
+</p>
+<hr>
+<h2 id="internal-implementation-details">Internal Implementation Details</h2>
+<p>
+How does the %%INLINE<em>8%% actually send these approvals? Let's look inside %%INLINE</em>9%%.
+</p>
+<h3 id="constructing-the-response">Constructing the Response</h3>
+<p>
+When you call <code>respondToPermissionRequest</code>, the manager builds a strict JSON packet to send back to the server.
+</p>
+<pre data-lang="typescript"><code>// Inside DirectConnectSessionManager
+respondToPermissionRequest(requestId, result) {
+  // 1. Ensure the line is open
+  if (!this.ws) return
+
+  // 2. Build the packet
+  const response = jsonStringify({
+    type: 'control_response', // Tells server: "Here is my answer"
+    response: {
+      subtype: 'success',     // The communication worked
+      request_id: requestId,  // Matching the ticket number
+      response: {
+        behavior: result.behavior // 'allow' or 'block'
+      },
+    },
+  })
+
+  // 3. Send it
+  this.ws.send(response)
+}
+</code></pre>
+<p>
+<strong>Why so many layers?</strong>
+ 
+Notice the structure: <code>{ response: { response: { ... } } }</code>.
+</p>
+<ul>
+<li>The outer layer is for the Network (WebSocket type).</li>
+<li>The middle layer is for the Protocol (Matching the ID).</li>
+<li>The inner layer is for the Agent (The actual answer).</li>
+</ul>
+<p>
+This strict nesting ensures that even if the answer is "No," the message itself is a "Success" in terms of network communication.
+</p>
+<hr>
+<h2 id="advanced-concept-interrupts">Advanced Concept: Interrupts</h2>
+<p>
+Sometimes, you don't want to answer a question—you just want the agent to <strong>stop talking</strong>.
+</p>
+<p>
+Maybe the agent is printing 1,000 lines of text, or it's hallucinating. You can press the "Emergency Stop" button.
+</p>
+<h3 id="sending-an-interrupt">sending an Interrupt</h3>
+<pre data-lang="typescript"><code>// Stop the agent immediately
+manager.sendInterrupt()
+</code></pre>
+<h3 id="internal-implementation">Internal Implementation</h3>
+<p>
+This sends a specific <code>control_request</code> <em>from</em> the user <em>to</em> the agent.
+</p>
+<pre data-lang="typescript"><code>// Inside DirectConnectSessionManager
+sendInterrupt() {
+  const request = jsonStringify({
+    type: 'control_request',
+    request_id: crypto.randomUUID(), // New ticket
+    request: {
+      subtype: 'interrupt', // The specific command
+    },
+  })
+  this.ws.send(request)
+}
+</code></pre>
+<p>
+This tells the server: "Cancel whatever you are doing right now."
+</p>
+<hr>
+<h2 id="summary-of-the-series">Summary of the Series</h2>
+<p>
+Congratulations! You have completed the <strong>Server</strong> project tutorial. Let's recap your journey:
+</p>
+<ol>
+<li><strong><a href="01<em>session</em>data_models.md">Session Data Models</a>:</strong> We learned the language (Types and Schemas) used to define a session.</li>
+</ol>
+<ol>
+<li><strong><a href="02<em>session</em>initialization.md">Session Initialization</a>:</strong> We learned how to "Check In" and get our credentials via HTTP.</li>
+</ol>
+<ol>
+<li><strong><a href="03<em>direct</em>connect_manager.md">Direct Connect Manager</a>:</strong> We built the phone operator that manages the WebSocket connection.</li>
+</ol>
+<ol>
+<li><strong>Control & Permission Handling:</strong> We implemented the security guard that approves or denies agent actions.</li>
+</ol>
+<p>
+You now have a complete mental model of how a client connects to, listens to, and controls an autonomous coding agent server.
+</p>
+<p>
+<strong>Happy Coding!</strong>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="server.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">server/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-over-eager-agent">The Problem: The Over-Eager Agent</a></li>
+<li style="padding-left:0px"><a href="#the-solution-the-request-response-loop">The Solution: The Request-Response Loop</a></li>
+<li style="padding-left:0px"><a href="#visualizing-the-checkpoint">Visualizing the Checkpoint</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:10px"><a href="#step-1-receiving-the-request">Step 1: Receiving the Request</a></li>
+<li style="padding-left:10px"><a href="#step-2-approving-allowing">Step 2: Approving (Allowing)</a></li>
+<li style="padding-left:10px"><a href="#step-3-blocking-denying">Step 3: Blocking (Denying)</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-details">Internal Implementation Details</a></li>
+<li style="padding-left:10px"><a href="#constructing-the-response">Constructing the Response</a></li>
+<li style="padding-left:0px"><a href="#advanced-concept-interrupts">Advanced Concept: Interrupts</a></li>
+<li style="padding-left:10px"><a href="#sending-an-interrupt">sending an Interrupt</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:0px"><a href="#summary-of-the-series">Summary of the Series</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

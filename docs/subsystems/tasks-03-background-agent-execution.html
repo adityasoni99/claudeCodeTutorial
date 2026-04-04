@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: Background Agent Execution — tasks/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">tasks/03_background_agent_execution.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">📋 tasks/ · 03_background_agent_execution.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: Background Agent Execution</h1>
+  <div class="chapter-meta"><span>📄 tasks/03_background_agent_execution.md</span></div>
+</div>
+<h1 id="chapter-3-background-agent-execution">Chapter 3: Background Agent Execution</h1>
+<p>
+In the <a href="02<em>local</em>shell_execution.md">previous chapter</a>, we learned how to run dumb, simple commands using <strong>Local Shell Execution</strong>. We solved the "Invisible Typist" problem using a Watchdog.
+</p>
+<p>
+But what if the job is too complex for a single command? What if you need someone to read code, think about a bug, try a fix, run tests, and fix it again if it fails?
+</p>
+<p>
+You don't need a Typist; you need a <strong>Contractor</strong>. This is where <strong>Background Agent Execution</strong> comes in.
+</p>
+<h2 id="the-problem-the-high-maintenance-helper">The Problem: The High-Maintenance Helper</h2>
+<p>
+Imagine you are working with a basic AI chatbot. You ask it to "Refactor this file."
+</p>
+<ol>
+<li><strong>It needs your attention:</strong> It writes some code, then stops and waits for you to copy-paste it.</li>
+</ol>
+<ol>
+<li><strong>It has no memory:</strong> If it makes a mistake, you have to explain the error manually.</li>
+</ol>
+<ol>
+<li><strong>It blocks you:</strong> While it is thinking, you can't use the terminal for anything else.</li>
+</ol>
+<p>
+We need a way to wrap an AI Agent so it can work <strong>asynchronously</strong> (independently) while you do other things.
+</p>
+<h2 id="the-solution-the-general-contractor">The Solution: The General Contractor</h2>
+<p>
+<strong>Background Agent Execution</strong> (<code>LocalAgentTask</code>) treats an AI Agent like an independent contractor.
+</p>
+<ol>
+<li><strong>The Job Description:</strong> You give it a prompt (the goal).</li>
+</ol>
+<ol>
+<li><strong>The Job Site:</strong> It runs in the background.</li>
+</ol>
+<ol>
+<li><strong>Expense Reporting:</strong> It tracks its own "expenses" (token usage) and "tools used" (file reads, searches).</li>
+</ol>
+<ol>
+<li><strong>Reporting Back:</strong> It only notifies you when the job is done or if it crashes.</li>
+</ol>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+In our system, we don't just call the LLM directly. We wrap the LLM loop inside a <code>LocalAgentTask</code>.
+</p>
+<h3 id="registering-a-contractor">Registering a Contractor</h3>
+<p>
+To start an agent, we use <code>registerAsyncAgent</code>. This creates the task state and immediately puts it in the background.
+</p>
+<pre data-lang="typescript"><code>// From LocalAgentTask.tsx
+const taskState = registerAsyncAgent({
+  agentId: 'agent-123',
+  description: 'Refactor login.ts',
+  prompt: 'Analyze login.ts and improve error handling',
+  selectedAgent: myCodingAgent, // The AI logic
+  setAppState: appStateSetter
+});
+</code></pre>
+<p>
+<strong>What happens here:</strong>
+</p>
+<ol>
+<li>A new Task ID is generated.</li>
+</ol>
+<ol>
+<li>The system creates a <code>LocalAgentTaskState</code>.</li>
+</ol>
+<ol>
+<li>The task status is set to <code>'running'</code>.</li>
+</ol>
+<ol>
+<li>The Agent starts its "Think -> Act -> Observe" loop in a separate process flow.</li>
+</ol>
+<h2 id="internal-implementation">Internal Implementation</h2>
+<p>
+How does the system manage this "Contractor" while it works?
+</p>
+<h3 id="visual-walkthrough">Visual Walkthrough</h3>
+<p>
+The Agent Loop is more complex than a Shell command because it goes back and forth between the AI and the Operating System (Tools).
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant U as User
+    participant T as Agent Task
+    participant AI as LLM (Brain)
+    participant OS as System Tools
+
+    U-&gt;&gt;T: "Fix the bug" (Start Task)
+    
+    loop Work Cycle
+        T-&gt;&gt;AI: Send History &amp; Context
+        AI--&gt;&gt;T: "I need to read file.js"
+        
+        note right of T: Tracking Tool Usage
+        T-&gt;&gt;OS: Read file.js
+        OS--&gt;&gt;T: File Content
+        
+        T-&gt;&gt;AI: Here is the content
+        AI--&gt;&gt;T: "I found the bug. Fixing it."
+    end
+    
+    T-&gt;&gt;U: Notification: "Task Completed"</div></div>
+<h3 id="code-deep-dive">Code Deep Dive</h3>
+<p>
+Let's look at the specific mechanisms that make this work in <code>LocalAgentTask.tsx</code>.
+</p>
+<h4 id="1-the-expense-report-state">1. The Expense Report (State)</h4>
+<p>
+Unlike a shell command (which just has an output log), an Agent Task has rich data about what it is doing. We call this the <code>progress</code> object.
+</p>
+<pre data-lang="typescript"><code>// From LocalAgentTask.tsx
+export type AgentProgress = {
+  toolUseCount: number; // How many actions taken?
+  tokenCount: number;   // How expensive is this?
+  lastActivity?: ToolActivity; // What is it doing RIGHT NOW?
+  summary?: string;     // A 1-sentence update
+};
+</code></pre>
+<h4 id="2-tracking-activity">2. Tracking Activity</h4>
+<p>
+As the agent runs, it constantly updates its progress. This allows the dashboard to show "Reading file..." instead of just "Running...".
+</p>
+<pre data-lang="typescript"><code>// From LocalAgentTask.tsx
+export function updateAgentProgress(
+  taskId: string, 
+  progress: AgentProgress, 
+  setAppState: SetAppState
+): void {
+  updateTaskState(taskId, setAppState, task =&gt; ({
+    ...task,
+    // Merge new progress with existing state
+    progress: { ...task.progress, ...progress }
+  }));
+}
+</code></pre>
+<h4 id="3-handling-completion">3. Handling Completion</h4>
+<p>
+When the agent decides it is finished, we must wrap up the project. We calculate the final stats and send a notification.
+</p>
+<pre data-lang="typescript"><code>// From LocalAgentTask.tsx
+export function completeAgentTask(
+  result: AgentToolResult, 
+  setAppState: SetAppState
+): void {
+  // 1. Mark as completed
+  updateTaskState(result.agentId, setAppState, task =&gt; ({
+    ...task,
+    status: 'completed',
+    result: result, // Store the final answer
+    endTime: Date.now()
+  }));
+
+  // 2. Clean up memory output
+  void evictTaskOutput(result.agentId);
+}
+</code></pre>
+<h3 id="special-case-the-main-session">Special Case: The Main Session</h3>
+<p>
+Sometimes, you are chatting with the AI in the main window, and you realize: <em>"This is going to take a long time."</em>
+</p>
+<p>
+We handle this with <code>LocalMainSessionTask</code>. It converts the current active chat into a background task.
+</p>
+<pre data-lang="typescript"><code>// From LocalMainSessionTask.ts
+// Marks the task as "backgrounded" so the UI can clear
+// and you can start a new topic while this one finishes.
+export function backgroundAgentTask(taskId: string, ...): boolean {
+  setAppState(prev =&gt; ({
+    ...prev,
+    tasks: {
+      ...prev.tasks,
+      [taskId]: { ...prev.tasks[taskId], isBackgrounded: true }
+    }
+  }));
+  return true;
+}
+</code></pre>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>Background Agent Execution</strong> wraps an AI loop into a managed Task.</li>
+</ol>
+<ol>
+<li>It acts like a <strong>Contractor</strong>, tracking its own tools (%%INLINE<em>8%%) and expenses (%%INLINE</em>9%%).</li>
+</ol>
+<ol>
+<li>It provides rich feedback (<code>lastActivity</code>) so the user knows if the agent is "Reading" or "Writing," unlike a silent shell command.</li>
+</ol>
+<p>
+Now we have a "Contractor" working in the background. But what if that contractor needs to hire <em>their own</em> subcontractors?
+</p>
+<p>
+In the next chapter, we will explore how agents can spawn other agents using <strong>In-Process Teammates</strong>.
+</p>
+<p>
+<a href="04<em>in</em>process_teammates.md">Next Chapter: In-Process Teammates</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="tasks.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">tasks/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-high-maintenance-helper">The Problem: The High-Maintenance Helper</a></li>
+<li style="padding-left:0px"><a href="#the-solution-the-general-contractor">The Solution: The General Contractor</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:10px"><a href="#registering-a-contractor">Registering a Contractor</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#visual-walkthrough">Visual Walkthrough</a></li>
+<li style="padding-left:10px"><a href="#code-deep-dive">Code Deep Dive</a></li>
+<li style="padding-left:10px"><a href="#special-case-the-main-session">Special Case: The Main Session</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

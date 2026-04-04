@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 5: Feature Discovery & Teaser — buddy/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">buddy/05_feature_discovery___teaser.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">👥 buddy/ · 05_feature_discovery___teaser.md</div>
+  <h1 class="chapter-title-h1">Chapter 5: Feature Discovery & Teaser</h1>
+  <div class="chapter-meta"><span>📄 buddy/05_feature_discovery___teaser.md</span></div>
+</div>
+<h1 id="chapter-5-feature-discovery-teaser">Chapter 5: Feature Discovery & Teaser</h1>
+<p>
+In the previous chapter, <a href="04<em>context</em>injection.md">Context Injection</a>, we connected our companion to the AI's brain, allowing it to "see" and "hear" what is happening in the chat.
+</p>
+<p>
+We now have a complete feature:
+</p>
+<ol>
+<li><strong>Soul:</strong> Deterministic stats.</li>
+</ol>
+<ol>
+<li><strong>Body:</strong> ASCII renderer.</li>
+</ol>
+<ol>
+<li><strong>Life:</strong> Animation loop.</li>
+</ol>
+<ol>
+<li><strong>Brain:</strong> Context awareness.</li>
+</ol>
+<p>
+But there is one final problem: <strong>Invisibility</strong>.
+</p>
+<p>
+If a user installs %%INLINE<em>0%% but doesn't know the command %%INLINE</em>1%% exists, they will never see their new friend. We need a way to announce the feature without being annoying.
+</p>
+<p>
+Welcome to <strong>Feature Discovery</strong>.
+</p>
+<h2 id="the-concept-the-movie-poster">The Concept: The Movie Poster</h2>
+<p>
+Imagine walking past a cinema. You know a new movie is coming out because there is a poster with the release date.
+</p>
+<p>
+We want to do the same thing in the terminal. We want to show a "Coming Soon" or "Now Available" sign.
+</p>
+<p>
+However, we need strict rules:
+</p>
+<ol>
+<li><strong>Time-Gated:</strong> Don't show the teaser in 2030 for a feature released in 2026.</li>
+</ol>
+<ol>
+<li><strong>Smart:</strong> Don't show the teaser if the user <em>already</em> has a buddy.</li>
+</ol>
+<ol>
+<li><strong>Flashy:</strong> Use colors (Rainbows) so the user notices it among boring white text.</li>
+</ol>
+<h2 id="key-concepts">Key Concepts</h2>
+<h3 id="1-the-time-window">1. The Time Window</h3>
+<p>
+We define a specific date range (e.g., April 1st to April 7th, 2026). The code checks the user's system clock. If we are outside this window, the teaser remains hidden.
+</p>
+<h3 id="2-the-feature-flag">2. The Feature Flag</h3>
+<p>
+A "Feature Flag" is a master switch in the code. If %%INLINE<em>2%% is %%INLINE</em>3%%, the code acts like the feature doesn't exist. This lets us ship code before it is ready to turn on.
+</p>
+<h3 id="3-rainbow-text">3. Rainbow Text</h3>
+<p>
+Terminals usually support 16 basic colors. To grab attention, we render text where every letter has a different color from a calculated spectrum.
+</p>
+<hr>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+The discovery logic is packaged into a React Hook called <code>useBuddyNotification</code>. You simply call this hook in your main application component.
+</p>
+<h3 id="input">Input</h3>
+<p>
+You don't pass arguments. The hook checks the environment automatically.
+</p>
+<pre data-lang="typescript"><code>import { useBuddyNotification } from './useBuddyNotification'
+
+export function App() {
+  // Run the logic silently in the background
+  useBuddyNotification()
+
+  return &lt;Layout&gt;...&lt;/Layout&gt;
+}
+</code></pre>
+<h3 id="output">Output</h3>
+<p>
+If the date is correct and the user has no buddy, a notification appears at the bottom of the screen:
+</p>
+<blockquote><p><strong>New Feature:</strong> Try typing <span style="color:red">/</span><span style="color:orange">b</span><span style="color:yellow">u</span><span style="color:green">d</span><span style="color:blue">d</span><span style="color:purple">y</span> to meet your companion!</p></blockquote>
+<hr>
+<h2 id="under-the-hood-implementation">Under the Hood: Implementation</h2>
+<p>
+How does the app decide whether to annoy the user with a popup?
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant App
+    participant Clock as System Clock
+    participant Config as User Config
+    participant UI as Notification System
+
+    App-&gt;&gt;App: Feature Flag "BUDDY" on?
+    App-&gt;&gt;Clock: What date is it?
+    Clock--&gt;&gt;App: April 4, 2026
+    App-&gt;&gt;App: Is date within Launch Week? (Yes)
+    App-&gt;&gt;Config: Do we have a buddy saved?
+    Config--&gt;&gt;App: No (First time user)
+    App-&gt;&gt;UI: Trigger Rainbow Notification
+    UI--&gt;&gt;App: Show "/buddy"</div></div>
+<h3 id="step-1-checking-the-calendar">Step 1: Checking the Calendar</h3>
+<p>
+We write a helper function to check the current date. Note that in JavaScript, <code>month</code> starts at 0 (January is 0, April is 3).
+</p>
+<pre data-lang="typescript"><code>// useBuddyNotification.tsx
+export function isBuddyTeaserWindow(): boolean {
+  const d = new Date()
+  
+  // Only active in April (3) of 2026, from the 1st to the 7th
+  return d.getFullYear() === 2026 
+      &amp;&amp; d.getMonth() === 3 
+      &amp;&amp; d.getDate() &lt;= 7
+}
+</code></pre>
+<h3 id="step-2-the-rainbow-renderer">Step 2: The Rainbow Renderer</h3>
+<p>
+To make the text <code>/buddy</code> pop, we split the string into individual characters and map a color to each index.
+</p>
+<pre data-lang="typescript"><code>// useBuddyNotification.tsx
+function RainbowText({ text }) {
+  return (
+    &lt;&gt;
+      {[...text].map((char, i) =&gt; (
+        // getRainbowColor(i) returns a different hex code based on position
+        &lt;Text key={i} color={getRainbowColor(i)}&gt;
+          {char}
+        &lt;/Text&gt;
+      ))}
+    &lt;/&gt;
+  )
+}
+</code></pre>
+<h3 id="step-3-the-notification-logic">Step 3: The Notification Logic</h3>
+<p>
+This is where we combine everything inside a <code>useEffect</code>. We check the <strong>Flag</strong>, the <strong>Config</strong>, and the <strong>Date</strong>.
+</p>
+<pre data-lang="typescript"><code>// useBuddyNotification.tsx
+export function useBuddyNotification() {
+  const { addNotification } = useNotifications()
+
+  useEffect(() =&gt; {
+    // 1. Safety Check: Is feature enabled?
+    if (!feature('BUDDY')) return
+
+    // 2. Logic Check: Do they have a pet? Is it the right date?
+    const config = getGlobalConfig()
+    if (config.companion || !isBuddyTeaserWindow()) return
+
+    // 3. Action: Show the rainbow text
+    addNotification({
+      key: 'buddy-teaser',
+      jsx: &lt;RainbowText text="/buddy" /&gt;,
+      timeoutMs: 15000 // Disappears after 15 seconds
+    })
+  }, [])
+}
+</code></pre>
+<h2 id="why-this-is-cool">Why this is cool</h2>
+<ol>
+<li><strong>Non-Intrusive:</strong> By checking <code>config.companion</code>, we ensure that once the user engages with the feature, we stop pestering them.</li>
+</ol>
+<ol>
+<li><strong>FOMO (Fear Of Missing Out):</strong> Time-gating the teaser makes the event feel special for users who are using the app during launch week.</li>
+</ol>
+<ol>
+<li><strong>Discoverability:</strong> It bridges the gap between "Writing code" and "Using code."</li>
+</ol>
+<h2 id="tutorial-conclusion">Tutorial Conclusion</h2>
+<p>
+Congratulations! You have completed the <strong>buddy</strong> architecture tutorial.
+</p>
+<p>
+Let's look back at what we built:
+</p>
+<ol>
+<li><strong><a href="01<em>deterministic</em>generation<strong>soul</strong><em>bones</em>.md">Chapter 1</a></strong> taught us how to create a unique <strong>Soul</strong> from a User ID using math.</li>
+</ol>
+<ol>
+<li><strong><a href="02<em>ascii</em>sprite_renderer.md">Chapter 2</a></strong> taught us how to draw a <strong>Body</strong> using ASCII sprite substitution.</li>
+</ol>
+<ol>
+<li><strong><a href="03<em>live</em>component<em>_</em>animation.md">Chapter 3</a></strong> gave the creature <strong>Life</strong> with a heartbeat loop.</li>
+</ol>
+<ol>
+<li><strong><a href="04<em>context</em>injection.md">Chapter 4</a></strong> gave it a <strong>Brain</strong> by introducing it to the AI.</li>
+</ol>
+<ol>
+<li><strong>Chapter 5</strong> (This chapter) showed us how to introduce the feature to the <strong>User</strong>.</li>
+</ol>
+<p>
+You now understand the full lifecycle of a modern CLI agent feature—from the random number generator to the pixels on the screen. Happy coding!
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="buddy.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">buddy/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-concept-the-movie-poster">The Concept: The Movie Poster</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-time-window">1. The Time Window</a></li>
+<li style="padding-left:10px"><a href="#2-the-feature-flag">2. The Feature Flag</a></li>
+<li style="padding-left:10px"><a href="#3-rainbow-text">3. Rainbow Text</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:10px"><a href="#input">Input</a></li>
+<li style="padding-left:10px"><a href="#output">Output</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-implementation">Under the Hood: Implementation</a></li>
+<li style="padding-left:10px"><a href="#step-1-checking-the-calendar">Step 1: Checking the Calendar</a></li>
+<li style="padding-left:10px"><a href="#step-2-the-rainbow-renderer">Step 2: The Rainbow Renderer</a></li>
+<li style="padding-left:10px"><a href="#step-3-the-notification-logic">Step 3: The Notification Logic</a></li>
+<li style="padding-left:0px"><a href="#why-this-is-cool">Why this is cool</a></li>
+<li style="padding-left:0px"><a href="#tutorial-conclusion">Tutorial Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ch.05 Git Integration — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">Ch.05 — Git Integration</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-tools">TOOLS</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">Chapter 5 · <span class="tag tag-tools">TOOLS</span></div>
+  <h1 class="chapter-title-h1">Git Integration</h1>
+  <div class="chapter-meta">
+    <span>📄 05_git_integration.md</span>
+    <span>🏷 Tools</span>
+  </div>
+</div>
+<h1 id="chapter-5-git-integration">Chapter 5: Git Integration</h1>
+<p>
+In the previous <a href="04<em>fileedittool.md">FileEditTool</a> chapter, we gave %%INLINE</em>0%% the "hands" to modify your code files. But anyone who has written code knows that saving a file is only half the battle.
+</p>
+<p>
+The other half is <strong>Version Control</strong>.
+</p>
+<p>
+If the AI makes a mistake, we need to be able to undo it. If the AI makes 10 changes, we might want to group them into a "Commit." This is where <strong>Git Integration</strong> comes in.
+</p>
+<h2 id="what-is-git-integration">What is Git Integration?</h2>
+<p>
+Git is complex. It involves branches, remotes, staging areas, and sometimes complex folder structures called "worktrees."
+</p>
+<p>
+If we just blindly ran <code>git</code> commands in the terminal, we might crash if the user doesn't have Git installed, or if we are inside a folder that isn't actually a repository.
+</p>
+<p>
+The <strong>Git Integration</strong> module is a set of utilities that answers three critical questions safely:
+</p>
+<ol>
+<li><strong>"Where am I?"</strong> (Are we inside a Git repo?)</li>
+</ol>
+<ol>
+<li><strong>"What changed?"</strong> (Which files did the AI just edit?)</li>
+</ol>
+<ol>
+<li><strong>"Is it safe?"</strong> (Are there uncommitted changes we might overwrite?)</li>
+</ol>
+<h3 id="the-central-use-case-the-context-check">The Central Use Case: "The Context Check"</h3>
+<p>
+Imagine you ask <code>claudeCode</code>: <strong>"Summarize my recent changes."</strong>
+</p>
+<p>
+To answer this, the application needs to:
+</p>
+<ol>
+<li>Find the root of your project (where the <code>.git</code> folder lives).</li>
+</ol>
+<ol>
+<li>Run a "diff" to see what looks different from the last commit.</li>
+</ol>
+<ol>
+<li>Return that list to the <a href="03<em>query</em>engine.md">Query Engine</a>.</li>
+</ol>
+<p>
+Without this integration, the AI is blind to the project's history.
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<h3 id="1-the-git-root-the-anchor">1. The Git Root (The Anchor)</h3>
+<p>
+Every Git project has a "root" folder. This is where the hidden <code>.git</code> directory lives.
+</p>
+<ul>
+<li>If you are in %%INLINE<em>5%%, the root is %%INLINE</em>6%%.</li>
+<li>We must find this root before running any commands, or Git will get confused.</li>
+</ul>
+<h3 id="2-worktrees-the-virtual-window">2. Worktrees (The Virtual Window)</h3>
+<p>
+Advanced Git users use "Worktrees." This allows you to have the <em>same</em> project checked out in two different folders at the same time (e.g., one folder for "main" branch, one for "feature" branch).
+ 
+Our integration handles this automatically so the AI doesn't need to know the difference.
+</p>
+<h3 id="3-dirty-vs-clean">3. Dirty vs. Clean</h3>
+<ul>
+<li><strong>Clean:</strong> All changes are saved and committed.</li>
+<li><strong>Dirty:</strong> You have modified files that haven't been committed yet.</li>
+</ul>
+<p>
+Knowing this is crucial for the <a href="10<em>auto</em>mode_classifier.md">Auto-Mode Classifier</a> to decide if a task is "finished."
+</p>
+<h2 id="how-to-use-git-utilities">How to Use Git Utilities</h2>
+<p>
+These utilities are usually helper functions imported from <code>utils/git.ts</code>.
+</p>
+<h3 id="finding-the-root">Finding the Root</h3>
+<p>
+Here is how we determine where the project starts.
+</p>
+<pre data-lang="typescript"><code>import { findGitRoot } from './utils/git';
+import { getCwd } from './utils/cwd';
+
+// 1. Get where the user currently is
+const currentDir = getCwd();
+
+// 2. Walk up the tree to find .git
+const root = findGitRoot(currentDir);
+
+if (!root) {
+  console.log("Not in a git repository!");
+}
+</code></pre>
+<p>
+<em>Explanation: %%INLINE<em>8%% looks at the current folder. If it doesn't see %%INLINE</em>9%%, it checks the parent folder, and so on, until it hits the top of the drive.</em>
+</p>
+<h3 id="checking-for-changes">Checking for Changes</h3>
+<p>
+The AI often needs to know if the workspace is "Clean."
+</p>
+<pre data-lang="typescript"><code>import { getIsClean } from './utils/git';
+
+async function checkStatus() {
+  // Returns true if no files are modified
+  const isSafe = await getIsClean();
+
+  if (!isSafe) {
+    console.log("You have uncommitted changes.");
+  }
+}
+</code></pre>
+<p>
+<em>Explanation: This wraps <code>git status</code>. If Git returns output, it means things are "dirty" (changed).</em>
+</p>
+<h3 id="getting-the-remote-url">Getting the Remote URL</h3>
+<p>
+To help the AI understand the project context (e.g., "Is this an open source library?"), we fetch the remote origin.
+</p>
+<pre data-lang="typescript"><code>import { getRemoteUrl } from './utils/git';
+
+async function identifyProject() {
+  const url = await getRemoteUrl();
+  // Output might be: "git@github.com:anthropics/claude-code.git"
+  return url;
+}
+</code></pre>
+<h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
+<p>
+The Git Integration doesn't reinvent Git. It acts as a <strong>translator</strong>. It runs standard Git commands in the background and converts the messy text output into nice JavaScript objects.
+</p>
+<p>
+Here is the flow when checking for changed files:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant App as ClaudeCode App
+    participant Utils as Git Utils
+    participant Shell as System Shell
+    participant Git as Git Binary
+
+    App-&gt;&gt;Utils: getChangedFiles()
+    Utils-&gt;&gt;Shell: Spawns process
+    Shell-&gt;&gt;Git: git status --porcelain
+    Git--&gt;&gt;Shell: Output: "M src/index.ts"
+    Shell--&gt;&gt;Utils: Returns string
+    Utils-&gt;&gt;Utils: Split text into Array
+    Utils--&gt;&gt;App: Returns ["src/index.ts"]</div></div>
+<h3 id="internal-implementation-code">Internal Implementation Code</h3>
+<p>
+Let's look at <code>utils/git.ts</code> to see how this is actually implemented.
+</p>
+<h4 id="1-walking-the-tree-finding-root">1. Walking the Tree (Finding Root)</h4>
+<p>
+This logic mimics how Git itself finds the root directory.
+</p>
+<pre data-lang="typescript"><code>// utils/git.ts (Simplified)
+import { statSync } from 'fs';
+import { join, dirname } from 'path';
+
+const findGitRootImpl = (startPath) =&gt; {
+  let current = startPath;
+  
+  // Loop until we reach the top of the drive
+  while (current !== root) {
+    // Check if .git exists here
+    if (pathExists(join(current, '.git'))) {
+      return current; // Found it!
+    }
+    // Move up one level
+    current = dirname(current);
+  }
+  return null; 
+};
+</code></pre>
+<p>
+<em>Explanation: We use a %%INLINE<em>12%% loop to climb up the directory tree. We check for %%INLINE</em>13%% at every step. We use <code>memoization</code> (caching) in the real code so we don't scan the hard drive every single time.</em>
+</p>
+<h4 id="2-resolving-worktrees">2. Resolving Worktrees</h4>
+<p>
+This is the complex part. Sometimes <code>.git</code> isn't a folder—it's a <strong>file</strong> pointing to another folder.
+</p>
+<pre data-lang="typescript"><code>// utils/git.ts (Simplified Logic)
+
+const resolveCanonicalRoot = (gitRoot) =&gt; {
+  // Read the .git item
+  const gitContent = readFileSync(join(gitRoot, '.git'), 'utf-8');
+
+  // If it starts with "gitdir:", it's a worktree!
+  if (gitContent.startsWith('gitdir:')) {
+    // Follow the path to find the REAL git folder
+    const realPath = gitContent.slice(8).trim();
+    return resolve(realPath);
+  }
+  
+  return gitRoot;
+};
+</code></pre>
+<p>
+<em>Explanation: Worktrees are basically "shortcuts." This function follows the shortcut to find where the actual history database is stored. This ensures that even if you are in a worktree, the AI knows the real project identity.</em>
+</p>
+<h4 id="3-executing-git-commands">3. Executing Git Commands</h4>
+<p>
+We use a helper to run the commands safely without crashing the app if Git fails.
+</p>
+<pre data-lang="typescript"><code>// utils/git.ts
+import { execFileNoThrow } from './execFileNoThrow.js';
+
+export const getChangedFiles = async () =&gt; {
+  // Run: git status --porcelain (machine readable format)
+  const { stdout } = await execFileNoThrow(
+    'git', 
+    ['status', '--porcelain']
+  );
+
+  // Turn text output into an array of filenames
+  return stdout
+    .split('\n')
+    .map(line =&gt; line.substring(3)); // Remove "M  " prefix
+}
+</code></pre>
+<p>
+<em>Explanation: <code>execFileNoThrow</code> ensures that if Git crashes or isn't installed, our app doesn't crash. It just returns an error code which we handle gracefully.</em>
+</p>
+<h2 id="why-is-this-important-for-later">Why is this important for later?</h2>
+<p>
+This chapter provides the "Project Awareness" needed for advanced features:
+</p>
+<ul>
+<li><strong><a href="06<em>bashtool.md">BashTool</a>:</strong> While Git Integration handles <em>status</em> checks, %%INLINE</em>17%% is what allows the AI to actually run %%INLINE<em>18%% or %%INLINE</em>19%%.</li>
+<li><strong><a href="08<em>permission</em><em>_security</em>system.md">Permission & Security System</a>:</strong> We use <code>findGitRoot</code> to limit the AI's access. We might say: "You can only edit files <em>inside</em> this Git repository."</li>
+<li><strong><a href="16_teammates.md">Teammates</a>:</strong> Teammates (other AI agents) use the git commit history to understand what you were working on yesterday.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have learned that <strong>Git Integration</strong> is the compass of <code>claudeCode</code>. It tells the application where the project boundaries are, what has been changed, and how to navigate complex setups like worktrees.
+</p>
+<p>
+Now that the AI can read the project status, what if it needs to run other commands? Like listing directories, installing packages, or running tests?
+</p>
+<p>
+<a href="06_bashtool.md">Next Chapter: BashTool</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="04-fileedittool.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">FileEditTool</div>
+        </a><a class="chapter-nav-card next" href="06-bashtool.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">BashTool</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#what-is-git-integration">What is Git Integration?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case-the-context-check">The Central Use Case: "The Context Check"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-git-root-the-anchor">1. The Git Root (The Anchor)</a></li>
+<li style="padding-left:10px"><a href="#2-worktrees-the-virtual-window">2. Worktrees (The Virtual Window)</a></li>
+<li style="padding-left:10px"><a href="#3-dirty-vs-clean">3. Dirty vs. Clean</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-git-utilities">How to Use Git Utilities</a></li>
+<li style="padding-left:10px"><a href="#finding-the-root">Finding the Root</a></li>
+<li style="padding-left:10px"><a href="#checking-for-changes">Checking for Changes</a></li>
+<li style="padding-left:10px"><a href="#getting-the-remote-url">Getting the Remote URL</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-how-it-works">Under the Hood: How it Works</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-code">Internal Implementation Code</a></li>
+<li style="padding-left:0px"><a href="#why-is-this-important-for-later">Why is this important for later?</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

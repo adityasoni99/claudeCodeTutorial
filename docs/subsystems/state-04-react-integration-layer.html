@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: React Integration Layer — state/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">state/04_react_integration_layer.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🗂 state/ · 04_react_integration_layer.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: React Integration Layer</h1>
+  <div class="chapter-meta"><span>📄 state/04_react_integration_layer.md</span></div>
+</div>
+<h1 id="chapter-4-react-integration-layer">Chapter 4: React Integration Layer</h1>
+<p>
+In the previous chapter, <a href="03<em>teammate</em>view<em>logic</em><em>domain</em>actions_.md">Teammate View Logic (Domain Actions)</a>, we built the logic to safely update our data using Domain Actions.
+</p>
+<p>
+We now have a working Store (the Brain), Selectors (the Eyes), and Actions (the Muscles). But we are missing the Face. We need to connect all of this to <strong>React</strong> so users can actually see and interact with the application.
+</p>
+<p>
+This connection is handled by the <strong>React Integration Layer</strong>.
+</p>
+<h3 id="the-motivation-the-smart-subscription">The Motivation: The Smart Subscription</h3>
+<p>
+Connecting a global store to React is tricky.
+</p>
+<p>
+<strong>The Naive Approach:</strong>
+ 
+Imagine if every component in your app re-rendered every time <em>anything</em> in the store changed.
+</p>
+<ul>
+<li>The background clock ticks -> <strong>The whole screen flashes.</strong></li>
+<li>A chat message arrives -> <strong>The settings menu flickers.</strong></li>
+</ul>
+<p>
+This makes the app slow and laggy.
+</p>
+<p>
+<strong>The Solution:</strong>
+ 
+We need a "Smart Subscription."
+</p>
+<ul>
+<li>The <strong>Header</strong> only subscribes to "User Name."</li>
+<li>The <strong>Footer</strong> only subscribes to "Status."</li>
+</ul>
+<p>
+If "Status" changes, the Footer updates, but the Header stays asleep. This is exactly what our React Integration Layer does.
+</p>
+<hr>
+<h3 id="key-concept-the-provider-inline-0">Key Concept: The Provider (<code>AppStateProvider</code>)</h3>
+<p>
+First, we need to plug the app into the power grid. We wrap our entire application in a component called <code>AppStateProvider</code>.
+</p>
+<p>
+This component creates the Store instance once and passes it down to the rest of the app using React Context.
+</p>
+<pre data-lang="tsx"><code>// main.tsx (Simplified)
+import { AppStateProvider } from './state/AppState';
+
+function App() {
+  return (
+    &lt;AppStateProvider&gt;
+      &lt;MyGreatUI /&gt;
+    &lt;/AppStateProvider&gt;
+  );
+}
+</code></pre>
+<p>
+<em>Explanation:</em> Now, every component inside <code>&lt;MyGreatUI /&gt;</code> has access to the store, without us having to pass variables down manually through props (prop drilling).
+</p>
+<hr>
+<h3 id="key-concept-reading-data-inline-3">Key Concept: Reading Data (<code>useAppState</code>)</h3>
+<p>
+To read data, we use a custom hook called <code>useAppState</code>.
+</p>
+<p>
+This hook takes a <strong>Selector</strong> (from Chapter 2) as an argument. It runs that selector and returns the result. Most importantly, <strong>it only triggers a re-render if that specific result changes.</strong>
+</p>
+<h4 id="use-case-the-brief-mode-indicator">Use Case: The "Brief Mode" Indicator</h4>
+<p>
+Let's say we want to show a text label only if "Brief Mode" is enabled.
+</p>
+<pre data-lang="tsx"><code>import { useAppState } from './state/AppState';
+
+export function BriefModeLabel() {
+  // We subscribe ONLY to 'isBriefOnly'
+  const isBrief = useAppState(state =&gt; state.isBriefOnly);
+
+  if (!isBrief) return null; // Don't show anything
+
+  return &lt;span&gt;Brief Mode is ON&lt;/span&gt;;
+}
+</code></pre>
+<p>
+<em>Explanation:</em> If the %%INLINE<em>5%% list updates or the %%INLINE</em>6%% changes, this component ignores it. It <em>only</em> wakes up if <code>isBriefOnly</code> flips.
+</p>
+<hr>
+<h3 id="key-concept-writing-data-inline-8">Key Concept: Writing Data (<code>useSetAppState</code>)</h3>
+<p>
+To change data, we need access to the %%INLINE<em>9%% function (or our Domain Actions). We use %%INLINE</em>10%%.
+</p>
+<p>
+This hook is special because it <strong>never causes a re-render</strong>. It just gives you the function to trigger updates.
+</p>
+<h4 id="use-case-the-toggle-button">Use Case: The Toggle Button</h4>
+<pre data-lang="tsx"><code>import { useSetAppState } from './state/AppState';
+
+export function ToggleBriefModeButton() {
+  // Get the writer function
+  const setState = useSetAppState();
+
+  const handleClick = () =&gt; {
+    setState(prev =&gt; ({ ...prev, isBriefOnly: !prev.isBriefOnly }));
+  };
+
+  return &lt;button onClick={handleClick}&gt;Toggle Mode&lt;/button&gt;;
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This component doesn't even read the data! It just sends a command. It will never re-render, making it very fast.
+</p>
+<hr>
+<h3 id="internal-implementation-how-it-works">Internal Implementation: How it Works</h3>
+<p>
+How does %%INLINE<em>11%% know when to re-render? It uses a modern React feature called %%INLINE</em>12%%.
+</p>
+<p>
+Here is the flow of events when data changes:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant U as User Click
+    participant S as Store
+    participant C1 as Component A (Brief Mode)
+    participant C2 as Component B (Task List)
+
+    U-&gt;&gt;S: setState( isBriefOnly = true )
+    Note over S: 1. Update Data&lt;br/&gt;2. Notify Listeners
+    
+    S-&gt;&gt;C1: Run Selector (state.isBriefOnly)
+    Note right of C1: Result changed!&lt;br/&gt;(false -&gt; true)&lt;br/&gt;TRIGGER RE-RENDER
+    
+    S-&gt;&gt;C2: Run Selector (state.tasks)
+    Note right of C2: Result same.&lt;br/&gt;(Same list)&lt;br/&gt;DO NOTHING</div></div>
+<h4 id="code-walkthrough-inline-13">Code Walkthrough: <code>AppState.tsx</code></h4>
+<p>
+Let's look at the actual code in <code>AppState.tsx</code> that makes this possible.
+</p>
+<p>
+<strong>1. The Hook Definition</strong>
+ 
+We wrap the standard React <code>useSyncExternalStore</code> hook. This ensures our external store plays nicely with React's rendering lifecycle (like Concurrent Mode).
+</p>
+<pre data-lang="typescript"><code>// AppState.tsx
+export function useAppState&lt;T&gt;(selector: (state: AppState) =&gt; T): T {
+  const store = useAppStore(); // Get the store instance
+
+  // Create a stable 'get' function
+  const getSnapshot = () =&gt; selector(store.getState());
+
+  // React subscribes to the store and calls 'getSnapshot'
+  return useSyncExternalStore(store.subscribe, getSnapshot);
+}
+</code></pre>
+<p>
+<em>Explanation:</em> %%INLINE<em>16%% does the heavy lifting. It listens to %%INLINE</em>17%%. When the store notifies it, it calls <code>getSnapshot</code>. If the result is different from last time, React re-renders the component.
+</p>
+<p>
+<strong>2. The Provider Setup</strong>
+ 
+The provider is responsible for creating the store exactly once.
+</p>
+<pre data-lang="typescript"><code>// AppState.tsx (Simplified)
+export function AppStateProvider({ children, initialState }: Props) {
+  // Create store ONLY if inputs change (rarely happens)
+  const [store] = useState(() =&gt; 
+    createStore(initialState ?? getDefaultAppState())
+  );
+
+  return (
+    &lt;AppStoreContext.Provider value={store}&gt;
+      {children}
+    &lt;/AppStoreContext.Provider&gt;
+  );
+}
+</code></pre>
+<p>
+<em>Explanation:</em> We use <code>useState</code> to hold the store instance. We put that instance into a Context Provider so the hooks below can find it.
+</p>
+<h3 id="putting-it-together-a-complete-component">Putting it together: A Complete Component</h3>
+<p>
+Let's combine everything we've learned in Chapters 1 through 4 into one robust component.
+</p>
+<p>
+<strong>Goal:</strong> A "Teammate Viewer" that shows the name of the active teammate.
+</p>
+<ol>
+<li><strong>Select</strong> the active task (Chapter 2).</li>
+</ol>
+<ol>
+<li><strong>Display</strong> the name (Chapter 4).</li>
+</ol>
+<ol>
+<li><strong>Clear</strong> the view on click (Chapter 3).</li>
+</ol>
+<pre data-lang="tsx"><code>import { useAppState, useSetAppState } from './state/AppState';
+import { getViewedTeammateTask } from './selectors'; // Chapter 2
+import { exitTeammateView } from './teammateViewHelpers'; // Chapter 3
+
+export function TeammateHeader() {
+  // 1. SELECT: Get derived data
+  const task = useAppState(getViewedTeammateTask);
+  
+  // 2. ACTION: Get the writer
+  const setState = useSetAppState();
+
+  // If no task is selected, render nothing
+  if (!task) return null;
+
+  return (
+    &lt;div className="header"&gt;
+      {/* 3. DISPLAY */}
+      &lt;h1&gt;Viewing: {task.label}&lt;/h1&gt;
+      
+      {/* 4. INTERACT */}
+      &lt;button onClick={() =&gt; exitTeammateView(setState)}&gt;
+        Close
+      &lt;/button&gt;
+    &lt;/div&gt;
+  );
+}
+</code></pre>
+<h3 id="conclusion">Conclusion</h3>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>AppStateProvider</strong> is the bridge that plugs the Store into React.</li>
+</ol>
+<ol>
+<li><strong>useAppState</strong> allows components to subscribe intelligently to small slices of data.</li>
+</ol>
+<ol>
+<li><strong>useSetAppState</strong> allows components to trigger updates without re-rendering themselves.</li>
+</ol>
+<p>
+We now have a fully functioning cycle: <strong>Data -> Selector -> UI -> Action -> Data</strong>.
+</p>
+<p>
+However, our application doesn't live in a vacuum. Sometimes we need to save data to a file, play a sound, or talk to an API when state changes. We shouldn't put that logic inside our UI components. We need <strong>Side Effects</strong>.
+</p>
+<p>
+<a href="05<em>state</em>synchronization<em>_side</em>effects_.md">Next Chapter: State Synchronization (Side Effects)</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="state.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">state/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:10px"><a href="#the-motivation-the-smart-subscription">The Motivation: The Smart Subscription</a></li>
+<li style="padding-left:10px"><a href="#key-concept-the-provider-inline-0">Key Concept: The Provider (%%INLINE_0%%)</a></li>
+<li style="padding-left:10px"><a href="#key-concept-reading-data-inline-3">Key Concept: Reading Data (%%INLINE_3%%)</a></li>
+<li style="padding-left:10px"><a href="#key-concept-writing-data-inline-8">Key Concept: Writing Data (%%INLINE_8%%)</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-how-it-works">Internal Implementation: How it Works</a></li>
+<li style="padding-left:10px"><a href="#putting-it-together-a-complete-component">Putting it together: A Complete Component</a></li>
+<li style="padding-left:10px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

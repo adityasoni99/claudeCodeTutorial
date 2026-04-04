@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 6: MCP Skill Bridge — skills/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">skills/06_mcp_skill_bridge.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🎓 skills/ · 06_mcp_skill_bridge.md</div>
+  <h1 class="chapter-title-h1">Chapter 6: MCP Skill Bridge</h1>
+  <div class="chapter-meta"><span>📄 skills/06_mcp_skill_bridge.md</span></div>
+</div>
+<h1 id="chapter-6-mcp-skill-bridge">Chapter 6: MCP Skill Bridge</h1>
+<p>
+Welcome to Chapter 6! In the previous chapter, <a href="05<em>static</em>content_assets.md">Static Content Assets</a>, we learned how to bundle large text files (like manuals) inside our application so the AI can read them on demand.
+</p>
+<p>
+So far, all the skills we have built live <strong>inside</strong> our application. But the Model Context Protocol (MCP) is designed to let the AI talk to <strong>external</strong> tools—like a database server, a web browser, or a specialized analysis tool running on a different computer.
+</p>
+<p>
+This introduces a tricky architectural problem called a <strong>Circular Dependency</strong>. The <strong>MCP Skill Bridge</strong> is the solution to that problem.
+</p>
+<h2 id="motivation-the-chicken-and-egg-problem">Motivation: The "Chicken and Egg" Problem</h2>
+<p>
+Imagine you are building a house.
+</p>
+<ol>
+<li><strong> The Carpenter</strong> needs the <strong>Hammer</strong>.</li>
+</ol>
+<ol>
+<li>But the <strong>Hammer</strong> is locked inside the <strong>Toolbox</strong>.</li>
+</ol>
+<ol>
+<li>And the <strong>Toolbox</strong> can only be opened by the <strong>Carpenter</strong>.</li>
+</ol>
+<p>
+If the Carpenter is inside the Toolbox, and the Toolbox is inside the Carpenter... well, in programming, this crashes the computer. This is called a <strong>Circular Dependency</strong>.
+</p>
+<h3 id="the-use-case">The Use Case</h3>
+<p>
+In our project, we have two main parts:
+</p>
+<ol>
+<li><strong>The Core Loader</strong> (from <a href="03<em>filesystem</em>skill_loader.md">Filesystem Skill Loader</a>): It knows <em>how</em> to build a skill command. It holds the "Factory Functions."</li>
+</ol>
+<ol>
+<li><strong>The MCP Client</strong>: It connects to external servers. When an external server says "I have a tool," the MCP Client needs to build a command for it.</li>
+</ol>
+<p>
+<strong>The Problem:</strong> The MCP Client needs the Core Loader's logic to build skills. But the Core Loader eventually needs to know about MCP to register those skills. If they import each other directly, the app won't start.
+</p>
+<p>
+<strong>The Solution:</strong> We create a "Bridge"—a neutral location where they can exchange tools without crashing.
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+To solve this, we use a pattern often called <strong>Dependency Injection</strong> or a <strong>Service Locator</strong>. We can think of it as a <strong>Secure Drop-off Box</strong>.
+</p>
+<ol>
+<li><strong>The Bridge</strong>: A tiny, independent file that has no dependencies. It just holds a variable.</li>
+</ol>
+<ol>
+<li><strong>The Provider (Core Loader)</strong>: At startup, it puts its "Skill Building Tools" into the Bridge.</li>
+</ol>
+<ol>
+<li><strong>The Consumer (MCP Client)</strong>: Later, when it connects to a server, it asks the Bridge: "Do you have the tools I need?"</li>
+</ol>
+<h2 id="step-by-step-implementation">Step-by-Step Implementation</h2>
+<p>
+Let's look at how we implement this bridge to keep our code clean and crash-free.
+</p>
+<h3 id="1-the-bridge-file">1. The Bridge File</h3>
+<p>
+This file (<code>mcpSkillBuilders.ts</code>) is the neutral ground. It is very simple. It doesn't import the heavy logic; it just defines what the logic <em>looks</em> like (Types).
+</p>
+<pre data-lang="typescript"><code>// File: src/skills/mcpSkillBuilders.ts
+
+// A variable to hold the tools. Starts empty (null).
+let builders: MCPSkillBuilders | null = null
+
+// Method for the Provider to drop off tools
+export function registerMCPSkillBuilders(b: MCPSkillBuilders): void {
+  builders = b
+}
+</code></pre>
+<p>
+<em>Explanation:</em> We create a global variable <code>builders</code>. We export a function that allows someone to fill this variable.
+</p>
+<h3 id="2-the-retrieval-function">2. The Retrieval Function</h3>
+<p>
+In the same file, we need a way for the Consumer to pick up the tools.
+</p>
+<pre data-lang="typescript"><code>// File: src/skills/mcpSkillBuilders.ts
+
+export function getMCPSkillBuilders(): MCPSkillBuilders {
+  // Safety check: Did the Provider arrive yet?
+  if (!builders) {
+    throw new Error('Tools not yet registered!')
+  }
+  
+  return builders
+}
+</code></pre>
+<p>
+<em>Explanation:</em> If the MCP system tries to grab the tools before the Core Loader has started, we throw an error. This ensures the startup order is correct.
+</p>
+<h3 id="3-the-provider-core-loader">3. The Provider (Core Loader)</h3>
+<p>
+Now, let's look at %%INLINE<em>2%% (the file we discussed in <a href="03</em>filesystem<em>skill</em>loader.md">Filesystem Skill Loader</a>). When this file runs, it registers its factory functions.
+</p>
+<pre data-lang="typescript"><code>// File: src/skills/loadSkillsDir.ts
+import { registerMCPSkillBuilders } from './mcpSkillBuilders.js'
+
+// We define the tools we have available
+import { createSkillCommand } from './skillFactory.js'
+
+// DROP-OFF: We put the tools in the bridge
+registerMCPSkillBuilders({
+  createSkillCommand: createSkillCommand,
+  // ... other helpers
+})
+</code></pre>
+<p>
+<em>Explanation:</em> The Core Loader imports the bridge and calls %%INLINE<em>3%%. It effectively says: "Hey Bridge, here is the function %%INLINE</em>4%%. Keep it safe for anyone who needs it."
+</p>
+<h3 id="4-the-consumer-mcp-client">4. The Consumer (MCP Client)</h3>
+<p>
+Finally, the MCP system (%%INLINE<em>5%%) needs to create a skill from a remote server's definition. It doesn't import %%INLINE</em>6%% directly (which would cause the crash). Instead, it asks the Bridge.
+</p>
+<pre data-lang="typescript"><code>// File: src/skills/mcpSkills.ts
+import { getMCPSkillBuilders } from './mcpSkillBuilders.js'
+
+export function convertMcpToolToSkill(tool: any) {
+  // PICK-UP: Get the factory function from the bridge
+  const { createSkillCommand } = getMCPSkillBuilders()
+
+  // Now we can use the logic without a direct dependency!
+  return createSkillCommand({
+    name: tool.name,
+    // ...
+  })
+}
+</code></pre>
+<p>
+<em>Explanation:</em> By using <code>getMCPSkillBuilders()</code>, the MCP system gets access to the powerful logic defined elsewhere, without directly linking to the file that defines it.
+</p>
+<h2 id="internal-implementation-under-the-hood">Internal Implementation: Under the Hood</h2>
+<p>
+Let's visualize exactly what happens when the application starts up. The order of events is critical here.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant App as Application Start
+    participant Loader as Core Loader (Provider)
+    participant Bridge as MCP Bridge
+    participant MCP as MCP Client (Consumer)
+
+    Note over Bridge: Builders = null
+
+    App-&gt;&gt;Loader: 1. Initialize System
+    Loader-&gt;&gt;Loader: Define createSkillCommand()
+    Loader-&gt;&gt;Bridge: 2. Call registerMCPSkillBuilders(tools)
+    Note over Bridge: Builders = { createSkillCommand }
+
+    App-&gt;&gt;MCP: 3. Connect to External Server
+    MCP-&gt;&gt;Bridge: 4. Call getMCPSkillBuilders()
+    Bridge--&gt;&gt;MCP: Return { createSkillCommand }
+    
+    MCP-&gt;&gt;MCP: Use tool to build skill</div></div>
+<h3 id="why-this-works">Why this works</h3>
+<p>
+In JavaScript/TypeScript, modules are executed the first time they are imported.
+</p>
+<ol>
+<li><strong><code>mcpSkillBuilders.ts</code></strong> is a "Leaf Node." It sits at the bottom of the tree. It depends on nothing.</li>
+</ol>
+<ol>
+<li><strong><code>loadSkillsDir.ts</code></strong> imports the Bridge.</li>
+</ol>
+<ol>
+<li><strong><code>mcpSkills.ts</code></strong> imports the Bridge.</li>
+</ol>
+<p>
+Because neither %%INLINE<em>11%% nor %%INLINE</em>12%% import <em>each other</em>, the circle is broken. They both just point to the neutral Bridge.
+</p>
+<h3 id="the-type-definitions">The Type Definitions</h3>
+<p>
+To make TypeScript happy, the Bridge needs to know what the tools <em>look like</em> without actually importing the code. We use <code>typeof</code> imports for this.
+</p>
+<pre data-lang="typescript"><code>// File: src/skills/mcpSkillBuilders.ts
+
+// We import ONLY the type, not the code
+import type { createSkillCommand } from './loadSkillsDir.js'
+
+export type MCPSkillBuilders = {
+  createSkillCommand: typeof createSkillCommand
+  // other functions...
+}
+</code></pre>
+<p>
+<em>Explanation:</em> <code>import type</code> is a special TypeScript feature. It tells the compiler "I need to know the shape of this function, but don't actually load the file at runtime." This is crucial for avoiding the circular dependency while keeping our code strictly typed.
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+The <strong>MCP Skill Bridge</strong> is a helper pattern that keeps our application architecture healthy.
+</p>
+<ol>
+<li>It solves <strong>Circular Dependencies</strong> by decoupling the "Creator" of skills from the "User" of skills.</li>
+</ol>
+<ol>
+<li>It acts as a <strong>Registry</strong> where factory functions are stored at startup.</li>
+</ol>
+<ol>
+<li>It allows the MCP system to reuse the robust skill creation logic (from <a href="03<em>filesystem</em>skill_loader.md">Filesystem Skill Loader</a>) without crashing the app.</li>
+</ol>
+<p>
+By using this bridge, we ensure that whether a skill comes from a local file, a bundled asset, or a remote MCP server, it is always built using the exact same logic.
+</p>
+<p>
+This concludes our tutorial on the <strong>Skills</strong> project! You now understand:
+</p>
+<ol>
+<li>How skills are registered.</li>
+</ol>
+<ol>
+<li>How they are defined.</li>
+</ol>
+<ol>
+<li>How they are loaded from disk.</li>
+</ol>
+<ol>
+<li>How prompts are generated.</li>
+</ol>
+<ol>
+<li>How assets are managed.</li>
+</ol>
+<ol>
+<li>How we connect to external MCP servers safely.</li>
+</ol>
+<p>
+You are now ready to extend the AI's capabilities with your own custom tools! Happy coding!
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="skills.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">skills/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#motivation-the-chicken-and-egg-problem">Motivation: The "Chicken and Egg" Problem</a></li>
+<li style="padding-left:10px"><a href="#the-use-case">The Use Case</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:0px"><a href="#step-by-step-implementation">Step-by-Step Implementation</a></li>
+<li style="padding-left:10px"><a href="#1-the-bridge-file">1. The Bridge File</a></li>
+<li style="padding-left:10px"><a href="#2-the-retrieval-function">2. The Retrieval Function</a></li>
+<li style="padding-left:10px"><a href="#3-the-provider-core-loader">3. The Provider (Core Loader)</a></li>
+<li style="padding-left:10px"><a href="#4-the-consumer-mcp-client">4. The Consumer (MCP Client)</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-under-the-hood">Internal Implementation: Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#why-this-works">Why this works</a></li>
+<li style="padding-left:10px"><a href="#the-type-definitions">The Type Definitions</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

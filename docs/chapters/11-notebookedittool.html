@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ch.11 NotebookEditTool — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">Ch.11 — NotebookEditTool</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-tools">TOOLS</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">Chapter 11 · <span class="tag tag-tools">TOOLS</span></div>
+  <h1 class="chapter-title-h1">NotebookEditTool</h1>
+  <div class="chapter-meta">
+    <span>📄 11_notebookedittool.md</span>
+    <span>🏷 Tools</span>
+  </div>
+</div>
+<h1 id="chapter-11-notebookedittool">Chapter 11: NotebookEditTool</h1>
+<p>
+In the previous <a href="10<em>auto</em>mode_classifier.md">Auto-Mode Classifier</a> chapter, we discussed how the AI decides if an action is safe enough to perform automatically.
+</p>
+<p>
+Now, we need to talk about a specific type of file that is notoriously difficult for AI to edit: <strong>Jupyter Notebooks (<code>.ipynb</code>)</strong>.
+</p>
+<p>
+If you use <a href="04_fileedittool.md">FileEditTool</a> on a standard text file, it works perfectly. But if you try to use standard text editing tools on a Notebook, you will likely corrupt the file and break the JSON structure.
+</p>
+<p>
+Enter the <strong>NotebookEditTool</strong>. This is a specialized instrument designed to perform surgery on Data Science notebooks without breaking them.
+</p>
+<h2 id="what-is-the-notebookedittool">What is the NotebookEditTool?</h2>
+<p>
+To a human, a Jupyter Notebook looks like a document with text and code blocks.
+ 
+To a computer, a <code>.ipynb</code> file is actually a giant, messy <strong>JSON object</strong>.
+</p>
+<p>
+If you change one comma in the wrong place in that JSON file, the entire notebook becomes unreadable by Jupyter.
+</p>
+<p>
+The <strong>NotebookEditTool</strong> solves this by treating the file as a <strong>Structure</strong>, not just a string of text. It parses the JSON, finds the specific "Cell" you want to change, updates it safely, and saves the file back to disk.
+</p>
+<h3 id="the-central-use-case-fixing-the-experiment">The Central Use Case: "Fixing the Experiment"</h3>
+<p>
+Imagine you are a Data Scientist. You have a notebook <code>experiments.ipynb</code> with 50 cells.
+ 
+<strong>You ask <code>claudeCode</code>: "Update the plotting code in the third cell to use Seaborn instead of Matplotlib."</strong>
+</p>
+<p>
+The tool needs to:
+</p>
+<ol>
+<li>Open <code>experiments.ipynb</code>.</li>
+</ol>
+<ol>
+<li>Navigate specifically to <strong>Cell #3</strong>.</li>
+</ol>
+<ol>
+<li>Swap the code inside that cell.</li>
+</ol>
+<ol>
+<li>Leave the other 49 cells (and their output images) completely untouched.</li>
+</ol>
+<h2 id="key-concepts">Key Concepts</h2>
+<h3 id="1-the-cell">1. The Cell</h3>
+<p>
+In a notebook, content is divided into chunks called <strong>Cells</strong>.
+</p>
+<ul>
+<li><strong>Code Cells:</strong> Python code that runs.</li>
+<li><strong>Markdown Cells:</strong> Text for documentation.</li>
+</ul>
+<p>
+The tool operates at the <strong>Cell Level</strong>, not the line level.
+</p>
+<h3 id="2-cell-id">2. Cell ID</h3>
+<p>
+Every cell has a unique identifier (e.g., <code>"cell-8472"</code>). This allows the AI to target a specific block of code even if you move other cells around.
+</p>
+<h3 id="3-edit-modes">3. Edit Modes</h3>
+<p>
+Because notebooks are structured lists, we support three specific actions:
+</p>
+<ul>
+<li><strong>Replace:</strong> "Change the code inside this cell."</li>
+<li><strong>Insert:</strong> "Add a new cell after this one."</li>
+<li><strong>Delete:</strong> "Remove this cell entirely."</li>
+</ul>
+<h2 id="how-to-use-notebookedittool">How to Use NotebookEditTool</h2>
+<p>
+This tool is used automatically by the AI when it detects a <code>.ipynb</code> extension. However, understanding the input helps you understand how the AI "thinks" about your notebooks.
+</p>
+<h3 id="the-input-structure">The Input Structure</h3>
+<p>
+The AI sends a structured command telling the tool exactly which block to modify.
+</p>
+<pre data-lang="json"><code>{
+  "notebook_path": "analysis/data.ipynb",
+  "edit_mode": "replace",
+  "cell_id": "83j2-s9d1",
+  "new_source": "import seaborn as sns\nsns.histplot(data)"
+}
+</code></pre>
+<p>
+<em>Explanation: The AI specifies the file, the specific cell ID to target, and the new code to inject.</em>
+</p>
+<h3 id="example-inserting-a-new-cell">Example: Inserting a New Cell</h3>
+<p>
+If the AI wants to add documentation, it uses the <code>insert</code> mode.
+</p>
+<pre data-lang="json"><code>{
+  "notebook_path": "analysis/data.ipynb",
+  "edit_mode": "insert",
+  "cell_type": "markdown",
+  "new_source": "# Data Analysis Section"
+}
+</code></pre>
+<p>
+<em>Explanation: This adds a new markdown header into the notebook list.</em>
+</p>
+<h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
+<p>
+The process is different from editing a normal text file. We must Load -> Parse -> Modify -> Save.
+</p>
+<ol>
+<li><strong>Read:</strong> The tool reads the raw file content.</li>
+</ol>
+<ol>
+<li><strong>Validate:</strong> It checks if the file is valid JSON (not corrupted).</li>
+</ol>
+<ol>
+<li><strong>Parse:</strong> It converts the text into a JavaScript Object (the Notebook structure).</li>
+</ol>
+<ol>
+<li><strong>Locate:</strong> It loops through the <code>cells</code> array to find the matching ID.</li>
+</ol>
+<ol>
+<li><strong>Modify:</strong> It updates that specific object in the array.</li>
+</ol>
+<ol>
+<li><strong>Write:</strong> It converts the whole object back to a string and saves it.</li>
+</ol>
+<p>
+Here is the visual flow:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant AI
+    participant Tool as NotebookEditTool
+    participant FS as File System
+    participant JSON as JSON Parser
+
+    AI-&gt;&gt;Tool: "Replace Cell A with Code B"
+    
+    Tool-&gt;&gt;FS: Read "data.ipynb"
+    FS--&gt;&gt;Tool: Return raw string "{...}"
+    
+    Tool-&gt;&gt;JSON: Parse string to Object
+    JSON--&gt;&gt;Tool: Returns Notebook Object
+    
+    Note over Tool: Finds Cell A in array
+    Note over Tool: Updates source code
+    
+    Tool-&gt;&gt;FS: Write Object back to disk
+    Tool-&gt;&gt;AI: "Cell Updated Successfully"</div></div>
+<h3 id="internal-implementation-code">Internal Implementation Code</h3>
+<p>
+Let's look at <code>tools/NotebookEditTool/NotebookEditTool.ts</code> to see how we handle this safely.
+</p>
+<h4 id="1-validation-logic">1. Validation Logic</h4>
+<p>
+Before we do anything, we ensure we are working with the right file type.
+</p>
+<pre data-lang="typescript"><code>// tools/NotebookEditTool/NotebookEditTool.ts (Simplified)
+
+async validateInput({ notebook_path, edit_mode }) {
+  // 1. Check extension
+  if (!notebook_path.endsWith('.ipynb')) {
+    return { result: false, message: 'Must be a .ipynb file' };
+  }
+
+  // 2. Read file to ensure it exists
+  const content = readFileSync(notebook_path);
+  
+  // 3. Ensure it is valid JSON
+  if (!isValidJSON(content)) {
+    return { result: false, message: 'Notebook is corrupted' };
+  }
+}
+</code></pre>
+<p>
+<em>Explanation: We reject the request immediately if the file isn't a notebook or if the JSON is broken. This prevents us from making a bad file worse.</em>
+</p>
+<h4 id="2-the-modification-logic">2. The Modification Logic</h4>
+<p>
+This is the core "surgery." We load the JSON, find the array index, and swap the data.
+</p>
+<pre data-lang="typescript"><code>// Inside the call() function
+
+// 1. Parse the file content into an object
+const notebook = JSON.parse(fileContent);
+
+// 2. Find the index of the cell we want to change
+const cellIndex = notebook.cells.findIndex(c =&gt; c.id === cell_id);
+
+// 3. Perform the edit (Replace example)
+if (edit_mode === 'replace') {
+  // Update the source code
+  notebook.cells[cellIndex].source = new_source;
+  
+  // Clear old outputs (graphs/logs) since code changed
+  notebook.cells[cellIndex].outputs = [];
+}
+</code></pre>
+<p>
+<em>Explanation: Notice how we clear <code>outputs</code>. If you change code, the old graph is now outdated, so we remove it to keep the notebook clean.</em>
+</p>
+<h4 id="3-saving-the-result">3. Saving the Result</h4>
+<p>
+Finally, we write the file back to disk.
+</p>
+<pre data-lang="typescript"><code>// Saving the file
+import { writeTextContent } from '../../utils/file';
+
+// 1. Convert object back to text (with nice indentation)
+const updatedContent = JSON.stringify(notebook, null, 1);
+
+// 2. Write to disk
+writeTextContent(fullPath, updatedContent);
+
+// 3. Notify State Management that file changed
+updateFileHistoryState(fullPath);
+</code></pre>
+<p>
+<em>Explanation: We use <code>JSON.stringify</code> to turn our object back into the text format that Jupyter expects.</em>
+</p>
+<h2 id="why-is-this-important-for-later">Why is this important for later?</h2>
+<p>
+The NotebookEditTool is a great example of a "Specialized Tool."
+</p>
+<ul>
+<li><strong><a href="12_websearchtool.md">WebSearchTool</a>:</strong> In the next chapter, we will see another specialized tool that doesn't edit files, but retrieves information from the outside world.</li>
+<li><strong><a href="13<em>feature</em>gating.md">Feature Gating</a>:</strong> Since not every developer uses Python, this tool might be hidden or disabled for users who only work in JavaScript.</li>
+<li><strong><a href="08<em>permission</em><em>_security</em>system.md">Permission & Security System</a>:</strong> Just like <code>FileEditTool</code>, this tool must pass security checks before writing to your disk.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have learned that the <strong>NotebookEditTool</strong> allows <code>claudeCode</code> to safely edit Jupyter Notebooks. Instead of treating them as text files, it respects their internal JSON structure, ensuring that cells are updated cleanly without corrupting the document.
+</p>
+<p>
+Now that we can edit code and notebooks, what if the AI needs information it doesn't have? What if it needs to look up documentation online?
+</p>
+<p>
+<a href="12_websearchtool.md">Next Chapter: WebSearchTool</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="10-auto-mode-classifier.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">Auto-Mode Classifier</div>
+        </a><a class="chapter-nav-card next" href="12-websearchtool.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">WebSearchTool</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#what-is-the-notebookedittool">What is the NotebookEditTool?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case-fixing-the-experiment">The Central Use Case: "Fixing the Experiment"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-cell">1. The Cell</a></li>
+<li style="padding-left:10px"><a href="#2-cell-id">2. Cell ID</a></li>
+<li style="padding-left:10px"><a href="#3-edit-modes">3. Edit Modes</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-notebookedittool">How to Use NotebookEditTool</a></li>
+<li style="padding-left:10px"><a href="#the-input-structure">The Input Structure</a></li>
+<li style="padding-left:10px"><a href="#example-inserting-a-new-cell">Example: Inserting a New Cell</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-how-it-works">Under the Hood: How it Works</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-code">Internal Implementation Code</a></li>
+<li style="padding-left:0px"><a href="#why-is-this-important-for-later">Why is this important for later?</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: Input Transition Logic — vim/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">vim/02_input_transition_logic.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⌨️ vim/ · 02_input_transition_logic.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: Input Transition Logic</h1>
+  <div class="chapter-meta"><span>📄 vim/02_input_transition_logic.md</span></div>
+</div>
+<h1 id="chapter-2-input-transition-logic">Chapter 2: Input Transition Logic</h1>
+<p>
+In the previous chapter, <a href="01<em>vim</em>state<em>machine.md">Vim State Machine</a>, we learned that Vim acts like a car with a manual transmission. It has different "gears" (states) like %%INLINE</em>0%% and <code>Operator</code>.
+</p>
+<p>
+But who shifts the gears? Who decides that pressing <code>d</code> should shift from "Neutral" to "Delete Mode"?
+</p>
+<p>
+That is the job of the <strong>Input Transition Logic</strong>.
+</p>
+<h2 id="the-central-switchboard">The Central Switchboard</h2>
+<p>
+Imagine a massive telephone switchboard from the 1920s. Operators sit there, waiting for a light to blink. When a call comes in (a keystroke), they check who is calling (the current state) and plug the wire into the correct destination (the handler).
+</p>
+<p>
+In our Vim engine, the <code>transition</code> function is that operator.
+</p>
+<h3 id="the-problem-it-solves">The Problem it Solves</h3>
+<p>
+Without this logic, the editor is just a dumb typewriter. We need a system that can look at the letter <code>d</code> and ask context-aware questions:
+</p>
+<ol>
+<li><strong>Are we Idle?</strong> If yes, <code>d</code> means "Prepare to delete."</li>
+</ol>
+<ol>
+<li><strong>Are we already waiting to delete?</strong> If yes, <code>d</code> means "Delete the current line."</li>
+</ol>
+<ol>
+<li><strong>Are we waiting for a text object?</strong> If yes, <code>d</code> is invalid (you can't "delete inside d").</li>
+</ol>
+<h2 id="the-architecture">The Architecture</h2>
+<p>
+The logic is built around one main function that acts as a router. It looks at the <strong>Current State</strong> and routes the <strong>Input</strong> to a specific helper function.
+</p>
+<h3 id="the-main-router">The Main Router</h3>
+<p>
+Here is the simplified code for the main %%INLINE<em>8%% function found in %%INLINE</em>9%%.
+</p>
+<pre data-lang="typescript"><code>// From transitions.ts
+export function transition(
+  state: CommandState, // Where we are now
+  input: string,       // What user typed
+  ctx: Context,        // Editor data
+): TransitionResult {
+  switch (state.type) {
+    case 'idle':
+      return fromIdle(input, ctx)
+    case 'operator':
+      return fromOperator(state, input, ctx)
+    // ... other states like 'replace', 'count'
+  }
+}
+</code></pre>
+<p>
+This function is short and sweet. It doesn't know <em>how</em> to handle the input; it just knows <em>who</em> should handle it.
+</p>
+<h2 id="use-case-the-journey-of-inline-10">Use Case: The Journey of <code>dw</code></h2>
+<p>
+Let's walk through the command <code>dw</code> (Delete Word). This command requires two steps handled by our transition logic.
+</p>
+<h3 id="step-1-from-idle-to-operator">Step 1: From Idle to Operator</h3>
+<ol>
+<li><strong>State:</strong> <code>idle</code></li>
+</ol>
+<ol>
+<li><strong>Input:</strong> <code>d</code></li>
+</ol>
+<p>
+The router calls %%INLINE<em>14%%. This function checks if %%INLINE</em>15%% is a movement (like <code>j</code>) or an operator.
+</p>
+<pre data-lang="typescript"><code>// Inside fromIdle()
+function fromIdle(input: string, ctx: Context) {
+  // Check if input is an operator (d, c, y)
+  if (isOperatorKey(input)) {
+    // Return the NEW state
+    return {
+      next: { type: 'operator', op: 'delete', count: 1 }
+    }
+  }
+  // ... handle other keys
+}
+</code></pre>
+<p>
+<strong>Result:</strong> The editor acts like a traffic cop directing traffic. It says, "Switch state to <code>operator</code>." It does <em>not</em> delete anything yet.
+</p>
+<h3 id="step-2-from-operator-to-execution">Step 2: From Operator to Execution</h3>
+<p>
+Now the state has changed.
+</p>
+<ol>
+<li><strong>State:</strong> <code>operator</code> (waiting for motion)</li>
+</ol>
+<ol>
+<li><strong>Input:</strong> <code>w</code> (word)</li>
+</ol>
+<p>
+The router sees %%INLINE<em>20%% is %%INLINE</em>21%%, so it calls <code>fromOperator</code>.
+</p>
+<pre data-lang="typescript"><code>// Inside fromOperator()
+function fromOperator(state, input, ctx) {
+  // If input is a motion (like 'w', 'j', '$')
+  if (isMotion(input)) {
+    return {
+      // We have both an Operator (delete) and a Motion (word)
+      // We are ready to execute!
+      execute: () =&gt; executeOperatorMotion(state.op, input, ctx)
+    }
+  }
+}
+</code></pre>
+<p>
+<strong>Result:</strong> The logic sees we have a complete sentence ("Delete" + "Word"). It bundles them up and sends an <code>execute</code> command.
+</p>
+<h2 id="visualizing-the-flow">Visualizing the Flow</h2>
+<p>
+Here is how the transition logic routes the traffic for <code>dw</code>.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant Router as Main Transition
+    participant Idle as Idle Handler
+    participant Op as Operator Handler
+
+    Note over Router: Current State: Idle
+
+    User-&gt;&gt;Router: Types "d"
+    Router-&gt;&gt;Idle: "Handle 'd' please"
+    Idle--&gt;&gt;Router: "Switch State to Operator(delete)"
+
+    Note over Router: Current State: Operator
+
+    User-&gt;&gt;Router: Types "w"
+    Router-&gt;&gt;Op: "Handle 'w' please"
+    Op--&gt;&gt;Router: "Execute Delete Word!"</div></div>
+<h2 id="internal-implementation">Internal Implementation</h2>
+<p>
+Let's look at a few specific scenarios in the code to see how it handles edge cases.
+</p>
+<h3 id="1-handling-doubling-inline-25">1. Handling "Doubling" (<code>dd</code>)</h3>
+<p>
+When you are in the %%INLINE<em>26%% state (having pressed %%INLINE</em>27%% once), pressing %%INLINE<em>28%% again means "Delete Line." The %%INLINE</em>29%% function checks for this specifically.
+</p>
+<pre data-lang="typescript"><code>// Inside transitions.ts -&gt; fromOperator
+function fromOperator(state, input, ctx) {
+  // If the input matches the pending operator (d == d)
+  if (input === state.op[0]) {
+    // Execute line operation immediately
+    return { execute: () =&gt; executeLineOp(state.op, state.count, ctx) }
+  }
+  // ... check for motions
+}
+</code></pre>
+<h3 id="2-handling-counts-inline-30">2. Handling Counts (<code>2d</code>)</h3>
+<p>
+What if you type a number? Numbers are transitions too!
+</p>
+<p>
+If you are %%INLINE<em>31%% and type %%INLINE</em>32%%, you aren't moving or deleting. You are building a number.
+</p>
+<pre data-lang="typescript"><code>// Inside transitions.ts -&gt; fromIdle
+function fromIdle(input, ctx) {
+  // If input is 1-9
+  if (/[1-9]/.test(input)) {
+    // Switch to 'count' state to collect more digits
+    return { next: { type: 'count', digits: input } }
+  }
+  // ...
+}
+</code></pre>
+<p>
+This moves the editor into a %%INLINE<em>33%% state, waiting for the rest of the command (e.g., %%INLINE</em>34%% -> delete 2 lines).
+</p>
+<h2 id="why-this-matters">Why This Matters</h2>
+<p>
+By separating <strong>State</strong> from <strong>Input</strong>, we make the code modular.
+</p>
+<ul>
+<li>If we want to add a new motion (e.g., jump to next paragraph), we only update the motion logic. We don't have to rewrite the "Delete" logic.</li>
+<li>If we want to add a new operator (e.g., "Uppercase" operator), it automatically works with all existing motions.</li>
+</ul>
+<p>
+This is why Vim is so composable. The Transition Logic ensures that any <strong>Operator</strong> can be combined with any <strong>Motion</strong>.
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+The <strong>Input Transition Logic</strong> is the traffic controller.
+</p>
+<ol>
+<li>It receives the User Input.</li>
+</ol>
+<ol>
+<li>It checks the State Machine.</li>
+</ol>
+<ol>
+<li>It delegates to a specific handler (%%INLINE<em>35%%, %%INLINE</em>36%%).</li>
+</ol>
+<ol>
+<li>It returns the Next State or an Action.</li>
+</ol>
+<p>
+However, once the controller decides <em>what</em> to do (e.g., "Delete a Word"), we hit a new problem. What exactly <em>is</em> a "Word"? How does the editor know where the word ends?
+</p>
+<p>
+To answer that, we need to understand Motions.
+</p>
+<p>
+<a href="03<em>motion</em>resolution.md">Next Chapter: Motion Resolution</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="vim.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">vim/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-central-switchboard">The Central Switchboard</a></li>
+<li style="padding-left:10px"><a href="#the-problem-it-solves">The Problem it Solves</a></li>
+<li style="padding-left:0px"><a href="#the-architecture">The Architecture</a></li>
+<li style="padding-left:10px"><a href="#the-main-router">The Main Router</a></li>
+<li style="padding-left:0px"><a href="#use-case-the-journey-of-inline-10">Use Case: The Journey of %%INLINE_10%%</a></li>
+<li style="padding-left:10px"><a href="#step-1-from-idle-to-operator">Step 1: From Idle to Operator</a></li>
+<li style="padding-left:10px"><a href="#step-2-from-operator-to-execution">Step 2: From Operator to Execution</a></li>
+<li style="padding-left:0px"><a href="#visualizing-the-flow">Visualizing the Flow</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#1-handling-doubling-inline-25">1. Handling "Doubling" (%%INLINE_25%%)</a></li>
+<li style="padding-left:10px"><a href="#2-handling-counts-inline-30">2. Handling Counts (%%INLINE_30%%)</a></li>
+<li style="padding-left:0px"><a href="#why-this-matters">Why This Matters</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

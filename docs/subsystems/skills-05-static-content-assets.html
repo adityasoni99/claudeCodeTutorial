@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 5: Static Content Assets — skills/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">skills/05_static_content_assets.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🎓 skills/ · 05_static_content_assets.md</div>
+  <h1 class="chapter-title-h1">Chapter 5: Static Content Assets</h1>
+  <div class="chapter-meta"><span>📄 skills/05_static_content_assets.md</span></div>
+</div>
+<h1 id="chapter-5-static-content-assets">Chapter 5: Static Content Assets</h1>
+<p>
+Welcome back! In the previous chapter, <a href="04<em>prompt</em>generation_logic.md">Prompt Generation Logic</a>, we learned how to write the "brain" of a skill—the code that takes user input and transforms it into instructions for the AI.
+</p>
+<p>
+Sometimes, however, a skill doesn't need complex logic. It simply needs <strong>knowledge</strong>.
+</p>
+<p>
+Imagine you are building a skill called <code>/help-api</code> that explains how to use a complex software library. You have 50 pages of documentation written in Markdown. Where do you put this text?
+</p>
+<ol>
+<li><strong>In the code?</strong> Putting 50 pages of text into a TypeScript variable makes your code unreadable.</li>
+</ol>
+<ol>
+<li><strong>In loose files?</strong> If you distribute your app as a single binary file, you can't rely on <code>documentation.md</code> existing on the user's hard drive.</li>
+</ol>
+<p>
+This is where <strong>Static Content Assets</strong> come in.
+</p>
+<h2 id="motivation-the-encyclopedia-in-a-backpack">Motivation: The Encyclopedia in a Backpack</h2>
+<p>
+Imagine you are going on a hike (starting the application). You have a massive encyclopedia (the documentation) that you <em>might</em> need, but probably won't.
+</p>
+<ul>
+<li><strong>Bad Approach:</strong> You memorize the entire encyclopedia before you start walking. (This slows down application startup and wastes memory).</li>
+<li><strong>Good Approach:</strong> You keep the encyclopedia in your backpack. You don't look at it or think about it until someone asks a specific question. Then, and only then, do you pull it out.</li>
+</ul>
+<p>
+<strong>Static Content Assets</strong> allow us to bundle large text files directly into our application binary but keep them "asleep" (lazy-loaded) until the specific moment they are needed.
+</p>
+<h3 id="the-use-case">The Use Case</h3>
+<p>
+We will build a skill called <code>/docs</code>.
+</p>
+<ol>
+<li>We have a large file: <code>manual.md</code>.</li>
+</ol>
+<ol>
+<li>We want to bundle it inside our executable.</li>
+</ol>
+<ol>
+<li>When the user types <code>/docs</code>, we read the content and give it to the AI.</li>
+</ol>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+To achieve this, we rely on three concepts:
+</p>
+<ol>
+<li><strong>The Asset Loader:</strong> A build tool feature (like in Bun) that allows us to import a <code>.md</code> file as if it were a string variable.</li>
+</ol>
+<ol>
+<li><strong>Lazy Loading:</strong> Using JavaScript's <code>await import(...)</code> to load a file only when a function is executed, not when the app starts.</li>
+</ol>
+<ol>
+<li><strong>File Extraction:</strong> A feature of our Skills engine that can write these internal assets to a temporary real folder so the AI can use tools like <code>grep</code> on them.</li>
+</ol>
+<h2 id="step-by-step-implementation">Step-by-Step Implementation</h2>
+<p>
+Let's implement our <code>/docs</code> skill using the Static Content pattern.
+</p>
+<h3 id="1-creating-the-asset">1. Creating the Asset</h3>
+<p>
+First, we just write normal Markdown. No TypeScript here.
+</p>
+<pre data-lang="markdown"><code>&lt;!-- File: src/skills/bundled/docs/manual.md --&gt;
+# Super Complex Manual
+
+Here is how to configure the flux capacitor...
+1. Turn it on.
+2. Set speed to 88mph.
+... (imagine 1000 more lines) ...
+</code></pre>
+<h3 id="2-the-barrel-file">2. The "Barrel" File</h3>
+<p>
+We create a TypeScript file solely responsible for importing these assets. This acts as our "backpack."
+</p>
+<pre data-lang="typescript"><code>// File: src/skills/bundled/docs/content.ts
+import manual from './manual.md'
+
+// We export it so other files can see it
+export const MANUAL_TEXT = manual
+</code></pre>
+<p>
+<em>Explanation:</em> Because of our build system setup, <code>manual</code> is now a string containing the text from the file.
+</p>
+<h3 id="3-lazy-loading-the-asset">3. Lazy Loading the Asset</h3>
+<p>
+Now, inside our skill definition, we import the content dynamically.
+</p>
+<pre data-lang="typescript"><code>// File: src/skills/bundled/docsSkill.ts
+import { registerBundledSkill } from '../bundledSkills.js'
+
+export function registerDocsSkill() {
+  registerBundledSkill({
+    name: 'docs',
+    description: 'Read the manual.',
+    getPromptForCommand: async (args) =&gt; {
+      // MAGICAL LINE: Only load the huge text now!
+      const content = await import('./docs/content.js')
+      
+      return [{ type: 'text', text: content.MANUAL_TEXT }]
+    }
+  })
+}
+</code></pre>
+<p>
+<em>Explanation:</em> Notice we use %%INLINE<em>10%% inside the function. If the user never types %%INLINE</em>11%%, the application never loads <code>content.ts</code> into memory. This keeps our app fast and lightweight.
+</p>
+<h2 id="advanced-file-extraction">Advanced: File Extraction</h2>
+<p>
+Sometimes, the documentation is <em>too big</em> to dump into the chat context all at once. Or, perhaps it's a collection of code examples (Python, Java, TypeScript) and we want the AI to be able to search through them.
+</p>
+<p>
+Our engine supports <strong>Extracting Assets to Disk</strong>.
+</p>
+<p>
+Instead of returning the text directly, we tell the engine: "Here is a map of virtual files. When this skill runs, write them to a temporary folder and tell the AI where they are."
+</p>
+<h3 id="defining-virtual-files">Defining Virtual Files</h3>
+<p>
+We add a <code>files</code> property to our registration.
+</p>
+<pre data-lang="typescript"><code>// File: src/skills/bundled/codingSkill.ts
+import pythonExample from './examples/script.py'
+
+registerBundledSkill({
+  name: 'code-help',
+  description: 'Provides coding examples.',
+  // Define files to be written to disk
+  files: {
+    'examples/script.py': pythonExample, // content of file
+    'README.md': '# Help\nRead the script.'
+  },
+  // ... logic continues below
+</code></pre>
+<p>
+<em>Explanation:</em> The <code>files</code> object maps filenames (keys) to their string content (values).
+</p>
+<h3 id="the-prompt-with-extraction">The Prompt with Extraction</h3>
+<p>
+When we define <code>files</code>, the engine does the heavy lifting. We just write our prompt logic as usual.
+</p>
+<pre data-lang="typescript"><code>  getPromptForCommand: async (args) =&gt; {
+    return [{
+      type: 'text',
+      text: "I have provided examples in the directory above."
+    }]
+  }
+})
+</code></pre>
+<p>
+<em>Explanation:</em> You might wonder, "Where is the directory?" The engine automatically prepends the location of the temporary folder to the prompt before the AI sees it.
+</p>
+<h2 id="internal-implementation-under-the-hood">Internal Implementation: Under the Hood</h2>
+<p>
+How does the system take a string from memory and turn it into a physical file on the user's disk?
+</p>
+<h3 id="the-flow-of-execution">The Flow of Execution</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant Registry as bundledSkills.ts
+    participant Disk as File System
+    participant AI as AI Model
+
+    User-&gt;&gt;Registry: Types "/code-help"
+    Note over Registry: Registry sees "files" property
+    
+    Registry-&gt;&gt;Disk: Create temp folder (e.g. /tmp/skill-code-help)
+    Registry-&gt;&gt;Disk: Write "examples/script.py"
+    Registry-&gt;&gt;Disk: Write "README.md"
+    
+    Registry-&gt;&gt;Registry: Run user's getPromptForCommand()
+    Registry--&gt;&gt;AI: Prepend: "Base directory: /tmp/skill-code-help"
+    
+    AI-&gt;&gt;Disk: Can now use Grep/Read on these files!</div></div>
+<h3 id="the-code-extracting-files">The Code: Extracting Files</h3>
+<p>
+Let's look at <code>src/skills/bundledSkills.ts</code>. This is the core engine code that handles the extraction.
+</p>
+<p>
+It uses a wrapper pattern. It takes your <code>getPromptForCommand</code> and wraps it inside another function.
+</p>
+<pre data-lang="typescript"><code>// File: src/skills/bundledSkills.ts
+
+if (files) {
+  // Save your original function
+  const inner = definition.getPromptForCommand
+  
+  // Create a new wrapped function
+  getPromptForCommand = async (args, ctx) =&gt; {
+    // 1. Write files to disk (Memoized: only happens once)
+    const dir = await extractBundledSkillFiles(definition.name, files)
+    
+    // 2. Run your original logic
+    const blocks = await inner(args, ctx)
+    
+    // 3. Add the directory path to the message
+    return prependBaseDir(blocks, dir)
+  }
+}
+</code></pre>
+<p>
+<em>Explanation:</em> 
+</p>
+<ol>
+<li>%%INLINE<em>18%%: This helper function loops through your %%INLINE</em>19%% object and uses Node.js <code>fs</code> (filesystem) commands to write them to a temp folder.</li>
+</ol>
+<ol>
+<li>%%INLINE<em>21%%: This modifies the message sent to the AI, adding: %%INLINE</em>22%%.</li>
+</ol>
+<h3 id="real-world-example-the-claude-api-skill">Real World Example: The Claude API Skill</h3>
+<p>
+The most complex use of this system in our project is the <strong>Claude API Skill</strong> (<code>src/skills/bundled/claudeApi.ts</code>).
+</p>
+<p>
+It contains documentation for Python, TypeScript, Go, and Java. It uses a smart detector to only show relevant docs.
+</p>
+<ol>
+<li><strong>Detection:</strong> It scans the user's current folder for %%INLINE<em>24%% (TypeScript) or %%INLINE</em>25%% (Python).</li>
+</ol>
+<ol>
+<li><strong>Filtering:</strong> It loads a massive object containing <em>all</em> docs (<code>claudeApiContent.ts</code>).</li>
+</ol>
+<ol>
+<li><strong>Selection:</strong> It picks only the Markdown strings matching the detected language.</li>
+</ol>
+<pre data-lang="typescript"><code>// Simplified logic from src/skills/bundled/claudeApi.ts
+
+async getPromptForCommand(args) {
+  // 1. Lazy load the massive content file
+  const content = await import('./claudeApiContent.js')
+  
+  // 2. Detect language (e.g., 'python')
+  const lang = await detectLanguage()
+  
+  // 3. Filter keys that start with "python/"
+  const filePaths = getFilesForLanguage(lang, content)
+  
+  // 4. Return just those docs
+  return buildInlineReference(filePaths, content)
+}
+</code></pre>
+<h2 id="summary">Summary</h2>
+<p>
+<strong>Static Content Assets</strong> solve the problem of distributing knowledge with your code.
+</p>
+<ol>
+<li><strong>Bundle</strong> text files using <code>import content from './file.md'</code>.</li>
+</ol>
+<ol>
+<li><strong>Lazy Load</strong> them using <code>await import(...)</code> to save memory.</li>
+</ol>
+<ol>
+<li><strong>Extract</strong> them using the <code>files: {}</code> property if you want the AI to be able to grep/search them as real files.</li>
+</ol>
+<p>
+This mechanism allows our AI assistant to carry a massive library of documentation "in its backpack" without being weighed down by it during normal operation.
+</p>
+<p>
+So far, we have built skills that run logic inside our own application (Loop, Remember, Docs). But what if we want to talk to <em>other</em> servers? What if we want to control a database or a web browser that lives outside our binary?
+</p>
+<p>
+<a href="06<em>mcp</em>skill_bridge.md">Next Chapter: MCP Skill Bridge</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="skills.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">skills/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#motivation-the-encyclopedia-in-a-backpack">Motivation: The Encyclopedia in a Backpack</a></li>
+<li style="padding-left:10px"><a href="#the-use-case">The Use Case</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:0px"><a href="#step-by-step-implementation">Step-by-Step Implementation</a></li>
+<li style="padding-left:10px"><a href="#1-creating-the-asset">1. Creating the Asset</a></li>
+<li style="padding-left:10px"><a href="#2-the-barrel-file">2. The "Barrel" File</a></li>
+<li style="padding-left:10px"><a href="#3-lazy-loading-the-asset">3. Lazy Loading the Asset</a></li>
+<li style="padding-left:0px"><a href="#advanced-file-extraction">Advanced: File Extraction</a></li>
+<li style="padding-left:10px"><a href="#defining-virtual-files">Defining Virtual Files</a></li>
+<li style="padding-left:10px"><a href="#the-prompt-with-extraction">The Prompt with Extraction</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-under-the-hood">Internal Implementation: Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#the-flow-of-execution">The Flow of Execution</a></li>
+<li style="padding-left:10px"><a href="#the-code-extracting-files">The Code: Extracting Files</a></li>
+<li style="padding-left:10px"><a href="#real-world-example-the-claude-api-skill">Real World Example: The Claude API Skill</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

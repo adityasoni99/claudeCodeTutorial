@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: Planning Workflow — tools/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">tools/04_planning_workflow.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🔧 tools/ · 04_planning_workflow.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: Planning Workflow</h1>
+  <div class="chapter-meta"><span>📄 tools/04_planning_workflow.md</span></div>
+</div>
+<h1 id="chapter-4-planning-workflow">Chapter 4: Planning Workflow</h1>
+<p>
+In the previous chapter, <a href="03<em>communication</em>channels.md">Communication Channels</a>, we gave our agents the ability to talk to users and teammates. They can now ask for help and report status.
+</p>
+<p>
+But communicating isn't the same as <strong>thinking</strong>.
+</p>
+<p>
+If you ask an AI to "Rebuild the entire payment system," you don't want it to immediately start deleting files and guessing code. You want it to pause, study the existing code, draft a plan, and ask for your approval <em>before</em> it touches anything sensitive.
+</p>
+<p>
+This chapter introduces the <strong>Planning Workflow</strong>: a safety mechanism that forces agents to "Measure twice, cut once."
+</p>
+<h2 id="why-do-we-need-this">Why do we need this?</h2>
+<p>
+Imagine you are a contractor building a house.
+</p>
+<ul>
+<li><strong>The "Cowboy" Approach:</strong> You arrive at the empty lot and immediately start pouring concrete. Halfway through, you realize the kitchen is in the wrong spot. You have to jackhammer the concrete and start over.</li>
+<li><strong>The "Architect" Approach:</strong> You arrive, look at the land, and draw a blueprint. You show the blueprint to the owner. Only when they sign it do you pick up a shovel.</li>
+</ul>
+<p>
+The <strong>Planning Workflow</strong> enforces the "Architect" approach.
+</p>
+<h3 id="the-central-use-case-the-complex-refactor">The Central Use Case: "The Complex Refactor"</h3>
+<p>
+A user asks: <em>"Migrate our database from SQLite to PostgreSQL."</em>
+</p>
+<ol>
+<li><strong>Without Planning:</strong> The agent installs PostgreSQL, breaks the app, and then realizes the data types don't match. The app is down.</li>
+</ol>
+<ol>
+<li><strong>With Planning:</strong></li>
+<ul>
+<li>The agent enters <strong>Plan Mode</strong>.</li>
+<li>It loses the ability to edit code (Read-Only).</li>
+<li>It reads the database schema.</li>
+<li>It writes a text file called <code>PLAN.md</code>.</li>
+<li>It asks the user: <em>"Here is my plan. Do you approve?"</em></li>
+<li>Once approved, it gets its tools back and starts working.</li>
+</ul>
+</ol>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+There are three main components to this workflow:
+</p>
+<ol>
+<li><strong>Enter Plan Mode:</strong> A tool that switches the agent's state.</li>
+</ol>
+<ol>
+<li><strong>The Straitjacket (Read-Only):</strong> While in this mode, all "dangerous" tools (like %%INLINE<em>1%% or %%INLINE</em>2%%) are disabled.</li>
+</ol>
+<ol>
+<li><strong>The Exit Gate:</strong> To leave Plan Mode, the agent must present a plan. The user (or a Team Lead) must approve it.</li>
+</ol>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+The workflow consists of two specific tools: %%INLINE<em>3%% and %%INLINE</em>4%%.
+</p>
+<h3 id="step-1-entering-the-mode">Step 1: Entering the Mode</h3>
+<p>
+When the agent realizes a task is complex, it calls <code>EnterPlanMode</code>.
+</p>
+<pre data-lang="javascript"><code>// The agent decides to stop and think
+{
+  name: "EnterPlanMode",
+  input: {}
+}
+</code></pre>
+<p>
+<em>Result:</em> The system locks the "Write" permissions. The agent can now only %%INLINE<em>6%% files and %%INLINE</em>7%%.
+</p>
+<h3 id="step-2-the-planning-phase">Step 2: The Planning Phase</h3>
+<p>
+The agent explores the codebase. It creates a plan file (usually <code>CURRENT_PLAN.md</code>). It writes down:
+</p>
+<ol>
+<li>Which files need changing.</li>
+</ol>
+<ol>
+<li>What logic to update.</li>
+</ol>
+<ol>
+<li>Potential risks.</li>
+</ol>
+<h3 id="step-3-exiting-and-approval">Step 3: Exiting and Approval</h3>
+<p>
+When the agent is ready, it submits the plan for approval using <code>ExitPlanMode</code>.
+</p>
+<pre data-lang="javascript"><code>// The agent submits the plan
+{
+  name: "ExitPlanMode",
+  input: {
+    "plan": "1. Update schema.prisma\n2. Run migration..."
+  }
+}
+</code></pre>
+<p>
+<em>Result:</em> The user sees a prompt: <strong>"Do you approve this plan?"</strong> If yes, the agent unlocks <code>FileEdit</code> and starts coding.
+</p>
+<h2 id="under-the-hood-the-workflow">Under the Hood: The Workflow</h2>
+<p>
+How does the system enforce this safety latch?
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Agent
+    participant Runtime
+    participant User
+
+    Agent-&gt;&gt;Runtime: Tool: EnterPlanMode
+    
+    Note right of Runtime: 1. LOCKS write permissions&lt;br/&gt;2. Sets mode = "plan"
+    
+    Runtime--&gt;&gt;Agent: "You are now in Plan Mode (Read-Only)."
+    
+    loop Exploration
+        Agent-&gt;&gt;Runtime: Tool: ReadFile("database.ts")
+        Agent-&gt;&gt;Runtime: Tool: WriteFile("PLAN.md")
+    end
+    
+    Agent-&gt;&gt;Runtime: Tool: ExitPlanMode(plan="...")
+    
+    Note right of Runtime: 3. Pauses for Approval
+    
+    Runtime-&gt;&gt;User: "Do you approve this plan?"
+    User-&gt;&gt;Runtime: "Yes"
+    
+    Note right of Runtime: 4. UNLOCKS write permissions
+    
+    Runtime--&gt;&gt;Agent: "Plan Approved. You may start coding."</div></div>
+<h2 id="internal-implementation">Internal Implementation</h2>
+<p>
+Let's look at the code that manages this state machine.
+</p>
+<h3 id="1-locking-the-doors-inline-11">1. Locking the Doors: <code>EnterPlanModeTool.ts</code></h3>
+<p>
+When this tool is called, we update the global state of the application.
+</p>
+<pre data-lang="typescript"><code>// From EnterPlanModeTool.ts (Simplified)
+
+export const EnterPlanModeTool = buildTool({
+  name: "EnterPlanMode",
+  
+  // This tool changes the state of the agent
+  async call(_input, context) {
+    
+    // 1. Get current application state
+    const appState = context.getAppState();
+
+    // 2. Switch mode to 'plan'
+    // This flag is checked by other tools to block write access
+    context.setAppState(prev =&gt; ({
+      ...prev,
+      toolPermissionContext: { 
+         ...prev.toolPermissionContext, 
+         mode: 'plan' 
+      }
+    }));
+
+    return { data: { message: "Entered plan mode." } };
+  }
+});
+</code></pre>
+<p>
+<em>Explanation:</em> This is the switch. By setting <code>mode: 'plan'</code>, the system knows to restrict behavior.
+</p>
+<h3 id="2-the-straitjacket-inline-13">2. The Straitjacket: <code>planAgent.ts</code></h3>
+<p>
+How do we actually stop the agent from writing code? We define a specialized "Plan Agent" that has a list of <code>disallowedTools</code>.
+</p>
+<pre data-lang="typescript"><code>// From AgentTool/built-in/planAgent.ts (Simplified)
+
+export const PLAN_AGENT = {
+  agentType: 'Plan',
+  
+  // The list of forbidden actions
+  disallowedTools: [
+    'Agent',        // Cannot spawn sub-agents
+    'ExitPlanMode', // Cannot exit without the specific tool logic
+    'FileEdit',     // CANNOT edit files
+    'FileWrite',    // CANNOT write new files
+  ],
+
+  // The instructions given to the AI
+  getSystemPrompt: () =&gt; `
+    You are a software architect.
+    CRITICAL: READ-ONLY MODE.
+    You are STRICTLY PROHIBITED from modifying files.
+    Your role is to explore and design.
+  `
+};
+</code></pre>
+<p>
+<em>Explanation:</em> Even if the AI <em>wanted</em> to write code, the <code>FileEdit</code> tool is physically removed from its toolbox while in this mode.
+</p>
+<h3 id="3-the-gatekeeper-inline-16">3. The Gatekeeper: <code>ExitPlanModeV2Tool.ts</code></h3>
+<p>
+This is the most critical part: getting back to work. This tool requires user interaction.
+</p>
+<pre data-lang="typescript"><code>// From ExitPlanModeTool/ExitPlanModeV2Tool.ts (Simplified)
+
+export const ExitPlanModeV2Tool = buildTool({
+  name: "ExitPlanMode",
+
+  // 1. Force the system to pause and ask the human
+  requiresUserInteraction() {
+    // If it's a sub-agent, the Team Lead approves.
+    // If it's the main agent, the Human approves.
+    return !isTeammate(); 
+  },
+
+  async call(input, context) {
+    const plan = input.plan;
+
+    // 2. Save the plan to disk so we don't lose it
+    await writeFile('current_plan.md', plan);
+
+    // 3. Switch mode back to normal
+    context.setAppState(prev =&gt; ({
+      ...prev,
+      toolPermissionContext: { mode: 'default' }
+    }));
+
+    return { data: { message: "Plan approved. Start coding." } };
+  }
+});
+</code></pre>
+<p>
+<em>Explanation:</em>
+</p>
+<ol>
+<li><strong>Safety Check:</strong> <code>requiresUserInteraction()</code> tells the runtime "Don't run this automatically."</li>
+</ol>
+<ol>
+<li><strong>Persistence:</strong> We save the plan to a file. This acts as the project documentation.</li>
+</ol>
+<ol>
+<li><strong>Unlock:</strong> We set the mode back to %%INLINE<em>18%%, restoring the %%INLINE</em>19%% tool.</li>
+</ol>
+<h2 id="summary">Summary</h2>
+<p>
+The <strong>Planning Workflow</strong> turns an impulsive AI into a thoughtful engineer.
+</p>
+<ol>
+<li><strong>Enter Plan Mode</strong> locks the write permissions.</li>
+</ol>
+<ol>
+<li><strong>Plan Agent</strong> definition ensures the AI knows it is an "Architect," not a "Builder."</li>
+</ol>
+<ol>
+<li><strong>Exit Plan Mode</strong> requires a human (or Team Lead) signature on the blueprint before construction begins.</li>
+</ol>
+<p>
+Now that we have a plan and permission to edit files, how do our agents actually touch the hard drive?
+</p>
+<p>
+<a href="05<em>file</em>system_manipulation.md">Next Chapter: File System Manipulation</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="tools.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">tools/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#why-do-we-need-this">Why do we need this?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case-the-complex-refactor">The Central Use Case: "The Complex Refactor"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:10px"><a href="#step-1-entering-the-mode">Step 1: Entering the Mode</a></li>
+<li style="padding-left:10px"><a href="#step-2-the-planning-phase">Step 2: The Planning Phase</a></li>
+<li style="padding-left:10px"><a href="#step-3-exiting-and-approval">Step 3: Exiting and Approval</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-the-workflow">Under the Hood: The Workflow</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#1-locking-the-doors-inline-11">1. Locking the Doors: %%INLINE_11%%</a></li>
+<li style="padding-left:10px"><a href="#2-the-straitjacket-inline-13">2. The Straitjacket: %%INLINE_13%%</a></li>
+<li style="padding-left:10px"><a href="#3-the-gatekeeper-inline-16">3. The Gatekeeper: %%INLINE_16%%</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

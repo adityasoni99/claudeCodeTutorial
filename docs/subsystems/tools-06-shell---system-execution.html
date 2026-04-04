@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 6: Shell & System Execution — tools/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">tools/06_shell___system_execution.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🔧 tools/ · 06_shell___system_execution.md</div>
+  <h1 class="chapter-title-h1">Chapter 6: Shell & System Execution</h1>
+  <div class="chapter-meta"><span>📄 tools/06_shell___system_execution.md</span></div>
+</div>
+<h1 id="chapter-6-shell-system-execution">Chapter 6: Shell & System Execution</h1>
+<p>
+In the previous chapter, <a href="05<em>file</em>system_manipulation.md">File System Manipulation</a>, we gave our agents "hands" to write code and edit files.
+</p>
+<p>
+But writing code is only half the battle. You can write the most beautiful Python script in the world, but if you never run <code>python script.py</code>, you don't know if it actually works.
+</p>
+<p>
+This chapter introduces <strong>Shell & System Execution</strong>. This is the interface that allows the agent to leave the text editor and interact with the Operating System (OS) to run commands, install packages, and configure the environment.
+</p>
+<h2 id="why-do-we-need-this">Why do we need this?</h2>
+<p>
+Imagine a developer who can type code into a file but isn't allowed to open the Terminal window. They cannot:
+</p>
+<ol>
+<li>Run the app to see if it crashes.</li>
+</ol>
+<ol>
+<li>Install libraries (like <code>npm install</code>).</li>
+</ol>
+<ol>
+<li>Use Git to push changes.</li>
+</ol>
+<p>
+This "Terminal Window" is exactly what the <strong>Shell Tools</strong> provide to the agent.
+</p>
+<h3 id="the-central-use-case-the-test-run">The Central Use Case: "The Test Run"</h3>
+<p>
+Your agent just finished fixing a bug in <code>calculator.ts</code>.
+</p>
+<ul>
+<li><strong>Without Shell:</strong> The agent says, "I fixed the code. I hope it works."</li>
+<li><strong>With Shell:</strong></li>
+</ul>
+<p>
+    1.  The agent runs <code>npm test</code>.
+ 
+    2.  The terminal outputs <code>Error: expected 4, got 5</code>.
+ 
+    3.  The agent sees this, corrects the code, runs the test again.
+ 
+    4.  The terminal outputs <code>PASS</code>.
+ 
+    5.  The agent reports: "I fixed the bug and verified it with tests."
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+We categorize system execution into three specific tools depending on the OS and the goal:
+</p>
+<ol>
+<li><strong>Bash:</strong> The standard command line for Linux and macOS.</li>
+</ol>
+<ol>
+<li><strong>PowerShell:</strong> The command line for Windows.</li>
+</ol>
+<ol>
+<li><strong>Config:</strong> A tool to change the settings of the agent runtime itself.</li>
+</ol>
+<h3 id="the-sandbox-safety-first">The Sandbox (Safety First)</h3>
+<p>
+Giving an AI access to your terminal is risky. You don't want it to run <code>rm -rf /</code> (delete everything).
+</p>
+<p>
+To prevent this, the system uses a <strong>Sandbox</strong>.
+</p>
+<ul>
+<li><strong>Allowed:</strong> Running build scripts, running tests, listing files.</li>
+<li><strong>Blocked:</strong> Accessing sensitive system files (like passwords), connecting to banned websites, or running dangerous system commands.</li>
+</ul>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+The runtime provides tools that act like a "Remote Control" for your terminal.
+</p>
+<h3 id="1-running-commands-on-maclinux-inline-7">1. Running Commands on Mac/Linux (<code>Bash</code>)</h3>
+<p>
+The agent uses the <code>Bash</code> tool to execute commands.
+</p>
+<pre data-lang="javascript"><code>// Input to Bash tool
+{
+  "command": "npm install lodash"
+}
+</code></pre>
+<p>
+<em>Result:</em> The agent receives the console output: <code>added 1 package, and audited 2 packages in 3s</code>.
+</p>
+<h3 id="2-running-commands-on-windows-inline-10">2. Running Commands on Windows (<code>PowerShell</code>)</h3>
+<p>
+If the agent detects it is on Windows, it swaps to <code>PowerShell</code>.
+</p>
+<pre data-lang="javascript"><code>// Input to PowerShell tool
+{
+  "command": "Get-ChildItem -Path .\\src"
+}
+</code></pre>
+<p>
+<em>Result:</em> A list of files in the <code>src</code> directory is returned.
+</p>
+<h3 id="3-tuning-the-engine-inline-13">3. Tuning the Engine (<code>Config</code>)</h3>
+<p>
+Sometimes the agent needs to change how <em>it</em> behaves. For example, enabling a specific theme or checking a setting.
+</p>
+<pre data-lang="javascript"><code>// Input to Config tool (Setting a value)
+{
+  "setting": "theme",
+  "value": "dark"
+}
+</code></pre>
+<h2 id="under-the-hood-the-execution-flow">Under the Hood: The Execution Flow</h2>
+<p>
+How does a text command from an AI turn into a real system process?
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Agent
+    participant Tool as Shell Tool
+    participant Sandbox
+    participant OS as Operating System
+
+    Agent-&gt;&gt;Tool: Call Bash("npm test")
+    
+    Note right of Tool: 1. Safety Check
+    Tool-&gt;&gt;Sandbox: Is "npm test" allowed?
+    Sandbox--&gt;&gt;Tool: Yes (Allowed)
+    
+    Note right of Tool: 2. Execution
+    Tool-&gt;&gt;OS: Spawn Process
+    OS--&gt;&gt;Tool: stdout: "Tests Passed"
+    
+    Tool--&gt;&gt;Agent: Result: "Tests Passed"</div></div>
+<h2 id="internal-implementation">Internal Implementation</h2>
+<p>
+The magic of these tools isn't just running the command; it's <strong>teaching the AI how to use them safely</strong>. Let's look at how the code handles this.
+</p>
+<h3 id="1-teaching-the-ai-habits-inline-14">1. Teaching the AI Habits (<code>BashTool/prompt.ts</code>)</h3>
+<p>
+We don't just give the AI a blank terminal. We inject a "System Prompt" that acts as a user manual. It explicitly tells the AI <em>not</em> to use the shell for things that have better tools (like reading files).
+</p>
+<pre data-lang="typescript"><code>// Simplified from BashTool/prompt.ts
+export function getSimplePrompt() {
+  return `
+    Executes a bash command.
+    
+    IMPORTANT: Avoid using this tool for file operations.
+    - Read files: Use FileRead (NOT cat/head/tail)
+    - Edit files: Use FileEdit (NOT sed/awk)
+    
+    Avoid unnecessary 'sleep' commands.
+    If you need to run independent commands, send them in parallel.
+  `;
+}
+</code></pre>
+<p>
+<em>Explanation:</em> If we didn't do this, the AI might try to use %%INLINE<em>15%% to read a file. While that works, it's messy. We want it to use the specialized %%INLINE</em>16%% tool from <a href="05<em>file</em>system_manipulation.md">Chapter 5</a> because that tool handles large files and line numbers better.
+</p>
+<h3 id="2-handling-windows-weirdness-inline-17">2. Handling Windows Weirdness (<code>PowerShellTool/prompt.ts</code>)</h3>
+<p>
+Windows PowerShell has different versions (Desktop vs. Core). They have different syntax rules. The tool automatically detects this to prevent the agent from writing broken scripts.
+</p>
+<pre data-lang="typescript"><code>// Simplified from PowerShellTool/prompt.ts
+function getEditionSection(edition) {
+  if (edition === 'desktop') {
+    // Windows PowerShell 5.1 doesn't support &amp;&amp; or ||
+    return `Warning: You are on PowerShell 5.1. 
+            Do NOT use '&amp;&amp;' or '||'. 
+            Use '; if ($?) { ... }' instead.`;
+  }
+  
+  // PowerShell 7+ supports modern syntax
+  return `You are on PowerShell Core. You may use '&amp;&amp;' and '||'.`;
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This dynamic prompt saves the agent from getting frustrating "Syntax Error" messages just because it tried to use modern Linux-style operators on an old Windows machine.
+</p>
+<h3 id="3-managing-settings-inline-18">3. Managing Settings (<code>ConfigTool.ts</code>)</h3>
+<p>
+The <code>Config</code> tool allows the agent to modify the environment. It includes strict validation to ensure the agent doesn't set a setting to an invalid value.
+</p>
+<pre data-lang="typescript"><code>// Simplified from ConfigTool/ConfigTool.ts
+export const ConfigTool = buildTool({
+  name: "Config",
+  
+  async call({ setting, value }, context) {
+    // 1. Get the definition for this setting
+    const config = getConfig(setting);
+    
+    // 2. Validate the input (e.g. is 'theme' allowed to be 'blue'?)
+    const options = getOptionsForSetting(setting);
+    if (options &amp;&amp; !options.includes(value)) {
+      return { error: `Invalid value. Options are: ${options.join(', ')}` };
+    }
+
+    // 3. Save the new config to disk
+    saveGlobalConfig(prev =&gt; ({ ...prev, [setting]: value }));
+
+    return { success: true, newValue: value };
+  }
+});
+</code></pre>
+<p>
+<em>Explanation:</em> This acts as a registry editor. It checks if the setting exists and if the value is valid before writing it to the global configuration file.
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+The <strong>Shell & System Execution</strong> layer connects the AI's brain to the machine's engine.
+</p>
+<ol>
+<li><strong>Bash/PowerShell Tools:</strong> Allow the agent to run tests, git commands, and build scripts.</li>
+</ol>
+<ol>
+<li><strong>Prompt Engineering:</strong> We wrap the tools in instructions that prevent the agent from using "Bad Habits" (like using %%INLINE<em>20%% instead of %%INLINE</em>21%%).</li>
+</ol>
+<ol>
+<li><strong>Config Tool:</strong> Allows the agent to self-manage its environment settings.</li>
+</ol>
+<p>
+At this point, our agent can Plan, Communicate, Write Files, and Run Code. But to be truly effective in a large project, it needs to understand the <em>entire</em> codebase, not just one file at a time.
+</p>
+<p>
+<a href="07<em>codebase</em>intelligence.md">Next Chapter: Codebase Intelligence</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="tools.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">tools/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#why-do-we-need-this">Why do we need this?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case-the-test-run">The Central Use Case: "The Test Run"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#the-sandbox-safety-first">The Sandbox (Safety First)</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:10px"><a href="#1-running-commands-on-maclinux-inline-7">1. Running Commands on Mac/Linux (%%INLINE_7%%)</a></li>
+<li style="padding-left:10px"><a href="#2-running-commands-on-windows-inline-10">2. Running Commands on Windows (%%INLINE_10%%)</a></li>
+<li style="padding-left:10px"><a href="#3-tuning-the-engine-inline-13">3. Tuning the Engine (%%INLINE_13%%)</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-the-execution-flow">Under the Hood: The Execution Flow</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#1-teaching-the-ai-habits-inline-14">1. Teaching the AI Habits (%%INLINE_14%%)</a></li>
+<li style="padding-left:10px"><a href="#2-handling-windows-weirdness-inline-17">2. Handling Windows Weirdness (%%INLINE_17%%)</a></li>
+<li style="padding-left:10px"><a href="#3-managing-settings-inline-18">3. Managing Settings (%%INLINE_18%%)</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

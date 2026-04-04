@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 5: Command Execution Queue — hooks/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">hooks/05_command_execution_queue.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🪝 hooks/ · 05_command_execution_queue.md</div>
+  <h1 class="chapter-title-h1">Chapter 5: Command Execution Queue</h1>
+  <div class="chapter-meta"><span>📄 hooks/05_command_execution_queue.md</span></div>
+</div>
+<h1 id="chapter-5-command-execution-queue">Chapter 5: Command Execution Queue</h1>
+<p>
+Welcome to the final chapter! 
+</p>
+<p>
+In <a href="04<em>tool</em>permission_architecture.md">Chapter 4: Tool Permission Architecture</a>, we built a security system to stop the AI from doing dangerous things without permission. We authorized the command.
+</p>
+<p>
+But here is a new problem: <strong>Traffic Control.</strong>
+</p>
+<p>
+Imagine this scenario:
+</p>
+<ol>
+<li>You paste a huge block of code into the app.</li>
+</ol>
+<ol>
+<li>At the exact same time, a background file-watcher notices a file changed.</li>
+</ol>
+<ol>
+<li>Simultaneously, the AI is already halfway through answering your previous question.</li>
+</ol>
+<p>
+If all three of these things try to update the screen or run logic at the exact same moment, the application will crash or produce garbage output.
+</p>
+<p>
+We need a <strong>Queue System</strong>. This chapter explains how we keep our application orderly using <code>useQueueProcessor</code>.
+</p>
+<hr>
+<h2 id="1-the-concept-the-deli-counter">1. The Concept: The Deli Counter</h2>
+<p>
+Think of your application like a busy Deli Counter.
+</p>
+<ul>
+<li><strong>The Customers:</strong> These are "Commands." (User inputs, system notifications, AI tool calls).</li>
+<li><strong>The Chef:</strong> This is the AI/Logic Engine. It can only make one sandwich at a time.</li>
+<li><strong>The Ticket Machine:</strong> This is our <strong>Command Queue</strong>.</li>
+<li><strong>The "Open/Closed" Sign:</strong> This is our <strong>QueryGuard</strong>.</li>
+</ul>
+<h3 id="the-rule">The Rule</h3>
+<p>
+<strong>"Take a ticket. Wait until the sign says OPEN."</strong>
+</p>
+<p>
+If the Chef is cooking (Guard = Active), nobody else gets served, no matter how much they yell. They must wait in line.
+</p>
+<hr>
+<h2 id="2-the-gatekeeper-inline-1">2. The Gatekeeper: <code>QueryGuard</code></h2>
+<p>
+Before we look at the queue, we need to understand the lock mechanism. We call this the <code>QueryGuard</code>.
+</p>
+<p>
+It is a simple reactive object that answers one question: <strong>"Is the AI busy?"</strong>
+</p>
+<h3 id="how-it-works">How it works</h3>
+<p>
+The %%INLINE<em>3%% doesn't just return %%INLINE</em>4%% or <code>false</code>. It allows components to <strong>subscribe</strong> to changes. This means if the AI finishes thinking, the guard instantly notifies the Queue Processor: <em>"Hey! The kitchen is free!"</em>
+</p>
+<pre data-lang="typescript"><code>// Conceptual usage of QueryGuard
+if (queryGuard.isBusy()) {
+  console.log("Wait your turn!");
+} else {
+  queryGuard.reserve(); // Lock the kitchen
+  startCooking();
+}
+</code></pre>
+<hr>
+<h2 id="3-the-manager-inline-6">3. The Manager: <code>useQueueProcessor</code></h2>
+<p>
+The star of this chapter is the <code>useQueueProcessor</code> hook. It is the manager standing between the Ticket Machine (Queue) and the Chef (Execution).
+</p>
+<p>
+Its job is simple:
+</p>
+<ol>
+<li>Watch the <strong>Queue</strong>.</li>
+</ol>
+<ol>
+<li>Watch the <strong>Guard</strong>.</li>
+</ol>
+<ol>
+<li>If there is someone in line <strong>AND</strong> the guard is free... <strong>Execute!</strong></li>
+</ol>
+<h3 id="step-1-subscribing-to-the-state">Step 1: Subscribing to the State</h3>
+<p>
+We use a special React hook called <code>useSyncExternalStore</code>. This is faster than standard State because it bypasses some of React's slowness. We want the queue to react <em>instantly</em>.
+</p>
+<pre data-lang="typescript"><code>// Inside useQueueProcessor.ts
+export function useQueueProcessor({ queryGuard, ... }) {
+  
+  // 1. Listen to the "Open/Closed" sign
+  const isQueryActive = useSyncExternalStore(
+    queryGuard.subscribe,
+    queryGuard.getSnapshot
+  );
+
+  // 2. Listen to the Ticket Machine (The Queue)
+  const queueSnapshot = useSyncExternalStore(
+    subscribeToCommandQueue,
+    getCommandQueueSnapshot
+  );
+  
+  // ... logic continues below
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+ 
+We are wiring our component directly to the global store. If a background task adds a command to the queue, <code>queueSnapshot</code> updates immediately.
+</p>
+<h3 id="step-2-the-decision-logic">Step 2: The Decision Logic</h3>
+<p>
+Now we have a <code>useEffect</code> that runs every time the queue or guard changes.
+</p>
+<pre data-lang="typescript"><code>// Inside useQueueProcessor.ts
+
+useEffect(() =&gt; {
+  // Rule 1: If Chef is busy, do nothing.
+  if (isQueryActive) return;
+
+  // Rule 2: If the line is empty, do nothing.
+  if (queueSnapshot.length === 0) return;
+
+  // Rule 3: If a local modal (like a Permission check) is open, wait.
+  if (hasActiveLocalJsxUI) return;
+
+  // SUCCESS: Process the next item!
+  processQueueIfReady({ executeInput: executeQueuedInput });
+
+}, [queueSnapshot, isQueryActive]);
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+ 
+This is the "traffic light" of our app. It only turns Green if <em>all</em> conditions are met. This prevents <strong>Race Conditions</strong> (two processes trying to run at the same time).
+</p>
+<hr>
+<h2 id="under-the-hood-the-processing-sequence">Under the Hood: The Processing Sequence</h2>
+<p>
+Let's visualize what happens when you type a command while the AI is busy.
+</p>
+<ol>
+<li><strong>AI</strong> is processing a previous request (<code>QueryGuard</code> is <strong>Busy</strong>).</li>
+</ol>
+<ol>
+<li><strong>User</strong> types "Hello".</li>
+</ol>
+<ol>
+<li><strong>System</strong> sees the Guard is busy, so it puts "Hello" into the <strong>Queue</strong>.</li>
+</ol>
+<ol>
+<li><strong>AI</strong> finishes. <code>QueryGuard</code> switches to <strong>Free</strong>.</li>
+</ol>
+<ol>
+<li><strong><code>useQueueProcessor</code></strong> sees the Green Light.</li>
+</ol>
+<ol>
+<li>It pulls "Hello" from the Queue and executes it.</li>
+</ol>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Guard as QueryGuard
+    participant QP as QueueProcessor
+    participant Q as The Queue
+    participant AI as AI Engine
+
+    Note over Guard: Status: BUSY
+    Q-&gt;&gt;Q: User adds "Hello"
+    
+    QP-&gt;&gt;Guard: Can we run?
+    Guard--&gt;&gt;QP: No.
+    
+    Note over AI: Finishes Task
+    AI-&gt;&gt;Guard: cancelReservation()
+    Note over Guard: Status: FREE
+    
+    Guard-&gt;&gt;QP: Signal: I am free!
+    QP-&gt;&gt;Q: Get next item
+    Q--&gt;&gt;QP: "Hello"
+    
+    QP-&gt;&gt;AI: Execute("Hello")
+    AI-&gt;&gt;Guard: reserve()
+    Note over Guard: Status: BUSY</div></div>
+<h3 id="deep-dive-priority-handling">Deep Dive: Priority Handling</h3>
+<p>
+Not all commands are equal.
+</p>
+<ul>
+<li><strong>User Typing:</strong> High Priority ("Next").</li>
+<li><strong>Background Notification:</strong> Low Priority ("Later").</li>
+</ul>
+<p>
+The <code>processQueueIfReady</code> function (imported in our hook) is smart. It doesn't just take the oldest item; it takes the most <em>important</em> item.
+</p>
+<pre data-lang="typescript"><code>// Inside utils/queueProcessor.js (Simplified)
+export function processQueueIfReady({ executeInput }) {
+  // 1. Get the next item (handles priority logic internally)
+  const nextCommand = dequeue(); 
+  
+  if (!nextCommand) return;
+
+  // 2. Execute it
+  executeInput([nextCommand]);
+}
+</code></pre>
+<p>
+By abstracting this logic, our React component stays clean. It doesn't care <em>how</em> the queue is sorted, only that it needs to run the next thing.
+</p>
+<hr>
+<h2 id="4-preventing-context-lag">4. Preventing "Context Lag"</h2>
+<p>
+You might notice we use %%INLINE<em>15%% instead of %%INLINE</em>16%% or <code>useState</code>.
+</p>
+<p>
+<strong>Why?</strong>
+ 
+In terminal applications (like Ink), React Context sometimes has a tiny delay as it bubbles down the tree. If the user types very fast, a "State" update might arrive 10ms too late, causing the app to miss a keystroke or process commands out of order.
+</p>
+<p>
+<code>useSyncExternalStore</code> connects directly to the memory. It is the "Direct Line" to the data.
+</p>
+<pre data-lang="typescript"><code>// Code snippet from useQueueProcessor.ts
+const queueSnapshot = useSyncExternalStore(
+  subscribeToCommandQueue, // Function to listen for changes
+  getCommandQueueSnapshot  // Function to get current data
+);
+</code></pre>
+<p>
+This ensures that even if the UI is lagging, the Command Processor always has the absolute latest truth about what needs to be done.
+</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<p>
+In this final chapter, we learned how to maintain order in a chaotic system:
+</p>
+<ol>
+<li><strong><code>QueryGuard</code></strong>: The traffic light that prevents the AI from being overwhelmed.</li>
+</ol>
+<ol>
+<li><strong><code>useQueueProcessor</code></strong>: The manager that watches the light and the line, ensuring commands run one by one.</li>
+</ol>
+<ol>
+<li><strong>Prioritization</strong>: Ensuring user commands take precedence over background noise.</li>
+</ol>
+<h3 id="series-conclusion">Series Conclusion</h3>
+<p>
+Congratulations! You have toured the architectural pillars of the <strong>Hooks</strong> project.
+</p>
+<ol>
+<li><strong><a href="01<em>global</em>configuration<em>_</em>controls.md">Chapter 1</a></strong>: We built the Global Dashboard.</li>
+</ol>
+<ol>
+<li><strong><a href="02<em>modal</em>input_processing.md">Chapter 2</a></strong>: We created advanced Input Modes (Vim/Voice).</li>
+</ol>
+<ol>
+<li><strong><a href="03<em>external</em>context<em>_</em>connectivity.md">Chapter 3</a></strong>: We connected to the outside world (Files/SSH).</li>
+</ol>
+<ol>
+<li><strong><a href="04<em>tool</em>permission_architecture.md">Chapter 4</a></strong>: We secured the system with Permissions.</li>
+</ol>
+<ol>
+<li><strong>Chapter 5</strong>: We coordinated it all with a unified Execution Queue.</li>
+</ol>
+<p>
+You now understand how this complex spaceship flies. Happy coding!
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="hooks.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">hooks/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#1-the-concept-the-deli-counter">1. The Concept: The Deli Counter</a></li>
+<li style="padding-left:10px"><a href="#the-rule">The Rule</a></li>
+<li style="padding-left:0px"><a href="#2-the-gatekeeper-inline-1">2. The Gatekeeper: %%INLINE_1%%</a></li>
+<li style="padding-left:10px"><a href="#how-it-works">How it works</a></li>
+<li style="padding-left:0px"><a href="#3-the-manager-inline-6">3. The Manager: %%INLINE_6%%</a></li>
+<li style="padding-left:10px"><a href="#step-1-subscribing-to-the-state">Step 1: Subscribing to the State</a></li>
+<li style="padding-left:10px"><a href="#step-2-the-decision-logic">Step 2: The Decision Logic</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-the-processing-sequence">Under the Hood: The Processing Sequence</a></li>
+<li style="padding-left:10px"><a href="#deep-dive-priority-handling">Deep Dive: Priority Handling</a></li>
+<li style="padding-left:0px"><a href="#4-preventing-context-lag">4. Preventing "Context Lag"</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li>
+<li style="padding-left:10px"><a href="#series-conclusion">Series Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 1: Event-Based Configuration Registry — schemas/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">schemas/01_event_based_configuration_registry.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">📐 schemas/ · 01_event_based_configuration_registry.md</div>
+  <h1 class="chapter-title-h1">Chapter 1: Event-Based Configuration Registry</h1>
+  <div class="chapter-meta"><span>📄 schemas/01_event_based_configuration_registry.md</span></div>
+</div>
+<h1 id="chapter-1-event-based-configuration-registry">Chapter 1: Event-Based Configuration Registry</h1>
+<p>
+Welcome to the first chapter of the <strong>Schemas</strong> project tutorial! In this series, we will explore how to build a flexible, reactive system using Zod schemas.
+</p>
+<p>
+In this chapter, we will look at the foundation of our reactive system: the <strong>Event-Based Configuration Registry</strong>.
+</p>
+<h2 id="the-problem-how-do-i-make-the-system-react">The Problem: "How do I make the system react?"</h2>
+<p>
+Imagine you are building an automated coding assistant. You have a specific requirement:
+</p>
+<blockquote><p><strong>Use Case:</strong> Every time the assistant finishes writing a code file, you want to automatically run a "linter" to check for syntax errors.</p></blockquote>
+<p>
+Hardcoding this logic deep inside your code makes the system brittle. What if you later want to run a security scan instead? Or send a notification?
+</p>
+<p>
+We need a flexible <strong>Rulebook</strong>. We need a way to say: "When <strong>X</strong> happens, check if it looks like <strong>Y</strong>, and if so, do <strong>Z</strong>."
+</p>
+<h2 id="the-solution-inline-0">The Solution: <code>HooksSchema</code></h2>
+<p>
+The <code>HooksSchema</code> is the master registry. It acts like a centralized dispatcher. It maps <strong>Lifecycle Events</strong> to a list of rules.
+</p>
+<p>
+Here is the high-level hierarchy:
+</p>
+<ol>
+<li><strong>Event:</strong> The trigger (e.g., "A tool is being executed").</li>
+</ol>
+<ol>
+<li><strong>Matcher:</strong> The filter (e.g., "Is the tool named <code>WriteFile</code>?").</li>
+</ol>
+<ol>
+<li><strong>Hook:</strong> The action (e.g., "Run the <code>eslint</code> command").</li>
+</ol>
+<h3 id="analogy-the-emergency-dispatcher">Analogy: The Emergency Dispatcher</h3>
+<p>
+Think of this system like a 911 dispatcher's manual:
+</p>
+<ul>
+<li><strong>Event:</strong> Phone Rings.</li>
+<li><strong>Matcher:</strong> Is the caller reporting a "Fire"?</li>
+<li><strong>Hook:</strong> Dispatch the Fire Department.</li>
+</ul>
+<h2 id="solving-the-use-case">Solving the Use Case</h2>
+<p>
+Let's look at how we structure the data to solve our "Lint on Save" use case.
+</p>
+<h3 id="step-1-defining-the-event">Step 1: Defining the Event</h3>
+<p>
+First, we look at the top-level object. The keys of this object correspond to specific moments in the application's lifecycle, known as <code>HOOK_EVENTS</code>.
+</p>
+<pre data-lang="typescript"><code>// The top-level registry
+const settings = {
+  // We listen for the 'tool_finish' event
+  "tool_finish": [
+    // Rules go here...
+  ]
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong> This tells the system, "I only care about adding behavior when a tool finishes its job." If an event isn't listed here, the system ignores it.
+</p>
+<h3 id="step-2-adding-the-matcher">Step 2: Adding the Matcher</h3>
+<p>
+Inside the event array, we add a <strong>Matcher</strong>. We don't want to lint <em>every</em> tool (like "ReadFile" or "ListDir"). We only match "WriteFile".
+</p>
+<pre data-lang="typescript"><code>// Inside "tool_finish":
+[
+  {
+    // The filter
+    "matcher": "WriteFile", 
+    "hooks": [
+      // Actions go here...
+    ]
+  }
+]
+</code></pre>
+<p>
+<strong>Explanation:</strong> The %%INLINE<em>5%% field acts as a gatekeeper. If the tool name matches "WriteFile", we proceed to the %%INLINE</em>6%%. If not, we skip it.
+</p>
+<h3 id="step-3-defining-the-hook">Step 3: Defining the Hook</h3>
+<p>
+Finally, we define the action. This is the <strong>Hook</strong>.
+</p>
+<pre data-lang="typescript"><code>// Inside "hooks":
+[
+  {
+    "type": "command",
+    "command": "npm run lint",
+    "statusMessage": "Linting file..."
+  }
+]
+</code></pre>
+<p>
+<strong>Explanation:</strong> This describes <em>what</em> to do. In this case, it executes a shell command. We will learn about the different types of hooks (commands, prompts, etc.) in <a href="02<em>polymorphic</em>hook_definitions.md">Polymorphic Hook Definitions</a>.
+</p>
+<h2 id="internal-implementation-under-the-hood">Internal Implementation: Under the Hood</h2>
+<p>
+How does the system process this registry? Let's visualize the flow.
+</p>
+<h3 id="the-dispatch-sequence">The Dispatch Sequence</h3>
+<p>
+When an event occurs in the application, the <code>HooksSchema</code> logic takes over.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant App as Application
+    participant Reg as Registry (HooksSchema)
+    participant Mat as Matcher Logic
+    participant Hook as Hook Execution
+
+    App-&gt;&gt;Reg: Emits Event: "tool_finish" (WriteFile)
+    Reg-&gt;&gt;Reg: Looks up "tool_finish" key
+    Reg-&gt;&gt;Mat: Iterates through Matchers
+    Mat-&gt;&gt;Mat: Checks: Does "WriteFile" == matcher?
+    Mat--&gt;&gt;Hook: Yes! Match Found.
+    Hook-&gt;&gt;App: Executes "npm run lint"</div></div>
+<ol>
+<li>The <strong>Application</strong> yells, "I just finished a tool called WriteFile!"</li>
+</ol>
+<ol>
+<li>The <strong>Registry</strong> looks at its list of keys. It finds <code>tool_finish</code>.</li>
+</ol>
+<ol>
+<li>It loops through the <strong>Matchers</strong> configured for that event.</li>
+</ol>
+<ol>
+<li>It finds a matcher for "WriteFile".</li>
+</ol>
+<ol>
+<li>It executes the <strong>Hooks</strong> associated with that matcher.</li>
+</ol>
+<h3 id="code-deep-dive">Code Deep Dive</h3>
+<p>
+Let's look at the actual Zod definition from <code>hooks.ts</code>.
+</p>
+<h4 id="the-matcher-schema">The Matcher Schema</h4>
+<p>
+This defines the structure of a single rule (Filter + Actions).
+</p>
+<pre data-lang="typescript"><code>// hooks.ts
+export const HookMatcherSchema = lazySchema(() =&gt;
+  z.object({
+    // The filter string (e.g., "WriteFile")
+    matcher: z.string().optional(), 
+    // The list of actions to perform
+    hooks: z.array(HookCommandSchema()),
+  }),
+)
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li><code>matcher</code>: This is optional. If you leave it empty, it acts like a wildcard (matches everything).</li>
+<li>%%INLINE<em>11%%: This uses %%INLINE</em>12%%, which we will detail in the next chapter.</li>
+</ul>
+<h4 id="the-registry-schema">The Registry Schema</h4>
+<p>
+This wraps everything together into the master lookup table.
+</p>
+<pre data-lang="typescript"><code>// hooks.ts
+export const HooksSchema = lazySchema(() =&gt;
+  // Maps Event Names -&gt; Array of Matchers
+  z.partialRecord(
+    z.enum(HOOK_EVENTS), 
+    z.array(HookMatcherSchema())
+  ),
+)
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li>%%INLINE<em>13%%: This ensures you can only use valid event names (like %%INLINE</em>14%%, <code>tool_finish</code>) as keys. You can't make up random events.</li>
+<li><code>z.partialRecord</code>: This is key! It means you <strong>don't</strong> have to define rules for every single event. You can define just one, or all of them.</li>
+<li><code>z.array(HookMatcherSchema)</code>: Each event can have multiple independent rules (e.g., one rule to Lint, another rule to Git Commit).</li>
+</ul>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>HooksSchema</strong> is the top-level dictionary that organizes system behavior.</li>
+</ol>
+<ol>
+<li>It uses a hierarchy of <strong>Event -> Matcher -> Hook</strong>.</li>
+</ol>
+<ol>
+<li>It allows us to react to specific lifecycle moments without hardcoding logic.</li>
+</ol>
+<p>
+But wait—what exactly goes inside that <code>hooks</code> array? In our example, we used a command, but can we ask the AI to think? Can we make an HTTP request?
+</p>
+<p>
+Yes! The system is polymorphic. Read on to find out how.
+</p>
+<p>
+<a href="02<em>polymorphic</em>hook_definitions.md">Next Chapter: Polymorphic Hook Definitions</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="schemas.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">schemas/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-how-do-i-make-the-system-react">The Problem: "How do I make the system react?"</a></li>
+<li style="padding-left:0px"><a href="#the-solution-inline-0">The Solution: %%INLINE_0%%</a></li>
+<li style="padding-left:10px"><a href="#analogy-the-emergency-dispatcher">Analogy: The Emergency Dispatcher</a></li>
+<li style="padding-left:0px"><a href="#solving-the-use-case">Solving the Use Case</a></li>
+<li style="padding-left:10px"><a href="#step-1-defining-the-event">Step 1: Defining the Event</a></li>
+<li style="padding-left:10px"><a href="#step-2-adding-the-matcher">Step 2: Adding the Matcher</a></li>
+<li style="padding-left:10px"><a href="#step-3-defining-the-hook">Step 3: Defining the Hook</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-under-the-hood">Internal Implementation: Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#the-dispatch-sequence">The Dispatch Sequence</a></li>
+<li style="padding-left:10px"><a href="#code-deep-dive">Code Deep Dive</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

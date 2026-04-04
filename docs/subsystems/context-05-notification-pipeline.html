@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 5: Notification Pipeline — context/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">context/05_notification_pipeline.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">💬 context/ · 05_notification_pipeline.md</div>
+  <h1 class="chapter-title-h1">Chapter 5: Notification Pipeline</h1>
+  <div class="chapter-meta"><span>📄 context/05_notification_pipeline.md</span></div>
+</div>
+<h1 id="chapter-5-notification-pipeline">Chapter 5: Notification Pipeline</h1>
+<p>
+Welcome back! In the previous chapter, <a href="04<em>voice</em>state_manager.md">Voice State Manager</a>, we built a high-speed sidecar to handle rapid audio updates.
+</p>
+<p>
+Now that our app can listen and process data, it needs to talk back. But there is a risk. If the app talks too much—or too fast—it becomes annoying.
+</p>
+<h2 id="the-problem-the-spammy-waiter">The Problem: "The Spammy Waiter"</h2>
+<p>
+Imagine a waiter who updates you on every micro-action:
+</p>
+<ol>
+<li>"I am walking to the kitchen."</li>
+</ol>
+<ol>
+<li>"I am picking up the spoon."</li>
+</ol>
+<ol>
+<li>"I am walking back."</li>
+</ol>
+<ol>
+<li>"Here is your spoon."</li>
+</ol>
+<p>
+In a Terminal UI, this looks like a wall of text scrolling by:
+</p>
+<pre data-lang="text"><code>Loading 10%...
+Loading 20%...
+Loading 30%...
+Success!
+</code></pre>
+<p>
+This buries important information (like errors) and clutters the screen.
+</p>
+<p>
+This chapter introduces the <strong>Notification Pipeline</strong>. It acts like a smart Traffic Controller. It knows that "Fire Alarm" is more important than "Radio Music," and it knows how to update a "Loading" message in place instead of spamming new lines.
+</p>
+<hr>
+<h2 id="part-1-the-traffic-controller">Part 1: The Traffic Controller</h2>
+<p>
+The pipeline manages three things that a standard <code>console.log</code> cannot:
+</p>
+<ol>
+<li><strong>Prioritization:</strong> An error stops the show. A "File Saved" note waits its turn.</li>
+</ol>
+<ol>
+<li><strong>Timing:</strong> Messages appear for a few seconds, then dismiss themselves.</li>
+</ol>
+<ol>
+<li><strong>Folding:</strong> This is the magic. If a message says "Loading 10%" and a new one arrives saying "Loading 20%", the pipeline <strong>merges</strong> them into one notification that updates in real-time.</li>
+</ol>
+<h3 id="usage-example-sending-a-notification">Usage Example: Sending a Notification</h3>
+<p>
+We use the <code>useNotifications</code> hook to access the pipeline.
+</p>
+<pre data-lang="tsx"><code>import { useNotifications } from './notifications';
+
+function SaveButton() {
+  const { addNotification } = useNotifications();
+
+  return (
+    &lt;Button onPress={() =&gt; {
+      addNotification({
+        key: 'save-success', // Unique ID
+        text: 'File saved successfully!',
+        priority: 'medium',
+        color: 'green'
+      });
+    }}&gt;
+      Save
+    &lt;/Button&gt;
+  );
+}
+</code></pre>
+<p>
+<strong>What happens?</strong>
+ 
+A green message appears. If another message is currently showing, this one enters a <strong>Queue</strong> and waits for the current one to finish (timeout).
+</p>
+<hr>
+<h2 id="part-2-the-magic-of-folding">Part 2: The Magic of "Folding"</h2>
+<p>
+Folding solves the "Spammy Waiter" problem. It allows a new notification to absorb an old one if they share the same <code>key</code>.
+</p>
+<h3 id="the-logic">The Logic</h3>
+<ol>
+<li><strong>Old Message:</strong> <code>key: 'download'</code>, text: "10%"</li>
+</ol>
+<ol>
+<li><strong>New Message:</strong> <code>key: 'download'</code>, text: "20%"</li>
+</ol>
+<ol>
+<li><strong>Pipeline:</strong> "Wait, I already have 'download'. I'll just update the text instead of creating a new popup."</li>
+</ol>
+<h3 id="usage-example-a-progress-bar">Usage Example: A Progress Bar</h3>
+<p>
+Here is how we create a notification that updates itself.
+</p>
+<pre data-lang="tsx"><code>function Downloader() {
+  const { addNotification } = useNotifications();
+
+  const updateProgress = (percent) =&gt; {
+    addNotification({
+      key: 'download-job', // Same key every time!
+      text: `Downloading... ${percent}%`,
+      priority: 'medium',
+      
+      // The Fold Logic: Replace the old one with the new one
+      fold: (prev, next) =&gt; next 
+    });
+  };
+  // ... call updateProgress(10), updateProgress(20), etc.
+}
+</code></pre>
+<p>
+<strong>Result:</strong>
+ 
+The user sees a single notification box that animates: %%INLINE<em>5%% -> %%INLINE</em>6%%. No scrolling spam!
+</p>
+<hr>
+<h2 id="part-3-emergency-interruptions-priority">Part 3: Emergency Interruptions (Priority)</h2>
+<p>
+Sometimes, you need to cut the line. If the internet connection dies, you don't want the error message to wait behind "File Saved."
+</p>
+<p>
+We use <code>priority: 'immediate'</code> for this.
+</p>
+<pre data-lang="tsx"><code>addNotification({
+  key: 'network-error',
+  text: 'CONNECTION LOST!',
+  priority: 'immediate', // Skips the queue!
+  color: 'red',
+  timeoutMs: 10000 // Stay longer (10s)
+});
+</code></pre>
+<p>
+<strong>What happens?</strong>
+</p>
+<ol>
+<li>Any current message is instantly removed.</li>
+</ol>
+<ol>
+<li>The "CONNECTION LOST" message appears immediately.</li>
+</ol>
+<ol>
+<li>The previous message is paused and re-queued (if it wasn't finished).</li>
+</ol>
+<hr>
+<h2 id="internal-implementation-how-it-all-connects">Internal Implementation: How it all connects</h2>
+<p>
+Let's look at how the pipeline makes decisions.
+</p>
+<h3 id="the-flow">The Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant Pipe as NotificationPipeline
+    participant Queue as MessageQueue
+    participant Screen as CurrentDisplay
+
+    User-&gt;&gt;Pipe: Add "Loading 10%" (Key: A)
+    Pipe-&gt;&gt;Screen: Display "Loading 10%"
+    
+    User-&gt;&gt;Pipe: Add "Loading 20%" (Key: A)
+    Pipe-&gt;&gt;Pipe: Checks Key... Match found!
+    Pipe-&gt;&gt;Screen: UPDATE to "Loading 20%" (Folded)
+    
+    User-&gt;&gt;Pipe: Add "Saved" (Key: B)
+    Pipe-&gt;&gt;Queue: Key A is busy. "Saved" waits in line.
+    
+    Note right of Screen: Timeout (8s)
+    Screen-&gt;&gt;Pipe: I am done.
+    Pipe-&gt;&gt;Queue: Get next?
+    Queue-&gt;&gt;Screen: Display "Saved"</div></div>
+<h3 id="code-walkthrough-the-queue-processor">Code Walkthrough: The Queue Processor</h3>
+<p>
+Open %%INLINE<em>8%%. The core logic lives in %%INLINE</em>9%%.
+</p>
+<h4 id="1-handling-immediate-priority">1. Handling Immediate Priority</h4>
+<p>
+First, the function checks if the new message is an emergency.
+</p>
+<pre data-lang="tsx"><code>// notifications.tsx (Simplified)
+const addNotification = (notif) =&gt; {
+  if (notif.priority === 'immediate') {
+    // 1. Clear current timeout (stop auto-dismiss)
+    clearTimeout(currentTimeoutId);
+
+    // 2. Force update state immediately
+    setAppState(prev =&gt; ({
+       ...prev,
+       notifications: {
+         current: notif, // Hijack the screen
+         // Put the old 'current' back into the queue
+         queue: [prev.current, ...prev.queue] 
+       }
+    }));
+    return;
+  }
+  // ... continue to normal logic
+};
+</code></pre>
+<h4 id="2-the-folding-logic">2. The Folding Logic</h4>
+<p>
+If it's not immediate, we check if we can merge it.
+</p>
+<pre data-lang="tsx"><code>// notifications.tsx (Simplified)
+// Inside setAppState...
+if (notif.fold) {
+  // Check if the CURRENT message has the same key
+  if (prev.current?.key === notif.key) {
+    // Run the user's fold function (usually returns 'next')
+    const folded = notif.fold(prev.current, notif);
+    
+    return {
+      ...prev,
+      notifications: {
+        current: folded, // Update in place!
+        queue: prev.queue
+      }
+    };
+  }
+}
+</code></pre>
+<h4 id="3-auto-dismissal">3. Auto-Dismissal</h4>
+<p>
+We need a way to remove messages after <code>timeoutMs</code>. We use a recursive timeout pattern.
+</p>
+<pre data-lang="tsx"><code>// notifications.tsx (Simplified)
+const processQueue = useCallback(() =&gt; {
+  setAppState(prev =&gt; {
+    const next = getNext(prev.queue); // Get highest priority item
+    
+    // Set a timer to clear THIS notification
+    setTimeout(() =&gt; {
+       // When time is up, clear current and run processQueue again
+       processQueue(); 
+    }, next.timeoutMs);
+
+    return {
+      notifications: { current: next, queue: remaining }
+    };
+  });
+}, []);
+</code></pre>
+<p>
+This ensures that the pipeline never gets stuck. As soon as one message finishes, it wakes up and pulls the next one from the queue.
+</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we built a polite and efficient communication system:
+</p>
+<ol>
+<li><strong>Queues:</strong> We prevent message overload by making low-priority alerts wait their turn.</li>
+</ol>
+<ol>
+<li><strong>Immediate Mode:</strong> We allow critical errors to cut the line.</li>
+</ol>
+<ol>
+<li><strong>Folding:</strong> We solved the "Spammy Waiter" problem by updating messages in place using unique Keys.</li>
+</ol>
+<p>
+Our application is now fully interactive. It has visuals, layers, voice input, and a smart notification system.
+</p>
+<p>
+But how do we know if it's actually working well? Are users hitting errors we don't see? In the final chapter, we will build a system to track the health of our app.
+</p>
+<p>
+<a href="06<em>telemetry</em><em>_stats</em>store.md">Next Chapter: Telemetry & Stats Store</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="context.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">context/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-spammy-waiter">The Problem: "The Spammy Waiter"</a></li>
+<li style="padding-left:0px"><a href="#part-1-the-traffic-controller">Part 1: The Traffic Controller</a></li>
+<li style="padding-left:10px"><a href="#usage-example-sending-a-notification">Usage Example: Sending a Notification</a></li>
+<li style="padding-left:0px"><a href="#part-2-the-magic-of-folding">Part 2: The Magic of "Folding"</a></li>
+<li style="padding-left:10px"><a href="#the-logic">The Logic</a></li>
+<li style="padding-left:10px"><a href="#usage-example-a-progress-bar">Usage Example: A Progress Bar</a></li>
+<li style="padding-left:0px"><a href="#part-3-emergency-interruptions-priority">Part 3: Emergency Interruptions (Priority)</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-how-it-all-connects">Internal Implementation: How it all connects</a></li>
+<li style="padding-left:10px"><a href="#the-flow">The Flow</a></li>
+<li style="padding-left:10px"><a href="#code-walkthrough-the-queue-processor">Code Walkthrough: The Queue Processor</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

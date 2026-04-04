@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ch.16 Teammates — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">Ch.16 — Teammates</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-agents">AGENTS</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">Chapter 16 · <span class="tag tag-agents">AGENTS</span></div>
+  <h1 class="chapter-title-h1">Teammates</h1>
+  <div class="chapter-meta">
+    <span>📄 16_teammates.md</span>
+    <span>🏷 Agents</span>
+  </div>
+</div>
+<h1 id="chapter-16-teammates">Chapter 16: Teammates</h1>
+<p>
+In the previous <a href="15_agenttool.md">AgentTool</a> chapter, we learned how to spawn "Sub-Agents" to handle complex tasks. However, those sub-agents were blocking. While the sub-agent was thinking, the main application was frozen, waiting for the result.
+</p>
+<p>
+But what if you want to keep working while an AI helper does something else in the background?
+</p>
+<p>
+Enter <strong>Teammates</strong>.
+</p>
+<h2 id="what-are-teammates">What are Teammates?</h2>
+<p>
+<strong>Teammates</strong> are independent AI agents that run alongside your main session. Unlike standard sub-agents, they don't block you. You can ask a teammate to "Research this library," and while they are reading documentation in the background, you can continue coding with the main agent.
+</p>
+<h3 id="the-central-use-case-the-background-researcher">The Central Use Case: "The Background Researcher"</h3>
+<p>
+Imagine you are fixing a bug. You need to know how a specific API works, but you don't want to lose your train of thought in the code.
+</p>
+<ol>
+<li><strong>You:</strong> "Spawn a researcher to find out how <code>React.useId</code> works."</li>
+</ol>
+<ol>
+<li><strong>System:</strong> Creates a "Researcher" teammate.</li>
+</ol>
+<ol>
+<li><strong>You:</strong> Continue typing code in the main prompt.</li>
+</ol>
+<ol>
+<li><strong>Researcher (Background):</strong> Googles, reads docs, summarizes.</li>
+</ol>
+<ol>
+<li><strong>Researcher:</strong> Pings you 2 minutes later: "Here is how <code>useId</code> works..."</li>
+</ol>
+<p>
+Without Teammates, you would have to sit and watch a loading spinner for 2 minutes.
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<h3 id="1-in-process-concurrency">1. In-Process Concurrency</h3>
+<p>
+We don't launch a whole new terminal window. Teammates run inside the same Node.js process as the main application. We use JavaScript's asynchronous nature to let them work "in parallel" with the user.
+</p>
+<h3 id="2-identity-context-isolation">2. Identity & Context Isolation</h3>
+<p>
+Every teammate needs a name (e.g., "Researcher", "QA") and a specific job. Most importantly, they need their own <strong>Context</strong>.
+ 
+If the Teammate changes a variable in its memory, it shouldn't accidentally change a variable in the Main Agent's memory. We use something called <code>AsyncLocalStorage</code> to keep their brains separate.
+</p>
+<h3 id="3-the-abort-controller">3. The Abort Controller</h3>
+<p>
+Since teammates run in the background, we need a way to stop them. If you quit the app, or if the teammate gets stuck, we need a "Kill Switch." Each teammate has its own <code>AbortController</code>.
+</p>
+<h2 id="how-to-use-teammates">How to Use Teammates</h2>
+<p>
+While users trigger teammates via chat, developers trigger them via code. Here is how we define a "spawn" configuration.
+</p>
+<h3 id="the-input-configuration">The Input Configuration</h3>
+<p>
+To spawn a teammate, we need to know who they are and what they should do.
+</p>
+<pre data-lang="typescript"><code>const spawnConfig = {
+  name: "Researcher",
+  teamName: "CoreTeam",
+  // The mission we give them
+  prompt: "Read the docs for React 18 and summarize concurrency.",
+  // Visuals for the UI
+  color: "blue",
+  planModeRequired: false
+};
+</code></pre>
+<h3 id="the-output-what-happens">The Output (What happens?)</h3>
+<p>
+When triggered, the system returns a success object containing the <strong>Agent ID</strong>.
+</p>
+<pre data-lang="typescript"><code>{
+  success: true,
+  agentId: "Researcher@CoreTeam",
+  taskId: "task_12345",
+  // A handle to kill the agent if needed
+  abortController: AbortController {} 
+}
+</code></pre>
+<h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
+<p>
+Spawning a teammate is a delicate operation. We have to create a new "virtual thread" inside our application.
+</p>
+<ol>
+<li><strong>Request:</strong> The user asks for help.</li>
+</ol>
+<ol>
+<li><strong>Identity:</strong> We generate a unique ID (<code>Name@Team</code>).</li>
+</ol>
+<ol>
+<li><strong>Context:</strong> We create a dedicated memory space (Context) for this agent.</li>
+</ol>
+<ol>
+<li><strong>Registration:</strong> We tell <a href="01<em>state</em>management.md">State Management</a> "Hey, there's a new active agent!" so the UI can show a spinner.</li>
+</ol>
+<ol>
+<li><strong>Execution:</strong> The agent starts its own loop (Think -> Act -> Observe) independently.</li>
+</ol>
+<p>
+Here is the visual flow:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant Main as Main Session
+    participant Spawn as Spawn Logic
+    participant State as App State
+    participant TM as Teammate
+
+    User-&gt;&gt;Main: "Ask Researcher to help"
+    Main-&gt;&gt;Spawn: spawnInProcessTeammate()
+    
+    Note over Spawn: Create unique Context &amp; ID
+    Spawn-&gt;&gt;State: Register Task (Status: Running)
+    
+    Spawn--&gt;&gt;TM: Start Background Loop
+    Spawn--&gt;&gt;Main: Return Success
+    
+    par Parallel Work
+        TM-&gt;&gt;TM: Researching...
+        Main-&gt;&gt;User: "Researcher started. What next?"
+    end</div></div>
+<h3 id="internal-implementation-code">Internal Implementation Code</h3>
+<p>
+The core logic is in <code>utils/swarm/spawnInProcess.ts</code>.
+</p>
+<h4 id="1-creating-the-identity">1. Creating the Identity</h4>
+<p>
+First, we generate a deterministic ID and a control switch (AbortController).
+</p>
+<pre data-lang="typescript"><code>// utils/swarm/spawnInProcess.ts
+
+export async function spawnInProcessTeammate(config, context) {
+  const { name, teamName } = config;
+
+  // 1. Create a unique ID (e.g., "Researcher@CoreTeam")
+  const agentId = formatAgentId(name, teamName);
+  
+  // 2. Create a "Kill Switch" specific to this agent
+  // If the main app dies, this stays alive until explicitly killed
+  const abortController = createAbortController();
+  
+  // ...
+}
+</code></pre>
+<p>
+<em>Explanation: We create <code>abortController</code> immediately. This allows us to cancel the teammate's specific task later without killing the whole application.</em>
+</p>
+<h4 id="2-creating-the-context">2. Creating the Context</h4>
+<p>
+This is the most important part. We use <code>createTeammateContext</code> to isolate the agent.
+</p>
+<pre data-lang="typescript"><code>// utils/swarm/spawnInProcess.ts
+
+// 3. Create the isolated environment
+const teammateContext = createTeammateContext({
+  agentId,
+  agentName: name,
+  parentSessionId: getSessionId(), // Link to parent for logging
+  abortController,
+  // ... other props
+});
+</code></pre>
+<p>
+<em>Explanation: This context object holds the agent's permissions and history. By creating a new one, we ensure the teammate doesn't see the Main Agent's private thoughts.</em>
+</p>
+<h4 id="3-registering-with-state">3. Registering with State</h4>
+<p>
+We need the <a href="02<em>ink</em>ui_framework.md">Ink UI Framework</a> to display the teammate's status. We do this by adding a "Task" to the global state.
+</p>
+<pre data-lang="typescript"><code>// utils/swarm/spawnInProcess.ts
+
+const taskState = {
+  // Standard task properties
+  type: 'in_process_teammate',
+  status: 'running',
+  identity: { agentId, color }, // Who is this?
+  prompt: config.prompt, // What are they doing?
+  
+  // Connect the kill switch
+  abortController
+};
+
+// 4. Update the global store
+registerTask(taskState, context.setAppState);
+</code></pre>
+<p>
+<em>Explanation: <code>registerTask</code> puts this data into the Global Store. The UI listens to the store and immediately renders a new "Running" indicator in the sidebar.</em>
+</p>
+<h4 id="4-killing-a-teammate">4. Killing a Teammate</h4>
+<p>
+When the job is done (or cancelled), we use the <code>killInProcessTeammate</code> function.
+</p>
+<pre data-lang="typescript"><code>// utils/swarm/spawnInProcess.ts
+
+export function killInProcessTeammate(taskId, setAppState) {
+  setAppState((prev) =&gt; {
+    const task = prev.tasks[taskId];
+    
+    // 1. Trigger the kill switch
+    task.abortController?.abort();
+    
+    // 2. Mark as killed in the UI
+    return {
+      ...prev,
+      tasks: {
+        ...prev.tasks,
+        [taskId]: { ...task, status: 'killed' }
+      }
+    };
+  });
+}
+</code></pre>
+<p>
+<em>Explanation: We find the task in the state, pull the trigger on the <code>abortController</code>, and update the status so the UI shows "Stopped."</em>
+</p>
+<h2 id="why-is-this-important-for-later">Why is this important for later?</h2>
+<p>
+Teammates represent the shift from "Chatbot" to "Organization."
+</p>
+<ul>
+<li><strong><a href="17<em>unique</em>features.md">Unique Features</a>:</strong> The ability to run concurrent, stateful agents is one of the standout features of <code>claudeCode</code>.</li>
+<li><strong><a href="19<em>cost</em>tracking.md">Cost Tracking</a>:</strong> Running multiple agents uses more tokens. We track costs per-teammate to see who is spending the most money.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have learned that <strong>Teammates</strong> are background workers that allow you to multitask. By using <strong>In-Process Spawning</strong> and <strong>Context Isolation</strong>, <code>claudeCode</code> can run multiple AI agents simultaneously in a single application. Each teammate has a name, a job, and a "Kill Switch" to keep them under control.
+</p>
+<p>
+Now that we have built the entire system—from State Management to Teammates—let's review what makes this entire project special compared to other tools.
+</p>
+<p>
+<a href="17<em>unique</em>features.md">Next Chapter: Unique Features</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="15-agenttool.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">AgentTool</div>
+        </a><a class="chapter-nav-card next" href="17-unique-features.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">Unique Features</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#what-are-teammates">What are Teammates?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case-the-background-researcher">The Central Use Case: "The Background Researcher"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-in-process-concurrency">1. In-Process Concurrency</a></li>
+<li style="padding-left:10px"><a href="#2-identity-context-isolation">2. Identity & Context Isolation</a></li>
+<li style="padding-left:10px"><a href="#3-the-abort-controller">3. The Abort Controller</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-teammates">How to Use Teammates</a></li>
+<li style="padding-left:10px"><a href="#the-input-configuration">The Input Configuration</a></li>
+<li style="padding-left:10px"><a href="#the-output-what-happens">The Output (What happens?)</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-how-it-works">Under the Hood: How it Works</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-code">Internal Implementation Code</a></li>
+<li style="padding-left:0px"><a href="#why-is-this-important-for-later">Why is this important for later?</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

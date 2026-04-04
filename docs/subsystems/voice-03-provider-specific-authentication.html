@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: Provider-Specific Authentication — voice/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">voice/03_provider_specific_authentication.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🎤 voice/ · 03_provider_specific_authentication.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: Provider-Specific Authentication</h1>
+  <div class="chapter-meta"><span>📄 voice/03_provider_specific_authentication.md</span></div>
+</div>
+<h1 id="chapter-3-provider-specific-authentication">Chapter 3: Provider-Specific Authentication</h1>
+<p>
+In the previous chapter, <a href="02<em>remote</em>feature<em>gating</em><em>growthbook</em>.md">Remote Feature Gating (GrowthBook)</a>, we learned how to install a "Smart Fuse" to disable features remotely.
+</p>
+<p>
+Now that we know the feature is safe to use, we face a different problem: <strong>Does the user have the right key to open the door?</strong>
+</p>
+<h2 id="the-problem-not-all-keys-are-the-same">The Problem: Not All Keys Are the Same</h2>
+<p>
+Imagine you are trying to enter an exclusive VIP lounge. You reach into your pocket and pull out a gym membership card. The bouncer stops you. "Sorry," they say, "that card works at the gym, but it doesn't work here."
+</p>
+<p>
+In our application, we support many AI providers (Anthropic, Google Vertex, Amazon Bedrock). However, the <strong>Voice Mode</strong> feature is very specific. It relies on a special technology called %%INLINE<em>0%% which is <strong>exclusively available</strong> via %%INLINE</em>1%%.
+</p>
+<p>
+If a user tries to use Voice Mode while logged in with an Amazon Bedrock key, the system will fail. We need a way to filter out users who have the wrong "membership card" <em>before</em> they try to connect.
+</p>
+<h2 id="the-solution-the-bouncer">The Solution: The Bouncer</h2>
+<p>
+We use a concept called <strong>Provider-Specific Authentication</strong>. This is a strict check that ensures:
+</p>
+<ol>
+<li>The user is using the correct provider (Anthropic).</li>
+</ol>
+<ol>
+<li>The user has the specific type of credential required (OAuth Token).</li>
+</ol>
+<p>
+We wrap this logic in a function called <code>hasVoiceAuth()</code>.
+</p>
+<h3 id="how-to-use-it">How to Use It</h3>
+<p>
+As a developer, you use this function to decide if the user is "logged in" for Voice purposes.
+</p>
+<pre data-lang="typescript"><code>import { hasVoiceAuth } from './voiceModeEnabled';
+
+// Simple check: Do they have the specific VIP card?
+if (hasVoiceAuth()) {
+  console.log("Allowed: User has Anthropic OAuth tokens.");
+  enableMicrophone();
+} else {
+  console.log("Denied: User might be logged out OR using Bedrock/Vertex.");
+}
+</code></pre>
+<p>
+<strong>What happens here:</strong>
+</p>
+<ul>
+<li><strong>Input:</strong> None (it checks the global authentication state).</li>
+<li><strong>Output:</strong> %%INLINE<em>3%% only if the user is logged into %%INLINE</em>4%% via OAuth.</li>
+<li><strong>Result:</strong> Users with API Keys, Bedrock keys, or no keys are filtered out.</li>
+</ul>
+<hr>
+<h2 id="how-it-works-under-the-hood">How it Works: Under the Hood</h2>
+<p>
+The <code>hasVoiceAuth</code> function performs a two-step verification process. Think of it like a bouncer checking an ID.
+</p>
+<ol>
+<li><strong>Check the Card Type:</strong> Is the user currently set to use Anthropic? (If they are set to Google Vertex, stop immediately).</li>
+</ol>
+<ol>
+<li><strong>Check the Validity:</strong> Does the user actually have a token in their keychain?</li>
+</ol>
+<p>
+Here is the flow:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant App as Application
+    participant Bouncer as hasVoiceAuth
+    participant Config as User Config
+    participant Keychain as Secure Storage
+
+    App-&gt;&gt;Bouncer: Can we use Voice?
+    
+    Bouncer-&gt;&gt;Config: Is provider "Anthropic"?
+    Config--&gt;&gt;Bouncer: Yes
+    
+    Bouncer-&gt;&gt;Keychain: Do we have an Access Token?
+    Keychain--&gt;&gt;Bouncer: Yes (Token "sk-...")
+    
+    Bouncer--&gt;&gt;App: true (Access Granted)</div></div>
+<hr>
+<h2 id="deep-dive-the-code">Deep Dive: The Code</h2>
+<p>
+Let's break down the implementation in <code>voiceModeEnabled.ts</code>.
+</p>
+<h3 id="step-1-filtering-the-provider">Step 1: Filtering the Provider</h3>
+<p>
+First, we check if the user is even looking at the right provider. Standard API keys or other cloud providers (like Azure or Bedrock) do not support the <code>voice_stream</code> endpoint.
+</p>
+<pre data-lang="typescript"><code>export function hasVoiceAuth(): boolean {
+  // 1. Check provider type.
+  // Voice works ONLY with Anthropic OAuth.
+  // API Keys, Bedrock, and Vertex are strictly forbidden here.
+  if (!isAnthropicAuthEnabled()) {
+    return false
+  }
+  
+  // ... continued below
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li>%%INLINE<em>8%%: Checks the user's settings. If they are configured for Amazon Bedrock, this returns %%INLINE</em>9%%, and <code>hasVoiceAuth</code> immediately says "No".</li>
+</ul>
+<h3 id="step-2-verifying-the-token">Step 2: Verifying the Token</h3>
+<p>
+If the provider is correct, we need to make sure the user is actually logged in. We look for the "Access Token" (the digital key).
+</p>
+<pre data-lang="typescript"><code>  // ... continued from above
+
+  // 2. Retrieve the tokens from secure storage.
+  const tokens = getClaudeAIOAuthTokens()
+  
+  // 3. Convert to boolean (true if token exists, false if null/empty).
+  return Boolean(tokens?.accessToken)
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li><code>getClaudeAIOAuthTokens()</code>: This fetches the credentials from the computer's secure password storage (Keychain on macOS, Credentials Manager on Windows).</li>
+<li>%%INLINE<em>12%%: This is a fancy way of saying: "Is there text inside the token variable?" If it is undefined or empty, it returns %%INLINE</em>13%%.</li>
+</ul>
+<h2 id="a-note-on-performance">A Note on Performance</h2>
+<p>
+You might wonder: <em>doesn't reading from the secure keychain take time?</em>
+</p>
+<p>
+Yes, it does! On some computers, asking for a password takes 20-50 milliseconds. That is fast for a human, but slow for a computer trying to render a button 60 times a second.
+</p>
+<p>
+If we ran this check every single frame, the app would stutter. We need a way to make this check faster. We will solve this in the next chapter using caching strategies.
+</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have learned about <strong>Provider-Specific Authentication</strong>.
+</p>
+<ul>
+<li>We don't just ask "Is the user logged in?"</li>
+<li>We ask "Is the user logged in with <strong>Anthropic OAuth</strong>?"</li>
+<li>This prevents bugs where the app tries to send voice data to incompatible providers (like Bedrock or Vertex).</li>
+</ul>
+<p>
+This completes our "Readiness Logic." We have a fuse (GrowthBook) and a bouncer (Auth). But our bouncer is currently a bit slow at checking IDs.
+</p>
+<p>
+In the next chapter, we will learn how to speed up this process so our UI stays buttery smooth.
+</p>
+<p>
+<a href="04<em>performance</em>aware<em>token</em>access.md">Next Chapter: Performance-Aware Token Access</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="voice.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">voice/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-not-all-keys-are-the-same">The Problem: Not All Keys Are the Same</a></li>
+<li style="padding-left:0px"><a href="#the-solution-the-bouncer">The Solution: The Bouncer</a></li>
+<li style="padding-left:10px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:0px"><a href="#how-it-works-under-the-hood">How it Works: Under the Hood</a></li>
+<li style="padding-left:0px"><a href="#deep-dive-the-code">Deep Dive: The Code</a></li>
+<li style="padding-left:10px"><a href="#step-1-filtering-the-provider">Step 1: Filtering the Provider</a></li>
+<li style="padding-left:10px"><a href="#step-2-verifying-the-token">Step 2: Verifying the Token</a></li>
+<li style="padding-left:0px"><a href="#a-note-on-performance">A Note on Performance</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 6: Path Security and Sandboxing — memdir/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">memdir/06_path_security_and_sandboxing.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🧠 memdir/ · 06_path_security_and_sandboxing.md</div>
+  <h1 class="chapter-title-h1">Chapter 6: Path Security and Sandboxing</h1>
+  <div class="chapter-meta"><span>📄 memdir/06_path_security_and_sandboxing.md</span></div>
+</div>
+<h1 id="chapter-6-path-security-and-sandboxing">Chapter 6: Path Security and Sandboxing</h1>
+<p>
+In the previous chapter, <a href="05<em>temporal</em>freshness<em>_</em>verification.md">Temporal Freshness & Verification</a>, we learned how to trust the <strong>content</strong> of a memory by checking if it is too old.
+</p>
+<p>
+Now we must trust the <strong>intent</strong>.
+</p>
+<p>
+The AI has the ability to write files to your computer. It <em>needs</em> this ability to save memories. But what if the AI gets confused (or tricked) and tries to write a memory to a sensitive location, like your operating system's configuration folder or your SSH keys?
+</p>
+<p>
+This brings us to the final piece of the <code>memdir</code> puzzle: <strong>Path Security and Sandboxing</strong>.
+</p>
+<h2 id="the-motivation-the-guest-room-analogy">The Motivation: The "Guest Room" Analogy</h2>
+<p>
+Imagine you invite a guest to stay at your house. You tell them: <em>"You can put your things in the Guest Room."</em>
+</p>
+<ol>
+<li><strong>The Good Guest:</strong> Puts their suitcase in the Guest Room.</li>
+</ol>
+<ol>
+<li><strong>The Climbing Guest:</strong> Climbs out the Guest Room window and breaks into your Bedroom.</li>
+</ol>
+<ol>
+<li><strong>The Tunneling Guest:</strong> Drills a hole in the floor to access the basement.</li>
+</ol>
+<p>
+In computer terms, the "Guest Room" is the <code>memory/</code> folder. We need a security guard that ensures the AI never leaves that folder, no matter what path it tries to write to.
+</p>
+<h2 id="the-threat-escaping-the-sandbox">The Threat: Escaping the Sandbox</h2>
+<p>
+There are two main ways a program (or AI) tries to escape its allowed folder.
+</p>
+<h3 id="1-path-traversal-climbing-out">1. Path Traversal (Climbing Out)</h3>
+<p>
+In file systems, <code>..</code> means "go up one level."
+</p>
+<p>
+If the AI tries to save a file named:
+ 
+<code>memory/team/../../../../etc/passwd</code>
+</p>
+<p>
+The computer interprets this as:
+</p>
+<ol>
+<li>Start in <code>memory/team</code></li>
+</ol>
+<ol>
+<li>Go up (<code>memory/</code>)</li>
+</ol>
+<ol>
+<li>Go up (Project Root)</li>
+</ol>
+<ol>
+<li>Go up (User Home)</li>
+</ol>
+<ol>
+<li>Go up (Root of drive)</li>
+</ol>
+<ol>
+<li>Go down to <code>etc/passwd</code></li>
+</ol>
+<p>
+If we just blindly write to the path the AI gives us, we overwrite a system file.
+</p>
+<h3 id="2-symlink-attacks-tunneling-out">2. Symlink Attacks (Tunneling Out)</h3>
+<p>
+A <strong>Symbolic Link</strong> (symlink) is a shortcut. You can have a file inside %%INLINE<em>7%% that actually points to a file <em>outside</em> %%INLINE</em>8%%.
+</p>
+<p>
+If %%INLINE<em>9%% points to %%INLINE</em>10%%, writing to the shortcut actually overwrites your private key.
+</p>
+<h2 id="internal-implementation-the-security-guard">Internal Implementation: The Security Guard</h2>
+<p>
+<strong>memdir</strong> implements a strict "Sandbox" mechanism. Before any file is written, it goes through a validation checkpoint.
+</p>
+<h3 id="conceptual-flow">Conceptual Flow</h3>
+<p>
+Here is what happens every time the AI tries to write a memory:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant AI
+    participant Guard as Security Guard
+    participant FS as File System
+
+    AI-&gt;&gt;Guard: Request write: "memory/team/../../bad_file.txt"
+    
+    Guard-&gt;&gt;Guard: Step 1: Resolve ".." (Result: "/bad_file.txt")
+    Guard-&gt;&gt;Guard: Step 2: Check "Is this inside /memory/team?"
+    
+    alt Is Outside
+        Guard--xAI: ERROR: Path Traversal Detected!
+    else Is Inside
+        Guard-&gt;&gt;FS: Step 3: Check for Shortcuts (Symlinks)
+        FS--&gt;&gt;Guard: It points to a real file inside.
+        Guard-&gt;&gt;FS: Write File
+    end</div></div>
+<h3 id="step-1-blocking-path-traversal">Step 1: Blocking Path Traversal</h3>
+<p>
+We use Node.js's %%INLINE<em>11%% function. This function processes all the %%INLINE</em>12%% segments <em>before</em> we check the path.
+</p>
+<p>
+Here is a simplified version of the logic found in <code>src/teamMemPaths.ts</code>:
+</p>
+<pre data-lang="typescript"><code>// Simplified logic from src/teamMemPaths.ts
+import { resolve } from 'path'
+
+function validatePath(inputPath: string, allowedFolder: string) {
+  // 1. Resolve removes all ".." segments
+  const absolutePath = resolve(inputPath)
+
+  // 2. Check if the result starts with the allowed folder
+  if (!absolutePath.startsWith(allowedFolder)) {
+    throw new Error("Security Alert: You cannot escape the sandbox!")
+  }
+  
+  return absolutePath
+}
+</code></pre>
+<p>
+<strong>Example:</strong>
+</p>
+<ul>
+<li><strong>Allowed:</strong> <code>/Users/me/project/memory</code></li>
+<li><strong>Input:</strong> <code>memory/../../etc/passwd</code></li>
+<li><strong>Resolved:</strong> <code>/etc/passwd</code></li>
+<li><strong>Check:</strong> Does %%INLINE<em>17%% start with %%INLINE</em>18%%? <strong>NO.</strong> -> <strong>Error.</strong></li>
+</ul>
+<h3 id="step-2-blocking-symlinks-the-real-path">Step 2: Blocking Symlinks (The Real Path)</h3>
+<p>
+Even if the path <em>looks</em> like it is inside the folder, it might be a trick. We must ask the file system where the file <em>really</em> lives.
+</p>
+<p>
+We use <code>realpath</code> to trace the path to its physical destination on the disk.
+</p>
+<pre data-lang="typescript"><code>// Simplified logic from src/teamMemPaths.ts
+import { realpath } from 'fs/promises'
+
+async function checkSymlinks(safePath: string, allowedFolder: string) {
+  // 1. Ask the disk: "Where does this actually point?"
+  const physicalPath = await realpath(safePath)
+
+  // 2. Check if the PHYSICAL location is safe
+  if (!physicalPath.startsWith(allowedFolder)) {
+    throw new Error("Security Alert: Symlink points outside!")
+  }
+}
+</code></pre>
+<p>
+<strong>Example:</strong>
+</p>
+<ul>
+<li><strong>Input:</strong> <code>memory/team/my_key</code></li>
+<li><strong>Physical Location:</strong> <code>/Users/me/.ssh/id_rsa</code></li>
+<li><strong>Check:</strong> Is the physical location inside <code>memory/team</code>? <strong>NO.</strong> -> <strong>Error.</strong></li>
+</ul>
+<h2 id="deep-dive-the-production-code">Deep Dive: The Production Code</h2>
+<p>
+In the actual project, this logic is robust to handle edge cases (like null bytes). Let's look at <code>src/teamMemPaths.ts</code>.
+</p>
+<h3 id="sanitizing-the-input">Sanitizing the Input</h3>
+<p>
+First, we ensure the filename itself doesn't contain invisible "Null Bytes" (<code>\0</code>) which can trick some systems into truncating filenames.
+</p>
+<pre data-lang="typescript"><code>// src/teamMemPaths.ts
+
+function sanitizePathKey(key: string): string {
+  // Null bytes can act as string terminators in C/C++
+  if (key.includes('\0')) {
+    throw new Error(`Null byte in path key: "${key}"`)
+  }
+  
+  // We also block absolute paths starting with '/' to be safe
+  if (key.startsWith('/')) {
+    throw new Error(`Absolute path key: "${key}"`)
+  }
+  
+  return key
+}
+</code></pre>
+<h3 id="the-deepest-existing-check">The "Deepest Existing" Check</h3>
+<p>
+There is a tricky problem: checking <code>realpath</code> on a file that <strong>doesn't exist yet</strong> (because we are about to create it) will fail.
+</p>
+<p>
+The code in <code>src/teamMemPaths.ts</code> solves this by walking up the directory tree until it finds a folder that exists, and checking <em>that</em> for symlinks.
+</p>
+<pre data-lang="typescript"><code>// src/teamMemPaths.ts (Simplified)
+
+async function realpathDeepestExisting(path: string) {
+  let current = path
+  
+  // Loop: Try to find the real path. If file missing, check parent.
+  while (true) {
+    try {
+      return await realpath(current) // Found an existing part!
+    } catch (err) {
+      // If missing (ENOENT), go up one level and try again
+      current = dirname(current)
+    }
+  }
+}
+</code></pre>
+<p>
+This ensures that even if you try to write to %%INLINE<em>27%%, we verify that %%INLINE</em>28%% isn't a symlink to somewhere dangerous.
+</p>
+<h2 id="putting-it-all-together">Putting It All Together</h2>
+<p>
+When the AI decides to write a memory:
+</p>
+<ol>
+<li><strong>Sanitize:</strong> We remove weird characters and null bytes.</li>
+</ol>
+<ol>
+<li><strong>Resolve:</strong> We collapse all <code>..</code> to get the absolute path.</li>
+</ol>
+<ol>
+<li><strong>Containment Check 1:</strong> Does the string start with <code>/memory/team</code>?</li>
+</ol>
+<ol>
+<li><strong>Realpath:</strong> We find the physical location on the disk.</li>
+</ol>
+<ol>
+<li><strong>Containment Check 2:</strong> Does the physical location start with <code>/memory/team</code>?</li>
+</ol>
+<p>
+Only if all 5 checks pass does the system allow the write operation.
+</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+We have reached the end of the <strong>memdir</strong> tutorial series!
+</p>
+<p>
+We have built a complete, production-grade memory system:
+</p>
+<ol>
+<li><strong><a href="01<em>structured</em>memory_taxonomy.md">Structured Taxonomy</a>:</strong> We categorized <em>what</em> to save (User, Feedback, Project).</li>
+</ol>
+<ol>
+<li><strong><a href="02<em>scoped</em>persistence<strong>private<em>vs</strong>team</em>.md">Scoped Persistence</a>:</strong> We decided <em>who</em> sees it (Private vs. Team).</li>
+</ol>
+<ol>
+<li><strong><a href="03<em>two</em>tier<em>storage</em>architecture<strong>index<em>vs</strong>detail</em>.md">Two-Tier Architecture</a>:</strong> We managed <em>scale</em> (Index vs. Detail files).</li>
+</ol>
+<ol>
+<li><strong><a href="04<em>contextual</em>recall_mechanism.md">Contextual Recall</a>:</strong> We learned how to <em>find</em> memories (Smart "Librarian" Search).</li>
+</ol>
+<ol>
+<li><strong><a href="05<em>temporal</em>freshness<em>_</em>verification.md">Temporal Freshness</a>:</strong> We learned how to <em>verify</em> data (Fresh vs. Stale warnings).</li>
+</ol>
+<ol>
+<li><strong><a href="06<em>path</em>security<em>and</em>sandboxing.md">Path Security</a>:</strong> We ensured the system is <em>safe</em> (Sandboxing).</li>
+</ol>
+<p>
+By combining these six concepts, <strong>memdir</strong> turns a chaotic stream of AI thoughts into a persistent, organized, and safe knowledge base for your engineering team.
+</p>
+<p>
+Thank you for reading!
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="memdir.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">memdir/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-the-guest-room-analogy">The Motivation: The "Guest Room" Analogy</a></li>
+<li style="padding-left:0px"><a href="#the-threat-escaping-the-sandbox">The Threat: Escaping the Sandbox</a></li>
+<li style="padding-left:10px"><a href="#1-path-traversal-climbing-out">1. Path Traversal (Climbing Out)</a></li>
+<li style="padding-left:10px"><a href="#2-symlink-attacks-tunneling-out">2. Symlink Attacks (Tunneling Out)</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-the-security-guard">Internal Implementation: The Security Guard</a></li>
+<li style="padding-left:10px"><a href="#conceptual-flow">Conceptual Flow</a></li>
+<li style="padding-left:10px"><a href="#step-1-blocking-path-traversal">Step 1: Blocking Path Traversal</a></li>
+<li style="padding-left:10px"><a href="#step-2-blocking-symlinks-the-real-path">Step 2: Blocking Symlinks (The Real Path)</a></li>
+<li style="padding-left:0px"><a href="#deep-dive-the-production-code">Deep Dive: The Production Code</a></li>
+<li style="padding-left:10px"><a href="#sanitizing-the-input">Sanitizing the Input</a></li>
+<li style="padding-left:10px"><a href="#the-deepest-existing-check">The "Deepest Existing" Check</a></li>
+<li style="padding-left:0px"><a href="#putting-it-all-together">Putting It All Together</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

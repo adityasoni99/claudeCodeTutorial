@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: Filesystem Skill Loader — skills/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">skills/03_filesystem_skill_loader.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🎓 skills/ · 03_filesystem_skill_loader.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: Filesystem Skill Loader</h1>
+  <div class="chapter-meta"><span>📄 skills/03_filesystem_skill_loader.md</span></div>
+</div>
+<h1 id="chapter-3-filesystem-skill-loader">Chapter 3: Filesystem Skill Loader</h1>
+<p>
+Welcome to Chapter 3! In the previous chapter, <a href="02<em>bundled</em>skill_definition.md">Bundled Skill Definition</a>, we defined what a skill actually <em>is</em>—a JavaScript object containing a name, description, and logic.
+</p>
+<p>
+However, in Chapter 2, we wrote that definition directly into the application's source code. But what if a user wants to add a skill <strong>without</strong> recompiling the entire application? What if they want to just drop a file into a folder and have it work?
+</p>
+<p>
+This is the job of the <strong>Filesystem Skill Loader</strong>.
+</p>
+<h2 id="motivation-the-plugin-analogy">Motivation: The "Plugin" Analogy</h2>
+<p>
+Imagine a video game that allows "mods." You don't need to be a developer at the game studio to add a new map or character. You just download a file, drop it into the <code>mods/</code> folder, and the game automatically finds it when it starts up.
+</p>
+<p>
+The <strong>Filesystem Skill Loader</strong> works exactly the same way. It scans specific directories on your computer, finds skill files, and converts them into the executable commands we learned about in the previous chapter.
+</p>
+<h3 id="the-use-case">The Use Case</h3>
+<p>
+Let's say a user wants a custom command called <code>/deploy</code> that helps them push code to production.
+</p>
+<ol>
+<li>They create a folder: <code>.claude/skills/deploy/</code> inside their project.</li>
+</ol>
+<ol>
+<li>They create a file: <code>SKILL.md</code> inside that folder.</li>
+</ol>
+<ol>
+<li>They want the AI to immediately recognize <code>/deploy</code>.</li>
+</ol>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+To bridge the gap between a text file on a disk and a running command in memory, we need three concepts:
+</p>
+<ol>
+<li><strong>Discovery</strong>: The engine must know <em>where</em> to look (e.g., user settings, project settings).</li>
+</ol>
+<ol>
+<li><strong>Frontmatter</strong>: A special section at the top of the Markdown file that contains the metadata (name, description) that we used to write in JavaScript.</li>
+</ol>
+<ol>
+<li><strong>The Factory</strong>: A function that reads the text file and "manufactures" a Command object from it.</li>
+</ol>
+<h2 id="step-by-step-implementation">Step-by-Step Implementation</h2>
+<p>
+Let's look at how the loader processes a user's skill.
+</p>
+<h3 id="1-the-structure-on-disk">1. The Structure on Disk</h3>
+<p>
+The loader expects a specific folder structure. It looks for a <code>.claude/skills</code> directory. Inside, every skill gets its own folder.
+</p>
+<pre data-lang="text"><code>my-project/
+├── .claude/
+│   └── skills/
+│       └── deploy/       &lt;-- The Skill Name
+│           └── SKILL.md  &lt;-- The Definition
+</code></pre>
+<h3 id="2-the-file-content-skillmd">2. The File Content (SKILL.md)</h3>
+<p>
+Instead of writing TypeScript, the user writes Markdown with <strong>YAML Frontmatter</strong>.
+</p>
+<pre data-lang="markdown"><code>---
+name: deploy
+description: Deploys the current branch to staging.
+when_to_use: Use when the user wants to update the staging server.
+---
+
+# Deployment Instructions
+
+To deploy this app, please run the following shell command:
+...
+</code></pre>
+<p>
+<em>Explanation:</em> The content between the %%INLINE<em>6%% lines is the <strong>Frontmatter</strong>. The loader reads this to fill in the %%INLINE</em>7%% and <code>description</code> fields of the Command object.
+</p>
+<h3 id="3-the-loading-logic">3. The Loading Logic</h3>
+<p>
+Now, let's look at the TypeScript code that powers this discovery. It lives in <code>src/skills/loadSkillsDir.ts</code>.
+</p>
+<p>
+First, the loader finds the directories.
+</p>
+<pre data-lang="typescript"><code>// File: src/skills/loadSkillsDir.ts
+async function loadSkillsFromSkillsDir(basePath: string) {
+  const fs = getFsImplementation()
+  
+  // 1. Get a list of all folders in .claude/skills
+  const entries = await fs.readdir(basePath)
+  
+  // ... iterate through them
+}
+</code></pre>
+<p>
+<em>Explanation:</em> We use the filesystem (<code>fs</code>) to list everything in the target directory.
+</p>
+<h3 id="4-reading-the-skill-file">4. Reading the Skill File</h3>
+<p>
+For every folder found (like %%INLINE<em>11%%), the loader looks for %%INLINE</em>12%%.
+</p>
+<pre data-lang="typescript"><code>// Inside the loop...
+const skillDirPath = join(basePath, entry.name) // e.g., .claude/skills/deploy
+const skillFilePath = join(skillDirPath, 'SKILL.md')
+
+// 2. Read the text content of the file
+const content = await fs.readFile(skillFilePath, { encoding: 'utf-8' })
+</code></pre>
+<p>
+<em>Explanation:</em> If the file exists, we read it into a giant string. If it doesn't exist, the loader skips this folder.
+</p>
+<h3 id="5-parsing-frontmatter">5. Parsing Frontmatter</h3>
+<p>
+The loader needs to separate the metadata (YAML) from the instructions (Markdown).
+</p>
+<pre data-lang="typescript"><code>import { parseFrontmatter } from '../utils/frontmatterParser.js'
+
+// 3. Split the file into two parts
+const { frontmatter, content: markdownContent } = parseFrontmatter(
+  content,
+  skillFilePath
+)
+</code></pre>
+<p>
+<em>Explanation:</em> %%INLINE<em>13%% becomes an object (like %%INLINE</em>14%%), and <code>markdownContent</code> is the rest of the text.
+</p>
+<h3 id="6-the-command-factory">6. The Command Factory</h3>
+<p>
+Finally, we convert these raw parts into the <code>Command</code> object we studied in Chapter 2.
+</p>
+<pre data-lang="typescript"><code>// 4. Create the executable Command object
+return createSkillCommand({
+  skillName: entry.name,
+  description: frontmatter.description,
+  markdownContent: markdownContent,
+  // ... other flags from frontmatter
+})
+</code></pre>
+<p>
+<em>Explanation:</em> <code>createSkillCommand</code> is a helper that takes the static data from the text file and wraps it in the necessary functions to make it run within the app.
+</p>
+<h2 id="internal-implementation-how-it-works">Internal Implementation: How it Works</h2>
+<p>
+Let's visualize the journey of the "Deploy" skill from the hard drive to the application memory.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Disk as Filesystem
+    participant Loader as Skill Loader
+    participant Parser as Frontmatter Parser
+    participant Registry as Command List
+
+    Note over Disk: .claude/skills/deploy/SKILL.md exists
+    
+    Loader-&gt;&gt;Disk: Scan .claude/skills/
+    Disk--&gt;&gt;Loader: Found folder "deploy"
+    
+    Loader-&gt;&gt;Disk: Read deploy/SKILL.md
+    Disk--&gt;&gt;Loader: Return file content
+    
+    Loader-&gt;&gt;Parser: Parse content
+    Parser--&gt;&gt;Loader: Return { Metadata, Markdown }
+    
+    Loader-&gt;&gt;Loader: createSkillCommand()
+    Loader-&gt;&gt;Registry: Add "deploy" to active commands</div></div>
+<h3 id="handling-duplicates">Handling Duplicates</h3>
+<p>
+A complex challenge the loader faces is <strong>Deduplication</strong>. A user might have the same skill defined in their user settings <em>and</em> their project settings. Or, they might use "symlinks" (shortcuts) that make one file appear in two places.
+</p>
+<p>
+The loader is smart enough to handle this.
+</p>
+<pre data-lang="typescript"><code>// File: src/skills/loadSkillsDir.ts
+
+// We use realpath to find the "true" location of a file
+const fileId = await realpath(filePath)
+
+if (seenFileIds.has(fileId)) {
+  // We already loaded this exact file!
+  logForDebugging(`Skipping duplicate skill...`)
+  continue
+}
+</code></pre>
+<p>
+<em>Explanation:</em> By checking the <code>realpath</code> (the canonical path on the physical disk), the loader ensures that even if you link to a skill from multiple places, it only loads into memory once.
+</p>
+<h3 id="dynamic-discovery">Dynamic Discovery</h3>
+<p>
+The loader doesn't just run once at startup. It can also "walk up" the directory tree. If you are deep inside <code>project/src/components</code>, the loader looks for skills in:
+</p>
+<ol>
+<li><code>project/src/components/.claude/skills</code></li>
+</ol>
+<ol>
+<li><code>project/src/.claude/skills</code></li>
+</ol>
+<ol>
+<li><code>project/.claude/skills</code></li>
+</ol>
+<pre data-lang="typescript"><code>export async function discoverSkillDirsForPaths(filePaths, cwd) {
+  // Start from the file's directory and move up
+  let currentDir = dirname(filePath)
+  
+  while (currentDir !== root) {
+     // Check if .claude/skills exists here
+     // If yes, add to list
+     currentDir = parent(currentDir)
+  }
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This ensures that skills relevant to a specific sub-project are only available when you are working inside that sub-project.
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+The <strong>Filesystem Skill Loader</strong> is the bridge between static files and dynamic capabilities.
+</p>
+<ol>
+<li>It scans standard directories (like <code>.claude/skills</code>).</li>
+</ol>
+<ol>
+<li>It parses <code>SKILL.md</code> files to separate <strong>Metadata</strong> (Frontmatter) from <strong>Instructions</strong> (Markdown).</li>
+</ol>
+<ol>
+<li>It handles complex filesystem logic like <strong>deduplication</strong> and <strong>directory traversal</strong>.</li>
+</ol>
+<ol>
+<li>It uses <code>createSkillCommand</code> to turn text files into the executable objects we defined in Chapter 2.</li>
+</ol>
+<p>
+Now that we have loaded the skill and have its Markdown content in memory, how does the AI actually use it? How do we take <code>markdownContent</code> and turn it into a prompt that guides the Large Language Model?
+</p>
+<p>
+<a href="04<em>prompt</em>generation_logic.md">Next Chapter: Prompt Generation Logic</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="skills.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">skills/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#motivation-the-plugin-analogy">Motivation: The "Plugin" Analogy</a></li>
+<li style="padding-left:10px"><a href="#the-use-case">The Use Case</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:0px"><a href="#step-by-step-implementation">Step-by-Step Implementation</a></li>
+<li style="padding-left:10px"><a href="#1-the-structure-on-disk">1. The Structure on Disk</a></li>
+<li style="padding-left:10px"><a href="#2-the-file-content-skillmd">2. The File Content (SKILL.md)</a></li>
+<li style="padding-left:10px"><a href="#3-the-loading-logic">3. The Loading Logic</a></li>
+<li style="padding-left:10px"><a href="#4-reading-the-skill-file">4. Reading the Skill File</a></li>
+<li style="padding-left:10px"><a href="#5-parsing-frontmatter">5. Parsing Frontmatter</a></li>
+<li style="padding-left:10px"><a href="#6-the-command-factory">6. The Command Factory</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-how-it-works">Internal Implementation: How it Works</a></li>
+<li style="padding-left:10px"><a href="#handling-duplicates">Handling Duplicates</a></li>
+<li style="padding-left:10px"><a href="#dynamic-discovery">Dynamic Discovery</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

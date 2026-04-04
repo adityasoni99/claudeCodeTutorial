@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 6: Plugin & MCP Integration — commands/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">commands/06_plugin___mcp_integration.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⌨️ commands/ · 06_plugin___mcp_integration.md</div>
+  <h1 class="chapter-title-h1">Chapter 6: Plugin & MCP Integration</h1>
+  <div class="chapter-meta"><span>📄 commands/06_plugin___mcp_integration.md</span></div>
+</div>
+<h1 id="chapter-6-plugin-mcp-integration">Chapter 6: Plugin & MCP Integration</h1>
+<p>
+In the previous chapter, <a href="05<em>project</em>setup<em>_</em>intelligence.md">Project Setup & Intelligence</a>, we taught the AI how to understand your specific codebase.
+</p>
+<p>
+However, modern development involves more than just local files. You use <strong>GitHub</strong> for issues, <strong>PostgreSQL</strong> for data, <strong>Slack</strong> for communication, and <strong>Browsers</strong> for research.
+</p>
+<p>
+By default, the AI is "trapped in a box." It cannot see your database or access the internet.
+</p>
+<p>
+This chapter introduces <strong>Plugin & MCP Integration</strong>. This is the "App Store" for your AI, allowing you to install external tools so the AI can interact with the outside world.
+</p>
+<hr>
+<h2 id="the-big-idea-the-usb-port-for-ai">The Big Idea: The "USB Port" for AI</h2>
+<p>
+In the past, if you wanted an AI to talk to a database, you had to write complex custom code.
+</p>
+<p>
+Now, we use a standard called <strong>MCP (Model Context Protocol)</strong>. Think of MCP like a <strong>USB port</strong>.
+</p>
+<ul>
+<li><strong>Before USB:</strong> You needed a specific port for a mouse, a different one for a printer, and another for a keyboard.</li>
+<li><strong>With USB:</strong> You just plug it in, and it works.</li>
+</ul>
+<p>
+<strong>MCP</strong> allows us to "plug in" any tool—whether it's Google Drive, Linear, or a local file server—and the AI instantly knows how to use it.
+</p>
+<hr>
+<h2 id="use-case-the-app-store-interface">Use Case: The "App Store" Interface</h2>
+<p>
+We don't want users to manually edit configuration files to install these tools. We want a friendly graphical interface in the terminal.
+</p>
+<p>
+We will focus on the <code>/marketplace</code> command, specifically the <strong>Add Marketplace</strong> flow, where a user can install a new plugin simply by pasting a GitHub link.
+</p>
+<hr>
+<h2 id="component-1-adding-a-plugin">Component 1: Adding a Plugin</h2>
+<p>
+Let's look at <code>plugin/AddMarketplace.tsx</code>. This component handles the user input when they want to install a new tool.
+</p>
+<h3 id="handling-user-input">Handling User Input</h3>
+<p>
+First, we need to capture what the user types (e.g., <code>owner/repo</code>) and validate it.
+</p>
+<pre data-lang="tsx"><code>// File: plugin/AddMarketplace.tsx (Simplified Logic)
+const handleAdd = async () =&gt; {
+  const input = inputValue.trim();
+
+  // 1. Validate the input format
+  const parsed = await parseMarketplaceInput(input);
+  if (!parsed) {
+    setError('Invalid format. Try: owner/repo');
+    return;
+  }
+
+  // 2. Start the loading spinner
+  setLoading(true);
+  
+  // 3. Add the source
+  await installPlugin(parsed);
+};
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+ 
+This is standard React logic. We grab the text, check if it looks like a valid plugin source, and then trigger the installation.
+</p>
+<h3 id="the-visual-feedback">The Visual Feedback</h3>
+<p>
+While the plugin installs, we don't want the screen to freeze. We use the %%INLINE<em>3%% component we learned about in <a href="02</em>interactive<em>tui</em><em>text</em>user<em>interface</em>.md">Chapter 2</a>.
+</p>
+<pre data-lang="tsx"><code>// File: plugin/AddMarketplace.tsx (Simplified UI)
+return (
+  &lt;Box flexDirection="column"&gt;
+    &lt;Text&gt;Enter marketplace source:&lt;/Text&gt;
+    
+    {/* The Input Field */}
+    &lt;TextInput 
+       value={inputValue} 
+       onChange={setInputValue} 
+       onSubmit={handleAdd} 
+    /&gt;
+
+    {/* The Loading State */}
+    {isLoading &amp;&amp; (
+      &lt;Box marginTop={1}&gt;
+        &lt;Spinner /&gt;
+        &lt;Text&gt;Installing plugin...&lt;/Text&gt;
+      &lt;/Box&gt;
+    )}
+  &lt;/Box&gt;
+);
+</code></pre>
+<hr>
+<h2 id="component-2-configuration-wizard">Component 2: Configuration Wizard</h2>
+<p>
+Installing a plugin is only half the battle. If you install a <strong>GitHub</strong> plugin, the AI needs your <strong>API Key</strong> to actually read your issues.
+</p>
+<p>
+We can't just crash if the key is missing. We need a "Wizard" that walks the user through the setup.
+</p>
+<p>
+This is handled in <code>plugin/PluginOptionsFlow.tsx</code>. It looks at the plugin's "Manifest" (a file describing what settings it needs) and generates a form.
+</p>
+<h3 id="detecting-missing-configs">Detecting Missing Configs</h3>
+<p>
+The code loops through required settings and checks if they are saved on your computer.
+</p>
+<pre data-lang="typescript"><code>// File: plugin/PluginOptionsFlow.tsx (Simplified)
+const [steps] = React.useState(() =&gt; {
+  const result = [];
+
+  // 1. Check what options the plugin needs
+  const unconfigured = getUnconfiguredOptions(plugin);
+
+  // 2. If options are missing, add a "Step" to the wizard
+  if (Object.keys(unconfigured).length &gt; 0) {
+    result.push({
+      title: `Configure ${plugin.name}`,
+      schema: unconfigured,
+      save: (values) =&gt; saveOptions(plugin.id, values)
+    });
+  }
+
+  return result;
+});
+</code></pre>
+<h3 id="the-wizard-loop">The Wizard Loop</h3>
+<p>
+The component acts like a slideshow. It shows one configuration screen. When the user saves, it moves to the next screen.
+</p>
+<pre data-lang="tsx"><code>// File: plugin/PluginOptionsFlow.tsx (Simplified Render)
+const currentStep = steps[index];
+
+return (
+  &lt;PluginOptionsDialog 
+    title={currentStep.title}
+    configSchema={currentStep.schema}
+    onSave={(values) =&gt; {
+       // Save data and move to next step
+       currentStep.save(values);
+       setIndex(index + 1);
+    }} 
+  /&gt;
+);
+</code></pre>
+<p>
+<strong>Why is this cool?</strong>
+ 
+This code is <strong>generic</strong>. It doesn't know about "GitHub" or "Linear." It just reads a schema (like "I need a username and a token") and automatically builds the UI forms for them.
+</p>
+<hr>
+<h2 id="component-3-managing-connections-mcp">Component 3: Managing Connections (MCP)</h2>
+<p>
+Once a plugin is installed and configured, it becomes an <strong>MCP Server</strong>. The AI connects to this server to ask questions.
+</p>
+<p>
+The <code>mcp/mcp.tsx</code> file handles turning these connections on and off.
+</p>
+<h3 id="the-toggle-logic">The Toggle Logic</h3>
+<p>
+Sometimes you want to disable a tool temporarily.
+</p>
+<pre data-lang="typescript"><code>// File: mcp/mcp.tsx (Simplified)
+function MCPToggle({ action, target }) {
+  const toggleMcpServer = useMcpToggleEnabled();
+
+  useEffect(() =&gt; {
+    // 1. Find the requested server (or 'all')
+    const toToggle = target === 'all' 
+      ? allClients 
+      : allClients.filter(c =&gt; c.name === target);
+
+    // 2. Flip the switch
+    for (const server of toToggle) {
+      toggleMcpServer(server.name);
+    }
+  }, []); // Run once
+  
+  return null; // This is a logic-only component
+}
+</code></pre>
+<p>
+<strong>Note:</strong> This uses the <strong>App State</strong> we discussed in <a href="03<em>authentication</em><em>_session</em>state.md">Chapter 3</a> to persist your preferences. If you disable a tool, it stays disabled even after you restart the app.
+</p>
+<hr>
+<h2 id="how-it-works-under-the-hood">How It Works Under the Hood</h2>
+<p>
+When you type <code>/mcp install owner/repo</code>, a complex sequence of events occurs to connect the AI to the new tool.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant App
+    participant GitHub as GitHub/Internet
+    participant Config as Local Config
+    participant AI
+
+    User-&gt;&gt;App: "Install plugin X"
+    App-&gt;&gt;GitHub: Download Plugin Manifest
+    GitHub--&gt;&gt;App: Returns JSON (Capabilities)
+    
+    App-&gt;&gt;App: Check for required API Keys
+    
+    rect rgb(20, 20, 20)
+        Note over App: Configuration Wizard
+        App--&gt;&gt;User: "Please enter API Key"
+        User-&gt;&gt;App: Enters Key
+        App-&gt;&gt;Config: Save Key Securely
+    end
+    
+    App-&gt;&gt;App: Start MCP Server
+    App-&gt;&gt;AI: "New Tool Available: X"
+    
+    Note over AI: AI can now use Tool X</div></div>
+<ol>
+<li><strong>Discovery:</strong> The app downloads the definition of the tool.</li>
+</ol>
+<ol>
+<li><strong>Configuration:</strong> The app ensures it has the secrets needed to run the tool.</li>
+</ol>
+<ol>
+<li><strong>Registration:</strong> The app tells the AI, "Hey, I have a new skill. Here is how you use it."</li>
+</ol>
+<hr>
+<h2 id="advanced-the-tool-use-concept">Advanced: The "Tool Use" Concept</h2>
+<p>
+You might wonder: <em>How does the AI actually click the buttons?</em>
+</p>
+<p>
+It doesn't. When the AI wants to use a plugin, it sends a special text message:
+ 
+<code>{ "tool": "github", "action": "create_issue", "title": "Fix bug" }</code>
+</p>
+<p>
+The <strong>MCP Layer</strong> intercepts this message, runs the actual Javascript code to talk to GitHub, and then sends the result back to the AI:
+ 
+<code>{ "status": "success", "issue_url": "..." }</code>
+</p>
+<p>
+This abstraction allows the AI to control software without running code directly on your machine, making it safer and more structured.
+</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<p>
+In this final chapter, we unlocked the full potential of our digital assistant.
+</p>
+<ol>
+<li><strong>Marketplace (<code>AddMarketplace.tsx</code>):</strong> We built a UI to find and install new skills.</li>
+</ol>
+<ol>
+<li><strong>Configuration (<code>PluginOptionsFlow.tsx</code>):</strong> We created a dynamic wizard to handle API keys and settings without editing JSON files.</li>
+</ol>
+<ol>
+<li><strong>MCP Integration (<code>mcp.tsx</code>):</strong> We used the Model Context Protocol to standardize how the AI connects to these external tools.</li>
+</ol>
+<h3 id="conclusion-of-the-tutorial">Conclusion of the Tutorial</h3>
+<p>
+Congratulations! You have explored the entire architecture of the <strong>Commands</strong> project.
+</p>
+<ul>
+<li>You started with the <strong>Architecture</strong> of splitting features into files.</li>
+<li>You built beautiful <strong>TUI</strong> interfaces.</li>
+<li>You secured the app with <strong>Authentication</strong>.</li>
+<li>You gave the AI a <strong>Memory</strong> and <strong>Project Intelligence</strong>.</li>
+<li>And finally, you connected it to the world with <strong>Plugins</strong>.</li>
+</ul>
+<p>
+You now have a deep understanding of how to build a modern, extensible, AI-powered terminal application. Happy coding!
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="commands.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">commands/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-big-idea-the-usb-port-for-ai">The Big Idea: The "USB Port" for AI</a></li>
+<li style="padding-left:0px"><a href="#use-case-the-app-store-interface">Use Case: The "App Store" Interface</a></li>
+<li style="padding-left:0px"><a href="#component-1-adding-a-plugin">Component 1: Adding a Plugin</a></li>
+<li style="padding-left:10px"><a href="#handling-user-input">Handling User Input</a></li>
+<li style="padding-left:10px"><a href="#the-visual-feedback">The Visual Feedback</a></li>
+<li style="padding-left:0px"><a href="#component-2-configuration-wizard">Component 2: Configuration Wizard</a></li>
+<li style="padding-left:10px"><a href="#detecting-missing-configs">Detecting Missing Configs</a></li>
+<li style="padding-left:10px"><a href="#the-wizard-loop">The Wizard Loop</a></li>
+<li style="padding-left:0px"><a href="#component-3-managing-connections-mcp">Component 3: Managing Connections (MCP)</a></li>
+<li style="padding-left:10px"><a href="#the-toggle-logic">The Toggle Logic</a></li>
+<li style="padding-left:0px"><a href="#how-it-works-under-the-hood">How It Works Under the Hood</a></li>
+<li style="padding-left:0px"><a href="#advanced-the-tool-use-concept">Advanced: The "Tool Use" Concept</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li>
+<li style="padding-left:10px"><a href="#conclusion-of-the-tutorial">Conclusion of the Tutorial</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

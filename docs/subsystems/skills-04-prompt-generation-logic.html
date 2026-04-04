@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: Prompt Generation Logic — skills/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">skills/04_prompt_generation_logic.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🎓 skills/ · 04_prompt_generation_logic.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: Prompt Generation Logic</h1>
+  <div class="chapter-meta"><span>📄 skills/04_prompt_generation_logic.md</span></div>
+</div>
+<h1 id="chapter-4-prompt-generation-logic">Chapter 4: Prompt Generation Logic</h1>
+<p>
+Welcome back! In the previous chapter, <a href="03<em>filesystem</em>skill_loader.md">Filesystem Skill Loader</a>, we learned how to load skills from disk. But loading a skill is like buying a tool; now we need to learn how to <em>use</em> it.
+</p>
+<p>
+When a user types a command like <code>/loop 5m check status</code>, the AI doesn't inherently know what that means. We need a way to translate that raw text into a clear, structured instruction manual for the AI.
+</p>
+<p>
+This translation process is called <strong>Prompt Generation Logic</strong>.
+</p>
+<h2 id="motivation-the-briefing-officer">Motivation: The Briefing Officer</h2>
+<p>
+Imagine the AI is a high-ranking General. The General is very smart but doesn't have time to look up small details. You are the <strong>Briefing Officer</strong> (the Skill).
+</p>
+<p>
+When a request comes in ("The troops need supplies!"), you don't just run to the General and yell. You:
+</p>
+<ol>
+<li><strong>Analyze</strong> the request.</li>
+</ol>
+<ol>
+<li><strong>Gather Context</strong> (check the map, check inventory).</li>
+</ol>
+<ol>
+<li><strong>Write a Briefing</strong> (a prompt) that says: <em>"Sir, troops at Sector 7 need food. We have trucks available. Please authorize deployment."</em></li>
+</ol>
+<p>
+<strong>Prompt Generation Logic</strong> is the code that writes that briefing. It is the bridge between the user's messy typing and the AI's need for clarity.
+</p>
+<h3 id="the-use-case">The Use Case</h3>
+<p>
+We will look at the <strong>Loop Skill</strong> (<code>/loop</code>).
+ 
+User types: <code>/loop 5m check server</code>
+</p>
+<p>
+If we just sent "loop 5m check server" to the AI, it might get confused. Does "5m" mean 5 meters? 5 million? Instead, the Prompt Generation Logic transforms it into:
+</p>
+<blockquote><p>"Run the command 'check server' every 5 minutes. Use the Cron Tool with expression <code>*/5 * * * *</code>."</p></blockquote>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+To write this logic, we use three main ingredients:
+</p>
+<ol>
+<li><strong>User Arguments (<code>args</code>)</strong>: The text the user typed after the command name.</li>
+</ol>
+<ol>
+<li><strong>Runtime Context</strong>: Information about the world right now (Time, OS, File Contents).</li>
+</ol>
+<ol>
+<li><strong>The Generator Function</strong>: A function named <code>getPromptForCommand</code> that mixes #1 and #2 to produce instructions.</li>
+</ol>
+<h2 id="step-by-step-implementation">Step-by-Step Implementation</h2>
+<p>
+Let's build the logic for a simple skill called <code>/greet</code>. It greets the user differently depending on the time of day.
+</p>
+<h3 id="1-the-function-signature">1. The Function Signature</h3>
+<p>
+In your skill definition (which we learned about in <a href="02<em>bundled</em>skill_definition.md">Bundled Skill Definition</a>), you add a specific function.
+</p>
+<pre data-lang="typescript"><code>// Inside your skill definition object
+async getPromptForCommand(args: string, context: ToolUseContext) {
+  // Logic goes here...
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This function receives %%INLINE<em>7%% (what the user typed) and %%INLINE</em>8%% (system details). It must return a Promise that resolves to the prompt.
+</p>
+<h3 id="2-processing-logic">2. Processing Logic</h3>
+<p>
+The "Intelligence" of the skill lives here. We can use standard JavaScript to manipulate data.
+</p>
+<pre data-lang="typescript"><code>async getPromptForCommand(args: string) {
+  // 1. Logic: Check the current time
+  const hour = new Date().getHours()
+  const timeOfDay = hour &lt; 12 ? 'Morning' : 'Evening'
+  
+  // 2. Logic: Handle empty arguments
+  const name = args.trim() || "User"
+  
+  // ... continue to step 3
+}
+</code></pre>
+<p>
+<em>Explanation:</em> The AI doesn't know what time it is unless we tell it. Here, we calculate <code>timeOfDay</code> dynamically <em>before</em> generating the prompt.
+</p>
+<h3 id="3-returning-the-prompt">3. Returning the Prompt</h3>
+<p>
+Finally, we return the instructions structured as a "Block".
+</p>
+<pre data-lang="typescript"><code>  // ... inside the function
+  return [
+    {
+      type: 'text',
+      text: `Context: It is currently ${timeOfDay}.
+             Task: Please wish ${name} a happy ${timeOfDay}.`
+    }
+  ]
+}
+</code></pre>
+<p>
+<em>Explanation:</em> We return an array of blocks. The AI reads this %%INLINE<em>10%% and acts accordingly. To the AI, it looks like a user typed this detailed paragraph, even though the user only typed %%INLINE</em>11%%.
+</p>
+<h2 id="internal-implementation-real-world-example">Internal Implementation: Real World Example</h2>
+<p>
+Let's look at how the <strong>Loop Skill</strong> (<code>src/skills/bundled/loop.ts</code>) handles this. It's a bit more complex because it has to parse time intervals (like "5m" or "2h").
+</p>
+<h3 id="the-workflow">The Workflow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant Logic as Prompt Logic
+    participant Helper as Helper Functions
+    participant AI as AI Model
+
+    User-&gt;&gt;Logic: Type "/loop 5m check logs"
+    Logic-&gt;&gt;Logic: Extract "5m" (interval)
+    Logic-&gt;&gt;Logic: Extract "check logs" (prompt)
+    Logic-&gt;&gt;Helper: Convert "5m" to Cron "*/5 * * * *"
+    Helper--&gt;&gt;Logic: Return Cron String
+    Logic-&gt;&gt;AI: "Schedule this cron job..."</div></div>
+<h3 id="parsing-user-input">Parsing User Input</h3>
+<p>
+The Loop skill first tries to figure out what the user meant.
+</p>
+<pre data-lang="typescript"><code>// File: src/skills/bundled/loop.ts
+
+function buildPrompt(args: string): string {
+  return `# /loop — schedule a recurring prompt
+  
+  Parse the input below into [interval] &lt;prompt&gt;...
+  1. If input starts with "5m", that is the interval.
+  2. If input ends with "every 5 minutes", that is the interval.
+  
+  ## Input
+  ${args}`
+}
+</code></pre>
+<p>
+<em>Explanation:</em> The Loop skill actually delegates the hard work! It constructs a prompt that <em>tells the AI</em> how to parse the arguments. This is a technique called <strong>"Prompt Engineering via Code."</strong> instead of writing complex Regex in TypeScript, we ask the AI to figure out the user's intent based on rules we provide.
+</p>
+<h3 id="dynamic-context-reading-files">Dynamic Context: Reading Files</h3>
+<p>
+Sometimes, the logic needs to read a file to be useful. Let's look at the <strong>Debug Skill</strong> (<code>src/skills/bundled/debug.ts</code>). It reads the application's log file to help the user fix errors.
+</p>
+<pre data-lang="typescript"><code>// File: src/skills/bundled/debug.ts
+import { open, stat } from 'fs/promises'
+
+async getPromptForCommand(args) {
+  // 1. Get path to the log file
+  const debugLogPath = getDebugLogPath()
+  
+  // 2. Read the last 20 lines of the file
+  const stats = await stat(debugLogPath)
+  // ... complex file reading logic ...
+  const tail = buffer.toString() 
+  
+  // ... continue
+}
+</code></pre>
+<p>
+<em>Explanation:</em> The skill uses Node.js filesystem commands (<code>fs/promises</code>) to grab data.
+</p>
+<p>
+Then, it injects that data into the prompt:
+</p>
+<pre data-lang="typescript"><code>  // 3. Create the prompt with the file content included
+  return [{ 
+    type: 'text', 
+    text: `Here are the last 20 lines of the log:\n\n${tail}\n\n` 
+  }]
+} // End of function
+</code></pre>
+<p>
+<em>Explanation:</em> This is powerful. The user didn't have to find the log file, open it, copy the text, and paste it. The <strong>Prompt Generation Logic</strong> did it automatically.
+</p>
+<h3 id="the-inline-15">The <code>ToolUseContext</code></h3>
+<p>
+The second argument, <code>context</code>, provides access to tools and the environment.
+</p>
+<pre data-lang="typescript"><code>// src/skills/bundled/scheduleRemoteAgents.ts
+
+async getPromptForCommand(args, context: ToolUseContext) {
+  // We can access available MCP clients
+  const connectors = context.options.mcpClients
+  
+  // formatting logic...
+}
+</code></pre>
+<p>
+<em>Explanation:</em> <code>ToolUseContext</code> allows your skill to be aware of the "Outside World," such as other servers (MCP) the user is connected to.
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+<strong>Prompt Generation Logic</strong> is the functional core of a skill.
+</p>
+<ol>
+<li>It takes <strong>Input</strong> (%%INLINE<em>18%%) and <strong>Context</strong> (%%INLINE</em>19%%, %%INLINE<em>20%%, %%INLINE</em>21%%).</li>
+</ol>
+<ol>
+<li>It runs <strong>Logic</strong> (Parsing, Reading Files, Calculations).</li>
+</ol>
+<ol>
+<li>It returns a <strong>Structured Prompt</strong> that guides the AI.</li>
+</ol>
+<p>
+By using this logic, we can make the AI appear much smarter and more context-aware than it actually is. We do the heavy lifting of gathering information so the AI can focus on reasoning.
+</p>
+<p>
+Sometimes, however, a skill doesn't need <em>logic</em>—it just needs to provide a lot of static text, like a tutorial or a reference guide. Writing huge strings inside JavaScript files is messy.
+</p>
+<p>
+<a href="05<em>static</em>content_assets.md">Next Chapter: Static Content Assets</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="skills.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">skills/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#motivation-the-briefing-officer">Motivation: The Briefing Officer</a></li>
+<li style="padding-left:10px"><a href="#the-use-case">The Use Case</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:0px"><a href="#step-by-step-implementation">Step-by-Step Implementation</a></li>
+<li style="padding-left:10px"><a href="#1-the-function-signature">1. The Function Signature</a></li>
+<li style="padding-left:10px"><a href="#2-processing-logic">2. Processing Logic</a></li>
+<li style="padding-left:10px"><a href="#3-returning-the-prompt">3. Returning the Prompt</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-real-world-example">Internal Implementation: Real World Example</a></li>
+<li style="padding-left:10px"><a href="#the-workflow">The Workflow</a></li>
+<li style="padding-left:10px"><a href="#parsing-user-input">Parsing User Input</a></li>
+<li style="padding-left:10px"><a href="#dynamic-context-reading-files">Dynamic Context: Reading Files</a></li>
+<li style="padding-left:10px"><a href="#the-inline-15">The %%INLINE_15%%</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

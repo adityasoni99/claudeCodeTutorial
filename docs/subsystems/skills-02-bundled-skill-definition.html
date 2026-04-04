@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: Bundled Skill Definition — skills/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">skills/02_bundled_skill_definition.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🎓 skills/ · 02_bundled_skill_definition.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: Bundled Skill Definition</h1>
+  <div class="chapter-meta"><span>📄 skills/02_bundled_skill_definition.md</span></div>
+</div>
+<h1 id="chapter-2-bundled-skill-definition">Chapter 2: Bundled Skill Definition</h1>
+<p>
+Welcome back! In the previous chapter, <a href="01<em>skill</em>registration_pattern.md">Skill Registration Pattern</a>, we learned how to tell the system that a new tool exists by "registering" it.
+</p>
+<p>
+But simply saying "I have a tool called Remember" isn't enough. The AI needs to know:
+</p>
+<ol>
+<li><strong>What</strong> is it?</li>
+</ol>
+<ol>
+<li><strong>When</strong> should I use it?</li>
+</ol>
+<ol>
+<li><strong>How</strong> does it work?</li>
+</ol>
+<p>
+This is where the <strong>Bundled Skill Definition</strong> comes in.
+</p>
+<h2 id="motivation-the-job-description">Motivation: The Job Description</h2>
+<p>
+Think of the AI as a hiring manager and your skills as potential employees. You can't just hand the manager a sticky note with a name on it. You need to provide a full <strong>Job Description</strong>.
+</p>
+<p>
+The <strong>Bundled Skill Definition</strong> is that job description. It is a strict contract (or "blueprint") that ensures every skill speaks the same language. If you fill out the blueprint correctly, the system automatically handles the complex parts—like showing the skill to the user or generating the right instructions for the AI.
+</p>
+<h3 id="the-use-case">The Use Case</h3>
+<p>
+We are continuing with our <strong>"Remember"</strong> skill. We want to define it so that:
+</p>
+<ol>
+<li>Its name is <code>remember</code>.</li>
+</ol>
+<ol>
+<li>It tells the user: "I save important information."</li>
+</ol>
+<ol>
+<li>When triggered, it creates a specific message for the AI model to process.</li>
+</ol>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+A skill definition is just a JavaScript object with specific properties. Here are the three most important ones:
+</p>
+<ol>
+<li><strong>Metadata</strong>: The %%INLINE<em>1%% and %%INLINE</em>2%%. This is what the user sees when they list available commands.</li>
+</ol>
+<ol>
+<li><strong>Trigger Logic</strong>: The <code>whenToUse</code> field. This helps the AI decide <em>if</em> this is the right tool for the current conversation.</li>
+</ol>
+<ol>
+<li><strong>Prompt Generator</strong>: The <code>getPromptForCommand</code> function. This is the brain. It takes the user's input and converts it into instructions the AI can understand.</li>
+</ol>
+<h2 id="step-by-step-implementation">Step-by-Step Implementation</h2>
+<p>
+Let's build the definition for our "Remember" skill.
+</p>
+<h3 id="1-defining-the-metadata">1. Defining the Metadata</h3>
+<p>
+First, we define who the skill is.
+</p>
+<pre data-lang="typescript"><code>const rememberDefinition = {
+  name: 'remember',
+  description: 'Stores key details in memory.',
+  argumentHint: '&lt;text to save&gt;',
+  // This helps the AI understand intent
+  whenToUse: 'Use this when the user asks to save information.'
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This acts like the label on a tool. %%INLINE<em>5%% tells the user what to type next (e.g., %%INLINE</em>6%%). <code>whenToUse</code> is a hint specifically for the AI model to know when this skill is relevant.
+</p>
+<h3 id="2-the-prompt-generator">2. The Prompt Generator</h3>
+<p>
+Next, we define what happens when the skill is actually used. We need a function that returns the "Prompt"—the text sent to the AI model.
+</p>
+<pre data-lang="typescript"><code>import type { ToolUseContext } from '../Tool.js'
+
+// This function receives the user's arguments
+async function generatePrompt(args: string, context: ToolUseContext) {
+  return [
+    {
+      type: 'text',
+      text: `ACTION: Save this to memory:\n"${args}"`
+    }
+  ]
+}
+</code></pre>
+<p>
+<em>Explanation:</em> When a user types %%INLINE<em>8%%, the %%INLINE</em>9%% variable will contain %%INLINE<em>10%%. This function wraps that text into a structured format (Blocks) that the AI model understands. We will dive deeper into this in <a href="04</em>prompt<em>generation</em>logic.md">Prompt Generation Logic</a>.
+</p>
+<h3 id="3-putting-it-together">3. Putting it Together</h3>
+<p>
+Finally, we combine the metadata and the generator into one object and pass it to the registration function we learned about in Chapter 1.
+</p>
+<pre data-lang="typescript"><code>import { registerBundledSkill } from '../bundledSkills.js'
+
+export function registerRememberSkill(): void {
+  registerBundledSkill({
+    name: 'remember',
+    description: 'Stores key details in memory.',
+    // Link the function we wrote above
+    getPromptForCommand: generatePrompt 
+  })
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This is the complete package. We are handing the system a single object that contains everything it needs to run the skill.
+</p>
+<h2 id="internal-implementation-under-the-hood">Internal Implementation: Under the Hood</h2>
+<p>
+What happens when you call <code>registerBundledSkill</code>? The system doesn't run the skill immediately. It stores it in a secure list (registry) and waits for the user.
+</p>
+<p>
+Here is the flow of data:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Skill as Your Skill File
+    participant Registry as bundledSkills.ts
+    participant CLI as CLI App
+    
+    Note over Skill: 1. Registration Phase
+    Skill-&gt;&gt;Registry: registerBundledSkill(definition)
+    Registry-&gt;&gt;Registry: Add to global list
+    
+    Note over CLI: 2. Execution Phase
+    CLI-&gt;&gt;Registry: User typed "/remember"
+    Registry-&gt;&gt;Registry: Find skill by name
+    Registry-&gt;&gt;Skill: Run getPromptForCommand("...")
+    Skill--&gt;&gt;CLI: Return Prompt Text</div></div>
+<h3 id="the-registry-code">The Registry Code</h3>
+<p>
+Let's look at the actual code in <code>src/skills/bundledSkills.ts</code> to see how it handles your definition.
+</p>
+<p>
+First, it creates a holding area for all skills.
+</p>
+<pre data-lang="typescript"><code>// File: src/skills/bundledSkills.ts
+import type { Command } from '../types/command.js'
+
+// The central list of all registered skills
+const bundledSkills: Command[] = []
+
+export function getBundledSkills(): Command[] {
+  return [...bundledSkills]
+}
+</code></pre>
+<p>
+<em>Explanation:</em> %%INLINE<em>13%% is just a simple array. %%INLINE</em>14%% allows other parts of the app to read this list without being able to delete things from it.
+</p>
+<h3 id="the-registration-logic">The Registration Logic</h3>
+<p>
+When you register a skill, the system converts your simple "Definition" into a strictly typed "Command" object used by the engine.
+</p>
+<pre data-lang="typescript"><code>// File: src/skills/bundledSkills.ts
+export function registerBundledSkill(definition: BundledSkillDefinition): void {
+  // We transform the definition into a standard Command
+  const command: Command = {
+    type: 'prompt',
+    name: definition.name,
+    description: definition.description,
+    getPromptForCommand: definition.getPromptForCommand,
+    // ... maps other fields like aliases, permissions, etc.
+  }
+  
+  bundledSkills.push(command)
+}
+</code></pre>
+<p>
+<em>Explanation:</em> The %%INLINE<em>15%% function is a converter. It takes your user-friendly definition and maps it to the internal %%INLINE</em>16%% structure required by the application's core loop.
+</p>
+<h3 id="advanced-handling-static-files">Advanced: Handling Static Files</h3>
+<p>
+Sometimes a skill needs reference files (like a strict set of rules or a documentation file). The definition allows you to bundle these files directly.
+</p>
+<p>
+The registry handles a clever trick here: it intercepts your prompt generator to ensure files are written to disk <em>before</em> your logic runs.
+</p>
+<pre data-lang="typescript"><code>// File: src/skills/bundledSkills.ts
+if (files) {
+    // Wrap the original function with file extraction logic
+    const inner = definition.getPromptForCommand
+    
+    getPromptForCommand = async (args, ctx) =&gt; {
+      // 1. Write files to a temporary folder
+      const dir = await extractBundledSkillFiles(definition.name, files)
+      
+      // 2. Run the original logic
+      const blocks = await inner(args, ctx)
+      
+      // 3. Prepend the file location to the prompt
+      return prependBaseDir(blocks, dir)
+    }
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This is a "Wrapper Pattern." If you provide files in your definition, the system automatically modifies your function. It ensures the files are extracted to a real folder on the computer, and then tells the AI model: "Hey, look in this folder for extra context!"
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+The <strong>Bundled Skill Definition</strong> is the blueprint for your capability.
+</p>
+<ol>
+<li>It is a simple <strong>Object</strong> containing metadata and logic.</li>
+</ol>
+<ol>
+<li>It uses <strong><code>getPromptForCommand</code></strong> to translate user input into AI instructions.</li>
+</ol>
+<ol>
+<li>The system <strong>converts</strong> this definition into a standardized Command.</li>
+</ol>
+<ol>
+<li>It supports <strong>advanced features</strong> like file bundling automatically.</li>
+</ol>
+<p>
+Now that we have defined <em>what</em> a skill is, we need to understand how the system loads skills that aren't hardcoded into the binary—skills that live on your hard drive.
+</p>
+<p>
+<a href="03<em>filesystem</em>skill_loader.md">Next Chapter: Filesystem Skill Loader</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="skills.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">skills/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#motivation-the-job-description">Motivation: The Job Description</a></li>
+<li style="padding-left:10px"><a href="#the-use-case">The Use Case</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:0px"><a href="#step-by-step-implementation">Step-by-Step Implementation</a></li>
+<li style="padding-left:10px"><a href="#1-defining-the-metadata">1. Defining the Metadata</a></li>
+<li style="padding-left:10px"><a href="#2-the-prompt-generator">2. The Prompt Generator</a></li>
+<li style="padding-left:10px"><a href="#3-putting-it-together">3. Putting it Together</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-under-the-hood">Internal Implementation: Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#the-registry-code">The Registry Code</a></li>
+<li style="padding-left:10px"><a href="#the-registration-logic">The Registration Logic</a></li>
+<li style="padding-left:10px"><a href="#advanced-handling-static-files">Advanced: Handling Static Files</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

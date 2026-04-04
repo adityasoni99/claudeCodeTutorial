@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: Ink DOM & Layout Engine — ink/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">ink/02_ink_dom___layout_engine.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🖊 ink/ · 02_ink_dom___layout_engine.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: Ink DOM & Layout Engine</h1>
+  <div class="chapter-meta"><span>📄 ink/02_ink_dom___layout_engine.md</span></div>
+</div>
+<h1 id="chapter-2-ink-dom-layout-engine">Chapter 2: Ink DOM & Layout Engine</h1>
+<p>
+In the previous chapter, <a href="01<em>core</em>component<em>primitives.md">Core Component Primitives</a>, we learned how to compose UI using %%INLINE</em>0%% and <code>&lt;Text&gt;</code>.
+</p>
+<p>
+But here is the mystery: <strong>The terminal is just a grid of characters.</strong> It doesn't know what a "Flexbox" is. It doesn't know what a "component" is. It doesn't even know what a "parent" or "child" is.
+</p>
+<p>
+So, how does Ink know that <code>justifyContent="center"</code> means "calculate the width of the window, subtract the width of the content, divide by two, and place the cursor there"?
+</p>
+<p>
+The answer is the <strong>Ink DOM</strong> and the <strong>Yoga Layout Engine</strong>.
+</p>
+<hr>
+<h2 id="the-motivation-an-invisible-skeleton">The Motivation: An Invisible Skeleton</h2>
+<p>
+Imagine you are building a house. Before you paint the walls (render pixels), you need a blueprint and a wooden frame (DOM) to hold everything together.
+</p>
+<p>
+Browsers have the HTML DOM (%%INLINE<em>3%%, %%INLINE</em>4%%).
+ 
+Ink creates its own <strong>DOM (Document Object Model)</strong> solely in memory.
+</p>
+<h3 id="the-goal-a-centered-modal">The Goal: A Centered Modal</h3>
+<p>
+Let's look at this simple layout:
+</p>
+<pre data-lang="tsx"><code>&lt;Box height={10} alignItems="center" justifyContent="center"&gt;
+  &lt;Text&gt;I am centered!&lt;/Text&gt;
+&lt;/Box&gt;
+</code></pre>
+<p>
+To make this work, Ink needs to perform three invisible steps:
+</p>
+<ol>
+<li><strong>Construct a Tree:</strong> Remember that %%INLINE<em>5%% is inside %%INLINE</em>6%%.</li>
+</ol>
+<ol>
+<li><strong>Calculate Math:</strong> Figure out the exact X and Y coordinates for the text based on the Box's size.</li>
+</ol>
+<ol>
+<li><strong>Store Data:</strong> Hold the style information (colors, bold) until we are ready to print.</li>
+</ol>
+<hr>
+<h2 id="concept-1-the-ink-dom-node">Concept 1: The Ink DOM Node</h2>
+<p>
+In a browser, you have %%INLINE<em>7%%. In Ink, we have %%INLINE</em>8%%.
+</p>
+<p>
+An %%INLINE<em>9%% (or %%INLINE</em>10%%) is a plain JavaScript object that represents one piece of your UI. It acts as a container for:
+</p>
+<ol>
+<li><strong>Children:</strong> Which nodes are inside this one?</li>
+</ol>
+<ol>
+<li><strong>Styles:</strong> What colors or margins does this node have?</li>
+</ol>
+<ol>
+<li><strong>The Yoga Node:</strong> A reference to the math engine (more on this below).</li>
+</ol>
+<h3 id="what-a-node-looks-like">What a Node looks like</h3>
+<p>
+If you could inspect Ink's memory while running the example above, a simplified <code>ink-box</code> node would look like this:
+</p>
+<pre data-lang="javascript"><code>// A simplified view of an Ink Node
+const boxNode = {
+  nodeName: 'ink-box',
+  parentNode: rootNode,
+  childNodes: [textNode], // The "I am centered" node
+  style: { alignItems: 'center' },
+  // The layout engine instance
+  yogaNode: &lt;YogaNode Instance&gt;
+};
+</code></pre>
+<hr>
+<h2 id="concept-2-yoga-layout-engine">Concept 2: Yoga Layout Engine</h2>
+<p>
+Terminals don't come with CSS layout engines. Browsers do. To bridge this gap, Ink uses <strong>Yoga</strong>.
+</p>
+<p>
+Yoga is a layout engine written in C++ (and compiled to JavaScript) that implements <strong>Flexbox</strong>. It does the heavy math.
+</p>
+<p>
+Think of Yoga as a calculator:
+</p>
+<ol>
+<li>You tell it: "I have a parent 100px wide, and a child 10px wide. I want the child centered."</li>
+</ol>
+<ol>
+<li>You say: "Calculate!"</li>
+</ol>
+<ol>
+<li>Yoga replies: "The child should start at X coordinate 45."</li>
+</ol>
+<hr>
+<h2 id="how-it-works-the-flow">How It Works: The Flow</h2>
+<p>
+When your React code runs, it talks to the Ink DOM, which talks to Yoga.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant React as React Component
+    participant DOM as Ink DOM Node
+    participant Yoga as Yoga Engine
+
+    React-&gt;&gt;DOM: Create Node (ink-box)
+    React-&gt;&gt;DOM: Set Style { justifyContent: 'center' }
+    DOM-&gt;&gt;Yoga: Node.setJustifyContent(Center)
+    
+    Note over DOM, Yoga: Later, during render...
+
+    DOM-&gt;&gt;Yoga: CalculateLayout()
+    Yoga--&gt;&gt;DOM: Result: { left: 45, top: 5 }</div></div>
+<ol>
+<li><strong>Creation:</strong> React asks Ink to create a node.</li>
+</ol>
+<ol>
+<li><strong>Configuration:</strong> Ink passes styles to the Yoga node.</li>
+</ol>
+<ol>
+<li><strong>Calculation:</strong> Ink triggers a layout calculation.</li>
+</ol>
+<ol>
+<li><strong>Result:</strong> The Yoga node now knows exactly where it sits in the terminal grid.</li>
+</ol>
+<hr>
+<h2 id="implementation-details">Implementation Details</h2>
+<p>
+Let's look under the hood at how Ink implements this "Invisible Skeleton."
+</p>
+<h3 id="1-creating-a-node-inline-12">1. Creating a Node (<code>dom.ts</code>)</h3>
+<p>
+When Ink initializes a component, it creates a %%INLINE<em>13%%. Notice how it initializes the %%INLINE</em>14%% immediately.
+</p>
+<pre data-lang="typescript"><code>// dom.ts (Simplified)
+import { createLayoutNode } from './layout/engine.js';
+
+export const createNode = (nodeName) =&gt; {
+  return {
+    nodeName,
+    childNodes: [],
+    style: {},
+    // Every visual element gets a Yoga node for math
+    yogaNode: createLayoutNode(), 
+    dirty: false
+  };
+};
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li>%%INLINE<em>15%%: Keeps track of what this is (%%INLINE</em>16%%, <code>ink-text</code>).</li>
+<li><code>yogaNode</code>: This is the bridge to the C++ engine.</li>
+</ul>
+<h3 id="2-translating-styles-to-math-inline-19">2. Translating Styles to Math (<code>styles.ts</code>)</h3>
+<p>
+When you write <code>&lt;Box margin={1}&gt;</code>, Ink has to translate that React prop into a Yoga instruction.
+</p>
+<pre data-lang="typescript"><code>// styles.ts (Simplified)
+const applyMarginStyles = (node, style) =&gt; {
+  // If the user set a margin prop...
+  if ('margin' in style) {
+    // ...tell Yoga to apply it to All sides.
+    // LayoutEdge.All maps to Yoga.EDGE_ALL
+    node.setMargin(LayoutEdge.All, style.margin ?? 0);
+  }
+};
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li>This function runs whenever styles change.</li>
+<li>It takes the user-friendly Ink style (%%INLINE<em>21%%) and calls the strict Yoga setter (%%INLINE</em>22%%).</li>
+</ul>
+<h3 id="3-the-yoga-adapter-inline-23">3. The Yoga Adapter (<code>layout/yoga.ts</code>)</h3>
+<p>
+Ink wraps the raw Yoga library to make it safer and easier to use with TypeScript.
+</p>
+<pre data-lang="typescript"><code>// layout/yoga.ts (Simplified)
+export class YogaLayoutNode {
+  constructor(yogaNode) {
+    this.yoga = yogaNode;
+  }
+
+  calculateLayout(width, height) {
+    // Trigger the heavy C++ calculation
+    this.yoga.calculateLayout(width, height, Direction.LTR);
+  }
+
+  getComputedLeft() {
+    // Retrieve the calculated X position
+    return this.yoga.getComputedLeft();
+  }
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li><code>calculateLayout</code>: The trigger button. It cascades down the tree, calculating positions for the node and all its children.</li>
+<li><code>getComputedLeft</code>: After calculation, this tells us where to draw the element.</li>
+</ul>
+<hr>
+<h2 id="putting-it-together-the-server-status-example">Putting It Together: The "Server Status" Example</h2>
+<p>
+Recalling our example from Chapter 1:
+</p>
+<pre data-lang="tsx"><code>&lt;Box borderStyle="single"&gt;
+  &lt;Text&gt;Status: OK&lt;/Text&gt;
+&lt;/Box&gt;
+</code></pre>
+<p>
+Here is the lifecycle in the Ink DOM:
+</p>
+<ol>
+<li><strong>Construction:</strong></li>
+<ul>
+<li>Ink creates a parent <code>ink-box</code> (The Box).</li>
+<li>Ink creates a child <code>ink-text</code> (The Text).</li>
+<li>It appends the child to the parent in the DOM <em>and</em> in the Yoga tree.</li>
+</ul>
+</ol>
+<ol>
+<li><strong>Styling:</strong></li>
+<ul>
+<li>The Box has <code>borderStyle="single"</code>.</li>
+<li>%%INLINE<em>29%% sees this and tells Yoga: %%INLINE</em>30%%. Use 1 unit of space for the border.</li>
+</ul>
+</ol>
+<ol>
+<li><strong>Measurement:</strong></li>
+<ul>
+<li>The Text node contains "Status: OK" (10 characters).</li>
+<li>Yoga asks: "How big is this child?"</li>
+<li>Ink measures the string and tells Yoga: "It is 10 units wide."</li>
+</ul>
+</ol>
+<ol>
+<li><strong>Layout Calculation:</strong></li>
+<ul>
+<li>Yoga calculates:</li>
+<li>Text Width: 10</li>
+<li>Border Width: 1 (left) + 1 (right) = 2</li>
+<li><strong>Total Box Width:</strong> 12</li>
+</ul>
+</ol>
+<p>
+Now the "Skeleton" is complete. Every node knows its X, Y, Width, and Height.
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ul>
+<li><strong>Ink DOM:</strong> An in-memory tree of objects (%%INLINE<em>31%%, %%INLINE</em>32%%) representing your UI.</li>
+<li><strong>Yoga Engine:</strong> The math wizard that calculates Flexbox layouts for the terminal.</li>
+<li><strong>The Bridge:</strong> <code>styles.ts</code> translates your props into Yoga commands.</li>
+</ul>
+<p>
+We have a structure. We have positions. But how does React manage updates to this structure when data changes?
+</p>
+<p>
+<a href="03<em>react</em>reconciler.md">Next Chapter: React Reconciler</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="ink.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">ink/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-an-invisible-skeleton">The Motivation: An Invisible Skeleton</a></li>
+<li style="padding-left:10px"><a href="#the-goal-a-centered-modal">The Goal: A Centered Modal</a></li>
+<li style="padding-left:0px"><a href="#concept-1-the-ink-dom-node">Concept 1: The Ink DOM Node</a></li>
+<li style="padding-left:10px"><a href="#what-a-node-looks-like">What a Node looks like</a></li>
+<li style="padding-left:0px"><a href="#concept-2-yoga-layout-engine">Concept 2: Yoga Layout Engine</a></li>
+<li style="padding-left:0px"><a href="#how-it-works-the-flow">How It Works: The Flow</a></li>
+<li style="padding-left:0px"><a href="#implementation-details">Implementation Details</a></li>
+<li style="padding-left:10px"><a href="#1-creating-a-node-inline-12">1. Creating a Node (%%INLINE_12%%)</a></li>
+<li style="padding-left:10px"><a href="#2-translating-styles-to-math-inline-19">2. Translating Styles to Math (%%INLINE_19%%)</a></li>
+<li style="padding-left:10px"><a href="#3-the-yoga-adapter-inline-23">3. The Yoga Adapter (%%INLINE_23%%)</a></li>
+<li style="padding-left:0px"><a href="#putting-it-together-the-server-status-example">Putting It Together: The "Server Status" Example</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

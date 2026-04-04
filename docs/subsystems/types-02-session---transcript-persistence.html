@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: Session & Transcript Persistence — types/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">types/02_session___transcript_persistence.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">📝 types/ · 02_session___transcript_persistence.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: Session & Transcript Persistence</h1>
+  <div class="chapter-meta"><span>📄 types/02_session___transcript_persistence.md</span></div>
+</div>
+<h1 id="chapter-2-session-transcript-persistence">Chapter 2: Session & Transcript Persistence</h1>
+<p>
+In the previous chapter, <a href="01<em>command</em>architecture.md">Command Architecture</a>, we learned how to make the agent perform actions. But an action without memory is fleeting. If you close your terminal, does the agent forget it wrote a file? Does it forget which Git branch it was on?
+</p>
+<p>
+This chapter introduces <strong>Session & Transcript Persistence</strong>.
+</p>
+<h2 id="the-motivation-a-ships-log-not-a-diary">The Motivation: A Ship's Log, Not a Diary</h2>
+<p>
+Most chat apps store a "Diary":
+</p>
+<blockquote><p><em>User: "Hi"</em></p></blockquote>
+<blockquote><p><em>Bot: "Hello"</em></p></blockquote>
+<p>
+Our agent needs a <strong>Ship's Log</strong>. It needs to record the exact state of the "ship" (your environment) at every turn.
+</p>
+<p>
+Imagine you are debugging a crash. You don't just want to know <em>what</em> was said. You need to know:
+</p>
+<ol>
+<li><strong>Context:</strong> What directory were we in? (<code>cwd</code>)</li>
+</ol>
+<ol>
+<li><strong>State:</strong> What git branch was active?</li>
+</ol>
+<ol>
+<li><strong>Changes:</strong> Did the agent edit <code>index.ts</code> before crashing?</li>
+</ol>
+<ol>
+<li><strong>Identity:</strong> Was this the main agent or a sub-agent helper?</li>
+</ol>
+<p>
+By storing this rich data, we enable the <strong>Resume</strong> capability. You can quit the application, restart it, and the agent picks up exactly where it left off—variables, history, and context intact.
+</p>
+<hr>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+To achieve this, we don't just save strings of text. We save a database of <strong>Entries</strong>.
+</p>
+<h3 id="1-the-session-id">1. The Session ID</h3>
+<p>
+Every interaction begins with a unique ID. However, we don't just use a plain string. We use "Branded Types" to prevent mistakes (like mixing up a User ID with a Session ID).
+</p>
+<pre data-lang="typescript"><code>// From ids.ts
+export type SessionId = string &amp; { readonly __brand: 'SessionId' }
+
+// We use a helper to generate or cast these
+export function asSessionId(id: string): SessionId {
+  return id as SessionId
+}
+</code></pre>
+<ul>
+<li><strong>Beginner Tip:</strong> A "Branded Type" is a TypeScript trick. It forces you to prove a string is truly a <code>SessionId</code> before the compiler lets you use it. It prevents bugs!</li>
+</ul>
+<h3 id="2-the-transcript-entry">2. The Transcript Entry</h3>
+<p>
+The transcript is a list. But it's not a list of strings; it's a list of %%INLINE<em>3%% objects. An %%INLINE</em>4%% can be a chat message, but it can also be a hidden system event.
+</p>
+<p>
+Here are a few "flavors" of entries found in <code>logs.ts</code>:
+</p>
+<ul>
+<li><strong>TranscriptMessage:</strong> Standard chat (User/Assistant).</li>
+<li><strong>WorktreeStateEntry:</strong> Records if we entered a specific Git worktree.</li>
+<li><strong>FileHistorySnapshotMessage:</strong> A backup of a file before we changed it.</li>
+<li><strong>PRLinkMessage:</strong> Remembers that this session is linked to GitHub PR #42.</li>
+</ul>
+<h3 id="3-the-rich-message">3. The "Rich" Message</h3>
+<p>
+Even a standard text message carries heavy baggage. We call this a <code>SerializedMessage</code>.
+</p>
+<pre data-lang="typescript"><code>export type SerializedMessage = Message &amp; {
+  cwd: string         // Where were we?
+  timestamp: string   // When did it happen?
+  gitBranch?: string  // What code version?
+  sessionId: string   // Which conversation?
+}
+</code></pre>
+<ul>
+<li><strong>Why this matters:</strong> When you resume a session, the agent looks at the last message's %%INLINE<em>7%%. If you are currently in %%INLINE</em>8%%, but the last message was in <code>/home/user/project</code>, the agent knows it needs to switch directories back.</li>
+</ul>
+<hr>
+<h2 id="use-case-resuming-a-coding-task">Use Case: Resuming a Coding Task</h2>
+<p>
+Let's walk through a scenario: <strong>The User asks the Agent to fix a bug, then closes the window.</strong>
+</p>
+<h3 id="step-1-the-event-stream">Step 1: The Event Stream</h3>
+<p>
+As the agent works, it generates a stream of mixed events.
+</p>
+<ol>
+<li><strong>User:</strong> "Fix the bug." -> <code>TranscriptMessage</code></li>
+</ol>
+<ol>
+<li><strong>System:</strong> (Agent checks git) -> <code>WorktreeStateEntry</code></li>
+</ol>
+<ol>
+<li><strong>Agent:</strong> (Edits file) -> <code>FileHistorySnapshotMessage</code> (Backup created)</li>
+</ol>
+<ol>
+<li><strong>Agent:</strong> "I fixed it." -> <code>TranscriptMessage</code></li>
+</ol>
+<h3 id="step-2-the-persistence-layer">Step 2: The Persistence Layer</h3>
+<p>
+These are saved to a JSON structure on the disk.
+</p>
+<pre data-lang="json"><code>[
+  { "type": "message", "text": "Fix the bug", "cwd": "/src" },
+  { "type": "worktree-state", "branch": "fix/login-bug" },
+  { "type": "file-history-snapshot", "file": "login.ts", "content": "..." },
+  { "type": "message", "text": "I fixed it", "cwd": "/src" }
+]
+</code></pre>
+<h3 id="step-3-resuming">Step 3: Resuming</h3>
+<p>
+When the user types <code>claude resume</code>:
+</p>
+<ol>
+<li>The system reads the JSON.</li>
+</ol>
+<ol>
+<li>It replays the <strong>WorktreeState</strong> (checking out the branch).</li>
+</ol>
+<ol>
+<li>It loads the <strong>File Snapshots</strong> (so it knows what changed).</li>
+</ol>
+<ol>
+<li>It presents the chat history to the Model so it "remembers" the conversation.</li>
+</ol>
+<hr>
+<h2 id="under-the-hood-the-inline-15-union">Under the Hood: The <code>Entry</code> Union</h2>
+<p>
+How does TypeScript handle a list containing so many different types of objects? We use a <strong>Discriminated Union</strong>.
+</p>
+<p>
+This is the core definition in <code>logs.ts</code>. It acts as a router for data types.
+</p>
+<pre data-lang="typescript"><code>export type Entry =
+  | TranscriptMessage
+  | SummaryMessage
+  | WorktreeStateEntry
+  | FileHistorySnapshotMessage
+  | PRLinkMessage
+  // ... and many others
+</code></pre>
+<h3 id="visualization-the-lifecycle-of-a-log">Visualization: The Lifecycle of a Log</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant U as User
+    participant C as Command
+    participant P as Persistence Layer
+    participant D as Disk (JSON)
+
+    U-&gt;&gt;C: "/commit -m 'wip'"
+    C-&gt;&gt;P: Create TranscriptMessage
+    P-&gt;&gt;P: Attach Metadata (cwd, gitBranch)
+    P-&gt;&gt;D: Append to Session Log
+    
+    Note over P, D: Later...
+    
+    U-&gt;&gt;C: "/resume"
+    C-&gt;&gt;D: Load Log
+    D--&gt;&gt;P: Return List&lt;Entry&gt;
+    P-&gt;&gt;P: Reconstruct State
+    P--&gt;&gt;U: "Welcome back. We were on branch 'wip'."</div></div>
+<h3 id="implementation-details">Implementation Details</h3>
+<p>
+Let's look at two specific entry types to see how specialized they are.
+</p>
+<h4 id="1-tracking-git-state-inline-17">1. Tracking Git State (<code>WorktreeStateEntry</code>)</h4>
+<p>
+This entry allows the agent to handle complex git setups involving worktrees (checking out multiple branches at once).
+</p>
+<pre data-lang="typescript"><code>export type WorktreeStateEntry = {
+  type: 'worktree-state' // The "Discriminator"
+  sessionId: UUID
+  worktreeSession: {
+    originalCwd: string
+    worktreePath: string
+    worktreeBranch?: string
+  } | null
+}
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong> If %%INLINE<em>18%% is stored, the resume logic knows to %%INLINE</em>19%% into that specific folder. If it is <code>null</code>, it knows the user exited that mode.</li>
+</ul>
+<h4 id="2-tracking-attribution-inline-21">2. Tracking Attribution (<code>AttributionSnapshotMessage</code>)</h4>
+<p>
+In a multi-agent world (or when working with a human), we need to know who wrote which line of code.
+</p>
+<pre data-lang="typescript"><code>export type AttributionSnapshotMessage = {
+  type: 'attribution-snapshot'
+  messageId: UUID
+  fileStates: Record&lt;string, {
+    claudeContribution: number // How many chars did the AI write?
+  }&gt;
+}
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong> This tracks metrics. We can calculate "The AI wrote 80% of this file" by replaying these snapshots.</li>
+</ul>
+<hr>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+The <strong>Session & Transcript Persistence</strong> layer is the brain's long-term memory. By treating history as a database of structured events—rather than just a text log—we allow the agent to:
+</p>
+<ol>
+<li>Safely resume complex tasks.</li>
+</ol>
+<ol>
+<li>Undo file changes (using snapshots).</li>
+</ol>
+<ol>
+<li>Understand the context (git branches, directories) surrounding every message.</li>
+</ol>
+<p>
+Now that our agent can execute commands and remember the results, we need to ensure it doesn't do anything dangerous.
+</p>
+<p>
+<a href="03<em>permission</em><em>_safety</em>system.md">Next Chapter: Permission & Safety System</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="types.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">types/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-a-ships-log-not-a-diary">The Motivation: A Ship's Log, Not a Diary</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-session-id">1. The Session ID</a></li>
+<li style="padding-left:10px"><a href="#2-the-transcript-entry">2. The Transcript Entry</a></li>
+<li style="padding-left:10px"><a href="#3-the-rich-message">3. The "Rich" Message</a></li>
+<li style="padding-left:0px"><a href="#use-case-resuming-a-coding-task">Use Case: Resuming a Coding Task</a></li>
+<li style="padding-left:10px"><a href="#step-1-the-event-stream">Step 1: The Event Stream</a></li>
+<li style="padding-left:10px"><a href="#step-2-the-persistence-layer">Step 2: The Persistence Layer</a></li>
+<li style="padding-left:10px"><a href="#step-3-resuming">Step 3: Resuming</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-the-inline-15-union">Under the Hood: The %%INLINE_15%% Union</a></li>
+<li style="padding-left:10px"><a href="#visualization-the-lifecycle-of-a-log">Visualization: The Lifecycle of a Log</a></li>
+<li style="padding-left:10px"><a href="#implementation-details">Implementation Details</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

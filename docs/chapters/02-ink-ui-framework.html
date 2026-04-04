@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ch.02 Ink UI Framework — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">Ch.02 — Ink UI Framework</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-core">CORE</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">Chapter 2 · <span class="tag tag-core">CORE</span></div>
+  <h1 class="chapter-title-h1">Ink UI Framework</h1>
+  <div class="chapter-meta">
+    <span>📄 02_ink_ui_framework.md</span>
+    <span>🏷 Core</span>
+  </div>
+</div>
+<h1 id="chapter-2-ink-ui-framework">Chapter 2: Ink UI Framework</h1>
+<p>
+In the previous <a href="01<em>state</em>management.md">State Management</a> chapter, we learned how <code>claudeCode</code> remembers information (like "Fix the bug"). However, data sitting in memory is invisible.
+</p>
+<p>
+Now, we need to answer the question: <strong>How do we show this information to the user inside a terminal window?</strong>
+</p>
+<h2 id="what-is-the-ink-ui-framework">What is the Ink UI Framework?</h2>
+<p>
+Usually, when you write a terminal script, you use <code>console.log</code>. The text prints, the screen scrolls down, and the old text is gone forever. This works for simple scripts, but it feels like using a typewriter.
+</p>
+<p>
+<code>claudeCode</code> feels more like a modern app. It has:
+</p>
+<ul>
+<li>Loading spinners that animate.</li>
+<li>Text that changes color.</li>
+<li>Layouts that stay in place while data updates.</li>
+</ul>
+<p>
+We achieve this using <strong>Ink</strong>. Ink allows us to build terminal interfaces using <strong>React</strong> (the same technology used for websites), but instead of rendering HTML <code>&lt;div&gt;</code> tags, it renders text to your terminal output.
+</p>
+<h3 id="the-central-use-case-the-status-dashboard">The Central Use Case: "The Status Dashboard"</h3>
+<p>
+Imagine you gave the AI a task. You don't want a wall of scrolling text. You want a clean dashboard that stays at the bottom of the screen saying:
+</p>
+<p>
+<strong>[ Spinner ] Working on: Fix server.js...</strong>
+</p>
+<p>
+If the state changes from "Working" to "Done," the text should update instantly <em>without</em> printing a new line.
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+To build this UI, we use three main building blocks.
+</p>
+<h3 id="1-react-components">1. React Components</h3>
+<p>
+Just like building with LEGO bricks, we build the interface out of small, reusable pieces.
+</p>
+<ul>
+<li><strong>%%INLINE<em>4%%</strong>: Used for displaying words (like a %%INLINE</em>5%% or <code>&lt;p&gt;</code> in HTML).</li>
+<li><strong>%%INLINE<em>7%%</strong>: Used for layout (like a %%INLINE</em>8%%). It holds other components.</li>
+</ul>
+<h3 id="2-flexbox-layouts">2. Flexbox Layouts</h3>
+<p>
+Since terminal windows can be any size, we can't use fixed positions. We use "Flexbox."
+</p>
+<ul>
+<li><strong>Column:</strong> Stacking items top-to-bottom.</li>
+<li><strong>Row:</strong> Placing items side-by-side.</li>
+</ul>
+<h3 id="3-interactive-hooks">3. Interactive Hooks</h3>
+<p>
+These allow the terminal to listen to your keyboard. For example, pressing "Arrow Up" to select a command in history.
+</p>
+<h2 id="how-to-use-the-ink-ui">How to Use the Ink UI</h2>
+<p>
+Let's build our "Status Dashboard" using the data we stored in Chapter 1.
+</p>
+<h3 id="step-1-basic-structure">Step 1: Basic Structure</h3>
+<p>
+Here is how we create a simple box with text.
+</p>
+<pre data-lang="tsx"><code>import React from 'react';
+import { Box, Text } from 'ink';
+
+function StatusDashboard() {
+  return (
+    &lt;Box borderStyle="round" borderColor="green"&gt;
+      &lt;Text&gt;System Online&lt;/Text&gt;
+    &lt;/Box&gt;
+  );
+}
+</code></pre>
+<p>
+<em>Explanation: This draws a box with rounded corners and a green border. Inside, it says "System Online".</em>
+</p>
+<h3 id="step-2-connecting-to-state">Step 2: Connecting to State</h3>
+<p>
+Now, let's make it dynamic. We will pull the "task description" from the <a href="01<em>state</em>management.md">State Management</a> store.
+</p>
+<pre data-lang="tsx"><code>import { useTaskState } from './state/store';
+import { Text, Box } from 'ink';
+
+function CurrentTask() {
+  // Grab the data from our Global Store
+  const { description } = useTaskState();
+
+  return (
+    &lt;Box padding={1}&gt;
+      &lt;Text bold&gt;Current Mission: &lt;/Text&gt;
+      &lt;Text color="blue"&gt;{description}&lt;/Text&gt;
+    &lt;/Box&gt;
+  );
+}
+</code></pre>
+<p>
+<em>Explanation: If <code>description</code> changes in the store, this component automatically re-runs ("re-renders") and updates the text in the terminal immediately.</em>
+</p>
+<h3 id="step-3-layouts-rows-and-columns">Step 3: Layouts (Rows and Columns)</h3>
+<p>
+Let's put a "Spinner" next to the text. We need them side-by-side.
+</p>
+<pre data-lang="tsx"><code>import { Spinner } from '@inkjs/ui';
+
+function LoadingBar() {
+  return (
+    &lt;Box flexDirection="row" gap={1}&gt;
+      &lt;Text color="green"&gt;&lt;Spinner /&gt;&lt;/Text&gt;
+      &lt;Text&gt;Thinking...&lt;/Text&gt;
+    &lt;/Box&gt;
+  );
+}
+</code></pre>
+<p>
+<em>Explanation: %%INLINE<em>10%% tells Ink to put the items next to each other, like books on a shelf. %%INLINE</em>11%% adds a space between them.</em>
+</p>
+<h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
+<p>
+How does React code turn into terminal characters? It uses a <strong>Custom Renderer</strong>.
+</p>
+<p>
+When you change the state (e.g., update the task name), the following happens:
+</p>
+<ol>
+<li><strong>State Change:</strong> The Store updates.</li>
+</ol>
+<ol>
+<li><strong>Re-render:</strong> React calculates what the new UI should look like.</li>
+</ol>
+<ol>
+<li><strong>Diffing:</strong> Ink compares the new UI to the old UI.</li>
+</ol>
+<ol>
+<li><strong>Painting:</strong> Ink sends special control codes (ANSI codes) to the terminal to erase specific lines and write new ones.</li>
+</ol>
+<p>
+Here is the flow:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant State as Global Store
+    participant React as React Component
+    participant Ink as Ink Renderer
+    participant Term as User Terminal
+
+    State-&gt;&gt;React: Data updated ("Done")
+    React-&gt;&gt;Ink: Returns new &lt;Text&gt;Done&lt;/Text&gt;
+    Note over Ink: Calculates difference
+    Ink-&gt;&gt;Term: Send ANSI Code: "Clear Line"
+    Ink-&gt;&gt;Term: Write Output: "Done"</div></div>
+<h3 id="internal-implementation-code">Internal Implementation Code</h3>
+<p>
+Deep in the <code>ui/</code> folder, we initialize the Ink instance. This is the entry point of the visual application.
+</p>
+<pre data-lang="tsx"><code>// ui/index.tsx
+import { render } from 'ink';
+import App from './App';
+
+// This function starts the UI Framework
+export function startUI() {
+  // Mounts the React App to the terminal stdout
+  render(&lt;App /&gt;);
+}
+</code></pre>
+<p>
+We also handle user input (keyboard presses) using the %%INLINE<em>13%% hook. This is crucial for features requiring confirmation, which we will see in <a href="07</em>shell<em>safety</em>checks.md">Chapter 7: Shell Safety Checks</a>.
+</p>
+<pre data-lang="tsx"><code>import { useInput } from 'ink';
+
+function InputHandler() {
+  // Listen for keystrokes
+  useInput((input, key) =&gt; {
+    if (input === 'q') {
+      // Exit the app if 'q' is pressed
+      process.exit(0);
+    }
+  });
+
+  return null; // This component renders nothing visible
+}
+</code></pre>
+<h2 id="why-is-this-important-for-later">Why is this important for later?</h2>
+<p>
+The UI Framework is the "face" of every tool we will build:
+</p>
+<ul>
+<li><strong><a href="03<em>query</em>engine.md">Query Engine</a>:</strong> The user types their question into an Ink <code>&lt;TextInput&gt;</code>.</li>
+<li><strong><a href="12<em>websearchtool.md">WebSearchTool</a>:</strong> We display search results in a neat list using %%INLINE</em>15%% layouts.</li>
+<li><strong><a href="16<em>teammates.md">Teammates</a>:</strong> We show avatars and names of different AI agents using colorful %%INLINE</em>16%% components.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have learned that the <strong>Ink UI Framework</strong> allows <code>claudeCode</code> to behave like a rich application rather than a simple script. By combining <strong>React components</strong> with our <strong>State</strong>, we can create interactive, updating dashboards right in the command line.
+</p>
+<p>
+Now that we have a brain (State) and a face (UI), we need ears. How does the application understand what the user wants to do?
+</p>
+<p>
+<a href="03<em>query</em>engine.md">Next Chapter: Query Engine</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="01-state-management.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">State Management</div>
+        </a><a class="chapter-nav-card next" href="03-query-engine.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">Query Engine</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#what-is-the-ink-ui-framework">What is the Ink UI Framework?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case-the-status-dashboard">The Central Use Case: "The Status Dashboard"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-react-components">1. React Components</a></li>
+<li style="padding-left:10px"><a href="#2-flexbox-layouts">2. Flexbox Layouts</a></li>
+<li style="padding-left:10px"><a href="#3-interactive-hooks">3. Interactive Hooks</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-the-ink-ui">How to Use the Ink UI</a></li>
+<li style="padding-left:10px"><a href="#step-1-basic-structure">Step 1: Basic Structure</a></li>
+<li style="padding-left:10px"><a href="#step-2-connecting-to-state">Step 2: Connecting to State</a></li>
+<li style="padding-left:10px"><a href="#step-3-layouts-rows-and-columns">Step 3: Layouts (Rows and Columns)</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-how-it-works">Under the Hood: How it Works</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-code">Internal Implementation Code</a></li>
+<li style="padding-left:0px"><a href="#why-is-this-important-for-later">Why is this important for later?</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

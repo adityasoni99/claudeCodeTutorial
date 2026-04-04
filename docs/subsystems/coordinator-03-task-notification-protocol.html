@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: Task Notification Protocol — coordinator/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">coordinator/03_task_notification_protocol.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🎯 coordinator/ · 03_task_notification_protocol.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: Task Notification Protocol</h1>
+  <div class="chapter-meta"><span>📄 coordinator/03_task_notification_protocol.md</span></div>
+</div>
+<h1 id="chapter-3-task-notification-protocol">Chapter 3: Task Notification Protocol</h1>
+<p>
+Welcome to Chapter 3! In the previous chapter, <a href="02<em>worker</em>lifecycle<em>management.md">Worker Lifecycle Management</a>, we learned how the Coordinator acts like a manager, hiring (spawning) and directing workers using tools like %%INLINE</em>0%%.
+</p>
+<p>
+But once you hire a worker and send them off to do a task, how do you know when they are finished? Do they shout? Do they tap you on the shoulder?
+</p>
+<p>
+In this chapter, we will explore the <strong>Task Notification Protocol</strong>, the strict "paperwork" system workers use to report their results back to the Coordinator.
+</p>
+<h2 id="the-problem-the-noisy-room">The Problem: The Noisy Room</h2>
+<p>
+Imagine the Coordinator is sitting in a room.
+</p>
+<ol>
+<li><strong>The User</strong> is sitting across the table, asking questions ("Fix this bug!").</li>
+</ol>
+<ol>
+<li><strong>The Workers</strong> are in the back room, running tests and writing code.</li>
+</ol>
+<p>
+If a Worker just walked in and shouted "I'm done!", the Coordinator might get confused. Was that the User speaking? Was that a Worker? Which Worker?
+</p>
+<p>
+To solve this, we enforce a <strong>Protocol</strong>. Workers are not allowed to just "talk." They must submit a formal report in a specific format.
+</p>
+<h3 id="central-use-case-the-asynchronous-callback">Central Use Case: The Asynchronous Callback</h3>
+<p>
+When a worker finishes a long task (like running a test suite), the system needs to "wake up" the Coordinator and say: "Hey, Agent-123 finished successfully. Here is the output."
+</p>
+<p>
+We achieve this by injecting a special message into the chat that looks like this:
+</p>
+<pre data-lang="xml"><code>&lt;task-notification&gt;
+  &lt;task-id&gt;agent-123&lt;/task-id&gt;
+  &lt;status&gt;completed&lt;/status&gt;
+  &lt;result&gt;Tests passed.&lt;/result&gt;
+&lt;/task-notification&gt;
+</code></pre>
+<h2 id="core-concept-the-xml-envelope">Core Concept: The XML Envelope</h2>
+<p>
+The Coordinator is an AI. It understands text. To make sure it doesn't mistake a worker's report for a user's chat message, we wrap the report in <strong>XML tags</strong>.
+</p>
+<p>
+Think of <code>&lt;task-notification&gt;</code> as a bright red envelope. When the Coordinator sees this envelope, it knows:
+</p>
+<ol>
+<li><strong>Do not reply to the sender</strong> (it's an automated system, not a human).</li>
+</ol>
+<ol>
+<li><strong>Read the contents</strong> to update its internal plan.</li>
+</ol>
+<ol>
+<li><strong>Synthesize the result</strong> for the User.</li>
+</ol>
+<h3 id="the-anatomy-of-a-notification">The Anatomy of a Notification</h3>
+<p>
+Let's look at the structure of a standard notification message.
+</p>
+<pre data-lang="xml"><code>&lt;task-notification&gt;
+  &lt;!-- 1. Who sent this? --&gt;
+  &lt;task-id&gt;agent-researcher-01&lt;/task-id&gt;
+  
+  &lt;!-- 2. Did it work? (completed | failed) --&gt;
+  &lt;status&gt;completed&lt;/status&gt;
+  
+  &lt;!-- 3. What is the outcome? --&gt;
+  &lt;result&gt;Found the file at src/index.ts&lt;/result&gt;
+&lt;/task-notification&gt;
+</code></pre>
+<h4 id="1-inline-2-the-badge-number">1. <code>&lt;task-id&gt;</code> (The Badge Number)</h4>
+<p>
+This matches the ID returned when you first called %%INLINE<em>3%%. This is crucial. If the Coordinator wants to ask follow-up questions, it uses this ID with the %%INLINE</em>4%% (as learned in <a href="02<em>worker</em>lifecycle_management.md">Worker Lifecycle Management</a>).
+</p>
+<h4 id="2-inline-5-the-traffic-light">2. <code>&lt;status&gt;</code> (The Traffic Light)</h4>
+<ul>
+<li><strong>completed</strong>: The worker finished successfully.</li>
+<li><strong>failed</strong>: The worker crashed or couldn't complete the instruction.</li>
+<li><strong>killed</strong>: The Coordinator stopped the worker manually.</li>
+</ul>
+<h4 id="3-inline-6-the-payload">3. <code>&lt;result&gt;</code> (The Payload)</h4>
+<p>
+This is the text generated by the worker. It might be a summary of code changes, a list of bugs found, or the output of a script.
+</p>
+<h2 id="the-flow-how-it-happens">The Flow: How It Happens</h2>
+<p>
+Here is how the message flows from the System to the Coordinator.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant U as User
+    participant C as Coordinator
+    participant S as System (The "Mailman")
+
+    U-&gt;&gt;C: "Run the tests."
+    C-&gt;&gt;S: AgentTool(prompt="Run npm test")
+    Note right of C: Coordinator waits...
+    
+    Note over S: ...time passes...
+    
+    S-&gt;&gt;C: &lt;task-notification&gt;&lt;status&gt;completed&lt;/status&gt;...&lt;/task-notification&gt;
+    Note right of C: "Ah, a red envelope!"
+    
+    C-&gt;&gt;U: "The tests passed successfully."</div></div>
+<h2 id="implementation-under-the-hood">Implementation: Under the Hood</h2>
+<p>
+How does the Coordinator know to expect this XML? It isn't magic; we simply tell it to expect it in the <strong>System Prompt</strong>.
+</p>
+<h3 id="defining-the-schema">Defining the Schema</h3>
+<p>
+In the file <code>coordinatorMode.ts</code>, we define the rules of engagement. We explicitly teach the AI how to parse these messages.
+</p>
+<pre data-lang="typescript"><code>// From coordinatorMode.ts
+export function getCoordinatorSystemPrompt(): string {
+  return `...
+  ### AgentTool Results
+  
+  Worker results arrive as user-role messages containing &lt;task-notification&gt; XML.
+  Distinguish them by the &lt;task-notification&gt; opening tag.
+  ...`
+}
+</code></pre>
+<p>
+By describing the format in the prompt, the LLM learns to treat these messages as data packets rather than conversation.
+</p>
+<h3 id="the-parsing-logic">The Parsing Logic</h3>
+<p>
+The prompt also defines the exact fields. This ensures the AI looks for %%INLINE<em>8%% and %%INLINE</em>9%% specifically.
+</p>
+<pre data-lang="typescript"><code>// From coordinatorMode.ts - explaining the fields to the AI
+/*
+Format:
+&lt;task-notification&gt;
+  &lt;task-id&gt;{agentId}&lt;/task-id&gt;
+  &lt;status&gt;completed|failed|killed&lt;/status&gt;
+  &lt;summary&gt;{human-readable status summary}&lt;/summary&gt;
+  &lt;result&gt;{agent's final text response}&lt;/result&gt;
+&lt;/task-notification&gt;
+*/
+</code></pre>
+<h3 id="handling-the-user-role">Handling the "User" Role</h3>
+<p>
+Technically, these messages are inserted into the chat history with the role of <code>user</code>.
+</p>
+<ul>
+<li><strong>Why?</strong> Most LLM APIs only allow %%INLINE<em>11%% or %%INLINE</em>12%% roles.</li>
+<li><strong>The Trick:</strong> The Coordinator is trained (via the prompt above) to see that although the message <em>says</em> it comes from "User", the content <code>&lt;task-notification&gt;</code> means it actually comes from the System/Worker.</li>
+</ul>
+<h2 id="example-a-full-interaction">Example: A Full Interaction</h2>
+<p>
+Let's look at a concrete example of how the Coordinator processes a notification.
+</p>
+<h3 id="1-the-trigger">1. The Trigger</h3>
+<p>
+The Coordinator spawns a worker to check a database.
+</p>
+<pre data-lang="javascript"><code>// Coordinator output
+AgentTool({ 
+  subagent_type: "worker",
+  prompt: "Check database connection..." 
+})
+</code></pre>
+<h3 id="2-the-notification">2. The Notification</h3>
+<p>
+The system inserts this message into the chat stream:
+</p>
+<pre data-lang="xml"><code>&lt;!-- Incoming Message (Role: User) --&gt;
+&lt;task-notification&gt;
+  &lt;task-id&gt;agent-db-check&lt;/task-id&gt;
+  &lt;status&gt;failed&lt;/status&gt;
+  &lt;result&gt;Connection refused: Port 5432 closed.&lt;/result&gt;
+&lt;/task-notification&gt;
+</code></pre>
+<h3 id="3-the-reaction">3. The Reaction</h3>
+<p>
+The Coordinator reads the XML. It sees <code>status: failed</code>. It decides to report this to the human user.
+</p>
+<pre data-lang="text"><code>// Coordinator output (to User)
+"The worker failed to connect to the database. It seems Port 5432 is closed."
+</code></pre>
+<p>
+Notice the Coordinator did <strong>not</strong> say "Thank you for the notification." It simply ingested the data and updated the user.
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>The Protocol</strong>: Workers use XML to communicate, creating a clear distinction between human chat and machine reports.</li>
+</ol>
+<ol>
+<li><strong>The Envelope</strong>: <code>&lt;task-notification&gt;</code> is the tag that signals "This is a worker report."</li>
+</ol>
+<ol>
+<li><strong>The Link</strong>: The <code>&lt;task-id&gt;</code> inside the notification allows the Coordinator to link the result back to the specific worker spawned in the previous chapter.</li>
+</ol>
+<p>
+Now that the Coordinator can send work out (Chapter 2) and get results back (Chapter 3), we need to figure out: <strong>What exactly does the worker know?</strong> Does it know the whole codebase? Does it know what the user just said?
+</p>
+<p>
+We will answer this in the next chapter on <strong>Context Hygiene</strong>.
+</p>
+<p>
+<a href="04<em>dynamic</em>context_injection.md">Next Chapter: Dynamic Context Injection</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="coordinator.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">coordinator/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-noisy-room">The Problem: The Noisy Room</a></li>
+<li style="padding-left:10px"><a href="#central-use-case-the-asynchronous-callback">Central Use Case: The Asynchronous Callback</a></li>
+<li style="padding-left:0px"><a href="#core-concept-the-xml-envelope">Core Concept: The XML Envelope</a></li>
+<li style="padding-left:10px"><a href="#the-anatomy-of-a-notification">The Anatomy of a Notification</a></li>
+<li style="padding-left:0px"><a href="#the-flow-how-it-happens">The Flow: How It Happens</a></li>
+<li style="padding-left:0px"><a href="#implementation-under-the-hood">Implementation: Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#defining-the-schema">Defining the Schema</a></li>
+<li style="padding-left:10px"><a href="#the-parsing-logic">The Parsing Logic</a></li>
+<li style="padding-left:10px"><a href="#handling-the-user-role">Handling the "User" Role</a></li>
+<li style="padding-left:0px"><a href="#example-a-full-interaction">Example: A Full Interaction</a></li>
+<li style="padding-left:10px"><a href="#1-the-trigger">1. The Trigger</a></li>
+<li style="padding-left:10px"><a href="#2-the-notification">2. The Notification</a></li>
+<li style="padding-left:10px"><a href="#3-the-reaction">3. The Reaction</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

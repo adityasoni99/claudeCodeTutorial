@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: Session Authorization Context — assistant/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">assistant/04_session_authorization_context.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🤖 assistant/ · 04_session_authorization_context.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: Session Authorization Context</h1>
+  <div class="chapter-meta"><span>📄 assistant/04_session_authorization_context.md</span></div>
+</div>
+<h1 id="chapter-4-session-authorization-context">Chapter 4: Session Authorization Context</h1>
+<p>
+Welcome to Chapter 4!
+</p>
+<p>
+In the previous chapter, <a href="03<em>defensive</em>api_wrapper.md">Defensive API Wrapper</a>, we built a safety mechanism to handle network errors gracefully. We compared it to hiring a courier who handles traffic and road closures for you.
+</p>
+<p>
+However, even the best courier needs two things to do their job:
+</p>
+<ol>
+<li><strong>The Address:</strong> Where exactly are they going?</li>
+</ol>
+<ol>
+<li><strong>The Keys:</strong> How do they get inside the secure building?</li>
+</ol>
+<p>
+In this chapter, we will build the <strong>Session Authorization Context</strong>. This is how we package the "Address" and "Keys" into a single, reusable object.
+</p>
+<hr>
+<h3 id="motivation-the-theme-park-wristband">Motivation: The Theme Park Wristband</h3>
+<p>
+Imagine you are visiting a high-tech theme park.
+</p>
+<p>
+<strong>The "Inefficient" Way:</strong>
+ 
+Every time you want to go on a ride, you have to go back to the front gate, show your ID, pay for that specific ride, get a paper ticket, walk back to the ride, and hand it to the operator.
+</p>
+<ul>
+<li><strong>Result:</strong> You spend 90% of your day walking back and forth to the gate.</li>
+</ul>
+<p>
+<strong>The "Context" Way:</strong>
+ 
+You go to the front gate <strong>once</strong> when you arrive. You show your ID and pay. The staff gives you a <strong>RFID Wristband</strong>.
+</p>
+<ul>
+<li>Now, when you want to go on a ride, you just flash your wristband. The ride operator instantly knows who you are and that you are allowed to enter.</li>
+</ul>
+<p>
+<strong>The Technical Problem:</strong>
+ 
+Logging in to an API is "expensive." It takes time to fetch an Access Token and find your Organization ID. If we did this inside every single %%INLINE<em>0%% or %%INLINE</em>1%% call, our chat would be slow and laggy.
+</p>
+<p>
+<strong>The Solution:</strong>
+ 
+We perform the expensive work once to create a <strong>Context (<code>ctx</code>)</strong>. We pass this context around like a wristband to make subsequent requests fast and simple.
+</p>
+<hr>
+<h3 id="key-concept-the-context-object">Key Concept: The Context Object</h3>
+<p>
+In our code, the "wristband" is a simple JavaScript object that looks like this:
+</p>
+<pre data-lang="typescript"><code>export type HistoryAuthCtx = {
+  // The specific address for this chat session
+  baseUrl: string
+  
+  // The keys (tokens and IDs) needed to enter
+  headers: Record&lt;string, string&gt;
+}
+</code></pre>
+<p>
+This object contains everything the <a href="03<em>defensive</em>api_wrapper.md">Defensive API Wrapper</a> needs to make a successful call.
+</p>
+<hr>
+<h3 id="how-to-use-it">How to use it</h3>
+<p>
+We have created a helper function called <code>createHistoryAuthCtx</code>. You call this function <strong>once</strong> when the user opens the chat.
+</p>
+<h4 id="1-generate-the-context">1. Generate the Context</h4>
+<p>
+This is the "standing in line at the front gate" part. It is asynchronous because it might need to talk to an authentication server.
+</p>
+<pre data-lang="typescript"><code>// Ideally, you get the session ID from the URL or app state
+const currentSessionId = 'session-888';
+
+// Generate the "wristband"
+const ctx = await createHistoryAuthCtx(currentSessionId);
+</code></pre>
+<h4 id="2-pass-it-to-the-strategies">2. Pass it to the Strategies</h4>
+<p>
+Now that you have the %%INLINE<em>4%%, you pass it to the functions we built in <a href="01</em>latest<em>event</em>anchoring.md">Latest Event Anchoring</a> and <a href="02<em>reverse</em>pagination_strategy.md">Reverse Pagination Strategy</a>.
+</p>
+<pre data-lang="typescript"><code>// Flash the wristband to get the latest messages
+const latest = await fetchLatestEvents(ctx);
+
+// Flash the wristband again to scroll up
+const older = await fetchOlderEvents(ctx, latest.firstId);
+</code></pre>
+<p>
+Notice how %%INLINE<em>5%% doesn't need to know your password or organization ID? It just trusts the %%INLINE</em>6%%.
+</p>
+<hr>
+<h3 id="under-the-hood-how-it-works">Under the Hood: How it Works</h3>
+<p>
+Let's see what happens when you ask for this context.
+</p>
+<h4 id="visualizing-the-flow">Visualizing the Flow</h4>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant App as Application
+    participant Builder as createHistoryAuthCtx
+    participant Auth as Auth System
+
+    Note over App, Auth: Initialization Phase
+
+    App-&gt;&gt;Builder: "I need a context for Session #123"
+    
+    Builder-&gt;&gt;Auth: "Give me the current User Tokens"
+    Auth--&gt;&gt;Builder: Access Token &amp; Org UUID
+    
+    Note right of Builder: Assembles URL &amp; Headers
+    
+    Builder--&gt;&gt;App: Returns Context Object (The Wristband)</div></div>
+<ol>
+<li><strong>Request:</strong> The App requests a context for a specific chat session.</li>
+</ol>
+<ol>
+<li><strong>Fetch Secrets:</strong> The builder asks the Auth System for the current user's credentials (this is the expensive part).</li>
+</ol>
+<ol>
+<li><strong>Assembly:</strong> The builder combines the credentials and the session ID into a neat package.</li>
+</ol>
+<ol>
+<li><strong>Delivery:</strong> The App receives the context and holds onto it.</li>
+</ol>
+<h4 id="code-implementation">Code Implementation</h4>
+<p>
+The code lives in <code>sessionHistory.ts</code>.
+</p>
+<p>
+<strong>1. Fetching the Secrets</strong>
+</p>
+<p>
+We use a helper <code>prepareApiRequest</code> (external to this module) to get the raw data we need.
+</p>
+<pre data-lang="typescript"><code>// File: sessionHistory.ts
+
+export async function createHistoryAuthCtx(
+  sessionId: string,
+): Promise&lt;HistoryAuthCtx&gt; {
+  // 1. Get the expensive data (Async operation)
+  const { accessToken, orgUUID } = await prepareApiRequest()
+  
+  // ... continued below
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong> This line creates the bridge between our chat history logic and the user's login state.</li>
+</ul>
+<p>
+<strong>2. Building the Base URL</strong>
+</p>
+<p>
+We construct the specific "address" for this chat session.
+</p>
+<pre data-lang="typescript"><code>  // 2. Construct the specific URL for THIS session
+  // Example: https://api.assistant.com/v1/sessions/session-123/events
+  const url = `${getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}/events`
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong> By pre-calculating this string, we ensure we don't accidentally mistype the URL later when fetching pages.</li>
+</ul>
+<p>
+<strong>3. Assembling the Headers</strong>
+</p>
+<p>
+Finally, we put the "keys" into a header object.
+</p>
+<pre data-lang="typescript"><code>  // 3. Return the ready-to-use context object
+  return {
+    baseUrl: url,
+    headers: {
+      ...getOAuthHeaders(accessToken), // Standard Bearer Token
+      'anthropic-beta': 'ccr-byoc-2025-07-29', // API Versioning
+      'x-organization-uuid': orgUUID, // Org Identification
+    },
+  }
+}
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong></li>
+<li>We include the <strong>OAuth Token</strong> (Access).</li>
+<li>We include the <strong>Organization UUID</strong> (Routing).</li>
+<li>We return the final object.</li>
+</ul>
+<hr>
+<h3 id="integration-with-previous-chapters">Integration with Previous Chapters</h3>
+<p>
+This chapter ties everything together.
+</p>
+<ol>
+<li><strong>Chapter 3 (<a href="03<em>defensive</em>api<em>wrapper.md">Defensive API Wrapper</a>):</strong> The %%INLINE</em>9%% function consumes this %%INLINE<em>10%%. It reads %%INLINE</em>11%% and sends <code>ctx.headers</code> with the request.</li>
+</ol>
+<ol>
+<li><strong>Chapter 1 & 2:</strong> The strategy functions act as middlemen, passing the <code>ctx</code> from your App to the Wrapper.</li>
+</ol>
+<p>
+Without the <strong>Session Authorization Context</strong>, we would have to repeat these 10 lines of setup code inside every single function in our project!
+</p>
+<hr>
+<h3 id="conclusion">Conclusion</h3>
+<p>
+You have learned about the <strong>Session Authorization Context</strong>.
+</p>
+<p>
+By doing the hard work of authentication and URL construction <strong>once</strong>, we created a "security badge" that makes the rest of our application faster and cleaner. We separated "Identity Management" (Who am I?) from "Data Fetching" (Get me messages).
+</p>
+<p>
+<strong>What's next?</strong>
+ 
+Now that we have the data, we need to make sure it looks correct. APIs sometimes send data in messy formats. We need to clean it up before showing it to the user.
+</p>
+<p>
+Join us in the final chapter to learn about the <strong>Data Normalization Layer</strong>.
+</p>
+<p>
+<a href="05<em>data</em>normalization_layer.md">Next Chapter: Data Normalization Layer</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="assistant.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">assistant/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:10px"><a href="#motivation-the-theme-park-wristband">Motivation: The Theme Park Wristband</a></li>
+<li style="padding-left:10px"><a href="#key-concept-the-context-object">Key Concept: The Context Object</a></li>
+<li style="padding-left:10px"><a href="#how-to-use-it">How to use it</a></li>
+<li style="padding-left:10px"><a href="#under-the-hood-how-it-works">Under the Hood: How it Works</a></li>
+<li style="padding-left:10px"><a href="#integration-with-previous-chapters">Integration with Previous Chapters</a></li>
+<li style="padding-left:10px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

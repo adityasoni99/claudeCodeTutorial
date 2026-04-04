@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 5: Model Context Protocol (MCP) — services/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">services/05_model_context_protocol__mcp_.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⚡ services/ · 05_model_context_protocol__mcp_.md</div>
+  <h1 class="chapter-title-h1">Chapter 5: Model Context Protocol (MCP)</h1>
+  <div class="chapter-meta"><span>📄 services/05_model_context_protocol__mcp_.md</span></div>
+</div>
+<h1 id="chapter-5-model-context-protocol-mcp">Chapter 5: Model Context Protocol (MCP)</h1>
+<p>
+Welcome to the fifth chapter of the <strong>Services</strong> project tutorial!
+</p>
+<p>
+In the previous chapter, <a href="04<em>tool</em>execution_pipeline.md">Tool Execution Pipeline</a>, we gave our AI "mechanical hands" to perform basic tasks like reading files and running terminal commands.
+</p>
+<p>
+However, built-in tools aren't enough. What if the AI needs to check your calendar on Google, query a PostgreSQL database, or send a message on Slack? We cannot write a custom tool for every single software in the world inside our core codebase. It would become impossible to maintain.
+</p>
+<p>
+We need a standard way to plug <em>any</em> external tool into our AI.
+</p>
+<h2 id="1-the-big-picture-the-usb-port-analogy">1. The Big Picture: The "USB Port" Analogy</h2>
+<p>
+Imagine buying a laptop.
+</p>
+<ul>
+<li>It has a built-in keyboard and screen (Internal Tools).</li>
+<li>But you want to connect a printer, a camera, or a microphone.</li>
+<li>You don't need to solder wires to the motherboard. You just plug them into a <strong>USB Port</strong>.</li>
+</ul>
+<p>
+<strong>Model Context Protocol (MCP)</strong> is the USB port for AI applications.
+</p>
+<p>
+It is an open standard that lets us build "Connectors" (MCP Servers) for things like GitHub, Google Drive, or Databases. Our application (the MCP Client) simply "plugs in" these servers, and suddenly the AI knows how to use them.
+</p>
+<h3 id="central-use-case">Central Use Case</h3>
+<p>
+<strong>Goal:</strong> The user asks, <em>"Who are the top 5 users in my database?"</em>
+ 
+<strong>Problem:</strong> Our AI app doesn't know your database password or schema.
+ 
+<strong>Solution:</strong> We plug in a "Postgres MCP Server."
+ 
+<strong>Result:</strong> The AI sees a new tool called <code>query_database</code>, uses it, and answers the question.
+</p>
+<h2 id="2-key-concepts">2. Key Concepts</h2>
+<h3 id="a-the-client-the-host">A. The Client (The Host)</h3>
+<p>
+This is our application (Claude Code). It is the "computer" that accepts the USB devices. It provides the interface for the AI to discover available tools.
+</p>
+<h3 id="b-the-server-the-device">B. The Server (The Device)</h3>
+<p>
+This is the external program we are connecting to. It could be a simple script running locally or a complex service running in the cloud. It tells the Client: <em>"Hi, I am the GitHub Server. I have a tool called <code>create_issue</code>."</em>
+</p>
+<h3 id="c-the-configuration-inline-2">C. The Configuration (<code>.mcp.json</code>)</h3>
+<p>
+How does our app know which servers to plug in? It looks for a configuration file. This file acts like a list of startup instructions.
+</p>
+<h3 id="d-the-transport-the-cable">D. The Transport (The Cable)</h3>
+<p>
+This is how data moves between the Client and the Server.
+</p>
+<ul>
+<li><strong>Stdio:</strong> We run the server as a background process and talk via standard input/output (like a pipe).</li>
+<li><strong>SSE/HTTP:</strong> We talk over the network (useful for remote tools).</li>
+</ul>
+<hr>
+<h2 id="3-how-it-works-the-workflow">3. How It Works (The Workflow)</h2>
+<p>
+When the application starts, the MCP system spins into action to discover capabilities.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant AI as AI Model
+    participant Client as MCP Client (App)
+    participant Config as Config Loader
+    participant Server as Postgres MCP Server
+
+    Client-&gt;&gt;Config: "What servers should I load?"
+    Config--&gt;&gt;Client: "Load 'Postgres' from .mcp.json"
+    
+    Client-&gt;&gt;Server: Connect (Handshake)
+    Server--&gt;&gt;Client: "Ready. I have tool: query_sql"
+    
+    Client-&gt;&gt;AI: "System Update: You now have tool 'query_sql'"
+    
+    AI-&gt;&gt;Client: "Call tool 'query_sql' with 'SELECT *...'"
+    Client-&gt;&gt;Server: Forward Request
+    Server--&gt;&gt;Client: Return 5 Rows
+    Client--&gt;&gt;AI: Here is the data</div></div>
+<h3 id="example-configuration-inline-3">Example Configuration (<code>.mcp.json</code>)</h3>
+<p>
+To add a server, users simply edit a JSON file. The system reads this to launch the connections.
+</p>
+<pre data-lang="json"><code>{
+  "mcpServers": {
+    "sqlite": {
+      "command": "uvx",
+      "args": ["mcp-server-sqlite", "--db-path", "test.db"]
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2 id="4-under-the-hood-the-code">4. Under the Hood: The Code</h2>
+<p>
+Let's look at how we implement this "USB System" in the codebase.
+</p>
+<h3 id="step-1-loading-the-config-inline-4">Step 1: Loading the Config (<code>mcp/config.ts</code>)</h3>
+<p>
+First, we need to read the configuration file to know what servers exist. We support multiple scopes (User, Project, Enterprise).
+</p>
+<pre data-lang="typescript"><code>// services/mcp/config.ts
+export function parseMcpConfigFromFilePath({ filePath }) {
+  const fs = getFsImplementation()
+
+  // 1. Read the text from the .mcp.json file
+  const configContent = fs.readFileSync(filePath, { encoding: 'utf8' })
+  
+  // 2. Parse the text into a JSON object
+  const parsedJson = safeParseJSON(configContent)
+
+  // 3. Return the config (or errors if file is broken)
+  return {
+    config: parsedJson,
+    errors: []
+  }
+}
+</code></pre>
+<p>
+<em>Explanation: This function acts like checking the "Device Manager." It reads the file from disk and parses the JSON to list all the servers the user wants to connect.</em>
+</p>
+<h3 id="step-2-policy-security-inline-5">Step 2: Policy & Security (<code>mcp/config.ts</code>)</h3>
+<p>
+Just because a user <em>wants</em> to plug something in doesn't mean they <em>should</em>. Enterprise policies might block certain "unsafe" servers.
+</p>
+<pre data-lang="typescript"><code>// services/mcp/config.ts
+function isMcpServerAllowedByPolicy(serverName, config): boolean {
+  // 1. Check if this server is explicitly on the "Denylist"
+  if (isMcpServerDenied(serverName, config)) {
+    return false
+  }
+
+  // 2. Check if we have an "Allowlist" (Only allow specific ones)
+  const settings = getMcpAllowlistSettings()
+  
+  // If no allowlist exists, we default to allowing it
+  if (!settings.allowedMcpServers) return true
+  
+  // Logic to match name/command against allowlist...
+  return matchAllowlist(serverName)
+}
+</code></pre>
+<p>
+<em>Explanation: This acts as an antivirus or firewall. Before plugging in the device, we check if it's on a list of banned devices or if the company policy restricts USB usage.</em>
+</p>
+<h3 id="step-3-the-transport-layer-inline-6">Step 3: The Transport Layer (<code>mcp/InProcessTransport.ts</code>)</h3>
+<p>
+Once approved, we need to send messages. For internal communication or testing, we might use an "In-Process" transport, which is like a virtual cable.
+</p>
+<pre data-lang="typescript"><code>// services/mcp/InProcessTransport.ts
+async send(message: JSONRPCMessage): Promise&lt;void&gt; {
+  if (this.closed) throw new Error('Transport is closed')
+
+  // Deliver the message to the "peer" (the other side of the connection)
+  // We use queueMicrotask to make it async, simulating a real network
+  queueMicrotask(() =&gt; {
+    this.peer?.onmessage?.(message)
+  })
+}
+</code></pre>
+<p>
+<em>Explanation: When the AI sends a command, this function passes the message to the MCP Server. <code>queueMicrotask</code> ensures the message is delivered in the next tick of the event loop, mimicking how a real cable works.</em>
+</p>
+<h3 id="step-4-the-official-registry-inline-8">Step 4: The Official Registry (<code>mcp/officialRegistry.ts</code>)</h3>
+<p>
+We also maintain a list of "Official" servers that we know are safe and high-quality.
+</p>
+<pre data-lang="typescript"><code>// services/mcp/officialRegistry.ts
+export async function prefetchOfficialMcpUrls(): Promise&lt;void&gt; {
+  // 1. Download the list from Anthropic's API
+  const response = await axios.get(
+    'https://api.anthropic.com/mcp-registry/v0/servers'
+  )
+
+  // 2. Store the URLs in a "Set" for fast lookup later
+  const urls = new Set&lt;string&gt;()
+  for (const entry of response.data.servers) {
+    urls.add(entry.server.url)
+  }
+  officialUrls = urls
+}
+</code></pre>
+<p>
+<em>Explanation: This is like a "Certified Accessories" list. We download a trusted list so we can tell the user, "Yes, this connection is verified."</em>
+</p>
+<h2 id="5-summary">5. Summary</h2>
+<p>
+We have expanded the horizons of our AI significantly.
+</p>
+<ol>
+<li><strong>Standardization:</strong> We don't write custom code for every tool; we use the MCP standard.</li>
+</ol>
+<ol>
+<li><strong>Configuration:</strong> Users can define what they want to plug in via <code>.mcp.json</code>.</li>
+</ol>
+<ol>
+<li><strong>Safety:</strong> We check policies before allowing connections.</li>
+</ol>
+<ol>
+<li><strong>Transport:</strong> We handle the messaging plumbing seamlessly.</li>
+</ol>
+<p>
+At this point, our AI is smart (Chapter 1-3) and capable of using both internal (Chapter 4) and external (Chapter 5) tools.
+</p>
+<p>
+However, writing code is special. It requires understanding the structure of programming languages, not just text. To do this, we use another specialized protocol.
+</p>
+<p>
+<a href="06<em>language</em>server<em>integration</em><em>lsp</em>.md">Next Chapter: Language Server Integration (LSP)</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="services.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">services/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#1-the-big-picture-the-usb-port-analogy">1. The Big Picture: The "USB Port" Analogy</a></li>
+<li style="padding-left:10px"><a href="#central-use-case">Central Use Case</a></li>
+<li style="padding-left:0px"><a href="#2-key-concepts">2. Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#a-the-client-the-host">A. The Client (The Host)</a></li>
+<li style="padding-left:10px"><a href="#b-the-server-the-device">B. The Server (The Device)</a></li>
+<li style="padding-left:10px"><a href="#c-the-configuration-inline-2">C. The Configuration (%%INLINE_2%%)</a></li>
+<li style="padding-left:10px"><a href="#d-the-transport-the-cable">D. The Transport (The Cable)</a></li>
+<li style="padding-left:0px"><a href="#3-how-it-works-the-workflow">3. How It Works (The Workflow)</a></li>
+<li style="padding-left:10px"><a href="#example-configuration-inline-3">Example Configuration (%%INLINE_3%%)</a></li>
+<li style="padding-left:0px"><a href="#4-under-the-hood-the-code">4. Under the Hood: The Code</a></li>
+<li style="padding-left:10px"><a href="#step-1-loading-the-config-inline-4">Step 1: Loading the Config (%%INLINE_4%%)</a></li>
+<li style="padding-left:10px"><a href="#step-2-policy-security-inline-5">Step 2: Policy & Security (%%INLINE_5%%)</a></li>
+<li style="padding-left:10px"><a href="#step-3-the-transport-layer-inline-6">Step 3: The Transport Layer (%%INLINE_6%%)</a></li>
+<li style="padding-left:10px"><a href="#step-4-the-official-registry-inline-8">Step 4: The Official Registry (%%INLINE_8%%)</a></li>
+<li style="padding-left:0px"><a href="#5-summary">5. Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

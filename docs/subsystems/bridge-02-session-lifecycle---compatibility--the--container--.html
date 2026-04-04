@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: Session Lifecycle & Compatibility (The "Container") — bridge/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">bridge/02_session_lifecycle___compatibility__the__container__.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🌉 bridge/ · 02_session_lifecycle___compatibility__the__container__.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: Session Lifecycle & Compatibility (The "Container")</h1>
+  <div class="chapter-meta"><span>📄 bridge/02_session_lifecycle___compatibility__the__container__.md</span></div>
+</div>
+<h1 id="chapter-2-session-lifecycle-compatibility-the-container">Chapter 2: Session Lifecycle & Compatibility (The "Container")</h1>
+<p>
+In the previous chapter, <a href="01<em>remote</em>bridge<em>core<strong>the</strong>brain</em>_.md">Remote Bridge Core (The "Brain")</a>, we learned how the system establishes a connection and keeps it alive. But a connection needs a destination.
+</p>
+<p>
+Think of the "Brain" as a telephone operator. The operator is ready to connect you, but they need to know <strong>which file folder</strong> (Session) you want to open and work on.
+</p>
+<p>
+This chapter covers the <strong>Session Lifecycle</strong>: how sessions are born, how they are named, how they connect different parts of the system, and how they are archived when finished.
+</p>
+<h3 id="the-problem-the-identity-crisis">The Problem: The "Identity Crisis"</h3>
+<p>
+Here is the central challenge this module solves.
+</p>
+<p>
+Imagine you are working in a terminal. The backend infrastructure knows your session by a specific technical ID (like %%INLINE<em>0%%). However, the web interface where you view your history expects a different ID format (like %%INLINE</em>1%%).
+</p>
+<p>
+If we send the wrong ID to the wrong place, the system says "404 Not Found."
+</p>
+<p>
+<strong>The Goal:</strong> We need a "Container" that:
+</p>
+<ol>
+<li>Creates the session.</li>
+</ol>
+<ol>
+<li>Translates the ID so both the backend and frontend are happy.</li>
+</ol>
+<ol>
+<li>Updates the title (e.g., renaming "Untitled" to "Fixing Bug").</li>
+</ol>
+<ol>
+<li>Archives the session when you type <code>exit</code>.</li>
+</ol>
+<h3 id="key-concepts">Key Concepts</h3>
+<h4 id="1-the-lifecycle">1. The Lifecycle</h4>
+<p>
+A session follows a strict path:
+</p>
+<ul>
+<li><strong>Creation:</strong> We ask the server for a new workspace.</li>
+<li><strong>Active:</strong> We update details like the Title.</li>
+<li><strong>Archival:</strong> We explicitly tell the server "We are done," so it can be saved to history.</li>
+</ul>
+<h4 id="2-the-compatibility-layer-the-translator">2. The Compatibility Layer (The Translator)</h4>
+<p>
+This is the most unique part of the Bridge.
+</p>
+<ul>
+<li><strong>Infrastructure ID (<code>cse_</code>)</strong>: "Code Session Entity." This is the raw ID used by the heavy-lifting servers executing code.</li>
+<li><strong>Compat ID (<code>session_</code>)</strong>: This is the legacy ID format used by the user-facing API and web dashboard.</li>
+</ul>
+<p>
+The <strong>Compatibility Layer</strong> is a small set of functions that swaps these labels on the fly.
+</p>
+<h3 id="use-case-starting-a-named-session">Use Case: Starting a Named Session</h3>
+<p>
+Let's say a user starts the bridge with a specific project name. We want to create the session and ensure the web UI can see it.
+</p>
+<h4 id="simplified-usage">Simplified Usage</h4>
+<pre data-lang="typescript"><code>// 1. Create the raw session
+const rawId = await createBridgeSession({ title: "My Project" });
+// Output: "cse_59283..."
+
+// 2. Convert ID for the User Interface
+const uiId = toCompatSessionId(rawId); 
+// Output: "session_59283..."
+
+// 3. Rename it later
+await updateBridgeSessionTitle(uiId, "New Name");
+
+// 4. Clean up
+await archiveBridgeSession(uiId);
+</code></pre>
+<h3 id="internal-implementation-the-shim-workflow">Internal Implementation: The "Shim" Workflow</h3>
+<p>
+How does the system handle this translation internally? It acts like a passport control officer, checking the ID format before letting requests pass.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant CLI as Terminal App
+    participant Shim as Compat Layer
+    participant Server as Backend API
+
+    Note over CLI, Server: Creation
+    CLI-&gt;&gt;Server: Create Session ("My Project")
+    Server--&gt;&gt;CLI: Return ID "cse_999"
+
+    Note over CLI, Server: Translation
+    CLI-&gt;&gt;Shim: toCompatSessionId("cse_999")
+    Shim--&gt;&gt;CLI: Returns "session_999"
+
+    Note over CLI, Server: User Action
+    CLI-&gt;&gt;Server: Update Title for "session_999"
+    Note right of Server: Server understands "session_"&lt;br/&gt;for UI updates.
+    Server--&gt;&gt;CLI: Success (200 OK)</div></div>
+<h3 id="code-deep-dive">Code Deep Dive</h3>
+<p>
+Let's look at the actual code that makes this work.
+</p>
+<h4 id="1-the-translator-inline-5">1. The Translator (<code>sessionIdCompat.ts</code>)</h4>
+<p>
+This file is the dictionary. It swaps the prefix of the ID.
+</p>
+<pre data-lang="typescript"><code>// sessionIdCompat.ts
+
+// Converts raw infra ID to UI-friendly ID
+export function toCompatSessionId(id: string): string {
+  if (!id.startsWith('cse_')) return id; // Already correct?
+  // Cut off "cse_" and add "session_"
+  return 'session_' + id.slice('cse_'.length);
+}
+
+// Converts UI ID back to infra ID (if needed)
+export function toInfraSessionId(id: string): string {
+  if (!id.startsWith('session_')) return id;
+  return 'cse_' + id.slice('session_'.length);
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong> This creates a "Shim." If the backend gives us %%INLINE<em>6%%, this function creates a virtual ID %%INLINE</em>7%%. We use this virtual ID whenever we talk to the web dashboard endpoints.
+</p>
+<h4 id="2-creating-the-session-inline-8">2. Creating the Session (<code>createSession.ts</code>)</h4>
+<p>
+This function talks to the API to initialize the container.
+</p>
+<pre data-lang="typescript"><code>// createSession.ts
+export async function createBridgeSession({ title, environmentId }) {
+  // Setup headers and body
+  const url = `${baseUrl}/v1/sessions`;
+  const body = { 
+    title, 
+    environment_id: environmentId,
+    source: 'remote-control' // Tells server who we are
+  };
+
+  // Send POST request
+  const response = await axios.post(url, body, { headers });
+  
+  // Return the ID (e.g., "cse_123")
+  return response.data.id;
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong> We send a POST request. Notice we include <code>source: 'remote-control'</code>. This helps the server understand that this isn't a browser session, but a terminal bridge session.
+</p>
+<h4 id="3-updating-the-title-inline-10">3. Updating the Title (<code>createSession.ts</code>)</h4>
+<p>
+Users often change their minds. The session needs to be renamed without breaking the connection.
+</p>
+<pre data-lang="typescript"><code>// createSession.ts
+export async function updateBridgeSessionTitle(sessionId, title) {
+  // IMPORTANT: The UI API expects "session_*", not "cse_*"
+  const compatId = toCompatSessionId(sessionId);
+  
+  const url = `${baseUrl}/v1/sessions/${compatId}`;
+  
+  // Send PATCH request to update just the title
+  await axios.patch(url, { title }, { headers });
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong> Notice the call to %%INLINE<em>11%%? If we tried to send %%INLINE</em>12%% to this specific endpoint, it might fail. We convert it to <code>session_123</code> first to ensure compatibility with the web platform.
+</p>
+<h4 id="4-archiving-the-cleanup">4. Archiving (The Cleanup)</h4>
+<p>
+When the user quits, we don't just walk away. We file the paperwork.
+</p>
+<pre data-lang="typescript"><code>// createSession.ts
+export async function archiveBridgeSession(sessionId) {
+  const url = `${baseUrl}/v1/sessions/${sessionId}/archive`;
+  
+  // Send POST to archive endpoint
+  // This tells the server: "Move this to history"
+  await axios.post(url, {}, { headers });
+  
+  console.log(`Session ${sessionId} archived.`);
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong> This is called during the teardown process mentioned in Chapter 1. It ensures that when you log into the web dashboard later, this session appears in "Past Chats" rather than staying stuck as "Active."
+</p>
+<h3 id="summary">Summary</h3>
+<p>
+The <strong>Session Lifecycle & Compatibility</strong> layer is the file cabinet manager.
+</p>
+<ol>
+<li>It <strong>Create</strong>s the folder.</li>
+</ol>
+<ol>
+<li>It <strong>Translates</strong> the folder name (%%INLINE<em>14%% vs %%INLINE</em>15%%) so different departments (backend vs frontend) can find it.</li>
+</ol>
+<ol>
+<li>It <strong>Archives</strong> the folder when work is done.</li>
+</ol>
+<p>
+Without this layer, the <a href="01<em>remote</em>bridge<em>core<strong>the</strong>brain</em>_.md">Remote Bridge Core (The "Brain")</a> would have a connection, but it wouldn't know <em>what</em> it is connected to or how to save the work.
+</p>
+<p>
+Now that we have a Brain and a Container, we need to actually move data back and forth. It's time to build the pipes.
+</p>
+<p>
+<a href="03<em>unified</em>transport<em>layer<strong>the</strong>pipe</em>_.md">Next Chapter: Unified Transport Layer (The "Pipe")</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="bridge.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">bridge/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:10px"><a href="#the-problem-the-identity-crisis">The Problem: The "Identity Crisis"</a></li>
+<li style="padding-left:10px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#use-case-starting-a-named-session">Use Case: Starting a Named Session</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-the-shim-workflow">Internal Implementation: The "Shim" Workflow</a></li>
+<li style="padding-left:10px"><a href="#code-deep-dive">Code Deep Dive</a></li>
+<li style="padding-left:10px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

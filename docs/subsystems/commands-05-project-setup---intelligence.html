@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 5: Project Setup & Intelligence — commands/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">commands/05_project_setup___intelligence.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⌨️ commands/ · 05_project_setup___intelligence.md</div>
+  <h1 class="chapter-title-h1">Chapter 5: Project Setup & Intelligence</h1>
+  <div class="chapter-meta"><span>📄 commands/05_project_setup___intelligence.md</span></div>
+</div>
+<h1 id="chapter-5-project-setup-intelligence">Chapter 5: Project Setup & Intelligence</h1>
+<p>
+In the previous chapter, <a href="04<em>context</em><em>_memory</em>management.md">Context & Memory Management</a>, we gave our AI a "Brain." It can remember conversation history and read files.
+</p>
+<p>
+However, dropping an AI into a new codebase is like hiring a new developer. Even if they are a genius, they don't know <em>your</em> specific rules.
+</p>
+<ul>
+<li>"Do we use tabs or spaces?"</li>
+<li>"How do I run the tests?"</li>
+<li>"Where do we keep the API keys?"</li>
+</ul>
+<p>
+This chapter covers <strong>Project Setup & Intelligence</strong>. We will build the logic that allows the AI to "onboard" itself, scan your project, and configure its own instructions.
+</p>
+<hr>
+<h2 id="the-big-idea-the-briefing-packet">The Big Idea: The "Briefing Packet"</h2>
+<p>
+To make the AI useful immediately, we need to generate a "Briefing Packet"—a set of instructions that describes how to work in <em>this specific</em> repository.
+</p>
+<p>
+In this project, that packet is a file named <strong><code>CLAUDE.md</code></strong>.
+</p>
+<p>
+Instead of writing this file manually (which is boring), we use the <code>/init</code> command. This command uses the AI to scan your code and write its own instruction manual.
+</p>
+<hr>
+<h2 id="use-case-the-inline-2-command">Use Case: The <code>/init</code> Command</h2>
+<p>
+When a user runs %%INLINE<em>3%%, the application performs a <strong>Phased Analysis</strong> of the current folder. It looks at %%INLINE</em>4%%, <code>Makefile</code>, and existing documentation to understand the project structure.
+</p>
+<h3 id="the-command-structure">The Command Structure</h3>
+<p>
+Let's look at <code>init.ts</code>. It follows the <strong>Prompt Command</strong> pattern we learned in Chapter 1, but with a twist: it changes its behavior based on the user type.
+</p>
+<pre data-lang="typescript"><code>// File: init.ts (Simplified)
+import { feature } from 'bun:bundle'
+
+const command = {
+  type: 'prompt',
+  name: 'init',
+  description: 'Initialize a new CLAUDE.md file',
+  
+  // The magic happens here:
+  async getPromptForCommand() {
+    // 1. Decide which instructions to send to the AI
+    const promptText = shouldUseNewInit() 
+        ? NEW_INIT_PROMPT 
+        : OLD_INIT_PROMPT;
+
+    // 2. Return the prompt to be sent to the model
+    return [{ type: 'text', text: promptText }];
+  },
+}
+export default command
+</code></pre>
+<p>
+<strong>What is happening?</strong>
+</p>
+<ol>
+<li><strong><code>getPromptForCommand</code></strong>: This function calculates what to tell the AI <em>before</em> the AI does anything.</li>
+</ol>
+<ol>
+<li><strong><code>NEW_INIT_PROMPT</code></strong>: This is a massive block of text (hidden in the variable) that tells the AI: <em>"Look at the file structure, detect languages, find test commands, and write a CLAUDE.md file."</em></li>
+</ol>
+<hr>
+<h2 id="how-intelligence-works-the-phased-prompt">How "Intelligence" Works (The Phased Prompt)</h2>
+<p>
+The "Intelligence" isn't magic; it's a very carefully written set of instructions. The %%INLINE<em>9%% inside %%INLINE</em>10%% guides the AI through a strict workflow.
+</p>
+<p>
+Here is a breakdown of the instructions we send to the AI:
+</p>
+<ol>
+<li><strong>Phase 1 (Interview):</strong> "Ask the user what they want. Do they want shared project rules or private personal rules?"</li>
+</ol>
+<ol>
+<li><strong>Phase 2 (Exploration):</strong> "Read %%INLINE<em>11%%, %%INLINE</em>12%%, or <code>requirements.txt</code>. Figure out how to build and test this code."</li>
+</ol>
+<ol>
+<li><strong>Phase 3 (Proposal):</strong> "Propose a <code>CLAUDE.md</code> file content and ask the user if it looks good."</li>
+</ol>
+<ol>
+<li><strong>Phase 4 (Execution):</strong> "Write the file to disk."</li>
+</ol>
+<h3 id="visualizing-the-logic">Visualizing the Logic</h3>
+<p>
+The application facilitates a conversation between the User and the AI to build this knowledge.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant App
+    participant AI
+
+    User-&gt;&gt;App: Types /init
+    App-&gt;&gt;AI: Sends "Phased Analysis Prompt"
+    
+    rect rgb(20, 20, 20)
+        Note over AI: Phase 1 &amp; 2
+        AI-&gt;&gt;App: Reads Manifest Files (package.json)
+        AI-&gt;&gt;App: Reads Directory Structure
+        AI--&gt;&gt;User: "I see this is a TypeScript project. Shall I create CLAUDE.md?"
+    end
+
+    User-&gt;&gt;AI: "Yes, proceed."
+    
+    rect rgb(20, 20, 20)
+        Note over AI: Phase 3 &amp; 4
+        AI-&gt;&gt;AI: Generates Rules based on findings
+        AI--&gt;&gt;App: Writes CLAUDE.md
+    end
+    
+    App--&gt;&gt;User: "Initialization Complete"</div></div>
+<hr>
+<h2 id="setting-up-integrations-github-actions">Setting Up Integrations (GitHub Actions)</h2>
+<p>
+Once the AI understands the code, we might want it to help <em>review</em> code automatically. This requires setting up <strong>GitHub Actions</strong>.
+</p>
+<p>
+This is complex because it requires permissions. We need to:
+</p>
+<ol>
+<li>Check if the user has the GitHub CLI (<code>gh</code>) installed.</li>
+</ol>
+<ol>
+<li>Authenticate with GitHub.</li>
+</ol>
+<ol>
+<li>Create a secret API Key in the repo.</li>
+</ol>
+<ol>
+<li>Push a <code>.github/workflows/claude.yml</code> file.</li>
+</ol>
+<p>
+We handle this in <code>install-github-app/setupGitHubActions.ts</code>.
+</p>
+<h3 id="checking-the-environment">Checking the Environment</h3>
+<p>
+Before we try to install anything, we ensure the user has the right tools.
+</p>
+<pre data-lang="typescript"><code>// File: install-github-app/install-github-app.tsx (Simplified)
+const checkGitHubCLI = useCallback(async () =&gt; {
+    // 1. Run "gh --version" in the background
+    const result = await execa('gh --version', { reject: false });
+    
+    if (result.exitCode !== 0) {
+      // 2. If it fails, add a warning to the UI state
+      warnings.push({
+        title: 'GitHub CLI not found',
+        message: 'Please install gh to continue.'
+      });
+    }
+    
+    // 3. Update the TUI state
+    setState(prev =&gt; ({ ...prev, warnings }));
+}, []);
+</code></pre>
+<h3 id="pushing-the-workflow">Pushing the Workflow</h3>
+<p>
+If the checks pass, we programmatically create the workflow file using the <code>gh</code> CLI tool. This saves the user from manually creating folders, copying YAML, and committing.
+</p>
+<pre data-lang="typescript"><code>// File: install-github-app/setupGitHubActions.ts (Simplified)
+async function createWorkflowFile(repoName, content) {
+  // We use the GitHub CLI API to push a file directly
+  // This avoids needing to clone/commit/push locally
+  
+  const apiParams = [
+    'api',
+    '--method', 'PUT',
+    `repos/${repoName}/contents/.github/workflows/claude.yml`,
+    '-f', `content=${Buffer.from(content).toString('base64')}`,
+    '-f', `message="Add Claude workflow"`
+  ];
+
+  await execFileNoThrow('gh', apiParams);
+}
+</code></pre>
+<p>
+<strong>Why do we use the API?</strong>
+ 
+By using <code>gh api</code>, we can inject the file directly into the repository on GitHub.com, even if the user's local git folder is messy or on a different branch.
+</p>
+<hr>
+<h2 id="the-ui-for-setup">The UI for Setup</h2>
+<p>
+To make this complex setup process friendly, we use the <strong>Interactive TUI</strong> concepts from <a href="02<em>interactive</em>tui<em>_text</em>user<em>interface</em>.md">Chapter 2</a>.
+</p>
+<p>
+The <code>InstallGitHubApp</code> component manages a state machine that guides the user step-by-step.
+</p>
+<pre data-lang="typescript"><code>// File: install-github-app/install-github-app.tsx (Simplified Concept)
+function InstallGitHubApp() {
+  const [step, setStep] = useState('check-gh');
+
+  switch (step) {
+    case 'check-gh':
+      return &lt;CheckGitHubStep /&gt;; // Shows spinner
+    case 'choose-repo':
+      return &lt;ChooseRepoStep /&gt;;  // Asks "Which repo?"
+    case 'api-key':
+      return &lt;ApiKeyStep /&gt;;      // Asks "What is your key?"
+    case 'success':
+      return &lt;SuccessStep /&gt;;     // Shows green checkmark
+  }
+}
+</code></pre>
+<p>
+This turns a complicated DevOps task (configuring CI/CD secrets and workflows) into a simple "Next -> Next -> Done" wizard in the terminal.
+</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<p>
+In <strong>Project Setup & Intelligence</strong>, we learned how to onboard the AI to a new environment:
+</p>
+<ol>
+<li><strong>Intelligence (<code>/init</code>):</strong> We use a prompt command to tell the AI to scan the project files and generate its own documentation.</li>
+</ol>
+<ol>
+<li><strong>Briefing Packet (%%INLINE<em>22%%):</strong> The result of %%INLINE</em>23%%. A file that serves as the project-specific memory for the AI.</li>
+</ol>
+<ol>
+<li><strong>Integrations:</strong> We use the <code>gh</code> CLI and React TUI components to automate setting up GitHub Actions, giving the AI permission to run inside Pull Requests.</li>
+</ol>
+<p>
+Now the AI knows <em>who</em> you are (Auth), <em>what</em> you are saying (Context), and <em>how</em> your project works (Setup).
+</p>
+<p>
+The final piece of the puzzle is giving the AI <strong>Tools</strong>—the ability to run commands, edit files, and search the web.
+</p>
+<p>
+<a href="06<em>plugin</em><em>_mcp</em>integration.md">Next Chapter: Plugin & MCP Integration</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="commands.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">commands/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-big-idea-the-briefing-packet">The Big Idea: The "Briefing Packet"</a></li>
+<li style="padding-left:0px"><a href="#use-case-the-inline-2-command">Use Case: The %%INLINE_2%% Command</a></li>
+<li style="padding-left:10px"><a href="#the-command-structure">The Command Structure</a></li>
+<li style="padding-left:0px"><a href="#how-intelligence-works-the-phased-prompt">How "Intelligence" Works (The Phased Prompt)</a></li>
+<li style="padding-left:10px"><a href="#visualizing-the-logic">Visualizing the Logic</a></li>
+<li style="padding-left:0px"><a href="#setting-up-integrations-github-actions">Setting Up Integrations (GitHub Actions)</a></li>
+<li style="padding-left:10px"><a href="#checking-the-environment">Checking the Environment</a></li>
+<li style="padding-left:10px"><a href="#pushing-the-workflow">Pushing the Workflow</a></li>
+<li style="padding-left:0px"><a href="#the-ui-for-setup">The UI for Setup</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

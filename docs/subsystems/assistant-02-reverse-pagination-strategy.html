@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: Reverse Pagination Strategy — assistant/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">assistant/02_reverse_pagination_strategy.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🤖 assistant/ · 02_reverse_pagination_strategy.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: Reverse Pagination Strategy</h1>
+  <div class="chapter-meta"><span>📄 assistant/02_reverse_pagination_strategy.md</span></div>
+</div>
+<h1 id="chapter-2-reverse-pagination-strategy">Chapter 2: Reverse Pagination Strategy</h1>
+<p>
+Welcome back! In the previous chapter, <a href="01<em>latest</em>event_anchoring.md">Latest Event Anchoring</a>, we learned how to load the "Live" view of a chat—the most recent messages.
+</p>
+<p>
+But a chat interface isn't just about what is happening <em>now</em>. It's a history book. Users expect to scroll up and see what was discussed yesterday or last week.
+</p>
+<p>
+In this chapter, we will solve the <strong>"Scroll Up"</strong> problem using the <strong>Reverse Pagination Strategy</strong>.
+</p>
+<hr>
+<h3 id="motivation-the-infinite-scroll">Motivation: The Infinite Scroll</h3>
+<p>
+Imagine you are reading a very long ancient scroll. You start reading at the very bottom (the most recent text).
+</p>
+<p>
+When you reach the top of the section you are reading, you realize there is more text missing above it. To get the rest, you need to tell the librarian exactly where you stopped so they can unroll the previous section.
+</p>
+<p>
+<strong>The Problem:</strong>
+ 
+You cannot simply say "Give me Page 2." In a live chat, new messages are constantly arriving, which shifts "Page 2" around. Relying on page numbers would result in skipping messages or seeing duplicates.
+</p>
+<p>
+<strong>The Solution:</strong>
+ 
+We use a <strong>Cursor System</strong>. We take the ID of the oldest message currently on your screen (the top one) and use it as a bookmark. We ask the database: <em>"Give me the 100 messages that came immediately <strong>before</strong> this ID."</em>
+</p>
+<hr>
+<h3 id="key-concept-the-inline-0">Key Concept: The <code>before_id</code></h3>
+<p>
+This strategy relies on a specific piece of data called a "cursor." In our system, this cursor is the <code>before_id</code>.
+</p>
+<ul>
+<li><strong>Chronological Order:</strong> Time moves forward.</li>
+<li><strong>Reverse Pagination:</strong> We move backward.</li>
+<li><strong>The Bookmark:</strong> The %%INLINE<em>2%% (the oldest ID in our current list) becomes the %%INLINE</em>3%% for our next request.</li>
+</ul>
+<hr>
+<h3 id="how-to-use-it">How to use it</h3>
+<p>
+We have simplified this logic into a function called <code>fetchOlderEvents</code>.
+</p>
+<p>
+Here is the flow of how you would use it in your application code.
+</p>
+<p>
+<strong>1. Identify the Bookmark</strong>
+ 
+When you fetched the latest events (in Chapter 1), the system gave you a "bookmark" called <code>firstId</code>.
+</p>
+<pre data-lang="typescript"><code>// From Chapter 1
+const latestPage = await fetchLatestEvents(ctx, 100);
+
+// This ID represents the top-most message on the user's screen
+const bookmark = latestPage.firstId; 
+
+// This boolean tells us if there is even more history to fetch
+const canScrollUp = latestPage.hasMore;
+</code></pre>
+<p>
+<strong>2. Fetch the Previous Batch</strong>
+ 
+When the user scrolls to the top, use that bookmark to get older data.
+</p>
+<pre data-lang="typescript"><code>if (canScrollUp &amp;&amp; bookmark) {
+  // Ask for history specifically BEFORE our bookmark
+  const olderPage = await fetchOlderEvents(ctx, bookmark, 100);
+
+  console.log(olderPage.events); // Messages from the past!
+  
+  // Update the bookmark for the next time the user scrolls
+  const newBookmark = olderPage.firstId;
+}
+</code></pre>
+<p>
+<strong>What happens here?</strong>
+</p>
+<ol>
+<li>We check if <code>hasMore</code> is true (the librarian says there is more text).</li>
+</ol>
+<ol>
+<li>We pass our current top-most ID (<code>bookmark</code>) to the function.</li>
+</ol>
+<ol>
+<li>The system returns the previous slice of history without overlapping or skipping messages.</li>
+</ol>
+<hr>
+<h3 id="under-the-hood-how-it-works">Under the Hood: How it Works</h3>
+<p>
+Let's visualize the timeline. We are traversing time backwards.
+</p>
+<h4 id="visualizing-the-flow">Visualizing the Flow</h4>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant App as Application Logic
+    participant API as Backend API
+
+    Note right of User: User scrolls to top
+    User-&gt;&gt;App: "I need older messages"
+    
+    Note over App: specific message ID (e.g., #850)
+    App-&gt;&gt;API: GET /events (before_id: #850)
+    
+    Note right of API: Finds messages #750 to #849
+    API--&gt;&gt;App: Returns older batch
+    App--&gt;&gt;User: Prepends messages to UI</div></div>
+<ol>
+<li><strong>User Action:</strong> The user hits the "ceiling" of the current chat.</li>
+</ol>
+<ol>
+<li><strong>Cursor Lookup:</strong> The app looks at the ID of that ceiling message (e.g., ID #850).</li>
+</ol>
+<ol>
+<li><strong>Request:</strong> The app requests messages <em>before</em> #850.</li>
+</ol>
+<ol>
+<li><strong>Response:</strong> The API returns the next chunk (e.g., IDs #750 to #849).</li>
+</ol>
+<hr>
+<h3 id="code-implementation">Code Implementation</h3>
+<p>
+The code for this is located in <code>sessionHistory.ts</code>. It follows the same pattern as the function in the previous chapter but uses a different parameter.
+</p>
+<p>
+<strong>1. The Specialist Function</strong>
+</p>
+<p>
+This function's job is to ensure we are asking for <code>before_id</code> specifically.
+</p>
+<pre data-lang="typescript"><code>// File: sessionHistory.ts
+
+/** Older page: events immediately before `beforeId` cursor. */
+export async function fetchOlderEvents(
+  ctx: HistoryAuthCtx,
+  beforeId: string,
+  limit = HISTORY_PAGE_SIZE,
+): Promise&lt;HistoryPage | null&gt; {
+  // We pass 'before_id' to the generic fetcher
+  return fetchPage(ctx, { limit, before_id: beforeId }, 'fetchOlderEvents')
+}
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong></li>
+<li>It accepts <code>beforeId</code> as a required argument.</li>
+<li>It calls %%INLINE<em>11%% (our <a href="03</em>defensive<em>api</em>wrapper.md">Defensive API Wrapper</a>), passing <code>{ before_id: beforeId }</code> in the parameters object.</li>
+</ul>
+<p>
+<strong>2. The Shared Logic</strong>
+</p>
+<p>
+Just like in Chapter 1, this function relies on %%INLINE<em>13%% to handle the network call. It uses the %%INLINE</em>14%% we will define in <a href="04<em>session</em>authorization_context.md">Session Authorization Context</a> to handle security.
+</p>
+<pre data-lang="typescript"><code>// File: sessionHistory.ts
+
+async function fetchPage(
+  ctx: HistoryAuthCtx,
+  params: Record&lt;string, string | number | boolean&gt;,
+  label: string,
+): Promise&lt;HistoryPage | null&gt; {
+  // The 'params' object now contains { before_id: "..." }
+  const resp = await axios
+    .get&lt;SessionEventsResponse&gt;(ctx.baseUrl, {
+      headers: ctx.headers,
+      params, // Axios attaches this to the URL: ?before_id=...
+    })
+    .catch(() =&gt; null)
+// ...
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong> %%INLINE<em>15%% is versatile. In Chapter 1, it received %%INLINE</em>16%%. In Chapter 2, it receives %%INLINE<em>17%%. It treats them both simply as %%INLINE</em>18%% to send to the server.</li>
+</ul>
+<p>
+<strong>3. Updating the Pointers</strong>
+</p>
+<p>
+When the data returns, we need to extract the <em>new</em> pointers so the user can scroll again later. This is part of the <a href="05<em>data</em>normalization_layer.md">Data Normalization Layer</a>.
+</p>
+<pre data-lang="typescript"><code>  // ... inside fetchPage ...
+  return {
+    events: Array.isArray(resp.data.data) ? resp.data.data : [],
+    
+    // This is crucial: The API gives us the ID of the OLDEST item 
+    // in this new batch. This becomes our NEXT bookmark.
+    firstId: resp.data.first_id, 
+    
+    hasMore: resp.data.has_more,
+  }
+}
+</code></pre>
+<hr>
+<h3 id="conclusion">Conclusion</h3>
+<p>
+You now understand the <strong>Reverse Pagination Strategy</strong>.
+</p>
+<p>
+By using the <code>before_id</code> cursor, we can stitch together a conversation history perfectly, regardless of how many new messages are coming in. We treat the top message as a "bookmark" to fetch the previous chapter of the story.
+</p>
+<p>
+<strong>However,</strong> you might have noticed we are making network requests (<code>axios.get</code>) inside these functions. What if the network fails? What if the API sends back garbage data?
+</p>
+<p>
+To make our assistant robust, we need to wrap these calls in a safety layer.
+</p>
+<p>
+<a href="03<em>defensive</em>api_wrapper.md">Next Chapter: Defensive API Wrapper</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="assistant.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">assistant/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:10px"><a href="#motivation-the-infinite-scroll">Motivation: The Infinite Scroll</a></li>
+<li style="padding-left:10px"><a href="#key-concept-the-inline-0">Key Concept: The %%INLINE_0%%</a></li>
+<li style="padding-left:10px"><a href="#how-to-use-it">How to use it</a></li>
+<li style="padding-left:10px"><a href="#under-the-hood-how-it-works">Under the Hood: How it Works</a></li>
+<li style="padding-left:10px"><a href="#code-implementation">Code Implementation</a></li>
+<li style="padding-left:10px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

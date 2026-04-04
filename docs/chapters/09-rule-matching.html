@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ch.09 Rule Matching — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">Ch.09 — Rule Matching</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-security">SECURITY</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">Chapter 9 · <span class="tag tag-security">SECURITY</span></div>
+  <h1 class="chapter-title-h1">Rule Matching</h1>
+  <div class="chapter-meta">
+    <span>📄 09_rule_matching.md</span>
+    <span>🏷 Security</span>
+  </div>
+</div>
+<h1 id="chapter-9-rule-matching">Chapter 9: Rule Matching</h1>
+<p>
+In the previous <a href="08<em>permission</em><em>_security</em>system.md">Permission & Security System</a> chapter, we built a "Bouncer" that stops the AI from running commands without your approval.
+</p>
+<p>
+However, if you had to approve <em>every single command</em> individually, you would quickly get frustrated.
+</p>
+<ul>
+<li>"Allow <code>ls -la</code>?" -> Yes.</li>
+<li>"Allow <code>ls src</code>?" -> Yes.</li>
+<li>"Allow <code>ls tests</code>?" -> Yes.</li>
+</ul>
+<p>
+We need a way to say: <strong>"Just allow all <code>ls</code> commands!"</strong>
+</p>
+<p>
+This is where <strong>Rule Matching</strong> comes in. It is the logic that allows us to create flexible permission slips using patterns instead of exact text.
+</p>
+<h2 id="what-is-rule-matching">What is Rule Matching?</h2>
+<p>
+Rule Matching is the engine that compares a specific command (like %%INLINE<em>4%%) against a stored permission rule (like %%INLINE</em>5%%).
+</p>
+<p>
+If they match, the <a href="08<em>permission</em><em>_security</em>system.md">Permission & Security System</a> grants access immediately, saving you from a pop-up.
+</p>
+<h3 id="the-central-use-case-the-test-runner">The Central Use Case: "The Test Runner"</h3>
+<p>
+Imagine you are working on a project where you run tests frequently. You want to allow the AI to run any test command.
+</p>
+<p>
+The AI might try:
+</p>
+<ol>
+<li><code>npm test</code></li>
+</ol>
+<ol>
+<li><code>npm test -- --watch</code></li>
+</ol>
+<ol>
+<li><code>npm test utils.js</code></li>
+</ol>
+<p>
+Instead of saving three separate rules, we want to save <strong>one</strong> rule: <code>npm test *</code>.
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+We support three types of matching logic.
+</p>
+<h3 id="1-exact-match">1. Exact Match</h3>
+<p>
+This is the strictest rule.
+</p>
+<ul>
+<li><strong>Rule:</strong> <code>npm test</code></li>
+<li><strong>Matches:</strong> <code>npm test</code></li>
+<li><strong>Does NOT Match:</strong> <code>npm test --watch</code> (Too long!)</li>
+</ul>
+<h3 id="2-prefix-match-legacy">2. Prefix Match (Legacy)</h3>
+<p>
+This uses a special syntax with a colon: <code>command:*</code>. It means "Start with this, and match anything after."
+</p>
+<ul>
+<li><strong>Rule:</strong> <code>npm:*</code></li>
+<li><strong>Matches:</strong> %%INLINE<em>15%%, %%INLINE</em>16%%, <code>npm start</code></li>
+</ul>
+<h3 id="3-wildcard-match-the-modern-standard">3. Wildcard Match (The Modern Standard)</h3>
+<p>
+This uses the asterisk <code>*</code> character. It is the most flexible.
+</p>
+<ul>
+<li><strong>Rule:</strong> <code>git commit *</code></li>
+<li><strong>Matches:</strong> %%INLINE<em>20%%, %%INLINE</em>21%%</li>
+<li><strong>Does NOT Match:</strong> <code>git push</code> (The start is wrong)</li>
+</ul>
+<h2 id="how-to-use-rule-matching">How to Use Rule Matching</h2>
+<p>
+While this logic mostly runs inside the system, understanding it helps you write better rules in your configuration.
+</p>
+<h3 id="example-wildcard-logic">Example: Wildcard Logic</h3>
+<p>
+Here is how the code decides if a command fits a pattern.
+</p>
+<pre data-lang="typescript"><code>import { matchWildcardPattern } from './utils/ruleMatching';
+
+// 1. Define a flexible rule
+const rule = "npm run *";
+
+// 2. The AI wants to run this:
+const command = "npm run build --prod";
+
+// 3. Check if it matches
+const isAllowed = matchWildcardPattern(rule, command);
+
+console.log(isAllowed); // Output: true
+</code></pre>
+<p>
+<em>Explanation: The function sees the <code>*</code> and understands it can be replaced by "build --prod".</em>
+</p>
+<h3 id="example-escaping">Example: Escaping</h3>
+<p>
+What if your filename actually contains a star? Like %%INLINE<em>24%%? You can escape it with a backslash %%INLINE</em>25%%.
+</p>
+<pre data-lang="typescript"><code>// Rule: Delete strict patterns only
+const rule = "rm image_\\*.png"; 
+
+// Command matching the literal character '*'
+const cmd = "rm image_*.png";
+
+console.log(matchWildcardPattern(rule, cmd)); // Output: true
+</code></pre>
+<p>
+<em>Explanation: Because we used <code>\\*</code>, the system treats the star as a normal text character, not a magic wildcard.</em>
+</p>
+<h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
+<p>
+Computers don't natively understand "wildcards." They understand <strong>Regular Expressions</strong> (Regex).
+</p>
+<p>
+Our Rule Matching engine is essentially a <strong>Translator</strong>. It takes your simple human-readable rule (%%INLINE<em>27%%) and converts it into a complex Regex pattern (%%INLINE</em>28%%) that the computer can execute.
+</p>
+<p>
+Here is the flow of a match request:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant App as ClaudeCode
+    participant Matcher as Rule Engine
+    participant Regex as Regex System
+
+    App-&gt;&gt;Matcher: Match "npm test" against "npm *"
+    
+    Note over Matcher: 1. Detects '*' symbol
+    Note over Matcher: 2. Converts '*' to Regex '.*'
+    
+    Matcher-&gt;&gt;Regex: Create Pattern /^npm\ .*$/
+    Regex--&gt;&gt;Matcher: Ready
+    
+    Matcher-&gt;&gt;Regex: Test "npm test"
+    Regex--&gt;&gt;Matcher: Result: TRUE
+    
+    Matcher--&gt;&gt;App: Allowed!</div></div>
+<h3 id="internal-implementation-code">Internal Implementation Code</h3>
+<p>
+The magic happens in <code>utils/permissions/shellRuleMatching.ts</code>.
+</p>
+<h4 id="1-categorizing-the-rule">1. Categorizing the Rule</h4>
+<p>
+First, we look at the string to decide which strategy to use.
+</p>
+<pre data-lang="typescript"><code>// utils/permissions/shellRuleMatching.ts
+
+export function parsePermissionRule(rule: string) {
+  // 1. Is it the old syntax? (e.g. "npm:*")
+  if (permissionRuleExtractPrefix(rule)) {
+    return { type: 'prefix', prefix: ... };
+  }
+
+  // 2. Does it have stars? (e.g. "npm *")
+  if (hasWildcards(rule)) {
+    return { type: 'wildcard', pattern: rule };
+  }
+
+  // 3. Otherwise, it must be exact
+  return { type: 'exact', command: rule };
+}
+</code></pre>
+<p>
+<em>Explanation: This function acts as a sorter. It checks for specific characters (%%INLINE<em>30%% or %%INLINE</em>31%%) to determine the complexity of the rule.</em>
+</p>
+<h4 id="2-the-wildcard-translator">2. The Wildcard Translator</h4>
+<p>
+This is the most complex part. We need to turn %%INLINE<em>32%% into %%INLINE</em>33%% (Regex for "anything"), but we must be careful not to break real stars (escaped ones).
+</p>
+<pre data-lang="typescript"><code>// utils/permissions/shellRuleMatching.ts
+
+export function matchWildcardPattern(pattern, command) {
+  // 1. Hide "real" stars (escaped ones like \*)
+  // We swap them with a placeholder text so Regex doesn't get confused
+  let processed = pattern.replace(/\\\*/g, 'ESCAPED_STAR_PLACEHOLDER');
+
+  // 2. Escape other Regex symbols (like brackets or dots)
+  // This ensures '.' matches a dot, not "any character"
+  const escaped = escapeRegexCharacters(processed);
+
+  // 3. Turn the "magic" stars into Regex wildcards
+  const withWildcards = escaped.replace(/\*/g, '.*');
+  
+  // 4. Create the Regex object
+  const regex = new RegExp(`^${withWildcards}$`, 's');
+  
+  return regex.test(command);
+}
+</code></pre>
+<p>
+<em>Explanation: We perform a "Search and Replace" dance. We hide the literal stars, convert the magic stars to regex code, and then build a RegExp object to do the final check.</em>
+</p>
+<h2 id="why-is-this-important-for-later">Why is this important for later?</h2>
+<p>
+Rule Matching is a small utility that makes the entire system usable.
+</p>
+<ul>
+<li><strong><a href="06_bashtool.md">BashTool</a>:</strong> Every time the BashTool runs, it checks these rules first.</li>
+<li><strong><a href="10<em>auto</em>mode_classifier.md">Auto-Mode Classifier</a>:</strong> In the next chapter, we will discuss "Auto Mode." Rule Matching is one of the ways Auto Mode determines if it can proceed without bothering the user.</li>
+<li><strong><a href="13<em>feature</em>gating.md">Feature Gating</a>:</strong> Sometimes we use matching to enable features for specific file types (e.g., <code>*.ipynb</code>).</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have learned that <strong>Rule Matching</strong> is the translator between human intentions ("Allow git commands") and computer logic (Regex). By supporting <strong>Exact</strong>, <strong>Prefix</strong>, and <strong>Wildcard</strong> matches, we make the security system flexible enough for real-world development.
+</p>
+<p>
+Now that we can verify commands against rules, what if we want the AI to run entirely on its own, making decisions without us?
+</p>
+<p>
+<a href="10<em>auto</em>mode_classifier.md">Next Chapter: Auto-Mode Classifier</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="08-permission---security-system.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">Permission & Security System</div>
+        </a><a class="chapter-nav-card next" href="10-auto-mode-classifier.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">Auto-Mode Classifier</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#what-is-rule-matching">What is Rule Matching?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case-the-test-runner">The Central Use Case: "The Test Runner"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-exact-match">1. Exact Match</a></li>
+<li style="padding-left:10px"><a href="#2-prefix-match-legacy">2. Prefix Match (Legacy)</a></li>
+<li style="padding-left:10px"><a href="#3-wildcard-match-the-modern-standard">3. Wildcard Match (The Modern Standard)</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-rule-matching">How to Use Rule Matching</a></li>
+<li style="padding-left:10px"><a href="#example-wildcard-logic">Example: Wildcard Logic</a></li>
+<li style="padding-left:10px"><a href="#example-escaping">Example: Escaping</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-how-it-works">Under the Hood: How it Works</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-code">Internal Implementation Code</a></li>
+<li style="padding-left:0px"><a href="#why-is-this-important-for-later">Why is this important for later?</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

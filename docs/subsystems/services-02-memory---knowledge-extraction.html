@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: Memory & Knowledge Extraction — services/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">services/02_memory___knowledge_extraction.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⚡ services/ · 02_memory___knowledge_extraction.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: Memory & Knowledge Extraction</h1>
+  <div class="chapter-meta"><span>📄 services/02_memory___knowledge_extraction.md</span></div>
+</div>
+<h1 id="chapter-2-memory-knowledge-extraction">Chapter 2: Memory & Knowledge Extraction</h1>
+<p>
+Welcome to the second chapter of the <strong>Services</strong> project tutorial!
+</p>
+<p>
+In the previous chapter, <a href="01<em>api</em>client<em>_</em>connectivity.md">API Client & Connectivity</a>, we built a "Universal Adapter" to talk to the AI. However, raw AI models have a major flaw: <strong>Amnesia</strong>. Every time you start a new session, the AI forgets everything you told it previously.
+</p>
+<h2 id="1-the-big-picture-the-secretary-analogy">1. The Big Picture: The "Secretary" Analogy</h2>
+<p>
+Imagine you are in an important business meeting. The discussion moves fast. You (the user) and the CEO (the AI) are brainstorming.
+</p>
+<p>
+If the CEO stops every 5 minutes to write down detailed minutes, the conversation flow dies. But if no one takes notes, the CEO forgets the decisions by next week.
+</p>
+<p>
+<strong>Memory & Knowledge Extraction</strong> acts as a silent <strong>Executive Secretary</strong>.
+</p>
+<ol>
+<li>It sits in the background, listening to the conversation.</li>
+</ol>
+<ol>
+<li>It waits for a pause in the dialogue.</li>
+</ol>
+<ol>
+<li>It quietly writes down key facts, decisions, and project structures into a "Notebook" (Markdown files).</li>
+</ol>
+<ol>
+<li>It doesn't interrupt the main flow.</li>
+</ol>
+<h3 id="central-use-case">Central Use Case</h3>
+<p>
+<strong>Goal:</strong>
+</p>
+<ol>
+<li><strong>Session 1:</strong> You tell the AI, <em>"My project uses Port 3000 for the backend."</em></li>
+</ol>
+<ol>
+<li><strong>Session 2 (Next Day):</strong> You ask, <em>"Start the server."</em></li>
+</ol>
+<ol>
+<li><strong>Result:</strong> The AI looks at its notebook, sees the note about Port 3000, and starts the server correctly without asking you again.</li>
+</ol>
+<h2 id="2-key-concepts">2. Key Concepts</h2>
+<h3 id="a-the-forked-agent-the-clone">A. The Forked Agent (The Clone)</h3>
+<p>
+This is the most critical technical concept. To prevent the "Secretary" from messing up the "CEO's" thought process, we use a <strong>Forked Agent</strong>.
+</p>
+<p>
+When we want to save a memory, we don't ask the main AI instance. We "fork" (clone) the conversation context into a separate, invisible process. This clone analyzes the chat log, extracts facts, saves them to disk, and then disappears. The main AI never even knows it happened.
+</p>
+<h3 id="b-session-memory-vs-durable-memory">B. Session Memory vs. Durable Memory</h3>
+<p>
+We have two types of notes:
+</p>
+<ol>
+<li><strong>Session Memory:</strong> A scratchpad for the <em>current</em> conversation (e.g., "User is currently debugging <code>index.ts</code>").</li>
+</ol>
+<ol>
+<li><strong>Durable Memory:</strong> Permanent facts stored in <code>MEMORY.md</code> files (e.g., "The project uses TypeScript").</li>
+</ol>
+<h3 id="c-auto-dreaming">C. Auto-Dreaming</h3>
+<p>
+Sometimes, notes get messy. <strong>Auto-Dreaming</strong> is a process that runs when you are away (idle). It reads through all the scattered notes and consolidates them into a clean, organized summary. It's like the Secretary organizing the filing cabinet overnight.
+</p>
+<hr>
+<h2 id="3-how-it-works-the-implementation">3. How It Works (The Implementation)</h2>
+<p>
+This system operates largely automatically in the background using "Hooks." You generally don't call it manually; you just configure the triggers.
+</p>
+<h3 id="the-workflow">The Workflow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant Main as Main AI (CEO)
+    participant Fork as Forked Agent (Secretary)
+    participant FS as File System
+
+    User-&gt;&gt;Main: "We use Postgres for the DB."
+    Main--&gt;&gt;User: "Got it. I'll remember that."
+    
+    note right of Main: Conversation Pause
+    
+    Main-&gt;&gt;Fork: Clone Context &amp; Start Background Job
+    Fork-&gt;&gt;Fork: Analyze conversation for facts
+    Fork-&gt;&gt;FS: Write to MEMORY.md
+    FS--&gt;&gt;Fork: Success
+    Fork--&gt;&gt;Main: (Silent termination)</div></div>
+<h2 id="4-code-walkthrough">4. Code Walkthrough</h2>
+<p>
+Let's look at how the code handles this "Silent Secretary" logic.
+</p>
+<h3 id="part-1-deciding-when-to-take-notes-inline-2">Part 1: Deciding When to Take Notes (<code>sessionMemory.ts</code>)</h3>
+<p>
+We don't want to save memories after every single word. We wait for thresholds (like number of tokens used or tools called).
+</p>
+<pre data-lang="typescript"><code>// services/SessionMemory/sessionMemory.ts
+export function shouldExtractMemory(messages: Message[]): boolean {
+  // 1. Check if enough "stuff" has happened (Token Threshold)
+  const currentTokenCount = tokenCountWithEstimation(messages)
+  const hasMetTokenThreshold = hasMetUpdateThreshold(currentTokenCount)
+
+  // 2. Ensure the AI finished its turn (don't interrupt a tool use)
+  const hasToolCallsInLastTurn = hasToolCallsInLastAssistantTurn(messages)
+
+  // Only extract if threshold met AND the AI is done talking
+  return hasMetTokenThreshold &amp;&amp; !hasToolCallsInLastTurn
+}
+</code></pre>
+<p>
+<em>Explanation: This function acts as the "Traffic Light." It only turns green when the conversation has progressed enough to be worth summarizing, and specifically avoids running if the AI is in the middle of a complex task.</em>
+</p>
+<h3 id="part-2-the-forked-agent-inline-3">Part 2: The Forked Agent (<code>extractMemories.ts</code>)</h3>
+<p>
+Once the traffic light is green, we create the "Secretary" (the Forked Agent).
+</p>
+<pre data-lang="typescript"><code>// services/extractMemories/extractMemories.ts
+async function runExtraction({ context }) {
+  // Create a special prompt telling the AI to act as a librarian
+  const userPrompt = buildExtractAutoOnlyPrompt(newMessageCount, existingMemories)
+
+  // Run the "Forked Agent" - a separate process sharing the prompt cache
+  const result = await runForkedAgent({
+    promptMessages: [createUserMessage({ content: userPrompt })],
+    // "cacheSafeParams" ensures we reuse the expensive context from the main chat
+    cacheSafeParams: createCacheSafeParams(context),
+    forkLabel: 'extract_memories',
+    skipTranscript: true // Don't write this internal thought to the user's screen
+  })
+}
+</code></pre>
+<p>
+<em>Explanation: %%INLINE<em>4%% is the magic function. It spins up a parallel AI request. %%INLINE</em>5%% ensures the user doesn't see "I am now saving memories..." in their terminal. It happens invisibly.</em>
+</p>
+<h3 id="part-3-writing-to-disk">Part 3: Writing to Disk</h3>
+<p>
+The Forked Agent uses tools just like the main agent. It calls %%INLINE<em>6%% or %%INLINE</em>7%% to save the facts.
+</p>
+<pre data-lang="typescript"><code>// services/extractMemories/extractMemories.ts (Concept)
+function extractWrittenPaths(agentMessages: Message[]): string[] {
+  const paths: string[] = []
+  
+  // Look through the Secretary's output
+  for (const message of agentMessages) {
+    // Did the Secretary use the "Write File" tool?
+    const filePath = getWrittenFilePath(message)
+    if (filePath) paths.push(filePath)
+  }
+  
+  return paths // Return list of files updated (e.g., ['project_structure.md'])
+}
+</code></pre>
+<p>
+<em>Explanation: After the forked agent finishes, we scan its output to see what files it touched. We might then show a subtle "Saved memory to project_structure.md" log to the user.</em>
+</p>
+<h3 id="part-4-auto-dreaming-inline-8">Part 4: Auto-Dreaming (<code>autoDream.ts</code>)</h3>
+<p>
+This runs when the system detects the user has been away for a while (e.g., 24 hours).
+</p>
+<pre data-lang="typescript"><code>// services/autoDream/autoDream.ts
+export function initAutoDream(): void {
+  runner = async function runAutoDream(context) {
+    // Check if 24 hours have passed since last cleanup
+    const hoursSince = (Date.now() - lastAt) / 3_600_000
+    if (hoursSince &lt; config.minHours) return
+
+    // If yes, run a specialized "Dream" agent to consolidate files
+    await runForkedAgent({
+      promptMessages: [createUserMessage({ content: 'Consolidate memories...' })],
+      querySource: 'auto_dream',
+      forkLabel: 'auto_dream'
+    })
+  }
+}
+</code></pre>
+<p>
+<em>Explanation: This is a maintenance task. It prevents the memory files from becoming cluttered with duplicates. It treats the memory folder like a garden that needs weeding.</em>
+</p>
+<h2 id="5-summary">5. Summary</h2>
+<p>
+We have given our AI a long-term memory system that:
+</p>
+<ol>
+<li><strong>Watches</strong> the conversation.</li>
+</ol>
+<ol>
+<li><strong>Forks</strong> a background process to avoid interruption.</li>
+</ol>
+<ol>
+<li><strong>Writes</strong> facts to Markdown files.</li>
+</ol>
+<ol>
+<li><strong>Cleans up</strong> (Dreams) when you are away.</li>
+</ol>
+<p>
+Now that the AI can remember facts, the amount of information in the conversation ("context") will grow larger and larger. Eventually, it will become too big for the model to handle efficiently.
+</p>
+<p>
+We need a way to "zip" or compress this conversation history.
+</p>
+<p>
+<a href="03<em>context</em>compaction.md">Next Chapter: Context Compaction</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="services.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">services/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#1-the-big-picture-the-secretary-analogy">1. The Big Picture: The "Secretary" Analogy</a></li>
+<li style="padding-left:10px"><a href="#central-use-case">Central Use Case</a></li>
+<li style="padding-left:0px"><a href="#2-key-concepts">2. Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#a-the-forked-agent-the-clone">A. The Forked Agent (The Clone)</a></li>
+<li style="padding-left:10px"><a href="#b-session-memory-vs-durable-memory">B. Session Memory vs. Durable Memory</a></li>
+<li style="padding-left:10px"><a href="#c-auto-dreaming">C. Auto-Dreaming</a></li>
+<li style="padding-left:0px"><a href="#3-how-it-works-the-implementation">3. How It Works (The Implementation)</a></li>
+<li style="padding-left:10px"><a href="#the-workflow">The Workflow</a></li>
+<li style="padding-left:0px"><a href="#4-code-walkthrough">4. Code Walkthrough</a></li>
+<li style="padding-left:10px"><a href="#part-1-deciding-when-to-take-notes-inline-2">Part 1: Deciding When to Take Notes (%%INLINE_2%%)</a></li>
+<li style="padding-left:10px"><a href="#part-2-the-forked-agent-inline-3">Part 2: The Forked Agent (%%INLINE_3%%)</a></li>
+<li style="padding-left:10px"><a href="#part-3-writing-to-disk">Part 3: Writing to Disk</a></li>
+<li style="padding-left:10px"><a href="#part-4-auto-dreaming-inline-8">Part 4: Auto-Dreaming (%%INLINE_8%%)</a></li>
+<li style="padding-left:0px"><a href="#5-summary">5. Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

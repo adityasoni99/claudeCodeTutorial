@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: Remote Feature Gating (GrowthBook) — voice/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">voice/02_remote_feature_gating__growthbook_.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🎤 voice/ · 02_remote_feature_gating__growthbook_.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: Remote Feature Gating (GrowthBook)</h1>
+  <div class="chapter-meta"><span>📄 voice/02_remote_feature_gating__growthbook_.md</span></div>
+</div>
+<h1 id="chapter-2-remote-feature-gating-growthbook">Chapter 2: Remote Feature Gating (GrowthBook)</h1>
+<p>
+In the previous chapter, <a href="01<em>composite</em>readiness_logic.md">Composite Readiness Logic</a>, we built a "Master Checklist" to decide if the Voice Mode should be active. One of the items on that checklist was checking if the feature is actually enabled by the developers.
+</p>
+<p>
+Now, we will learn how to control that specific item remotely using <strong>Feature Gating</strong>.
+</p>
+<h2 id="the-problem-the-emergency-stop-scenario">The Problem: The "Emergency Stop" Scenario</h2>
+<p>
+Imagine you just released a new update with Voice Mode. Thousands of users download it. Suddenly, you realize there is a critical bug: using Voice Mode crashes the entire application!
+</p>
+<p>
+<strong>Without Feature Gating:</strong>
+</p>
+<ol>
+<li>You scramble to fix the bug in the code.</li>
+</ol>
+<ol>
+<li>You build a new version of the app.</li>
+</ol>
+<ol>
+<li>You upload it to the store.</li>
+</ol>
+<ol>
+<li>You wait for approval.</li>
+</ol>
+<ol>
+<li>You hope users update their app.</li>
+</ol>
+<p>
+<em>Time elapsed: Days. User frustration: High.</em>
+</p>
+<p>
+<strong>With Feature Gating:</strong>
+</p>
+<ol>
+<li>You log into a website (GrowthBook).</li>
+</ol>
+<ol>
+<li>You flip a digital switch.</li>
+</ol>
+<ol>
+<li>Voice Mode instantly vanishes from everyone's app.</li>
+</ol>
+<p>
+<em>Time elapsed: Seconds. User frustration: Low.</em>
+</p>
+<h2 id="the-solution-a-smart-fuse-box">The Solution: A Smart Fuse Box</h2>
+<p>
+Think of your application like a house. The code you write is the <strong>wiring</strong>. Once the house is built (the app is installed), changing the wiring is hard.
+</p>
+<p>
+<strong>Remote Feature Gating</strong> acts like a <strong>smart fuse box</strong>.
+</p>
+<ul>
+<li><strong>The Wiring:</strong> The code for Voice Mode is installed on the user's computer.</li>
+<li><strong>The Fuse (Flag):</strong> This controls whether electricity allows the feature to run.</li>
+<li><strong>Remote Control:</strong> We can blow the fuse remotely if we detect a fire (a bug).</li>
+</ul>
+<p>
+In our project, we use a tool called <strong>GrowthBook</strong> to manage these fuses.
+</p>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+We use a specific logic called a <strong>Kill Switch</strong>. Instead of asking "Is this feature on?", we ask "Is this feature disabled?"
+</p>
+<p>
+We look at a specific flag named: <code>tengu_amber_quartz_disabled</code>.
+ 
+<em>(Don't worry about the strange name; it's just a code name for this specific emergency switch).</em>
+</p>
+<h3 id="the-code-interface">The Code Interface</h3>
+<p>
+You don't need to talk to the remote server manually. We have a helper function in <code>voiceModeEnabled.ts</code>.
+</p>
+<pre data-lang="typescript"><code>import { isVoiceGrowthBookEnabled } from './voiceModeEnabled';
+
+if (isVoiceGrowthBookEnabled()) {
+  console.log("Fuse is intact. Feature is GO.");
+} else {
+  console.log("Kill-switch is active. Feature is STOPPED.");
+}
+</code></pre>
+<p>
+<strong>What happens here:</strong>
+</p>
+<ol>
+<li><strong>Input:</strong> None.</li>
+</ol>
+<ol>
+<li><strong>Output:</strong> %%INLINE<em>2%% (Safe to run) or %%INLINE</em>3%% (Do not run).</li>
+</ol>
+<ol>
+<li><strong>Behavior:</strong> If the remote server says "Disabled = true", this function returns <code>false</code>.</li>
+</ol>
+<hr>
+<h2 id="how-it-works-under-the-hood">How it Works: Under the Hood</h2>
+<p>
+Checking a remote server every time you click a button would make the app slow. Instead, we use a <strong>Cached Strategy</strong>.
+</p>
+<ol>
+<li><strong>Sync:</strong> Occasionally (e.g., when the app starts), the app downloads the latest "Fuse Box Settings" from GrowthBook and saves them to a file (Cache).</li>
+</ol>
+<ol>
+<li><strong>Check:</strong> When <code>isVoiceGrowthBookEnabled</code> runs, it reads from that local file. It is instant.</li>
+</ol>
+<p>
+Here is the flow of information:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant App as Application Code
+    participant Cache as Local Settings File
+    participant Server as GrowthBook Server
+
+    Note over App, Server: 1. Background Sync (Happens occasionally)
+    Server-&gt;&gt;Cache: Update Flags (tengu_amber_quartz_disabled = false)
+
+    Note over App, Server: 2. The Check (Happens instantly)
+    App-&gt;&gt;Cache: Is the kill-switch ON?
+    Cache--&gt;&gt;App: No (Value is false)
+    App-&gt;&gt;App: Enable Voice Mode</div></div>
+<hr>
+<h2 id="deep-dive-the-code">Deep Dive: The Code</h2>
+<p>
+Let's look at the implementation in <code>voiceModeEnabled.ts</code>. We combine two important checks here.
+</p>
+<h3 id="1-the-build-time-check">1. The Build-Time Check</h3>
+<p>
+First, we check if the code exists at all. We will cover this concept in depth in <a href="05<em>build</em>time<em>code</em>elimination.md">Build-Time Code Elimination</a>.
+</p>
+<pre data-lang="typescript"><code>// Part 1: Check if the code is compiled
+export function isVoiceGrowthBookEnabled(): boolean {
+  // If 'VOICE_MODE' is false during build, the rest of the code vanishes.
+  if (!feature('VOICE_MODE')) {
+    return false
+  }
+  
+  // ... continued below
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li><code>feature('VOICE_MODE')</code> checks if we included the Voice code when we built the app. If not, we stop immediately.</li>
+</ul>
+<h3 id="2-the-runtime-kill-switch">2. The Runtime Kill-Switch</h3>
+<p>
+If the code is present, we check the remote flag.
+</p>
+<pre data-lang="typescript"><code>  // ... continued from above
+
+  // Part 2: Check the "Kill Switch" flag
+  // We check 'tengu_amber_quartz_disabled'.
+  // We provide a fallback value of 'false' (Not disabled).
+  const isDisabled = getFeatureValue_CACHED_MAY_BE_STALE(
+    'tengu_amber_quartz_disabled', 
+    false
+  )
+
+  // We return TRUE only if it is NOT disabled.
+  return !isDisabled
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li><code>getFeatureValue_CACHED_MAY_BE_STALE</code>: This function reads the local cache. The name reminds us that the value might be a few minutes old (stale), which is acceptable for a feature flag.</li>
+<li><code>'tengu_amber_quartz_disabled'</code>: The ID of the flag in the GrowthBook system.</li>
+<li><code>false</code> (The default): If the app can't reach the cache or server, we assume the feature is <strong>safe</strong> (not disabled) so users can use it.</li>
+<li><code>!isDisabled</code>: The logic is reversed. If "Disabled" is true, "Enabled" is false.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have learned how to install a <strong>Smart Fuse</strong> in your application.
+</p>
+<ul>
+<li><strong>GrowthBook</strong> allows us to control the app remotely.</li>
+<li><strong>Kill Switches</strong> allow us to disable features instantly in emergencies.</li>
+<li><strong>Caching</strong> ensures these checks don't slow down the application.</li>
+</ul>
+<p>
+Now that we know the wiring (Code) is safe and the fuse (Flag) is on, we need to make sure the user has the right keys to actually use the voice service.
+</p>
+<p>
+<a href="03<em>provider</em>specific_authentication.md">Next Chapter: Provider-Specific Authentication</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="voice.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">voice/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-emergency-stop-scenario">The Problem: The "Emergency Stop" Scenario</a></li>
+<li style="padding-left:0px"><a href="#the-solution-a-smart-fuse-box">The Solution: A Smart Fuse Box</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:10px"><a href="#the-code-interface">The Code Interface</a></li>
+<li style="padding-left:0px"><a href="#how-it-works-under-the-hood">How it Works: Under the Hood</a></li>
+<li style="padding-left:0px"><a href="#deep-dive-the-code">Deep Dive: The Code</a></li>
+<li style="padding-left:10px"><a href="#1-the-build-time-check">1. The Build-Time Check</a></li>
+<li style="padding-left:10px"><a href="#2-the-runtime-kill-switch">2. The Runtime Kill-Switch</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

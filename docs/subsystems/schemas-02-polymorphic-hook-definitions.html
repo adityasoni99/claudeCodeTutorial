@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: Polymorphic Hook Definitions — schemas/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">schemas/02_polymorphic_hook_definitions.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">📐 schemas/ · 02_polymorphic_hook_definitions.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: Polymorphic Hook Definitions</h1>
+  <div class="chapter-meta"><span>📄 schemas/02_polymorphic_hook_definitions.md</span></div>
+</div>
+<h1 id="chapter-2-polymorphic-hook-definitions">Chapter 2: Polymorphic Hook Definitions</h1>
+<p>
+In the previous chapter, <a href="01<em>event</em>based<em>configuration</em>registry.md">Event-Based Configuration Registry</a>, we built the "Rulebook." We learned how to map specific events (like <code>tool_finish</code>) to a list of rules.
+</p>
+<p>
+But we left one big question unanswered: <strong>What specific actions can we perform?</strong>
+</p>
+<p>
+In Chapter 1, we simply ran a <code>command</code>. But what if you want to:
+</p>
+<ol>
+<li><strong>Ask an AI</strong> to review the code?</li>
+</ol>
+<ol>
+<li><strong>Send a Webhook</strong> to a Slack channel?</li>
+</ol>
+<ol>
+<li><strong>Verify</strong> a task using an autonomous agent?</li>
+</ol>
+<p>
+This chapter introduces <strong>Polymorphic Hook Definitions</strong>. It’s a fancy name for a simple concept: A Universal Adapter.
+</p>
+<h2 id="the-problem-different-tools-for-different-jobs">The Problem: Different Tools for Different Jobs</h2>
+<p>
+Imagine you are building a "Deployment" workflow. When you finish writing code, you want three things to happen automatically:
+</p>
+<ol>
+<li><strong>Format</strong> the code (requires a Shell Command).</li>
+</ol>
+<ol>
+<li><strong>Log</strong> the event to your analytics server (requires an HTTP Request).</li>
+</ol>
+<ol>
+<li><strong>Check</strong> for security vulnerabilities using an LLM (requires an AI Prompt).</li>
+</ol>
+<p>
+If we only supported shell commands, steps 2 and 3 would be very hard to implement. We need a system that can handle different "shapes" of data depending on the task.
+</p>
+<h3 id="the-solution-the-universal-adapter">The Solution: The "Universal Adapter"</h3>
+<p>
+Think of your wall outlet. You can plug in:
+</p>
+<ul>
+<li>A Drill (Motor)</li>
+<li>A Lamp (Light)</li>
+<li>A Laptop (Computer)</li>
+</ul>
+<p>
+The outlet doesn't care <em>what</em> the device is, as long as the plug fits. In our system, the "plug" is a JSON object, and the "label" that tells us what the device does is the <strong><code>type</code></strong> field.
+</p>
+<h2 id="solving-the-use-case">Solving the Use Case</h2>
+<p>
+Let's look at how we define these three different actions using our polymorphic schema.
+</p>
+<h3 id="type-1-the-command-the-drill">Type 1: The "Command" (The Drill)</h3>
+<p>
+This is the worker. It executes scripts on your machine.
+</p>
+<pre data-lang="typescript"><code>{
+  // The label that identifies this as a Shell Command
+  "type": "command",
+  
+  // Specific settings for commands
+  "command": "npm run format",
+  "timeout": 30 // Stop after 30 seconds
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong> When the system sees %%INLINE<em>3%%, it knows to look for a %%INLINE</em>4%% string and executes it in the terminal.
+</p>
+<h3 id="type-2-the-http-the-sensor">Type 2: The "HTTP" (The Sensor)</h3>
+<p>
+This is the messenger. It talks to the outside world.
+</p>
+<pre data-lang="typescript"><code>{
+  // The label that identifies this as a Network Request
+  "type": "http",
+  
+  // Specific settings for HTTP
+  "url": "https://api.myapp.com/logs",
+  "headers": { "Authorization": "Bearer $MY_TOKEN" }
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong> When the system sees %%INLINE<em>5%%, it stops looking for shell commands. Instead, it expects a %%INLINE</em>6%%. It sends the event data there automatically.
+</p>
+<h3 id="type-3-the-prompt-the-brain">Type 3: The "Prompt" (The Brain)</h3>
+<p>
+This is the thinker. It asks an LLM a question.
+</p>
+<pre data-lang="typescript"><code>{
+  // The label that identifies this as an AI Prompt
+  "type": "prompt",
+  
+  // Specific settings for AI
+  "prompt": "Review the code in $ARGUMENTS for security issues.",
+  "model": "claude-3-5-sonnet"
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong> When the system sees %%INLINE<em>7%%, it knows it needs to talk to an AI model. It sends the %%INLINE</em>8%% text to the LLM and streams the response back to you.
+</p>
+<h2 id="internal-implementation-under-the-hood">Internal Implementation: Under the Hood</h2>
+<p>
+How does the code know which logic to run? It uses a pattern called a <strong>Discriminated Union</strong>.
+</p>
+<h3 id="the-flow-of-logic">The Flow of Logic</h3>
+<p>
+Here is how the system processes a generic hook object:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">graph TD
+    A[Input Hook Object] --&gt; B{Check 'type' field}
+    
+    B -- "command" --&gt; C[Validate against Command Schema]
+    C --&gt; D[Execute via Shell Provider]
+    
+    B -- "http" --&gt; E[Validate against HTTP Schema]
+    E --&gt; F[Execute via Fetch API]
+    
+    B -- "prompt" --&gt; G[Validate against Prompt Schema]
+    G --&gt; H[Execute via LLM Client]</div></div>
+<ol>
+<li>The system receives a generic object from the configuration.</li>
+</ol>
+<ol>
+<li>It looks at the <code>type</code> property <strong>first</strong>.</li>
+</ol>
+<ol>
+<li>Based on that value, it routes the data to the correct validator and execution engine.</li>
+</ol>
+<h3 id="code-deep-dive">Code Deep Dive</h3>
+<p>
+Let's look at <code>hooks.ts</code> to see how this is built using Zod.
+</p>
+<h4 id="1-defining-the-shapes">1. Defining the Shapes</h4>
+<p>
+First, we define the individual shapes (schemas) for each type.
+</p>
+<pre data-lang="typescript"><code>// hooks.ts (Simplified)
+const BashCommandHookSchema = z.object({
+  type: z.literal('command'), // This must be "command"
+  command: z.string(),
+  timeout: z.number().optional(),
+});
+
+const HttpHookSchema = z.object({
+  type: z.literal('http'),    // This must be "http"
+  url: z.string().url(),
+});
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li>%%INLINE<em>11%%: This is the magic. It enforces that if you use the %%INLINE</em>12%%, the <code>type</code> field <em>must</em> be exactly the string "command".</li>
+</ul>
+<h4 id="2-the-discriminated-union">2. The Discriminated Union</h4>
+<p>
+Now, we combine them into one master schema. This is the "Polymorphic" part.
+</p>
+<pre data-lang="typescript"><code>// hooks.ts
+export const HookCommandSchema = lazySchema(() =&gt; {
+  const { BashCommandHookSchema, HttpHookSchema, /* others */ } = buildHookSchemas()
+  
+  return z.discriminatedUnion('type', [
+    BashCommandHookSchema,
+    HttpHookSchema,
+    // PromptHookSchema,
+    // AgentHookSchema
+  ])
+})
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li>%%INLINE<em>14%%: This tells Zod, "I have a list of possible objects. They are all different, but they all share one common field called %%INLINE</em>15%%."</li>
+<li>When Zod validates data, it checks %%INLINE<em>16%% first. If it finds %%INLINE</em>17%%, it <em>only</em> checks against <code>HttpHookSchema</code> and ignores the Command schema.</li>
+</ul>
+<h3 id="why-is-this-better">Why is this better?</h3>
+<p>
+If we didn't use this approach, we might have a messy object like this:
+</p>
+<pre data-lang="typescript"><code>// The WRONG way (Bad design)
+{
+  "command": "npm run test", // Optional?
+  "url": "..."               // Optional?
+  "prompt": "..."            // Optional?
+}
+</code></pre>
+<p>
+In the "Wrong Way," you could accidentally provide both a %%INLINE<em>19%% and a %%INLINE</em>20%%, confusing the system.
+</p>
+<p>
+With <strong>Polymorphic Definitions</strong>, the structure is strict. If %%INLINE<em>21%% is "command", you are <strong>not allowed</strong> to have a %%INLINE</em>22%% property. It keeps the configuration clean and error-free.
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>Polymorphism</strong> allows us to define different behaviors (Command, HTTP, Prompt) within the same list of hooks.</li>
+</ol>
+<ol>
+<li>The <strong><code>type</code> field</strong> acts as a discriminator (or label) to tell the system how to handle the data.</li>
+</ol>
+<ol>
+<li><strong>Zod's <code>discriminatedUnion</code></strong> ensures strict validation—you can't mix up settings meant for a URL with settings meant for a shell command.</li>
+</ol>
+<p>
+Now that we know how to <em>define</em> these hooks, let's see how the most common one actually works.
+</p>
+<p>
+<a href="03<em>shell</em><em>_system</em>integration.md">Next Chapter: Shell & System Integration</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="schemas.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">schemas/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-different-tools-for-different-jobs">The Problem: Different Tools for Different Jobs</a></li>
+<li style="padding-left:10px"><a href="#the-solution-the-universal-adapter">The Solution: The "Universal Adapter"</a></li>
+<li style="padding-left:0px"><a href="#solving-the-use-case">Solving the Use Case</a></li>
+<li style="padding-left:10px"><a href="#type-1-the-command-the-drill">Type 1: The "Command" (The Drill)</a></li>
+<li style="padding-left:10px"><a href="#type-2-the-http-the-sensor">Type 2: The "HTTP" (The Sensor)</a></li>
+<li style="padding-left:10px"><a href="#type-3-the-prompt-the-brain">Type 3: The "Prompt" (The Brain)</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-under-the-hood">Internal Implementation: Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#the-flow-of-logic">The Flow of Logic</a></li>
+<li style="padding-left:10px"><a href="#code-deep-dive">Code Deep Dive</a></li>
+<li style="padding-left:10px"><a href="#why-is-this-better">Why is this better?</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

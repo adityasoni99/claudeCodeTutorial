@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 6: Operator Context — vim/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">vim/06_operator_context.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⌨️ vim/ · 06_operator_context.md</div>
+  <h1 class="chapter-title-h1">Chapter 6: Operator Context</h1>
+  <div class="chapter-meta"><span>📄 vim/06_operator_context.md</span></div>
+</div>
+<h1 id="chapter-6-operator-context">Chapter 6: Operator Context</h1>
+<p>
+In the previous chapter, <a href="05<em>text</em>objects.md">Text Objects</a>, we learned how to select complex chunks of text, like "inside quotes."
+</p>
+<p>
+We now have all the logic pieces:
+</p>
+<ol>
+<li><strong>State Machine:</strong> Knows we are deleting.</li>
+</ol>
+<ol>
+<li><strong>Motions:</strong> Knows where the text starts and ends.</li>
+</ol>
+<ol>
+<li><strong>Operators:</strong> Knows how to slice the string.</li>
+</ol>
+<p>
+But here is a question: <strong>Where is the text actually stored?</strong> And when we copy text with <code>y</code> (yank), where does it go?
+</p>
+<p>
+This brings us to the final piece of the puzzle: the <strong>Operator Context</strong>.
+</p>
+<h2 id="the-motivation-the-chef-and-the-kitchen">The Motivation: The Chef and The Kitchen</h2>
+<p>
+Think of the Vim engine like a professional Chef.
+</p>
+<ul>
+<li>The <strong>Chef</strong> (The Code) knows all the recipes. They know exactly how to slice an onion (Operator) or find a specific ingredient (Motion).</li>
+<li>However, a Chef cannot cook in empty space. They need a <strong>Kitchen</strong>.</li>
+</ul>
+<p>
+The <strong>Operator Context</strong> is that Kitchen. It is a toolbox passed to every function that contains:
+</p>
+<ol>
+<li><strong> The Ingredients:</strong> The current document text.</li>
+</ol>
+<ol>
+<li><strong> The Countertop:</strong> The current cursor position.</li>
+</ol>
+<ol>
+<li><strong> The Fridge:</strong> The clipboard (registers) to store food.</li>
+</ol>
+<ol>
+<li><strong> The Receipt:</strong> A log of what was just cooked (for undo/redo).</li>
+</ol>
+<p>
+Without the Context, our functions are just abstract math. With Context, they can change the world.
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+The Context serves as a bridge between our "Pure Logic" and the "Real World."
+</p>
+<h3 id="1-the-state-interface">1. The State Interface</h3>
+<p>
+In programming, we try to keep logic "pure" (input -> output). But an editor is inherently "dirty" (it holds state). The Context object wraps this state safely.
+</p>
+<pre data-lang="typescript"><code>// Conceptual View
+type Context = {
+  text: string          // The document
+  cursor: Cursor        // Your location
+  setText(t: string)    // Way to change document
+  setOffset(n: number)  // Way to move cursor
+}
+</code></pre>
+<h3 id="2-the-registers-clipboard">2. The Registers (Clipboard)</h3>
+<p>
+When you delete a word (%%INLINE<em>1%%) or yank a line (%%INLINE</em>2%%), that text doesn't disappear. It goes into a "Register." The Context holds these registers so you can paste (<code>p</code>) later.
+</p>
+<h3 id="3-the-recorder-dot-repeat">3. The Recorder (Dot Repeat)</h3>
+<p>
+One of Vim's most famous features is the %%INLINE<em>4%% command, which repeats the last change. How does it know what you did? The Context has a %%INLINE</em>5%% method that acts like a flight recorder (black box).
+</p>
+<h2 id="use-case-the-dot-command-inline-6">Use Case: The "Dot" Command (<code>.</code>)</h2>
+<p>
+Let's see why Context is vital for the command <code>.</code> (Repeat).
+</p>
+<p>
+<strong>Scenario:</strong>
+</p>
+<ol>
+<li>You type <code>dw</code> (Delete Word).</li>
+</ol>
+<ol>
+<li>You move the cursor to another word.</li>
+</ol>
+<ol>
+<li>You type <code>.</code>.</li>
+</ol>
+<p>
+<strong>What happens inside:</strong>
+</p>
+<ol>
+<li><strong>During <code>dw</code>:</strong> The Operator executes, but it <em>also</em> tells the Context: <em>"Record that I just did a Delete operation with the Word motion."</em></li>
+</ol>
+<ol>
+<li><strong>During <code>.</code>:</strong> The engine asks the Context: <em>"What was the last thing recorded?"</em> The Context replies, and the engine replays it.</li>
+</ol>
+<h2 id="internal-implementation">Internal Implementation</h2>
+<p>
+Let's visualize how the data flows when you execute a command.
+</p>
+<h3 id="the-flow">The Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant Logic as Operator Logic
+    participant Ctx as Context (The Toolkit)
+    participant Hist as History/Recorder
+
+    User-&gt;&gt;Logic: Types "dw"
+    
+    Note over Logic: 1. Read the State
+    Logic-&gt;&gt;Ctx: "Give me current text &amp; cursor"
+    Ctx--&gt;&gt;Logic: returns data
+    
+    Note over Logic: 2. Calculate &amp; Execute
+    Logic-&gt;&gt;Logic: Slice string (Delete word)
+    
+    Note over Logic: 3. Update the World
+    Logic-&gt;&gt;Ctx: setText("New String")
+    Logic-&gt;&gt;Ctx: setRegister("DeletedWord")
+    
+    Note over Logic: 4. Save for later
+    Logic-&gt;&gt;Ctx: recordChange({ op: 'd', motion: 'w' })
+    Ctx-&gt;&gt;Hist: Save entry</div></div>
+<h3 id="the-code">The Code</h3>
+<p>
+The Context is defined in <code>operators.ts</code>. It is a TypeScript type that lists everything an operator is allowed to touch.
+</p>
+<h4 id="1-defining-the-toolbox">1. Defining the Toolbox</h4>
+<p>
+This is the interface passed to every operator function.
+</p>
+<pre data-lang="typescript"><code>// From operators.ts
+export type OperatorContext = {
+  cursor: Cursor
+  text: string
+  
+  // The 'Write' methods
+  setText: (text: string) =&gt; void
+  setOffset: (offset: number) =&gt; void
+  
+  // The 'Extras'
+  setRegister: (content: string, linewise: boolean) =&gt; void
+  recordChange: (change: RecordedChange) =&gt; void
+}
+</code></pre>
+<h4 id="2-using-the-toolbox-deleting">2. Using the Toolbox (Deleting)</h4>
+<p>
+When we run <code>dw</code>, we use the Context to interact with the editor.
+</p>
+<pre data-lang="typescript"><code>// From operators.ts - applyOperator
+function applyOperator(op, from, to, ctx: OperatorContext) {
+  // 1. READ from ctx.text
+  const deletedChunk = ctx.text.slice(from, to)
+  
+  // 2. WRITE to Register (Clipboard)
+  ctx.setRegister(deletedChunk, false)
+
+  if (op === 'delete') {
+    // 3. CALCULATE new text
+    const newText = ctx.text.slice(0, from) + ctx.text.slice(to)
+    
+    // 4. WRITE updates back to Context
+    ctx.setText(newText)
+    ctx.setOffset(from)
+  }
+}
+</code></pre>
+<h4 id="3-recording-the-history">3. Recording the History</h4>
+<p>
+Finally, at the end of <code>executeOperatorMotion</code>, we leave a paper trail.
+</p>
+<pre data-lang="typescript"><code>// From operators.ts
+export function executeOperatorMotion(op, motion, count, ctx) {
+  // ... calculate ranges ...
+  // ... applyOperator ...
+
+  // RECORD what just happened
+  ctx.recordChange({ 
+    type: 'operator', 
+    op: op, 
+    motion: motion, 
+    count: count 
+  })
+}
+</code></pre>
+<p>
+This %%INLINE<em>15%% function is what allows the %%INLINE</em>16%% command (handled in <a href="02<em>input</em>transition_logic.md">Input Transition Logic</a>) to work later.
+</p>
+<h2 id="why-is-this-beginner-friendly">Why is this "Beginner Friendly"?</h2>
+<p>
+You might wonder why we pass this object around instead of just having a global variable called <code>THE_EDITOR</code>.
+</p>
+<ol>
+<li><strong>Testing:</strong> We can create a "Fake Context" for testing. We can give the function a fake document, run <code>dw</code>, and check if the fake document changed. We don't need to run the whole app to test one button.</li>
+</ol>
+<ol>
+<li><strong>Safety:</strong> The Operator function can <em>only</em> do what the Context allows. It cannot accidentally close the window or change the font size, because %%INLINE<em>19%% isn't in the %%INLINE</em>20%%.</li>
+</ol>
+<h2 id="summary">Summary</h2>
+<p>
+The <strong>Operator Context</strong> is the glue that holds the application together.
+</p>
+<ul>
+<li>It stores the <strong>Data</strong> (Text, Cursor).</li>
+<li>It provides the <strong>Tools</strong> (setText, setRegister).</li>
+<li>It remembers the <strong>Past</strong> (recordChange).</li>
+</ul>
+<p>
+<strong>Congratulations!</strong> You have completed the tour of the Vim Engine.
+</p>
+<p>
+We started with a <strong>State Machine</strong> to understand inputs. We used <strong>Motions</strong> to navigate geometry. We built <strong>Operators</strong> to transform text, and we used <strong>Context</strong> to make those changes real.
+</p>
+<p>
+You now understand the core architecture of how a modal editor like Vim "thinks."
+</p>
+<h3 id="complete-tutorial-navigation">Complete Tutorial Navigation</h3>
+<ol>
+<li><a href="01<em>vim</em>state_machine.md">Vim State Machine</a></li>
+</ol>
+<ol>
+<li><a href="02<em>input</em>transition_logic.md">Input Transition Logic</a></li>
+</ol>
+<ol>
+<li><a href="03<em>motion</em>resolution.md">Motion Resolution</a></li>
+</ol>
+<ol>
+<li><a href="04<em>operator</em>execution.md">Operator Execution</a></li>
+</ol>
+<ol>
+<li><a href="05<em>text</em>objects.md">Text Objects</a></li>
+</ol>
+<ol>
+<li><strong>Operator Context</strong> (You are here)</li>
+</ol>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="vim.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">vim/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-the-chef-and-the-kitchen">The Motivation: The Chef and The Kitchen</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-state-interface">1. The State Interface</a></li>
+<li style="padding-left:10px"><a href="#2-the-registers-clipboard">2. The Registers (Clipboard)</a></li>
+<li style="padding-left:10px"><a href="#3-the-recorder-dot-repeat">3. The Recorder (Dot Repeat)</a></li>
+<li style="padding-left:0px"><a href="#use-case-the-dot-command-inline-6">Use Case: The "Dot" Command (%%INLINE_6%%)</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#the-flow">The Flow</a></li>
+<li style="padding-left:10px"><a href="#the-code">The Code</a></li>
+<li style="padding-left:0px"><a href="#why-is-this-beginner-friendly">Why is this "Beginner Friendly"?</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li>
+<li style="padding-left:10px"><a href="#complete-tutorial-navigation">Complete Tutorial Navigation</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

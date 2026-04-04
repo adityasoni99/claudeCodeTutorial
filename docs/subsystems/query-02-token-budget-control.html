@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: Token Budget Control — query/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">query/02_token_budget_control.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⚙️ query/ · 02_token_budget_control.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: Token Budget Control</h1>
+  <div class="chapter-meta"><span>📄 query/02_token_budget_control.md</span></div>
+</div>
+<h1 id="chapter-2-token-budget-control">Chapter 2: Token Budget Control</h1>
+<p>
+Welcome back! In <a href="01<em>immutable</em>query_configuration.md">Chapter 1: Immutable Query Configuration</a>, we learned how to lock in our "Mission Parameters" (Configuration) so they don't change while the agent is working.
+</p>
+<p>
+Now, we face a new problem: <strong>Resource Management</strong>.
+</p>
+<h2 id="the-motivation-the-infinite-loop-problem">The Motivation: The "Infinite Loop" Problem</h2>
+<p>
+Imagine you hire a taxi to drive you across the city. You agree on a price, but you fall asleep in the back seat. The driver gets lost and drives in circles for 5 hours. When you wake up, the meter reads $5,000.
+</p>
+<p>
+AI Agents are similar. They run on "Tokens" (pieces of words).
+</p>
+<ol>
+<li><strong>The Risk:</strong> An agent might get stuck in a logic loop, repeating "Thinking..." or making tiny, useless edits forever.</li>
+</ol>
+<ol>
+<li><strong>The Cost:</strong> This burns through money (API costs) and time (user latency).</li>
+</ol>
+<p>
+<strong>The Solution:</strong> We need a <strong>Token Budget Control</strong>. Think of this as a "Smart Trip Computer." It doesn't just cut the engine when the gas tank is empty; it watches <em>how</em> the car is driving. If the car is burning gas but not moving forward, it stops the car early to save fuel.
+</p>
+<h3 id="central-use-case-diminishing-returns">Central Use Case: "Diminishing Returns"</h3>
+<p>
+If an agent has used 90% of its budget but is still outputting very short, unhelpful responses turn after turn, we shouldn't wait for 100%. We should stop it now. This is called detecting <strong>Diminishing Returns</strong>.
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<ol>
+<li><strong>Budget:</strong> The maximum amount of fuel (tokens) allowed for the entire conversation.</li>
+</ol>
+<ol>
+<li><strong>Tracker:</strong> A clipboard that records how much fuel has been used so far.</li>
+</ol>
+<ol>
+<li><strong>Nudge:</strong> A warning message sent to the agent (e.g., "You are almost out of fuel, wrap it up!") rather than just cutting it off.</li>
+</ol>
+<ol>
+<li><strong>Delta:</strong> The difference in token usage between the current turn and the previous turn.</li>
+</ol>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+Using the Token Budget Control is a two-step process: <strong>Initialize</strong> and <strong>Check</strong>.
+</p>
+<h3 id="step-1-create-the-tracker">Step 1: Create the Tracker</h3>
+<p>
+Before the agent starts its loop, we create a fresh tracker. This records the starting time and sets counters to zero.
+</p>
+<pre data-lang="typescript"><code>// budget.ts - Initialization
+import { createBudgetTracker } from './tokenBudget'
+
+// Create a blank slate for tracking
+const tracker = createBudgetTracker()
+
+console.log(tracker) 
+// Output: { continuationCount: 0, lastDeltaTokens: 0, ... }
+</code></pre>
+<p>
+<em>Explanation:</em> This <code>tracker</code> object is stateful. It will evolve as the conversation progresses, remembering history so we can detect patterns.
+</p>
+<h3 id="step-2-checking-the-budget">Step 2: Checking the Budget</h3>
+<p>
+Inside the agent's main loop (every time it wants to speak), we ask the Budget Control for a decision.
+</p>
+<pre data-lang="typescript"><code>// Inside the Agent Execution Loop
+import { checkTokenBudget } from './tokenBudget'
+
+// 1. Current total usage (from API)
+const currentUsage = 8500 
+const maxBudget = 10000
+
+// 2. Ask for a decision
+const decision = checkTokenBudget(tracker, undefined, maxBudget, currentUsage)
+</code></pre>
+<p>
+<em>Explanation:</em> We pass the %%INLINE<em>1%% (history), the %%INLINE</em>2%% (limit), and %%INLINE<em>3%% (current status). The function returns a %%INLINE</em>4%% object telling us what to do next.
+</p>
+<h2 id="under-the-hood">Under the Hood</h2>
+<p>
+How does the "Smart Trip Computer" make decisions? It's not just looking at the fuel gauge; it calculates efficiency.
+</p>
+<h3 id="visual-flow">Visual Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Agent
+    participant Budget as Token Budget Control
+
+    Agent-&gt;&gt;Budget: "I've used 4,000 tokens. Can I go?"
+    Budget--&gt;&gt;Agent: "Action: Continue" (All good)
+
+    Agent-&gt;&gt;Budget: "I've used 9,200 tokens. Can I go?"
+    Note right of Budget: 92% used. Need to warn.
+    Budget--&gt;&gt;Agent: "Action: Continue" (With Nudge: "Wrap it up!")
+
+    Agent-&gt;&gt;Budget: "I've used 9,300 tokens..."
+    Note right of Budget: Usage grew by only 100. &lt;br/&gt;That's very low progress.
+    Budget--&gt;&gt;Agent: "Action: STOP" (Diminishing Returns)</div></div>
+<h3 id="internal-implementation">Internal Implementation</h3>
+<p>
+Let's look at the logic inside <code>checkTokenBudget</code>. We'll break it down into simple parts.
+</p>
+<h4 id="part-1-the-tracker-structure">Part 1: The Tracker Structure</h4>
+<p>
+This is the state object we pass around.
+</p>
+<pre data-lang="typescript"><code>// tokenBudget.ts
+export type BudgetTracker = {
+  continuationCount: number  // How many times we've "nudged"
+  lastDeltaTokens: number    // Tokens used in the PREVIOUS turn
+  lastGlobalTurnTokens: number // Total tokens at the last check
+  startedAt: number          // Timestamp
+}
+</code></pre>
+<p>
+<em>Explanation:</em> <code>lastDeltaTokens</code> is crucial. It remembers how much "work" the agent did in the previous step.
+</p>
+<h4 id="part-2-calculating-progress">Part 2: Calculating Progress</h4>
+<p>
+When the check function runs, it first calculates where we stand.
+</p>
+<pre data-lang="typescript"><code>// tokenBudget.ts - Calculation
+  // ... inside checkTokenBudget ...
+
+  const turnTokens = globalTurnTokens // e.g., 9000
+  const pct = Math.round((turnTokens / budget) * 100) // e.g., 90%
+  
+  // How much did we do since the last time we checked?
+  const deltaSinceLastCheck = globalTurnTokens - tracker.lastGlobalTurnTokens
+</code></pre>
+<p>
+<em>Explanation:</em> <code>deltaSinceLastCheck</code> tells us the "velocity" of the agent. If this number is small, the agent is moving slowly.
+</p>
+<h4 id="part-3-the-diminishing-returns-heuristic">Part 3: The "Diminishing Returns" Heuristic</h4>
+<p>
+This is the "Smart" part of the system. It checks if the agent is stalling.
+</p>
+<pre data-lang="typescript"><code>// tokenBudget.ts - The Heuristic
+  const DIMINISHING_THRESHOLD = 500
+
+  // 1. Have we been nudged at least 3 times?
+  // 2. Is current progress slow?
+  // 3. Was PREVIOUS progress ALSO slow?
+  const isDiminishing =
+    tracker.continuationCount &gt;= 3 &amp;&amp;
+    deltaSinceLastCheck &lt; DIMINISHING_THRESHOLD &amp;&amp;
+    tracker.lastDeltaTokens &lt; DIMINISHING_THRESHOLD
+</code></pre>
+<p>
+<em>Explanation:</em> This logic says: "If the agent has been warned 3 times, AND it barely did anything this turn, AND it barely did anything last turn... it's time to pull the plug." This prevents the agent from spending money on empty loops.
+</p>
+<h4 id="part-4-the-decision">Part 4: The Decision</h4>
+<p>
+Finally, we return the verdict.
+</p>
+<pre data-lang="typescript"><code>// tokenBudget.ts - The Decision
+  // If we detect stalling...
+  if (isDiminishing) {
+    return {
+      action: 'stop',
+      completionEvent: { /* details about why we stopped */ },
+    }
+  }
+
+  // Otherwise, update tracker and continue
+  tracker.continuationCount++
+  return { 
+      action: 'continue', 
+      nudgeMessage: "You are nearing the token limit..." 
+  }
+</code></pre>
+<p>
+<em>Explanation:</em> If %%INLINE<em>8%% is %%INLINE</em>9%%, the agent keeps going (possibly seeing the %%INLINE<em>10%%). If %%INLINE</em>11%% is <code>stop</code>, the loop terminates immediately.
+</p>
+<h2 id="why-is-this-beginner-friendly">Why is this "Beginner Friendly"?</h2>
+<p>
+Instead of writing complex %%INLINE<em>13%% statements scattered throughout your agent code (e.g., %%INLINE</em>14%%), we extract that logic into this dedicated module.
+</p>
+<p>
+This makes your agent code cleaner and ensures you never accidentally create an expensive infinite loop. It also allows us to inject different budget rules later without rewriting the agent itself!
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>Cost Control:</strong> AI agents need strict supervision on resource usage.</li>
+</ol>
+<ol>
+<li><strong>Smart Heuristics:</strong> A simple hard limit isn't enough; we check for "Diminishing Returns" (low progress over time).</li>
+</ol>
+<ol>
+<li><strong>The Tracker:</strong> We maintain a history of the conversation flow to make intelligent stop decisions.</li>
+</ol>
+<p>
+Now that our agent has its <strong>Configuration</strong> (Chapter 1) and its <strong>Budget</strong> (Chapter 2), it needs tools to actually perform work.
+</p>
+<p>
+<a href="03<em>dependency</em>injection_interface.md">Next Chapter: Dependency Injection Interface</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="query.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">query/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-the-infinite-loop-problem">The Motivation: The "Infinite Loop" Problem</a></li>
+<li style="padding-left:10px"><a href="#central-use-case-diminishing-returns">Central Use Case: "Diminishing Returns"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:10px"><a href="#step-1-create-the-tracker">Step 1: Create the Tracker</a></li>
+<li style="padding-left:10px"><a href="#step-2-checking-the-budget">Step 2: Checking the Budget</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood">Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#visual-flow">Visual Flow</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:0px"><a href="#why-is-this-beginner-friendly">Why is this "Beginner Friendly"?</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

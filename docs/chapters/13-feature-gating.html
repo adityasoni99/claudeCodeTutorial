@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ch.13 Feature Gating — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">Ch.13 — Feature Gating</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-core">CORE</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">Chapter 13 · <span class="tag tag-core">CORE</span></div>
+  <h1 class="chapter-title-h1">Feature Gating</h1>
+  <div class="chapter-meta">
+    <span>📄 13_feature_gating.md</span>
+    <span>🏷 Core</span>
+  </div>
+</div>
+<h1 id="chapter-13-feature-gating">Chapter 13: Feature Gating</h1>
+<p>
+In the previous <a href="12<em>websearchtool.md">WebSearchTool</a> chapter, we gave %%INLINE</em>0%% access to the internet. Before that, in <a href="11_notebookedittool.md">NotebookEditTool</a>, we gave it access to data science files.
+</p>
+<p>
+We are adding powerful features rapidly. But here is a problem: <strong>Not every user needs every feature.</strong>
+</p>
+<ul>
+<li>Maybe a corporate user wants to disable the <strong>WebSearchTool</strong> for security.</li>
+<li>Maybe the <strong>Computer Use</strong> feature is experimental and should only be available to developers debugging the app.</li>
+<li>Maybe we want to ship a "Light" version of the app that loads faster.</li>
+</ul>
+<p>
+We need a way to turn features on and off efficiently. This is called <strong>Feature Gating</strong>.
+</p>
+<h2 id="what-is-feature-gating">What is Feature Gating?</h2>
+<p>
+Feature Gating is like a fuse box for your application. It allows you to enable or disable entire sections of functionality based on configuration.
+</p>
+<p>
+In <code>claudeCode</code>, we use a specific technique called <strong>Compile-Time Feature Flagging</strong> using our bundler, <strong>Bun</strong>.
+</p>
+<h3 id="the-central-use-case-hiding-the-experimental-tool">The Central Use Case: "Hiding the Experimental Tool"</h3>
+<p>
+Imagine we are building a new tool called "SuperTool," but it crashes 50% of the time. We want the code to exist in our project so we can work on it, but we <strong>do not</strong> want regular users to even see it exists.
+</p>
+<p>
+If we just use a normal <code>if</code> statement, the code is still shipped to the user—it's just hidden. With <strong>Compile-Time Gating</strong>, the dangerous code is physically removed from the final file before it is sent to the user.
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<h3 id="1-the-magic-variable">1. The Magic Variable</h3>
+<p>
+We use special variables in our code that look like normal variables (e.g., <code>IS_DEBUG_MODE</code>). However, these variables are not defined in the code files. They are injected by the build system.
+</p>
+<h3 id="2-dead-code-elimination">2. Dead Code Elimination</h3>
+<p>
+This is the superpower of this chapter.
+ 
+If the build system sees:
+</p>
+<pre data-lang="javascript"><code>if (false) {
+  launchNuclearMissiles();
+}
+</code></pre>
+<p>
+It knows that code can <em>never</em> run. So, it simply deletes the entire block from the final file. This makes the application smaller and safer.
+</p>
+<h3 id="3-the-bundler-bun">3. The Bundler (Bun)</h3>
+<p>
+We use <strong>Bun</strong> to package all our files into one executable. Bun is responsible for performing the "Search and Replace" that makes feature gating work.
+</p>
+<h2 id="how-to-use-feature-gating">How to Use Feature Gating</h2>
+<p>
+Feature gating is mostly set up in the build configuration, but as a developer contributing to <code>claudeCode</code>, you need to know how to write code that <em>can</em> be gated.
+</p>
+<h3 id="writing-gated-code">Writing Gated Code</h3>
+<p>
+You treat the feature flag like a global constant.
+</p>
+<pre data-lang="typescript"><code>// features/experimental.ts
+
+// 1. Check the magic variable
+if (process.env.ALLOW_EXPERIMENTAL_TOOLS) {
+  
+  // 2. If true, register the tool
+  registerTool('SuperTool', SuperToolDefinition);
+  
+} else {
+  console.log("Experimental tools are disabled.");
+}
+</code></pre>
+<p>
+<em>Explanation: When we build the app, %%INLINE<em>5%% will be replaced by either %%INLINE</em>6%% or <code>false</code>.</em>
+</p>
+<h3 id="the-result">The Result</h3>
+<p>
+If we set the flag to <code>false</code> during the build, the final output code that the user receives looks like this:
+</p>
+<pre data-lang="javascript"><code>// The if-statement was removed!
+console.log("Experimental tools are disabled.");
+</code></pre>
+<p>
+<em>Explanation: The risky <code>registerTool</code> code is gone completely.</em>
+</p>
+<h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
+<p>
+The process happens before the application ever starts running. It happens during the <strong>Build Step</strong>.
+</p>
+<ol>
+<li><strong>Source:</strong> You write code with flags.</li>
+</ol>
+<ol>
+<li><strong>Config:</strong> The build script (<code>build.ts</code>) defines the values of those flags.</li>
+</ol>
+<ol>
+<li><strong>Bundle:</strong> Bun reads the code, swaps the variables for values (%%INLINE<em>11%%/%%INLINE</em>12%%), and deletes unreachable code.</li>
+</ol>
+<ol>
+<li><strong>Output:</strong> A clean, optimized file is created.</li>
+</ol>
+<p>
+Here is the visual flow:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Dev as Developer Code
+    participant Config as Build Config
+    participant Bun as Bun Bundler
+    participant Output as Final Executable
+
+    Dev-&gt;&gt;Bun: Source: "if (IS_BETA) { runBeta() }"
+    Config-&gt;&gt;Bun: Define: IS_BETA = false
+    
+    Note over Bun: Step 1: Replace Variable
+    Note over Bun: Becomes: "if (false) { runBeta() }"
+    
+    Note over Bun: Step 2: Dead Code Elimination
+    Note over Bun: Detects code is unreachable
+    
+    Bun-&gt;&gt;Output: Write: (Empty / Nothing)</div></div>
+<h3 id="internal-implementation-code">Internal Implementation Code</h3>
+<p>
+The magic configuration lives in the build script. This is where we tell Bun what the "Magic Variables" actually equal.
+</p>
+<h4 id="1-the-build-configuration">1. The Build Configuration</h4>
+<p>
+We use %%INLINE<em>13%% and the %%INLINE</em>14%% property.
+</p>
+<pre data-lang="typescript"><code>// scripts/build.ts
+await Bun.build({
+  entrypoints: ['./src/index.ts'],
+  outdir: './dist',
+  
+  // This is the Feature Gating logic
+  define: {
+    // We replace string patterns with actual values
+    'process.env.IS_DEV': JSON.stringify(false),
+    'process.env.ENABLE_MCP': JSON.stringify(true),
+    'process.env.ENABLE_COMPUTER_USE': JSON.stringify(false),
+  },
+});
+</code></pre>
+<p>
+<em>Explanation: The %%INLINE<em>15%% object tells Bun: "Every time you see %%INLINE</em>16%% in the code, replace it with <code>false</code>."</em>
+</p>
+<h4 id="2-gating-a-dangerous-feature">2. Gating a Dangerous Feature</h4>
+<p>
+Let's see how this protects the <a href="18<em>computer</em>use.md">Computer Use</a> feature, which allows the AI to move the mouse.
+</p>
+<pre data-lang="typescript"><code>// tools/ComputerUse/index.ts
+
+export function getComputerTools() {
+  // Check the compile-time flag
+  if (process.env.ENABLE_COMPUTER_USE === 'true') {
+    return [ComputerTool, KeyboardTool];
+  }
+  
+  // If disabled, return nothing
+  return [];
+}
+</code></pre>
+<p>
+<em>Explanation: If the build script sets this to 'false', the <code>ComputerTool</code> code is never exposed to the rest of the app. It's as if it doesn't exist.</em>
+</p>
+<h4 id="3-integration-with-permissions">3. Integration with Permissions</h4>
+<p>
+We often combine Feature Gating with the <a href="08<em>permission</em><em>_security</em>system.md">Permission & Security System</a>.
+</p>
+<pre data-lang="typescript"><code>// utils/permissions/index.ts
+
+export function getDefaultPermissions() {
+  const defaults = { allowFileEdit: true };
+
+  // Only enable this permission if the FEATURE is enabled
+  if (process.env.ENABLE_MCP) {
+    defaults.allowMcp = true;
+  }
+  
+  return defaults;
+}
+</code></pre>
+<p>
+<em>Explanation: This ensures that the permission system doesn't even look for rules related to features that have been turned off.</em>
+</p>
+<h2 id="why-is-this-important-for-later">Why is this important for later?</h2>
+<p>
+Feature Gating is essential for managing the complexity of the upcoming chapters:
+</p>
+<ul>
+<li><strong><a href="14<em>model</em>context<em>protocol</em><em>mcp</em>.md">Model Context Protocol (MCP)</a>:</strong> This is a complex new standard. We use gating to enable it gradually for users.</li>
+<li><strong><a href="18<em>computer</em>use.md">Computer Use</a>:</strong> This feature is powerful but risky. We gate it so standard users don't accidentally let the AI take over their mouse.</li>
+<li><strong><a href="19<em>cost</em>tracking.md">Cost Tracking</a>:</strong> In enterprise builds (gated via a flag), we might enable stricter logging to track every token spent.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have learned that <strong>Feature Gating</strong> is the ability to turn features on or off during the build process. By using <strong>Bun's %%INLINE<em>19%% feature</strong>, we can remove experimental or restricted code from the final application entirely. This keeps %%INLINE</em>20%% lightweight, safe, and adaptable for different types of users.
+</p>
+<p>
+Now that we know how to turn features on, let's look at one of the most exciting gated features: a way to connect the AI to <em>any</em> external data source.
+</p>
+<p>
+<a href="14<em>model</em>context<em>protocol</em><em>mcp</em>.md">Next Chapter: Model Context Protocol (MCP)</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="12-websearchtool.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">WebSearchTool</div>
+        </a><a class="chapter-nav-card next" href="14-model-context-protocol--mcp-.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">Model Context Protocol (MCP)</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#what-is-feature-gating">What is Feature Gating?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case-hiding-the-experimental-tool">The Central Use Case: "Hiding the Experimental Tool"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-magic-variable">1. The Magic Variable</a></li>
+<li style="padding-left:10px"><a href="#2-dead-code-elimination">2. Dead Code Elimination</a></li>
+<li style="padding-left:10px"><a href="#3-the-bundler-bun">3. The Bundler (Bun)</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-feature-gating">How to Use Feature Gating</a></li>
+<li style="padding-left:10px"><a href="#writing-gated-code">Writing Gated Code</a></li>
+<li style="padding-left:10px"><a href="#the-result">The Result</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-how-it-works">Under the Hood: How it Works</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-code">Internal Implementation Code</a></li>
+<li style="padding-left:0px"><a href="#why-is-this-important-for-later">Why is this important for later?</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

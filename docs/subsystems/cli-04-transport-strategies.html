@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: Transport Strategies — cli/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">cli/04_transport_strategies.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">💻 cli/ · 04_transport_strategies.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: Transport Strategies</h1>
+  <div class="chapter-meta"><span>📄 cli/04_transport_strategies.md</span></div>
+</div>
+<h1 id="chapter-4-transport-strategies">Chapter 4: Transport Strategies</h1>
+<p>
+In the previous chapter, <a href="03<em>structured</em>message_protocol.md">Structured Message Protocol</a>, we defined the "language" (NDJSON) that our CLI and the remote AI use to understand each other.
+</p>
+<p>
+Now, we need to figure out the <strong>shipping method</strong>. How do we actually move those JSON messages across the internet?
+</p>
+<p>
+While you might think "just use the internet," corporate networks, firewalls, and proxies often have strict rules. Some block standard persistent connections (WebSockets), while others might timeout idle connections.
+</p>
+<h2 id="motivation-the-logistics-problem">Motivation: The Logistics Problem</h2>
+<p>
+Imagine you are a logistics manager trying to ship packages (messages) between your house (CLI) and a warehouse (Server).
+</p>
+<ol>
+<li><strong>The Highway (WebSocket):</strong> The fastest method. A direct, open road where trucks can drive back and forth instantly.</li>
+</ol>
+<ol>
+<li><strong>The Side Roads (Hybrid/SSE):</strong> Sometimes the highway is closed due to construction (firewalls). You might need to receive packages via a delivery drone (SSE) and send your returns via the post office (HTTP POST).</li>
+</ol>
+<p>
+The <strong>Transport Strategy</strong> pattern allows our application to switch between "The Highway" and "The Side Roads" automatically, without changing the messages inside the packages.
+</p>
+<h2 id="key-concept-the-inline-0-interface">Key Concept: The <code>Transport</code> Interface</h2>
+<p>
+To make the rest of the application not care <em>how</em> data is sent, we create a standard interface. Every shipping method must follow these rules:
+</p>
+<ol>
+<li><strong>Connect:</strong> Start the journey.</li>
+</ol>
+<ol>
+<li><strong>Write:</strong> Send a message out.</li>
+</ol>
+<ol>
+<li><strong>OnData:</strong> What to do when a message arrives.</li>
+</ol>
+<ol>
+<li><strong>Close:</strong> Stop shipping.</li>
+</ol>
+<p>
+This allows the core logic (from Chapter 1) to simply say <code>transport.write(message)</code> without worrying if it's using a WebSocket or an HTTP POST.
+</p>
+<h2 id="strategy-1-websocket-transport-the-highway">Strategy 1: WebSocket Transport ("The Highway")</h2>
+<p>
+This is the default and preferred method. It opens a <strong>bidirectional</strong> pipe. Both the CLI and the Server can shout down the pipe at any time.
+</p>
+<h3 id="how-it-works">How it works</h3>
+<p>
+It uses the standard <code>ws</code> protocol. It creates a persistent connection that stays open as long as the session is active.
+</p>
+<h3 id="resilience-the-heartbeat">Resilience: The Heartbeat</h3>
+<p>
+One specific problem with "Highways" is that if no cars drive on them for a while, security guards (proxies) might close the road.
+</p>
+<p>
+To prevent this, <code>WebSocketTransport.ts</code> implements a "Ping/Pong" or "Keep Alive" system.
+</p>
+<pre data-lang="typescript"><code>// transports/WebSocketTransport.ts (Simplified)
+
+// Every few seconds...
+this.pingInterval = setInterval(() =&gt; {
+  if (this.state === 'connected') {
+    // 1. Check if the server replied to our last ping
+    if (!this.pongReceived) {
+       // If not, the connection is dead. Reconnect!
+       this.handleConnectionError(); 
+       return;
+    }
+    
+    // 2. Send a new ping
+    this.pongReceived = false;
+    this.ws.ping(); 
+  }
+}, 10000); // 10 seconds
+</code></pre>
+<p>
+<em>Explanation:</em> The CLI pokes the server every 10 seconds ("Are you there?"). If the server doesn't poke back, the CLI hangs up and tries to call again.
+</p>
+<h2 id="strategy-2-hybrid-sse-the-side-roads">Strategy 2: Hybrid & SSE ("The Side Roads")</h2>
+<p>
+Some environments (like strict corporate VPNs) dislike WebSockets. For these cases, we use a <strong>Hybrid approach</strong>.
+</p>
+<ol>
+<li><strong>Reading (Incoming):</strong> We use <strong>Server-Sent Events (SSE)</strong>. This is like listening to a radio station. The server broadcasts a stream of events to us.</li>
+</ol>
+<ol>
+<li><strong>Writing (Outgoing):</strong> We use <strong>HTTP POST</strong>. This is like mailing a letter. Every time we want to say something, we make a new, distinct HTTP request.</li>
+</ol>
+<h3 id="the-sse-reader">The SSE Reader</h3>
+<p>
+The <code>SSETransport</code> listens to a stream of text data. It has to be smart enough to assemble pieces of data into a full message.
+</p>
+<pre data-lang="typescript"><code>// transports/SSETransport.ts (Simplified)
+
+// Read the incoming stream chunk by chunk
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+
+  // Decode bytes to text
+  buffer += decoder.decode(value);
+  
+  // Parse specific "data:" lines used by SSE
+  const { frames, remaining } = parseSSEFrames(buffer);
+  
+  // Process each complete frame
+  frames.forEach(frame =&gt; this.handleSSEFrame(frame));
+}
+</code></pre>
+<p>
+<em>Explanation:</em> The transport buffers incoming text. Once it sees a complete message (marked by newlines), it processes it.
+</p>
+<h3 id="the-post-writer">The POST Writer</h3>
+<p>
+Sending data via HTTP POST is slower than a WebSocket. To avoid clogging the network, we use a <strong>Batch Uploader</strong>. If the user sends 5 messages quickly, the <code>HybridTransport</code> might bundle them into a single HTTP POST.
+</p>
+<h2 id="internal-implementation-selecting-the-strategy">Internal Implementation: Selecting the Strategy</h2>
+<p>
+The file <code>transports/transportUtils.ts</code> acts as the traffic controller. It looks at your configuration and decides which vehicle to use.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant App as Application
+    participant Utils as transportUtils
+    participant WS as WebSocketTransport
+    participant SSE as SSETransport
+
+    App-&gt;&gt;Utils: getTransportForUrl(url)
+    
+    alt Env var CLAUDE_CODE_USE_CCR_V2 is set
+        Utils-&gt;&gt;SSE: Create SSETransport
+        Utils--&gt;&gt;App: Returns SSE Instance
+    else Default
+        Utils-&gt;&gt;WS: Create WebSocketTransport
+        Utils--&gt;&gt;App: Returns WS Instance
+    end
+
+    App-&gt;&gt;WS: connect()
+    Note right of WS: The rest of the app doesn't know&lt;br/&gt;which one it got!</div></div>
+<h3 id="the-code-the-selector-logic">The Code: The Selector Logic</h3>
+<p>
+Here is how the system decides what to use. It relies heavily on environment variables ("Env Vars") or protocol checks.
+</p>
+<pre data-lang="typescript"><code>// transports/transportUtils.ts (Simplified)
+
+export function getTransportForUrl(url: URL): Transport {
+  // 1. Check if we are forced to use SSE (The Side Road)
+  if (process.env.CLAUDE_CODE_USE_CCR_V2) {
+    // Transform the URL to an SSE endpoint
+    const sseUrl = convertToSSEUrl(url);
+    return new SSETransport(sseUrl);
+  }
+
+  // 2. Otherwise, check if the URL supports WebSockets
+  if (url.protocol === 'ws:' || url.protocol === 'wss:') {
+    // Return the standard "Highway" transport
+    return new WebSocketTransport(url);
+  }
+
+  throw new Error('Unsupported protocol');
+}
+</code></pre>
+<p>
+<em>Explanation:</em> The code checks <code>process.env</code>. If a special flag is set, it swaps the strategy. This is useful for debugging or specific deployment environments.
+</p>
+<h2 id="resilience-auto-reconnection">Resilience: Auto-Reconnection</h2>
+<p>
+Both strategies implement <strong>Exponential Backoff</strong>. If the internet cuts out:
+</p>
+<ol>
+<li>Wait 1 second. Retry.</li>
+</ol>
+<ol>
+<li>Fail? Wait 2 seconds. Retry.</li>
+</ol>
+<ol>
+<li>Fail? Wait 4 seconds. Retry.</li>
+</ol>
+<ol>
+<li>... up to a maximum delay.</li>
+</ol>
+<p>
+This prevents the CLI from "spamming" the server if the server is down, which could make the problem worse (a "Thundering Herd" problem).
+</p>
+<pre data-lang="typescript"><code>// transports/WebSocketTransport.ts (Simplified)
+
+private handleConnectionError() {
+  // Calculate delay: 1s * 2^(attempts)
+  const delay = Math.min(
+    1000 * Math.pow(2, this.reconnectAttempts), 
+    30000 // Max 30 seconds
+  );
+
+  setTimeout(() =&gt; {
+    this.connect(); // Try again
+  }, delay);
+}
+</code></pre>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned that <strong>Transport Strategies</strong> allow the CLI to adapt to different network environments without changing the core application logic.
+</p>
+<ol>
+<li><strong>WebSocketTransport</strong> is the preferred, fast, bidirectional layer.</li>
+</ol>
+<ol>
+<li><strong>SSETransport / HybridTransport</strong> is the fallback for restrictive networks, separating reading and writing into different channels.</li>
+</ol>
+<ol>
+<li><strong>Auto-reconnection</strong> ensures the tool recovers gracefully from network hiccups.</li>
+</ol>
+<p>
+Now that we have a reliable connection and a way to send structured messages, we need to handle the <strong>state</strong> of the remote AI. The AI needs to "remember" what we are doing, even if we disconnect and reconnect.
+</p>
+<p>
+<a href="05<em>ccr</em>state_synchronization.md">Next Chapter: CCR State Synchronization</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="cli.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">cli/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#motivation-the-logistics-problem">Motivation: The Logistics Problem</a></li>
+<li style="padding-left:0px"><a href="#key-concept-the-inline-0-interface">Key Concept: The %%INLINE_0%% Interface</a></li>
+<li style="padding-left:0px"><a href="#strategy-1-websocket-transport-the-highway">Strategy 1: WebSocket Transport ("The Highway")</a></li>
+<li style="padding-left:10px"><a href="#how-it-works">How it works</a></li>
+<li style="padding-left:10px"><a href="#resilience-the-heartbeat">Resilience: The Heartbeat</a></li>
+<li style="padding-left:0px"><a href="#strategy-2-hybrid-sse-the-side-roads">Strategy 2: Hybrid & SSE ("The Side Roads")</a></li>
+<li style="padding-left:10px"><a href="#the-sse-reader">The SSE Reader</a></li>
+<li style="padding-left:10px"><a href="#the-post-writer">The POST Writer</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-selecting-the-strategy">Internal Implementation: Selecting the Strategy</a></li>
+<li style="padding-left:10px"><a href="#the-code-the-selector-logic">The Code: The Selector Logic</a></li>
+<li style="padding-left:0px"><a href="#resilience-auto-reconnection">Resilience: Auto-Reconnection</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: Structured Message Protocol — cli/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">cli/03_structured_message_protocol.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">💻 cli/ · 03_structured_message_protocol.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: Structured Message Protocol</h1>
+  <div class="chapter-meta"><span>📄 cli/03_structured_message_protocol.md</span></div>
+</div>
+<h1 id="chapter-3-structured-message-protocol">Chapter 3: Structured Message Protocol</h1>
+<p>
+In the previous chapters, we established a connection to the internet in <a href="01<em>remote</em>i<em>o</em>bridge.md">Remote I/O Bridge</a> and proved our identity in <a href="02<em>authentication</em>flow.md">Authentication Flow</a>.
+</p>
+<p>
+Now we have a secure, open line of communication. But <strong>how</strong> do we talk?
+</p>
+<p>
+If the server sends a complex instruction and the connection hiccups, or if a message contains a "newline" character inside it, how does the CLI know where one message ends and the next begins?
+</p>
+<h2 id="motivation-the-broken-sentence-problem">Motivation: The "Broken Sentence" Problem</h2>
+<p>
+Imagine you are receiving a letter, but the mail carrier tears it in half and delivers the pieces separately. You might read the first half and think the sentence is finished, leading to a complete misunderstanding.
+</p>
+<p>
+In the world of CLI tools and AI, this is a critical risk. The AI might send a piece of code like this:
+</p>
+<pre data-lang="javascript"><code>console.log("Hello
+World");
+</code></pre>
+<p>
+If we aren't careful, our system might read %%INLINE<em>0%% as one message (which is invalid code) and %%INLINE</em>1%% as the next.
+</p>
+<p>
+The <strong>Structured Message Protocol</strong> solves this using <strong>NDJSON (Newline Delimited JSON)</strong>. It enforces a strict rule: <strong>One complete thought per line.</strong>
+</p>
+<h2 id="key-concept-the-safety-sanitizer">Key Concept: The Safety Sanitizer</h2>
+<p>
+The first line of defense is ensuring that no message <em>ever</em> accidentally looks like two messages.
+</p>
+<p>
+Standard JSON allows certain "invisible" characters that JavaScript treats as newlines (specifically %%INLINE<em>2%% and %%INLINE</em>3%%). If these sneak into a message, our reader might accidentally split the message in half.
+</p>
+<p>
+We use a helper called <code>ndjsonSafeStringify</code>.
+</p>
+<h3 id="how-to-use-it">How to Use It</h3>
+<p>
+Instead of using the standard <code>JSON.stringify</code>, we use our safe version for any data sent over the network.
+</p>
+<pre data-lang="typescript"><code>import { ndjsonSafeStringify } from './ndjsonSafeStringify';
+
+const dangerousMessage = { text: "Hello\u2028World" };
+
+// Standard stringify might output a raw newline character here.
+// Safe stringify escapes it:
+const safeString = ndjsonSafeStringify(dangerousMessage);
+
+console.log(safeString); 
+// Output: {"text":"Hello\u2028World"} 
+// (It remains on exactly one line)
+</code></pre>
+<h3 id="under-the-hood">Under the Hood</h3>
+<p>
+The implementation is a lightweight wrapper around standard JSON stringification. It uses a Regular Expression (Regex) to hunt down those specific line-breaking characters and replace them with their safe, escaped versions (<code>\u...</code>).
+</p>
+<pre data-lang="typescript"><code>// ndjsonSafeStringify.ts
+
+const JS_LINE_TERMINATORS = /\u2028|\u2029/g;
+
+function escapeJsLineTerminators(json: string): string {
+  // Replace the physical line break char with the text "\u2028"
+  return json.replace(JS_LINE_TERMINATORS, c =&gt;
+    c === '\u2028' ? '\\u2028' : '\\u2029',
+  );
+}
+
+export function ndjsonSafeStringify(value: unknown): string {
+  // 1. Convert to JSON
+  // 2. Scrub the output for hidden line breaks
+  return escapeJsLineTerminators(JSON.stringify(value));
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This ensures that no matter what text the user or AI types, the resulting message will occupy exactly <strong>one physical line</strong> in the stream.
+</p>
+<h2 id="key-concept-inline-7">Key Concept: <code>StructuredIO</code></h2>
+<p>
+Now that we can write safe messages, we need a system to read them and act on them. The <code>StructuredIO</code> class is the "Traffic Cop" of the application.
+</p>
+<p>
+It has two main jobs:
+</p>
+<ol>
+<li><strong>Read:</strong> Ingest raw text, split it by newlines, and parse the JSON.</li>
+</ol>
+<ol>
+<li><strong>Route:</strong> Decide if a message is just text (%%INLINE<em>9%% message) or a command that needs approval (%%INLINE</em>10%%).</li>
+</ol>
+<h3 id="the-reading-loop">The Reading Loop</h3>
+<p>
+Inside <code>structuredIO.ts</code>, there is a generator function that constantly listens for data.
+</p>
+<pre data-lang="typescript"><code>// structuredIO.ts (Simplified Logic)
+
+private async *read() {
+  let content = '';
+  // Loop through every chunk of data arriving
+  for await (const block of this.input) {
+    content += block;
+    
+    // While we find a newline character...
+    while (content.indexOf('\n') !== -1) {
+      const splitIndex = content.indexOf('\n');
+      const line = content.slice(0, splitIndex); // Grab the line
+      content = content.slice(splitIndex + 1);   // Save the rest
+      
+      // Parse and return the valid message object
+      yield this.processLine(line); 
+    }
+  }
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This buffers data. If a message arrives in two pieces, it waits until it sees the <code>\n</code> (newline) before trying to process it. This guarantees we never process a broken JSON fragment.
+</p>
+<h2 id="complex-use-case-permission-negotiation">Complex Use Case: Permission Negotiation</h2>
+<p>
+The most powerful feature of the Structured Message Protocol is the <strong>Control Loop</strong>.
+</p>
+<p>
+Sometimes, the remote AI wants to do something sensitive, like running a terminal command. It cannot just <em>do</em> it; it must ask <code>StructuredIO</code> for permission.
+</p>
+<ol>
+<li><strong>AI:</strong> Sends %%INLINE<em>14%% (subtype: %%INLINE</em>15%%).</li>
+</ol>
+<ol>
+<li><strong>StructuredIO:</strong> Pauses processing.</li>
+</ol>
+<ol>
+<li><strong>User/Host:</strong> Sees a prompt ("Allow this command?").</li>
+</ol>
+<ol>
+<li><strong>StructuredIO:</strong> Sends %%INLINE<em>16%% (subtype: %%INLINE</em>17%% or <code>deny</code>).</li>
+</ol>
+<h3 id="visualizing-the-negotiation">Visualizing the Negotiation</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant AI as Remote Brain
+    participant SIO as StructuredIO
+    participant User as Human User
+
+    AI-&gt;&gt;SIO: { type: "control_request", subtype: "can_use_tool", id: "123" }
+    Note over SIO: Pauses! Needs permission.
+    SIO-&gt;&gt;User: "AI wants to run 'ls -la'. Allow?"
+    User-&gt;&gt;SIO: "Yes" (Clicks Allow)
+    SIO-&gt;&gt;AI: { type: "control_response", id: "123", result: "allow" }
+    AI-&gt;&gt;SIO: { type: "assistant", text: "Running command..." }</div></div>
+<h3 id="implementing-the-permission-check">Implementing the Permission Check</h3>
+<p>
+In the code, this is handled by <code>createCanUseTool</code>. This function is passed to the AI agent. When the agent tries to use a tool, this function intercepts it.
+</p>
+<pre data-lang="typescript"><code>// structuredIO.ts (Simplified)
+
+createCanUseTool(): CanUseToolFn {
+  return async (tool, input, context, message, toolUseID) =&gt; {
+    
+    // 1. Send a request to the SDK consumer (User Interface)
+    // We create a unique ID for this specific question
+    const requestId = randomUUID();
+
+    // 2. Wait for the answer (Promise)
+    const result = await this.sendRequest(
+      {
+        subtype: 'can_use_tool',
+        tool_name: tool.name,
+        input: input,
+        tool_use_id: toolUseID
+      },
+      schema, // Expected response format
+      undefined, 
+      requestId
+    );
+
+    // 3. Return the decision (Allow/Deny) back to the internal system
+    return result; 
+  };
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This turns an asynchronous human interaction (waiting for a user to click a button) into a standard Promise that the code can await.
+</p>
+<h3 id="handling-the-response">Handling the Response</h3>
+<p>
+When the user finally replies (via the incoming stream), <code>StructuredIO</code> matches the response ID to the question ID.
+</p>
+<pre data-lang="typescript"><code>// structuredIO.ts inside processLine()
+
+if (message.type === 'control_response') {
+  // Find the question we asked earlier using the ID
+  const pending = this.pendingRequests.get(message.response.request_id);
+  
+  if (pending) {
+    // Complete the promise!
+    pending.resolve(message.response.result);
+    this.pendingRequests.delete(message.response.request_id);
+  }
+  return undefined; // This message was internal, don't print it
+}
+</code></pre>
+<h2 id="summary">Summary</h2>
+<p>
+The <strong>Structured Message Protocol</strong> is the strict grammar that keeps the conversation sane.
+</p>
+<ol>
+<li>It uses <strong>NDJSON</strong> to ensure messages are distinct.</li>
+</ol>
+<ol>
+<li>It uses <strong>Safety Sanitizers</strong> to prevent accidental message breaking.</li>
+</ol>
+<ol>
+<li>It uses <strong>Control Requests</strong> to handle permissions and interactive flows.</li>
+</ol>
+<p>
+Now that we can safely package our messages, how do we physically move them across the network? Do we use standard HTTP? WebSockets? Something else?
+</p>
+<p>
+<a href="04<em>transport</em>strategies.md">Next Chapter: Transport Strategies</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="cli.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">cli/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#motivation-the-broken-sentence-problem">Motivation: The "Broken Sentence" Problem</a></li>
+<li style="padding-left:0px"><a href="#key-concept-the-safety-sanitizer">Key Concept: The Safety Sanitizer</a></li>
+<li style="padding-left:10px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:10px"><a href="#under-the-hood">Under the Hood</a></li>
+<li style="padding-left:0px"><a href="#key-concept-inline-7">Key Concept: %%INLINE_7%%</a></li>
+<li style="padding-left:10px"><a href="#the-reading-loop">The Reading Loop</a></li>
+<li style="padding-left:0px"><a href="#complex-use-case-permission-negotiation">Complex Use Case: Permission Negotiation</a></li>
+<li style="padding-left:10px"><a href="#visualizing-the-negotiation">Visualizing the Negotiation</a></li>
+<li style="padding-left:10px"><a href="#implementing-the-permission-check">Implementing the Permission Check</a></li>
+<li style="padding-left:10px"><a href="#handling-the-response">Handling the Response</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

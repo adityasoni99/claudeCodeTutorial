@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 5: Temporal Freshness & Verification — memdir/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">memdir/05_temporal_freshness___verification.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🧠 memdir/ · 05_temporal_freshness___verification.md</div>
+  <h1 class="chapter-title-h1">Chapter 5: Temporal Freshness & Verification</h1>
+  <div class="chapter-meta"><span>📄 memdir/05_temporal_freshness___verification.md</span></div>
+</div>
+<h1 id="chapter-5-temporal-freshness-verification">Chapter 5: Temporal Freshness & Verification</h1>
+<p>
+In the previous chapter, <a href="04<em>contextual</em>recall_mechanism.md">Contextual Recall Mechanism</a>, we built a "smart librarian" that finds the right memory file for a user's question.
+</p>
+<p>
+But there is a danger lurking in that library. What if the book the librarian hands you is from 1998?
+</p>
+<p>
+Code changes fast. Memories do not update automatically. If a memory says, "The login function is in %%INLINE<em>0%%," but you renamed that file to %%INLINE</em>1%% yesterday, the memory is now a lie. This is called <strong>Memory Drift</strong>.
+</p>
+<p>
+In this chapter, we will learn how <strong>memdir</strong> solves this by treating memories like perishable goods (like milk) rather than permanent facts (like diamonds).
+</p>
+<h2 id="the-motivation-the-ghost-function-problem">The Motivation: The "Ghost Function" Problem</h2>
+<p>
+Imagine this scenario:
+</p>
+<ol>
+<li><strong>Two weeks ago:</strong> You wrote a memory: "Always use <code>util.quickSort()</code> for sorting."</li>
+</ol>
+<ol>
+<li><strong>Yesterday:</strong> You refactored the code and renamed it to <code>util.fastSort()</code>. You forgot to update the memory file.</li>
+</ol>
+<ol>
+<li><strong>Today:</strong> You ask the AI to write a sorting function.</li>
+</ol>
+<p>
+<strong>Without Verification:</strong>
+ 
+The AI reads the memory. It confidently writes code using <code>util.quickSort()</code>. Your code crashes because that function no longer exists.
+</p>
+<p>
+<strong>With Verification:</strong>
+ 
+The AI reads the memory but sees a "Warning Label" because the memory is 14 days old. Instead of blindly trusting it, the AI thinks: <em>"This memory is old. I should check if %%INLINE<em>5%% still exists."</em> It runs a %%INLINE</em>6%% command, fails to find it, finds <code>fastSort</code> instead, and writes the correct code.
+</p>
+<h2 id="key-concept-the-expiration-date">Key Concept: The Expiration Date</h2>
+<p>
+To handle this, we don't delete old memories (they might still contain valid reasoning). Instead, we tag them based on their age.
+</p>
+<p>
+We categorize memories into two states:
+</p>
+<ol>
+<li><strong>Fresh (0-1 days old):</strong> Likely accurate. We trust it.</li>
+</ol>
+<ol>
+<li><strong>Stale (>1 day old):</strong> Potentially dangerous. We treat it as a "historical observation," not a current fact.</li>
+</ol>
+<h2 id="use-case-injecting-the-warning">Use Case: Injecting the Warning</h2>
+<p>
+Let's see how the system alters what the AI reads based on the file's modification date.
+</p>
+<p>
+<strong>Input (File System):</strong>
+</p>
+<ul>
+<li>File: <code>memory/team/api_endpoints.md</code></li>
+<li>Last Modified: 20 days ago</li>
+</ul>
+<p>
+<strong>System Processing:</strong>
+ 
+The system calculates the age. Since 20 days > 1 day, it injects a warning.
+</p>
+<p>
+<strong>Output (What the AI sees):</strong>
+</p>
+<pre data-lang="xml"><code>&lt;system-reminder&gt;
+  This memory is 20 days old. Memories are point-in-time observations.
+  Claims about code behavior or file:line citations may be outdated.
+  Verify against current code before asserting as fact.
+&lt;/system-reminder&gt;
+User: Where is the API endpoint?
+</code></pre>
+<p>
+Because of that <code>&lt;system-reminder&gt;</code>, the AI lowers its confidence in the specific file paths mentioned in the memory and looks at the real code first.
+</p>
+<h2 id="internal-implementation-under-the-hood">Internal Implementation: Under the Hood</h2>
+<p>
+How does this happen automatically? It happens right before the memory content is sent to the AI.
+</p>
+<h3 id="conceptual-flow">Conceptual Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant System
+    participant File as Disk (Memory File)
+    participant AI
+
+    User-&gt;&gt;System: "How do I sort the list?"
+    System-&gt;&gt;File: Read 'sorting_rules.md'
+    File--&gt;&gt;System: Return content + Last Modified Date
+    
+    System-&gt;&gt;System: Calculate Age (Today - ModDate)
+    
+    alt is Fresh (&lt; 1 day)
+        System-&gt;&gt;AI: Send Content only
+    else is Stale (&gt; 1 day)
+        System-&gt;&gt;AI: Send Content + "Warning: Verify this!"
+    end
+
+    AI-&gt;&gt;AI: Reads Warning
+    AI-&gt;&gt;File: Run `grep` to verify function exists
+    AI-&gt;&gt;User: "Use fastSort() (I checked, quickSort is gone)"</div></div>
+<h3 id="1-calculating-the-age">1. Calculating the Age</h3>
+<p>
+We need a simple utility to convert a timestamp (milliseconds) into "Days Ago."
+</p>
+<p>
+In <code>src/memoryAge.ts</code>:
+</p>
+<pre data-lang="typescript"><code>// src/memoryAge.ts
+
+export function memoryAgeDays(mtimeMs: number): number {
+  const oneDay = 86_400_000 // milliseconds
+  // Math.max ensures we don't get negative numbers due to clock skew
+  return Math.max(0, Math.floor((Date.now() - mtimeMs) / oneDay))
+}
+</code></pre>
+<p>
+<em>Explanation:</em> We take the current time, subtract the file's modification time, and divide by the number of milliseconds in a day.
+</p>
+<h3 id="2-generating-the-warning-text">2. Generating the Warning Text</h3>
+<p>
+If the file is old, we generate the text that warns the AI.
+</p>
+<pre data-lang="typescript"><code>// src/memoryAge.ts
+
+export function memoryFreshnessText(mtimeMs: number): string {
+  const days = memoryAgeDays(mtimeMs)
+  
+  // If it was modified today or yesterday, it's fresh. No warning.
+  if (days &lt;= 1) return ''
+
+  // Otherwise, warn the AI.
+  return (
+    `This memory is ${days} days old. ` +
+    `Memories are point-in-time observations... ` +
+    `Verify against current code before asserting as fact.`
+  )
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This function returns an empty string for fresh files (reducing noise) but a strong warning for anything older than 48 hours.
+</p>
+<h3 id="3-teaching-the-ai-to-verify">3. Teaching the AI to Verify</h3>
+<p>
+The warning label is useless if the AI doesn't know <em>how</em> to verify things. We explicitly teach it this behavior in the System Prompt.
+</p>
+<p>
+In %%INLINE<em>11%%, we add a section called %%INLINE</em>12%%.
+</p>
+<pre data-lang="typescript"><code>// src/memoryTypes.ts (Simplified)
+
+export const TRUSTING_RECALL_SECTION = [
+  '## Before recommending from memory',
+  '',
+  'A memory that names a specific function or file is a claim that it existed *when the memory was written*.',
+  '',
+  '- If the memory names a file path: check the file exists.',
+  '- If the memory names a function: grep for it.',
+  '',
+  '"The memory says X exists" is not the same as "X exists now."',
+]
+</code></pre>
+<p>
+This is the most critical part. We act proactively. We tell the AI that <strong>Memory ≠ Reality</strong>. We force it to treat memory as a "lead" or a "hint" that must be confirmed by looking at the actual hard drive.
+</p>
+<h2 id="putting-it-all-together">Putting It All Together</h2>
+<p>
+When the system combines these pieces, it ensures the AI never hallucinates based on old data.
+</p>
+<ol>
+<li><strong>Retrieve:</strong> The system grabs the file.</li>
+</ol>
+<ol>
+<li><strong>Check:</strong> The system checks <code>mtime</code>.</li>
+</ol>
+<ol>
+<li><strong>Warn:</strong> The system appends the warning text if needed.</li>
+</ol>
+<ol>
+<li><strong>Prompt:</strong> The system prompt instructs the AI to verify claims.</li>
+</ol>
+<ol>
+<li><strong>Action:</strong> The AI uses tools (like %%INLINE<em>14%% or %%INLINE</em>15%%) to confirm the memory is still valid before answering you.</li>
+</ol>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>The Problem:</strong> Memories drift away from reality as code changes.</li>
+</ol>
+<ol>
+<li><strong>The Solution:</strong> Calculate the age of every memory file.</li>
+</ol>
+<ol>
+<li><strong>The Mechanism:</strong> Inject a <code>&lt;system-reminder&gt;</code> warning for any file older than 1 day.</li>
+</ol>
+<ol>
+<li><strong>The Instruction:</strong> Explicitly tell the AI to verify specific claims (filenames, functions) against the current codebase.</li>
+</ol>
+<p>
+We have now covered how to structure memories, where to store them, how to find them, and how to verify them.
+</p>
+<p>
+But there is one final piece of the puzzle. If the AI is reading and writing files on your computer, how do we make sure it doesn't accidentally read your passwords or delete your operating system?
+</p>
+<p>
+<a href="06<em>path</em>security<em>and</em>sandboxing.md">Next Chapter: Path Security and Sandboxing</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="memdir.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">memdir/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-the-ghost-function-problem">The Motivation: The "Ghost Function" Problem</a></li>
+<li style="padding-left:0px"><a href="#key-concept-the-expiration-date">Key Concept: The Expiration Date</a></li>
+<li style="padding-left:0px"><a href="#use-case-injecting-the-warning">Use Case: Injecting the Warning</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-under-the-hood">Internal Implementation: Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#conceptual-flow">Conceptual Flow</a></li>
+<li style="padding-left:10px"><a href="#1-calculating-the-age">1. Calculating the Age</a></li>
+<li style="padding-left:10px"><a href="#2-generating-the-warning-text">2. Generating the Warning Text</a></li>
+<li style="padding-left:10px"><a href="#3-teaching-the-ai-to-verify">3. Teaching the AI to Verify</a></li>
+<li style="padding-left:0px"><a href="#putting-it-all-together">Putting It All Together</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

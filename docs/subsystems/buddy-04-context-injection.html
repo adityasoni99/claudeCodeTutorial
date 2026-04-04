@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: Context Injection — buddy/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">buddy/04_context_injection.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">👥 buddy/ · 04_context_injection.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: Context Injection</h1>
+  <div class="chapter-meta"><span>📄 buddy/04_context_injection.md</span></div>
+</div>
+<h1 id="chapter-4-context-injection">Chapter 4: Context Injection</h1>
+<p>
+In the previous chapter, <a href="03<em>live</em>component<em>_</em>animation.md">Live Component & Animation</a>, we gave our companion a heartbeat. It can blink, wiggle, and stand next to your command prompt using ASCII art.
+</p>
+<p>
+However, we have a major disconnect.
+</p>
+<p>
+Your terminal shows a "Duck" standing there, but the <strong>AI Brain</strong> (the Large Language Model) has no idea it exists. The AI lives on a server in the cloud; it cannot "see" your screen. If you ask the AI, "Who is standing next to me?", it will likely say, "I don't know what you are talking about."
+</p>
+<p>
+To fix this, we need <strong>Context Injection</strong>.
+</p>
+<h2 id="the-problem-the-uninformed-dungeon-master">The Problem: The Uninformed Dungeon Master</h2>
+<p>
+Imagine playing a tabletop RPG (like D&D). The AI is the <strong>Dungeon Master</strong> (DM). You are the player.
+</p>
+<p>
+You have a pet Goblin named "Snarfl" sitting on your shoulder. But if you never hand the DM a character sheet for Snarfl, the DM will never describe Snarfl doing anything. The DM simply doesn't know Snarfl exists.
+</p>
+<p>
+<strong>Context Injection</strong> is the act of handing that character sheet to the AI right before the adventure starts.
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<h3 id="1-the-system-prompt">1. The System Prompt</h3>
+<p>
+Every time you send a message to the AI, we send a hidden instruction first called the <strong>System Prompt</strong>. This sets the rules of the universe (e.g., "You are a helpful coding assistant").
+</p>
+<h3 id="2-the-injection">2. The Injection</h3>
+<p>
+We take the data from <strong>Chapter 1</strong> (The Name "Snarfl", The Species "Goblin") and <em>inject</em> a sentence into that System Prompt.
+</p>
+<h3 id="3-the-instruction">3. The Instruction</h3>
+<p>
+We don't just say "There is a goblin." We give the AI behavioral rules:
+</p>
+<ul>
+<li>Acknowledge the companion.</li>
+<li>Do <strong>not</strong> pretend to be the companion (the companion has its own speech bubble system).</li>
+<li>Treat it as a sidekick.</li>
+</ul>
+<hr>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+In <code>buddy</code>, we handle this by creating a text generator function. This function takes the "Soul" (Name) and "Bones" (Species) and turns them into a paragraph of text for the AI.
+</p>
+<h3 id="input">Input</h3>
+<p>
+Let's say our user ID generated a <strong>Robot</strong> named <strong>"BeepBoop"</strong>.
+</p>
+<pre data-lang="typescript"><code>import { companionIntroText } from './prompt'
+
+const name = "BeepBoop"
+const species = "robot"
+
+// We generate the rulebook entry
+const rule = companionIntroText(name, species)
+</code></pre>
+<h3 id="output">Output</h3>
+<p>
+The <code>rule</code> variable now contains a string like this:
+</p>
+<blockquote><p>"A small <strong>robot</strong> named <strong>BeepBoop</strong> sits beside the user's input box... You're not BeepBoop — it's a separate watcher."</p></blockquote>
+<p>
+Now, when you talk to the AI, it knows the context!
+</p>
+<p>
+<strong>User:</strong> "High five!"
+ 
+<strong>AI:</strong> "<em>I can't high five you, but BeepBoop raises a mechanical claw in solidarity!</em>"
+</p>
+<hr>
+<h2 id="under-the-hood-implementation">Under the Hood: Implementation</h2>
+<p>
+How does this text get from our config file to the AI Model?
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant Logic as App Logic
+    participant Prompt as Prompt Engine
+    participant AI as AI Model
+
+    User-&gt;&gt;Logic: Types "Hello"
+    Logic-&gt;&gt;Logic: Checks: Is Companion Active?
+    Logic-&gt;&gt;Prompt: Get Companion Details (Name: Luna, Species: Cat)
+    Prompt-&gt;&gt;Prompt: Create "Intro Attachment"
+    Prompt--&gt;&gt;Logic: Return Hidden Context Text
+    Logic-&gt;&gt;AI: Send: [System Prompt + Context] + "Hello"
+    AI--&gt;&gt;User: "Hello! I see Luna is watching us today."</div></div>
+<h3 id="1-generating-the-description">1. Generating the Description</h3>
+<p>
+In <code>prompt.ts</code>, we have a template function. Notice how specific the instructions are. We strictly tell the AI <em>not</em> to speak <em>as</em> the companion, because the companion has its own visual speech bubble (which we built in Chapter 3).
+</p>
+<pre data-lang="typescript"><code>// prompt.ts
+export function companionIntroText(name: string, species: string): string {
+  return `# Companion
+  A small ${species} named ${name} sits beside the user...
+  You're not ${name} — it's a separate watcher.
+  
+  When the user addresses ${name}, stay out of the way...`
+}
+</code></pre>
+<h3 id="2-creating-the-attachment">2. Creating the Attachment</h3>
+<p>
+We wrap this text in an "Attachment" object. This is how <code>buddy</code> organizes hidden context.
+</p>
+<p>
+We also perform a check: <strong>Has the AI already been told?</strong>
+ 
+If we tell the AI "There is a duck here" in <em>every single message</em>, the AI might get annoyed or repetitive. We only inject this context if it's new.
+</p>
+<pre data-lang="typescript"><code>// prompt.ts
+export function getCompanionIntroAttachment(messages: Message[]) {
+  const companion = getCompanion() // Load "Soul" and "Bones"
+  
+  // 1. Safety Check: Is it muted?
+  if (!companion || getGlobalConfig().companionMuted) return []
+
+  // 2. History Check: Did we already tell the AI?
+  for (const msg of messages) {
+    if (msg.attachment?.name === companion.name) return [] // Already knows!
+  }
+
+  // 3. Return the new Context
+  return [{
+    type: 'companion_intro',
+    name: companion.name,
+    species: companion.species,
+  }]
+}
+</code></pre>
+<h3 id="3-the-flow-breakdown">3. The Flow Breakdown</h3>
+<ol>
+<li><strong>Load:</strong> <code>getCompanion()</code> retrieves the saved name ("Soul") and calculated species ("Bones").</li>
+</ol>
+<ol>
+<li><strong>Filter:</strong> We loop through previous messages. If we find an attachment with %%INLINE<em>5%% and the same name, we return an empty array %%INLINE</em>6%%. We don't need to repeat ourselves.</li>
+</ol>
+<ol>
+<li><strong>Inject:</strong> If it's new, we return the attachment. The main application loop will see this attachment, call <code>companionIntroText</code>, and send that hidden text to the AI.</li>
+</ol>
+<h2 id="why-this-is-cool">Why this is cool</h2>
+<ol>
+<li><strong>Immersion:</strong> The AI feels aware of your environment. If you say "feed the pet," the AI knows <em>what</em> pet you have without you saying "feed my robot."</li>
+</ol>
+<ol>
+<li><strong>Separation of Powers:</strong></li>
+<ul>
+<li>The <strong>CLI</strong> handles the visuals (Drawing the ASCII).</li>
+<li>The <strong>AI</strong> handles the narrative (Talking about the companion).</li>
+<li>This prevents the AI from trying to "draw" the pet with text, which LLMs are usually bad at.</li>
+</ul>
+</ol>
+<ol>
+<li><strong>Token Efficiency:</strong> By checking history (<code>messages</code>), we ensure we aren't wasting money sending the same "There is a duck" description 1,000 times.</li>
+</ol>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+We have now successfully connected the "Brain" (AI) to the "Body" (Companion).
+</p>
+<ul>
+<li><strong>Chapter 1:</strong> Created the data.</li>
+<li><strong>Chapter 2:</strong> Drew the body.</li>
+<li><strong>Chapter 3:</strong> Animated the body.</li>
+<li><strong>Chapter 4:</strong> Told the AI about the body.</li>
+</ul>
+<p>
+The system is fully functional. But <code>buddy</code> isn't just about watching a pet; it's about helping you code. What if the companion could help you discover hidden features or commands?
+</p>
+<p>
+In the final chapter, we will discuss how to guide the user through the application.
+</p>
+<p>
+<a href="05<em>feature</em>discovery<em>_</em>teaser.md">Next: Feature Discovery & Teaser</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="buddy.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">buddy/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-uninformed-dungeon-master">The Problem: The Uninformed Dungeon Master</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-system-prompt">1. The System Prompt</a></li>
+<li style="padding-left:10px"><a href="#2-the-injection">2. The Injection</a></li>
+<li style="padding-left:10px"><a href="#3-the-instruction">3. The Instruction</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:10px"><a href="#input">Input</a></li>
+<li style="padding-left:10px"><a href="#output">Output</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-implementation">Under the Hood: Implementation</a></li>
+<li style="padding-left:10px"><a href="#1-generating-the-description">1. Generating the Description</a></li>
+<li style="padding-left:10px"><a href="#2-creating-the-attachment">2. Creating the Attachment</a></li>
+<li style="padding-left:10px"><a href="#3-the-flow-breakdown">3. The Flow Breakdown</a></li>
+<li style="padding-left:0px"><a href="#why-this-is-cool">Why this is cool</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

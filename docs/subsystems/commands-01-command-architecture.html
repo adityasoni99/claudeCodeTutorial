@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 1: Command Architecture — commands/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">commands/01_command_architecture.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⌨️ commands/ · 01_command_architecture.md</div>
+  <h1 class="chapter-title-h1">Chapter 1: Command Architecture</h1>
+  <div class="chapter-meta"><span>📄 commands/01_command_architecture.md</span></div>
+</div>
+<h1 id="chapter-1-command-architecture">Chapter 1: Command Architecture</h1>
+<p>
+Welcome to the <strong>Commands</strong> project! 
+</p>
+<p>
+Imagine you are building a digital assistant. You want this assistant to learn new skills easily—like organizing files, writing emails, or checking the weather. In software architecture, we call this a <strong>Plugin System</strong>.
+</p>
+<p>
+In this project, every feature is a distinct file. If you want the app to know how to "login", you create a %%INLINE<em>0%% file. If you want it to "commit" code, you create a %%INLINE</em>1%% file. This is the <strong>Command Architecture</strong>.
+</p>
+<h3 id="why-do-we-do-this">Why do we do this?</h3>
+<p>
+Instead of writing one giant file with thousands of lines of code (which is hard to read and break), we break the application into tiny, self-contained pieces. Each piece does exactly one thing.
+</p>
+<hr>
+<h2 id="use-case-the-clear-command">Use Case: The "Clear" Command</h2>
+<p>
+Let's start with the simplest command possible: clearing the screen. 
+</p>
+<p>
+When a user types <code>/clear</code>, we want the application to wipe the chat history. We don't need Artificial Intelligence for this; it's a simple, mechanical action.
+</p>
+<h3 id="the-inline-3-function">The <code>call</code> Function</h3>
+<p>
+For simple actions, a command file exports a specific function called <code>call</code>.
+</p>
+<p>
+Here is the simplified code for <code>clear.ts</code>.
+</p>
+<pre data-lang="typescript"><code>// File: clear/clear.ts
+import { clearConversation } from './conversation.js'
+
+// This function runs when the user types /clear
+export const call = async (_, context) =&gt; {
+  
+  // 1. Perform the action
+  await clearConversation(context)
+  
+  // 2. Return an empty result
+  return { type: 'text', value: '' }
+}
+</code></pre>
+<p>
+<strong>What just happened?</strong>
+</p>
+<ol>
+<li><strong>Export:</strong> We use <code>export const call</code>. This tells the main application, "Hey, I can be executed!"</li>
+</ol>
+<ol>
+<li><strong>Context:</strong> The function receives <code>context</code>. This contains the app's memory (like the current chat history).</li>
+</ol>
+<ol>
+<li><strong>Action:</strong> We call <code>clearConversation(context)</code> to actually wipe the data.</li>
+</ol>
+<hr>
+<h2 id="use-case-the-init-command-ai-powered">Use Case: The "Init" Command (AI Powered)</h2>
+<p>
+Now, let's look at something smarter. The <code>/init</code> command analyzes your project and writes documentation. This is too complex for a simple script; we need the AI's help.
+</p>
+<p>
+For AI commands, we don't just export a function. We export a <strong>Command Object</strong> that describes <em>how</em> to talk to the AI.
+</p>
+<p>
+Here is a simplified version of <code>init.ts</code>:
+</p>
+<pre data-lang="typescript"><code>// File: init.ts
+import { feature } from 'bun:bundle'
+
+// 1. Define the prompt instructions for the AI
+const INIT_PROMPT = `Please analyze this codebase and create a CLAUDE.md file...`
+
+// 2. Define the command object
+const command = {
+  type: 'prompt',          // Type: Sends instructions to AI
+  name: 'init',            // Keyword: User types /init
+  description: 'Initialize a new CLAUDE.md file',
+  
+  // 3. The function that generates the prompt
+  async getPromptForCommand() {
+    return [
+      { type: 'text', text: INIT_PROMPT }
+    ]
+  },
+}
+
+export default command
+</code></pre>
+<p>
+<strong>Key Differences:</strong>
+</p>
+<ul>
+<li><strong><code>type: 'prompt'</code></strong>: This tells the system, "Don't run this logic locally. Send this text to the AI model."</li>
+<li><strong><code>getPromptForCommand</code></strong>: Instead of doing the work, this function <em>prepares</em> the instructions (the Prompt) that the AI will read.</li>
+</ul>
+<hr>
+<h2 id="how-it-works-under-the-hood">How It Works Under the Hood</h2>
+<p>
+When a user types a command, the system acts like a traffic controller. It doesn't know what every command does; it just knows where to find them.
+</p>
+<h3 id="the-flow">The Flow</h3>
+<ol>
+<li>User types <code>/init</code>.</li>
+</ol>
+<ol>
+<li>System looks for a file named <code>init.ts</code>.</li>
+</ol>
+<ol>
+<li>System loads the file.</li>
+</ol>
+<ol>
+<li>System checks: "Is this a %%INLINE<em>15%% function or a %%INLINE</em>16%% object?"</li>
+</ol>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant App as Main Application
+    participant File as Command File (init.ts)
+    participant AI as AI Model
+
+    User-&gt;&gt;App: Types "/init"
+    App-&gt;&gt;File: Load file
+    File--&gt;&gt;App: Return Command Object
+    
+    Note over App: App sees type is 'prompt'
+    
+    App-&gt;&gt;File: Run getPromptForCommand()
+    File--&gt;&gt;App: Returns "Analyze this codebase..."
+    App-&gt;&gt;AI: Sends Prompt
+    AI--&gt;&gt;User: Generates CLAUDE.md</div></div>
+<h3 id="passing-context">Passing Context</h3>
+<p>
+Notice that in the %%INLINE<em>17%% example, we used %%INLINE</em>18%%. This is how commands share memory.
+</p>
+<pre data-lang="typescript"><code>// simplified usage
+export const call = async (args, context) =&gt; {
+   // context.getAppState() lets us see the current state
+   const appState = context.getAppState();
+}
+</code></pre>
+<p>
+If you need to know who the user is, or what operating system they are on, you ask the <strong>Context</strong>. We will cover how this memory works in detail in <a href="04<em>context</em><em>_memory</em>management.md">Context & Memory Management</a>.
+</p>
+<hr>
+<h2 id="advanced-interactive-ui-commands">Advanced: Interactive UI Commands</h2>
+<p>
+Sometimes, you need more than just text. You need buttons, login forms, or interactive dialogues. 
+</p>
+<p>
+The architecture supports this by allowing commands to return <strong>React Components</strong>. This is used in the <code>login.tsx</code> command.
+</p>
+<pre data-lang="tsx"><code>// File: login/login.tsx (Simplified)
+import * as React from 'react';
+import { Dialog } from '../../components/Dialog.js';
+
+export async function call(onDone, context) {
+  // Returns a visual component to be rendered in the terminal
+  return (
+    &lt;Dialog title="Login"&gt;
+       &lt;LoginForm onSuccess={() =&gt; onDone('Success!')} /&gt;
+    &lt;/Dialog&gt;
+  );
+}
+</code></pre>
+<p>
+This specific capability allows us to build rich user interfaces inside the terminal! We will explore how to build these interfaces in the very next chapter.
+</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<p>
+In the <strong>Command Architecture</strong>, the application is just a shell that loads capabilities on demand.
+</p>
+<ol>
+<li><strong>Direct Commands (%%INLINE<em>20%%)</strong>: Good for utilities like %%INLINE</em>21%%.</li>
+</ol>
+<ol>
+<li><strong>Prompt Commands (%%INLINE<em>22%%)</strong>: Good for AI tasks like %%INLINE</em>23%% or <code>commit</code>.</li>
+</ol>
+<ol>
+<li><strong>UI Commands (%%INLINE<em>25%%)</strong>: Good for user interaction like %%INLINE</em>26%%.</li>
+</ol>
+<p>
+Now that you understand how commands are structured, let's learn how to make them look beautiful in the terminal.
+</p>
+<p>
+<a href="02<em>interactive</em>tui<em>_text</em>user<em>interface</em>.md">Next Chapter: Interactive TUI (Text User Interface)</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="commands.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">commands/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:10px"><a href="#why-do-we-do-this">Why do we do this?</a></li>
+<li style="padding-left:0px"><a href="#use-case-the-clear-command">Use Case: The "Clear" Command</a></li>
+<li style="padding-left:10px"><a href="#the-inline-3-function">The %%INLINE_3%% Function</a></li>
+<li style="padding-left:0px"><a href="#use-case-the-init-command-ai-powered">Use Case: The "Init" Command (AI Powered)</a></li>
+<li style="padding-left:0px"><a href="#how-it-works-under-the-hood">How It Works Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#the-flow">The Flow</a></li>
+<li style="padding-left:10px"><a href="#passing-context">Passing Context</a></li>
+<li style="padding-left:0px"><a href="#advanced-interactive-ui-commands">Advanced: Interactive UI Commands</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

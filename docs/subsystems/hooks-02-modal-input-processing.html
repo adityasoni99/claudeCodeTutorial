@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: Modal Input Processing — hooks/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">hooks/02_modal_input_processing.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🪝 hooks/ · 02_modal_input_processing.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: Modal Input Processing</h1>
+  <div class="chapter-meta"><span>📄 hooks/02_modal_input_processing.md</span></div>
+</div>
+<h1 id="chapter-2-modal-input-processing">Chapter 2: Modal Input Processing</h1>
+<p>
+Welcome back! In <a href="01<em>global</em>configuration<em>_</em>controls.md">Chapter 1: Global Configuration & Controls</a>, we built the dashboard and global steering of our application.
+</p>
+<p>
+Now, we zoom in on the most important part of the cockpit: <strong>The Input Field</strong>.
+</p>
+<p>
+In a standard web form, an input field is simple: you press %%INLINE<em>0%%, and the letter %%INLINE</em>1%% appears. But in our "Spaceship" (the Hooks application), the input field is a <strong>sophisticated interpreter</strong>. It needs to handle:
+</p>
+<ol>
+<li><strong>Vim Mode:</strong> Where keys move the cursor instead of typing.</li>
+</ol>
+<ol>
+<li><strong>Voice Mode:</strong> Where holding the spacebar records audio instead of typing spaces.</li>
+</ol>
+<p>
+This chapter explains how we intercept user keystrokes to create "Modes."
+</p>
+<hr>
+<h2 id="1-the-concept-the-interceptor">1. The Concept: The Interceptor</h2>
+<p>
+Imagine you are holding a game controller.
+</p>
+<ul>
+<li>In a menu screen, the <code>A</code> button selects an item.</li>
+<li>In the game world, the <code>A</code> button makes the character jump.</li>
+</ul>
+<p>
+The physical button didn't change, but the <strong>Mode</strong> did.
+</p>
+<p>
+To achieve this in code, we cannot simply let the keystroke hit the text box directly. We must place a <strong>Guard</strong> (an Interceptor) in front of it.
+</p>
+<h3 id="the-flow">The Flow</h3>
+<ol>
+<li>User presses a key.</li>
+</ol>
+<ol>
+<li><strong>Interceptor</strong> catches it.</li>
+</ol>
+<ol>
+<li><strong>Interceptor</strong> checks the current "Mode" (Normal, Insert, Recording).</li>
+</ol>
+<ol>
+<li><strong>Interceptor</strong> decides:</li>
+<ul>
+<li><em>Action A:</em> Update the text.</li>
+<li><em>Action B:</em> Move the cursor.</li>
+<li><em>Action C:</em> Start a microphone stream.</li>
+</ul>
+</ol>
+<hr>
+<h2 id="2-case-study-vim-emulation-inline-4">2. Case Study: Vim Emulation (<code>useVimInput</code>)</h2>
+<p>
+Let's look at how we handle Vim emulation. In Vim, there are two main modes:
+</p>
+<ul>
+<li><strong>INSERT:</strong> Typing works normally.</li>
+<li><strong>NORMAL:</strong> Keys are commands (e.g., %%INLINE<em>5%% moves left, %%INLINE</em>6%% deletes a character).</li>
+</ul>
+<p>
+We use a hook called <code>useVimInput</code>. It wraps around a standard text input hook but adds a layer of logic.
+</p>
+<h3 id="step-1-managing-mode-state">Step 1: Managing Mode State</h3>
+<p>
+First, we need to know which mode we are in.
+</p>
+<pre data-lang="typescript"><code>// Inside useVimInput.ts
+export function useVimInput(props: UseVimInputProps) {
+  // 1. Keep track of the current mode
+  const [mode, setMode] = useState&lt;VimMode&gt;('INSERT');
+
+  // 2. Setup the standard text input logic
+  const textInput = useTextInput(props);
+
+  // ...
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong> We create a state variable %%INLINE<em>8%%. By default, we are in %%INLINE</em>9%% mode (acting like a normal text box).
+</p>
+<h3 id="step-2-the-interception-function">Step 2: The Interception Function</h3>
+<p>
+This is the heart of the logic. We create a function <code>handleVimInput</code> that sits between the keyboard and the state.
+</p>
+<pre data-lang="typescript"><code>function handleVimInput(rawInput: string, key: Key): void {
+  // 1. Check if we are in INSERT mode
+  if (mode === 'INSERT') {
+    // If user presses Escape, switch to NORMAL mode
+    if (key.escape) {
+      switchToNormalMode();
+      return;
+    }
+    // Otherwise, just type the text normally
+    textInput.onInput(rawInput, key);
+    return;
+  }
+  
+  // ... handle NORMAL mode below ...
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong> If we are typing (%%INLINE<em>11%%), we mostly let the text input do its job. But we watch specifically for the %%INLINE</em>12%% key to change modes.
+</p>
+<h3 id="step-3-handling-commands-normal-mode">Step 3: Handling Commands (Normal Mode)</h3>
+<p>
+If we are <em>not</em> in Insert mode, the keys become commands.
+</p>
+<pre data-lang="typescript"><code>// Inside handleVimInput, continued...
+
+if (mode === 'NORMAL') {
+  // 2. Map keys to actions
+  let vimInput = rawInput;
+
+  // Example: Left Arrow behaves like the 'h' key in Vim
+  if (key.leftArrow) vimInput = 'h';
+  
+  // 3. Execute the command (move cursor, delete, etc.)
+  // 'transition' calculates the new state based on the key
+  const result = transition(currentCommand, vimInput, context);
+  
+  if (result.execute) {
+    result.execute(); // Actually move the cursor or edit text
+  }
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong> Here, pressing the %%INLINE<em>13%% doesn't type a character. It gets converted to a Vim command (%%INLINE</em>14%%), processed by our logic, and results in a cursor movement.
+</p>
+<hr>
+<h2 id="3-case-study-voice-integration-inline-15">3. Case Study: Voice Integration (<code>useVoiceIntegration</code>)</h2>
+<p>
+Voice input is even trickier. We want "Push-to-Talk" using the <code>Spacebar</code>.
+</p>
+<ul>
+<li><strong>Tap Space:</strong> Types a " " character.</li>
+<li><strong>Hold Space:</strong> Records audio.</li>
+</ul>
+<p>
+How does the computer know if you are tapping or holding? It has to measure <strong>Time</strong>.
+</p>
+<h3 id="the-timing-problem">The Timing Problem</h3>
+<p>
+If you press space, we can't type it immediately. We have to wait a tiny bit to see if you release it (a tap) or keep holding it.
+</p>
+<h3 id="the-solution-the-warmup-threshold">The Solution: The Warmup Threshold</h3>
+<p>
+We count rapid keyboard events. If the operating system sends "auto-repeat" events (which happens when you hold a key), we know it's a hold.
+</p>
+<pre data-lang="typescript"><code>// Inside useVoiceIntegration.tsx (Simplified)
+
+const handleKeyDown = (e: KeyboardEvent) =&gt; {
+  // 1. Check if the key is the "Voice Key" (e.g., Space)
+  if (e.key !== ' ') return;
+
+  // 2. Count how many times this event fired rapidly
+  rapidCountRef.current += 1;
+
+  // 3. If it fired more than 5 times quickly...
+  if (rapidCountRef.current &gt;= HOLD_THRESHOLD) {
+    // Stop the space from being typed!
+    e.stopImmediatePropagation();
+    
+    // Switch to Recording Mode
+    startVoiceRecording();
+  }
+};
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ol>
+<li>The user holds Space.</li>
+</ol>
+<ol>
+<li>The OS fires keydown events repeatedly: <code>Hit... Hit... Hit... Hit... Hit...</code></li>
+</ol>
+<ol>
+<li>The first few hits might type spaces (the "Warmup").</li>
+</ol>
+<ol>
+<li>Once we hit <code>HOLD_THRESHOLD</code> (e.g., 5 hits), we realize "Aha! They are holding it!"</li>
+</ol>
+<ol>
+<li>We stop typing spaces and start the microphone.</li>
+</ol>
+<ol>
+<li>Later, we clean up the extra spaces typed during the warmup.</li>
+</ol>
+<hr>
+<h2 id="under-the-hood-the-input-pipeline">Under the Hood: The Input Pipeline</h2>
+<p>
+Let's visualize the journey of a keystroke in our application.
+</p>
+<ol>
+<li><strong>Raw Input:</strong> User presses a key.</li>
+</ol>
+<ol>
+<li><strong>Global Listeners:</strong> <a href="01<em>global</em>configuration<em>_</em>controls.md">Chapter 1</a> listeners check for global hotkeys (like <code>Ctrl+C</code>).</li>
+</ol>
+<ol>
+<li><strong>Active Overlay Check:</strong> If a popup is open, input goes there.</li>
+</ol>
+<ol>
+<li><strong>Modal Processor:</strong> Our %%INLINE<em>20%% or %%INLINE</em>21%% logic runs.</li>
+</ol>
+<ol>
+<li><strong>Final Output:</strong> The text buffer is updated.</li>
+</ol>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant Global as Global Keybindings
+    participant Voice as Voice Processor
+    participant Vim as Vim Processor
+    participant State as Text State
+
+    User-&gt;&gt;Global: Presses Spacebar
+    
+    rect rgb(240, 240, 240)
+        Note right of Global: Checks shortcuts
+        Global--&gt;&gt;Voice: Not a shortcut, pass it on
+    end
+
+    rect rgb(220, 240, 255)
+        Note right of Voice: Holding or Tapping?
+        Voice-&gt;&gt;Voice: Detects HOLD
+        Voice-&gt;&gt;State: Start Recording (Don't Type)
+    end
+    
+    Note over Vim: (Skipped because Voice intercepted)</div></div>
+<h3 id="complex-interactions-stripping-the-warmup">Complex Interactions: "Stripping" the Warmup</h3>
+<p>
+In the voice example, the first few milliseconds of holding space might actually type a few spaces into the input box before we realize you are holding it.
+</p>
+<p>
+To fix this, <code>useVoiceIntegration</code> has a clever cleanup function:
+</p>
+<pre data-lang="typescript"><code>// Inside useVoiceIntegration.tsx
+
+const stripTrailing = useCallback((amountToStrip) =&gt; {
+  // 1. Get current text
+  const prev = inputValueRef.current;
+  
+  // 2. Remove the last N characters (the accidental spaces)
+  const cleaned = prev.slice(0, prev.length - amountToStrip);
+  
+  // 3. Update the text input instantly
+  setInputValue(cleaned);
+}, [inputValueRef]);
+</code></pre>
+<p>
+<strong>Explanation:</strong> This acts like a super-fast backspace. As soon as recording starts, we delete the "warmup" spaces so the user's prompt remains clean.
+</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned that input handling is a series of gates and decisions:
+</p>
+<ol>
+<li><strong>Interception:</strong> We catch keys before they print.</li>
+</ol>
+<ol>
+<li><strong>Mode Switching:</strong> We toggle between states (Insert vs. Normal, Idle vs. Recording).</li>
+</ol>
+<ol>
+<li><strong>Transformation:</strong> We turn keys into commands (<code>h</code> -> Move Left) or actions (Space -> Record).</li>
+</ol>
+<p>
+This creates a powerful, professional feel for the user. But what happens if the user wants to talk to something <em>outside</em> of our app? Like checking a database or reading a file?
+</p>
+<p>
+For that, we need our application to reach out to the world.
+</p>
+<p>
+<a href="03<em>external</em>context<em>_</em>connectivity.md">Next Chapter: External Context & Connectivity</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="hooks.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">hooks/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#1-the-concept-the-interceptor">1. The Concept: The Interceptor</a></li>
+<li style="padding-left:10px"><a href="#the-flow">The Flow</a></li>
+<li style="padding-left:0px"><a href="#2-case-study-vim-emulation-inline-4">2. Case Study: Vim Emulation (%%INLINE_4%%)</a></li>
+<li style="padding-left:10px"><a href="#step-1-managing-mode-state">Step 1: Managing Mode State</a></li>
+<li style="padding-left:10px"><a href="#step-2-the-interception-function">Step 2: The Interception Function</a></li>
+<li style="padding-left:10px"><a href="#step-3-handling-commands-normal-mode">Step 3: Handling Commands (Normal Mode)</a></li>
+<li style="padding-left:0px"><a href="#3-case-study-voice-integration-inline-15">3. Case Study: Voice Integration (%%INLINE_15%%)</a></li>
+<li style="padding-left:10px"><a href="#the-timing-problem">The Timing Problem</a></li>
+<li style="padding-left:10px"><a href="#the-solution-the-warmup-threshold">The Solution: The Warmup Threshold</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-the-input-pipeline">Under the Hood: The Input Pipeline</a></li>
+<li style="padding-left:10px"><a href="#complex-interactions-stripping-the-warmup">Complex Interactions: "Stripping" the Warmup</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

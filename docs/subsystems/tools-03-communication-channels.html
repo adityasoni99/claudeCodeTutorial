@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: Communication Channels — tools/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">tools/03_communication_channels.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🔧 tools/ · 03_communication_channels.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: Communication Channels</h1>
+  <div class="chapter-meta"><span>📄 tools/03_communication_channels.md</span></div>
+</div>
+<h1 id="chapter-3-communication-channels">Chapter 3: Communication Channels</h1>
+<p>
+In the previous chapter, <a href="02<em>task</em><em>_team</em>coordination.md">Task & Team Coordination</a>, we learned how to organize agents into teams and track their work using a shared Task Board.
+</p>
+<p>
+But a team that only moves cards on a board without ever speaking is inefficient. Agents need to ask for passwords, report "Mission Accomplished" to the user, or ask a teammate to review code.
+</p>
+<p>
+This chapter introduces <strong>Communication Channels</strong>: the specific tools agents use to speak to the <strong>User</strong> and to <strong>Each Other</strong>.
+</p>
+<h2 id="why-do-we-need-this">Why do we need this?</h2>
+<p>
+Imagine a "Backend Agent" is writing code and realizes the database credentials are missing.
+</p>
+<p>
+Without a communication channel:
+</p>
+<ol>
+<li>The agent guesses the password (fails).</li>
+</ol>
+<ol>
+<li>The agent tries to hack the database (bad idea).</li>
+</ol>
+<ol>
+<li>The agent crashes.</li>
+</ol>
+<p>
+<strong>With Communication Channels:</strong>
+</p>
+<ol>
+<li>The agent pauses.</li>
+</ol>
+<ol>
+<li>It uses a tool to pop up a question for the User: <em>"Please provide the database password."</em></li>
+</ol>
+<ol>
+<li>The User types it in.</li>
+</ol>
+<ol>
+<li>The agent continues working.</li>
+</ol>
+<h3 id="the-central-use-case-the-stuck-teammate">The Central Use Case: "The Stuck Teammate"</h3>
+<p>
+Agents, like humans, get blocked.
+</p>
+<ol>
+<li><strong>User Communication:</strong> The agent asks the human for help.</li>
+</ol>
+<ol>
+<li><strong>Peer Communication:</strong> A "Coder" agent finishes a file and messages the "Tester" agent: <em>"I'm done, please run the tests."</em></li>
+</ol>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+We divide communication into two distinct categories:
+</p>
+<ol>
+<li><strong>User-Facing Channels:</strong> Tools designed to show information to the human or get their input.</li>
+</ol>
+<ol>
+<li><strong>Peer-Facing Channels:</strong> Tools designed to send data between agents (the "Swarm").</li>
+</ol>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+The runtime provides three specific tools for these scenarios.
+</p>
+<h3 id="1-talking-to-the-user-inline-0">1. Talking to the User (<code>Brief</code>)</h3>
+<p>
+When an agent wants to give a status update, it uses the <code>Brief</code> tool. This isn't for debug logs; it's for "polite conversation" with the user.
+</p>
+<pre data-lang="javascript"><code>// Input to Brief tool
+{
+  "message": "I have finished analyzing the logs. No errors found.",
+  "status": "normal" // or "proactive" if interrupting the user
+}
+</code></pre>
+<p>
+<em>Result:</em> The user sees a nicely formatted message in their console.
+</p>
+<h3 id="2-asking-the-user-inline-2">2. Asking the User (<code>AskUserQuestion</code>)</h3>
+<p>
+Sometimes the agent cannot proceed without human input. It uses this tool to render a blocking menu.
+</p>
+<pre data-lang="javascript"><code>// Input to AskUserQuestion tool
+{
+  "questions": [
+    {
+      "question": "Which environment should I deploy to?",
+      "options": [
+        { "label": "Staging", "description": "Internal test server" },
+        { "label": "Production", "description": "Live user traffic" }
+      ]
+    }
+  ]
+}
+</code></pre>
+<p>
+<em>Result:</em> The agent pauses execution completely until the user selects an option.
+</p>
+<h3 id="3-talking-to-teammates-inline-3">3. Talking to Teammates (<code>SendMessage</code>)</h3>
+<p>
+This is the internal chat system (like Slack for AI). Agents can Direct Message (DM) specific peers or Broadcast to everyone.
+</p>
+<pre data-lang="javascript"><code>// Input to SendMessage tool
+{
+  "to": "qa-tester-bot",
+  "message": "I updated api.ts. Please verify the build."
+}
+</code></pre>
+<h2 id="under-the-hood-the-message-flow">Under the Hood: The Message Flow</h2>
+<p>
+How does a message get from Agent A to Agent B? It doesn't use complex networking. It uses the file system (Mailboxes), similar to how tasks work.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Sender as Agent A (Sender)
+    participant Tool as SendMessage Tool
+    participant FS as File System (Mailbox)
+    participant Recipient as Agent B (Recipient)
+
+    Sender-&gt;&gt;Tool: Call SendMessage("Agent B", "Hello")
+    
+    note right of Tool: 1. Locates Agent B's mailbox file
+    
+    Tool-&gt;&gt;FS: Appends message to /mailboxes/agent-b.json
+    Tool--&gt;&gt;Sender: "Message Queued"
+    
+    note right of Recipient: 2. Next time Agent B wakes up...
+    
+    Recipient-&gt;&gt;FS: Reads mailbox
+    FS--&gt;&gt;Recipient: "You have new mail from Agent A"</div></div>
+<h2 id="internal-implementation">Internal Implementation</h2>
+<p>
+Let's look at the code that powers these three tools.
+</p>
+<h3 id="1-the-output-channel-inline-4">1. The Output Channel: <code>BriefTool.ts</code></h3>
+<p>
+This tool is simple. It takes a message and passes it through to the user interface.
+</p>
+<pre data-lang="typescript"><code>// Simplified from BriefTool.ts
+export const BriefTool = buildTool({
+  name: "Brief",
+  
+  // This function runs when the AI calls the tool
+  async call({ message, attachments }, context) {
+    
+    // 1. Log analytics so we know the agent is talking
+    logEvent('brief_send', { attachment_count: attachments?.length });
+
+    // 2. Return the data. The UI layer (outside this file) 
+    // observes this return value and renders it to the console.
+    return {
+      data: { 
+        message, 
+        sentAt: new Date().toISOString() 
+      }
+    };
+  }
+});
+</code></pre>
+<p>
+<em>Explanation:</em> The %%INLINE<em>5%% tool doesn't "print" to the screen directly. It returns a structured object. The Recursive Agent Runtime (covered in <a href="01</em>recursive<em>agent</em>runtime.md">Chapter 1</a>) catches this result and decides how to show it to the user.
+</p>
+<h3 id="2-the-blocking-channel-inline-6">2. The Blocking Channel: <code>AskUserQuestionTool.tsx</code></h3>
+<p>
+This tool is unique because it uses <strong>React</strong> components (<code>tsx</code>) to render an interactive menu in the terminal.
+</p>
+<pre data-lang="typescript"><code>// Simplified from AskUserQuestionTool.tsx
+export const AskUserQuestionTool = buildTool({
+  name: "AskUserQuestion",
+  
+  // This flag tells the runtime: "Don't let the agent continue yet!"
+  requiresUserInteraction() {
+    return true;
+  },
+
+  // This renders the actual UI the user sees (The Menu)
+  renderToolResultMessage({ answers }) {
+    return &lt;AskUserQuestionResult answers={answers} /&gt;;
+  },
+
+  async call({ questions }, context) {
+    // The runtime pauses here until the user clicks an option.
+    // The 'answers' are injected into the context once the user replies.
+    return {
+      data: { questions, answers: context.answers }
+    };
+  }
+});
+</code></pre>
+<p>
+<em>Explanation:</em> The <code>requiresUserInteraction()</code> creates a "Break" in the agent's thought loop. The agent literally stops thinking. Once the user clicks "Staging", the runtime wakes the agent up with the result.
+</p>
+<h3 id="3-the-swarm-channel-inline-9">3. The Swarm Channel: <code>SendMessageTool.ts</code></h3>
+<p>
+This tool manages the "Inbox" system. It allows agents to coordinate without a central brain controlling every move.
+</p>
+<pre data-lang="typescript"><code>// Simplified from SendMessageTool.ts
+async function handleMessage(recipientName, content, context) {
+  const senderName = getAgentName(); // Who am I?
+
+  // We write to a specific file that the recipient watches
+  await writeToMailbox(
+    recipientName, 
+    {
+      from: senderName,
+      text: content,
+      timestamp: new Date().toISOString(),
+    }
+  );
+
+  return {
+    data: {
+      success: true,
+      message: `Message sent to ${recipientName}'s inbox`
+    }
+  }
+}
+</code></pre>
+<p>
+<em>Explanation:</em>
+</p>
+<ol>
+<li><strong>Identity:</strong> The tool automatically figures out who is sending the message (<code>getAgentName</code>).</li>
+</ol>
+<ol>
+<li><strong>Delivery:</strong> <code>writeToMailbox</code> is a helper that appends a JSON object to a file.</li>
+</ol>
+<ol>
+<li><strong>Broadcasting:</strong> If the user sends to <code>*</code> (wildcard), the tool loops through <em>all</em> teammates and writes to all their mailboxes.</li>
+</ol>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we gave our agents a voice.
+</p>
+<ol>
+<li><strong>Brief:</strong> Allows the agent to politely inform the user of progress.</li>
+</ol>
+<ol>
+<li><strong>AskUserQuestion:</strong> Allows the agent to stop and ask for help.</li>
+</ol>
+<ol>
+<li><strong>SendMessage:</strong> Allows agents to coordinate internally via a file-based mailbox system.</li>
+</ol>
+<p>
+Now that agents can talk and work together, how do they decide <em>what</em> to do next on a larger scale? They need a plan.
+</p>
+<p>
+<a href="04<em>planning</em>workflow.md">Next Chapter: Planning Workflow</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="tools.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">tools/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#why-do-we-need-this">Why do we need this?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case-the-stuck-teammate">The Central Use Case: "The Stuck Teammate"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:10px"><a href="#1-talking-to-the-user-inline-0">1. Talking to the User (%%INLINE_0%%)</a></li>
+<li style="padding-left:10px"><a href="#2-asking-the-user-inline-2">2. Asking the User (%%INLINE_2%%)</a></li>
+<li style="padding-left:10px"><a href="#3-talking-to-teammates-inline-3">3. Talking to Teammates (%%INLINE_3%%)</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-the-message-flow">Under the Hood: The Message Flow</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#1-the-output-channel-inline-4">1. The Output Channel: %%INLINE_4%%</a></li>
+<li style="padding-left:10px"><a href="#2-the-blocking-channel-inline-6">2. The Blocking Channel: %%INLINE_6%%</a></li>
+<li style="padding-left:10px"><a href="#3-the-swarm-channel-inline-9">3. The Swarm Channel: %%INLINE_9%%</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

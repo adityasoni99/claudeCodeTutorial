@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: Message Handling & Queues — context/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">context/03_message_handling___queues.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">💬 context/ · 03_message_handling___queues.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: Message Handling & Queues</h1>
+  <div class="chapter-meta"><span>📄 context/03_message_handling___queues.md</span></div>
+</div>
+<h1 id="chapter-3-message-handling-queues">Chapter 3: Message Handling & Queues</h1>
+<p>
+Welcome back! In the previous chapter, <a href="02<em>modal</em><em>_portal</em>layouts.md">Modal & Portal Layouts</a>, we learned how to create floating windows and give them "spatial awareness." We now have a nice UI structure.
+</p>
+<p>
+However, we have a new problem: <strong>Communication</strong>.
+</p>
+<h2 id="the-problem-the-tangled-telephone-lines">The Problem: "The Tangled Telephone Lines"</h2>
+<p>
+Imagine you have a <strong>"Stop Button"</strong> inside a floating Modal at the bottom of the screen.
+ 
+You also have an <strong>"AI Text Generator"</strong> running in the main window at the top.
+</p>
+<p>
+When the user clicks "Stop," the Generator needs to halt.
+ 
+In a standard React app, you might try to pass a function like <code>onStop</code> from the top component down through 10 layers of parents to reach the button. This is called "Prop Drilling," and it makes your code a nightmare to maintain.
+</p>
+<p>
+This chapter introduces <strong>Message Handling & Queues</strong> to solve this:
+</p>
+<ol>
+<li><strong>The Mailbox:</strong> A central radio station for disparate parts of the app to talk to each other.</li>
+</ol>
+<ol>
+<li><strong>QueuedMessageContext:</strong> A visual manager that keeps streamed messages looking tidy.</li>
+</ol>
+<hr>
+<h2 id="part-1-the-mailbox-asynchronous-communication">Part 1: The Mailbox (Asynchronous Communication)</h2>
+<p>
+Think of the <strong>Mailbox</strong> as a central hub or a "Walkie-Talkie" channel.
+</p>
+<ul>
+<li><strong>Component A</strong> (The Button) says: "I am broadcasting a 'cancel' signal!"</li>
+<li><strong>Component B</strong> (The Generator) is listening: "If I hear 'cancel', I will stop working."</li>
+</ul>
+<p>
+Component A and Component B don't need to know each other exists. They just need access to the Mailbox.
+</p>
+<h3 id="key-concept-the-hub">Key Concept: The Hub</h3>
+<p>
+We provide the Mailbox to the entire app using the <code>MailboxProvider</code>.
+</p>
+<h3 id="usage-example-sending-a-signal">Usage Example: Sending a Signal</h3>
+<p>
+Let's build that "Stop Button." It uses the <code>useMailbox</code> hook to get the walkie-talkie.
+</p>
+<pre data-lang="tsx"><code>import { useMailbox } from './mailbox';
+
+function StopButton() {
+  const mailbox = useMailbox();
+
+  return (
+    &lt;Button onPress={() =&gt; {
+      // Broadcast the signal!
+      mailbox.emit('abort-generation');
+    }}&gt;
+      STOP
+    &lt;/Button&gt;
+  );
+}
+</code></pre>
+<h3 id="usage-example-receiving-a-signal">Usage Example: Receiving a Signal</h3>
+<p>
+Now, somewhere completely different in the app, the Generator listens for that signal.
+</p>
+<pre data-lang="tsx"><code>import { useMailbox } from './mailbox';
+
+function Generator() {
+  const mailbox = useMailbox();
+
+  useEffect(() =&gt; {
+    // Define what happens when we hear the signal
+    const onAbort = () =&gt; console.log("Stopping process...");
+    
+    // Start listening
+    mailbox.on('abort-generation', onAbort);
+
+    // Cleanup: Stop listening when we unmount
+    return () =&gt; mailbox.off('abort-generation', onAbort);
+  }, [mailbox]);
+
+  return &lt;Text&gt;Generating...&lt;/Text&gt;;
+}
+</code></pre>
+<p>
+<strong>Why is this better?</strong>
+ 
+You can move the %%INLINE<em>3%% anywhere—into a sidebar, a modal, or a popup—and it will still work without changing a single line of code in the %%INLINE</em>4%%.
+</p>
+<hr>
+<h2 id="part-2-visual-queues-inline-5">Part 2: Visual Queues (<code>QueuedMessageContext</code>)</h2>
+<p>
+When building a TUI (Terminal User Interface) for AI, messages often stream in chunks. We need to distinguish between:
+</p>
+<ol>
+<li><strong>The First Chunk:</strong> This might need a header or extra margin.</li>
+</ol>
+<ol>
+<li><strong>The Middle Chunks:</strong> These should flow naturally.</li>
+</ol>
+<p>
+If we don't manage this, the text looks like a wall of unreadable blocks. <code>QueuedMessageContext</code> helps us apply the correct "Indent" and "Padding" automatically.
+</p>
+<h3 id="the-logic">The Logic</h3>
+<p>
+The context calculates how much <strong>Padding</strong> a message box should have based on two factors:
+</p>
+<ol>
+<li><strong><code>isFirst</code></strong>: Is this the start of a new message block?</li>
+</ol>
+<ol>
+<li><strong><code>useBriefLayout</code></strong>: Is the user requesting a compact view?</li>
+</ol>
+<h3 id="usage-example-a-smart-message-container">Usage Example: A Smart Message Container</h3>
+<p>
+Here is a component that wraps our text. It automatically knows if it should add padding or stay compact.
+</p>
+<pre data-lang="tsx"><code>import { QueuedMessageProvider, useQueuedMessage } from './QueuedMessageContext';
+
+function MessageBlock({ isFirst, children }) {
+  // 1. Wrap content in the Provider
+  return (
+    &lt;QueuedMessageProvider isFirst={isFirst}&gt;
+      &lt;MessageContent&gt;{children}&lt;/MessageContent&gt;
+    &lt;/QueuedMessageProvider&gt;
+  );
+}
+</code></pre>
+<h3 id="checking-the-context">Checking the Context</h3>
+<p>
+Inside <code>MessageContent</code>, we can read the calculated values to style our text.
+</p>
+<pre data-lang="tsx"><code>function MessageContent({ children }) {
+  // 2. Consume the calculated layout values
+  const { paddingWidth, isFirst } = useQueuedMessage();
+
+  return (
+    &lt;Box&gt;
+      {/* Show an arrow only for the first line */}
+      {isFirst &amp;&amp; &lt;Text color="blue"&gt;➜ &lt;/Text&gt;}
+      
+      {/* Indent content dynamically */}
+      &lt;Box paddingLeft={paddingWidth}&gt;
+        {children}
+      &lt;/Box&gt;
+    &lt;/Box&gt;
+  );
+}
+</code></pre>
+<p>
+<strong>Result:</strong>
+</p>
+<ul>
+<li>If %%INLINE<em>10%% is <strong>false</strong>: You get nice, readable indentation (%%INLINE</em>11%% = 4).</li>
+<li>If <code>useBriefLayout</code> is <strong>true</strong>: The padding collapses to 0 for a compact view.</li>
+</ul>
+<hr>
+<h2 id="internal-implementation-how-it-all-connects">Internal Implementation: How it all connects</h2>
+<p>
+Let's look under the hood to see how the signal flows through the system.
+</p>
+<h3 id="the-mailbox-flow">The Mailbox Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Button as StopButton
+    participant MB as Mailbox (Context)
+    participant Gen as Generator
+
+    Button-&gt;&gt;MB: emits "abort-generation"
+    Note right of MB: Looks up listeners...
+    MB-&gt;&gt;Gen: Triggers callback function
+    Gen-&gt;&gt;Gen: Stops processing</div></div>
+<h3 id="code-walkthrough-the-mailbox-provider">Code Walkthrough: The Mailbox Provider</h3>
+<p>
+Open <code>mailbox.tsx</code>. It is a wrapper around a utility class.
+</p>
+<pre data-lang="tsx"><code>// mailbox.tsx (Simplified)
+export function MailboxProvider({ children }) {
+  // 1. Create a stable instance of the Mailbox class
+  const mailbox = useMemo(() =&gt; new Mailbox(), []);
+
+  // 2. Pass it down to the whole app
+  return (
+    &lt;MailboxContext.Provider value={mailbox}&gt;
+      {children}
+    &lt;/MailboxContext.Provider&gt;
+  );
+}
+</code></pre>
+<p>
+The <code>Mailbox</code> class itself (imported from utils) is simply an "Event Emitter"—a standard pattern in programming for handling lists of listeners.
+</p>
+<h3 id="code-walkthrough-the-queue-logic">Code Walkthrough: The Queue Logic</h3>
+<p>
+Open <code>QueuedMessageContext.tsx</code>. This file does the math for visual styling.
+</p>
+<pre data-lang="tsx"><code>// QueuedMessageContext.tsx (Simplified)
+const PADDING_X = 2; // Default indentation
+
+export function QueuedMessageProvider({ isFirst, useBriefLayout, children }) {
+  
+  // 1. Calculate padding. If "Brief", use 0. Else use 2.
+  const padding = useBriefLayout ? 0 : PADDING_X;
+
+  // 2. Prepare the context value
+  const value = {
+    isQueued: true,
+    isFirst,
+    paddingWidth: padding * 2 // e.g., 4 spaces
+  };
+
+  // 3. Render the Box with the calculated padding applied immediately
+  return (
+    &lt;QueuedMessageContext.Provider value={value}&gt;
+      &lt;Box paddingX={padding}&gt;{children}&lt;/Box&gt;
+    &lt;/QueuedMessageContext.Provider&gt;
+  );
+}
+</code></pre>
+<p>
+<strong>Key Takeaway:</strong> By doing the math (<code>padding * 2</code>) inside the Provider, none of the child components need to know about "Brief Layouts" or math. They just ask: "How much padding should I use?" and the Context gives them the final number.
+</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned how to manage communication and flow:
+</p>
+<ol>
+<li><strong>Mailbox:</strong> We decoupled our components. Buttons can send signals to invisible workers using a central "Event Emitter" instead of messy prop chains.</li>
+</ol>
+<ol>
+<li><strong>Queues:</strong> We created a smart layout context that automatically handles indentation and spacing for streamed messages, keeping our UI clean whether it's in "Full" or "Brief" mode.</li>
+</ol>
+<p>
+Now that our components can talk to each other and look good doing it, we need to manage the most complex part of our app: <strong>Voice & Audio</strong>.
+</p>
+<p>
+<a href="04<em>voice</em>state_manager.md">Next Chapter: Voice State Manager</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="context.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">context/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-tangled-telephone-lines">The Problem: "The Tangled Telephone Lines"</a></li>
+<li style="padding-left:0px"><a href="#part-1-the-mailbox-asynchronous-communication">Part 1: The Mailbox (Asynchronous Communication)</a></li>
+<li style="padding-left:10px"><a href="#key-concept-the-hub">Key Concept: The Hub</a></li>
+<li style="padding-left:10px"><a href="#usage-example-sending-a-signal">Usage Example: Sending a Signal</a></li>
+<li style="padding-left:10px"><a href="#usage-example-receiving-a-signal">Usage Example: Receiving a Signal</a></li>
+<li style="padding-left:0px"><a href="#part-2-visual-queues-inline-5">Part 2: Visual Queues (%%INLINE_5%%)</a></li>
+<li style="padding-left:10px"><a href="#the-logic">The Logic</a></li>
+<li style="padding-left:10px"><a href="#usage-example-a-smart-message-container">Usage Example: A Smart Message Container</a></li>
+<li style="padding-left:10px"><a href="#checking-the-context">Checking the Context</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-how-it-all-connects">Internal Implementation: How it all connects</a></li>
+<li style="padding-left:10px"><a href="#the-mailbox-flow">The Mailbox Flow</a></li>
+<li style="padding-left:10px"><a href="#code-walkthrough-the-mailbox-provider">Code Walkthrough: The Mailbox Provider</a></li>
+<li style="padding-left:10px"><a href="#code-walkthrough-the-queue-logic">Code Walkthrough: The Queue Logic</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

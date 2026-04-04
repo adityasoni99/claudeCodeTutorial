@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: Shell & System Integration — schemas/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">schemas/03_shell___system_integration.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">📐 schemas/ · 03_shell___system_integration.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: Shell & System Integration</h1>
+  <div class="chapter-meta"><span>📄 schemas/03_shell___system_integration.md</span></div>
+</div>
+<h1 id="chapter-3-shell-system-integration">Chapter 3: Shell & System Integration</h1>
+<p>
+In the previous chapter, <a href="02<em>polymorphic</em>hook_definitions.md">Polymorphic Hook Definitions</a>, we learned how to differentiate between different types of actions (Commands, HTTP requests, Prompts).
+</p>
+<p>
+Now, we will focus on the most common and powerful action: <strong>The Command</strong>.
+</p>
+<p>
+This chapter explores <strong>Shell & System Integration</strong>. We will look at how to define the "Rules of Engagement" for interacting with the operating system, ensuring commands run safely and in the correct environment.
+</p>
+<h2 id="the-problem-its-not-just-about-running-a-command">The Problem: "It's not just about running a command"</h2>
+<p>
+Imagine you want your AI assistant to start a local web server. You tell it to run <code>npm start</code>.
+</p>
+<p>
+If you simply execute this command blindly, several things could go wrong:
+</p>
+<ol>
+<li><strong>Freezing:</strong> The server runs forever. The AI freezes, waiting for the command to finish.</li>
+</ol>
+<ol>
+<li><strong>Wrong Language:</strong> You are on Windows, but the command uses Linux syntax (%%INLINE<em>1%% vs %%INLINE</em>2%%).</li>
+</ol>
+<ol>
+<li><strong>Runaway Process:</strong> The command hangs and eats up all your CPU.</li>
+</ol>
+<p>
+We need a way to wrap the raw command in a safety layer. We need to tell the system <em>how</em> to run the command, not just <em>what</em> to run.
+</p>
+<h3 id="analogy-the-soldiers-orders">Analogy: The Soldier's Orders</h3>
+<p>
+Think of the <code>BashCommandHook</code> as a set of orders given to a soldier before a mission:
+</p>
+<ul>
+<li><strong>The Weapon (Shell):</strong> Are you using a Rifle (Bash) or a Pistol (PowerShell)?</li>
+<li><strong>The Time Limit (Timeout):</strong> "If you aren't back in 30 minutes, abort."</li>
+<li><strong>The Radio Protocol (Async):</strong> "Call us when you are done" vs. "Maintain radio silence."</li>
+</ul>
+<h2 id="the-solution-inline-4">The Solution: <code>BashCommandHook</code></h2>
+<p>
+The <code>BashCommandHook</code> schema handles these details. Let's look at a concrete use case to understand the configuration options.
+</p>
+<h3 id="use-case-starting-a-background-server">Use Case: Starting a Background Server</h3>
+<p>
+<strong>Goal:</strong> We want to start a server (<code>npm start</code>). We want it to run in the <strong>background</strong> so we can keep working, and we want to ensure it works on <strong>Windows</strong>.
+</p>
+<p>
+Here is how we configure that using the schema:
+</p>
+<pre data-lang="json"><code>{
+  "type": "command",
+  "command": "npm start",
+  "shell": "powershell",
+  "async": true,
+  "timeout": 10
+}
+</code></pre>
+<p>
+Let's break down the key concepts used here.
+</p>
+<h3 id="concept-1-the-shell-interpreter-inline-7">Concept 1: The Shell Interpreter (<code>shell</code>)</h3>
+<p>
+Operating systems speak different languages. Linux/macOS usually speak <strong>Bash</strong> (or Zsh). Windows usually speaks <strong>PowerShell</strong>.
+</p>
+<p>
+If you write a script that uses <code>grep</code> (Linux search), it will fail on Windows standard command prompt.
+</p>
+<ul>
+<li><strong>Options:</strong> %%INLINE<em>9%% (default) or %%INLINE</em>10%%.</li>
+<li><strong>Why it matters:</strong> It ensures your command syntax is interpreted correctly by the underlying OS.</li>
+</ul>
+<h3 id="concept-2-timeouts-inline-11">Concept 2: Timeouts (<code>timeout</code>)</h3>
+<p>
+This is your safety switch. It defines the maximum time (in seconds) a command is allowed to run.
+</p>
+<ul>
+<li><strong>Default:</strong> Usually runs until finished.</li>
+<li><strong>Why it matters:</strong> If a command asks for user input or enters an infinite loop, the <code>timeout</code> kills it automatically so your application doesn't hang forever.</li>
+</ul>
+<h3 id="concept-3-background-execution-inline-13">Concept 3: Background Execution (<code>async</code>)</h3>
+<p>
+By default, the system blocks. It waits for the command to finish before moving to the next task.
+</p>
+<ul>
+<li><strong><code>async: true</code></strong>: The system fires the command and immediately moves on. It returns the "Process ID" (PID) instead of the command output.</li>
+<li><strong>Why it matters:</strong> Essential for long-running tasks like servers, watchers, or complex builds.</li>
+</ul>
+<h3 id="concept-4-the-watchdog-inline-15">Concept 4: The Watchdog (<code>asyncRewake</code>)</h3>
+<p>
+This is a special, advanced feature.
+</p>
+<ul>
+<li><strong>%%INLINE<em>16%%</strong>: Like %%INLINE</em>17%%, it runs in the background. <strong>However</strong>, if the command crashes (specifically with exit code 2), it "wakes up" the AI model.</li>
+<li><strong>Use Case:</strong> You start a server in the background. You go to sleep. The server crashes. The system wakes up the AI to investigate why it crashed.</li>
+</ul>
+<h2 id="internal-implementation-under-the-hood">Internal Implementation: Under the Hood</h2>
+<p>
+How does the system enforce these rules? Let's visualize the flow when a command is executed.
+</p>
+<h3 id="the-execution-sequence">The Execution Sequence</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Config as Configuration
+    participant Val as Validation (Zod)
+    participant Exec as Shell Executor
+    participant OS as Operating System
+
+    Config-&gt;&gt;Val: Check Schema (Timeout? Shell?)
+    Val--&gt;&gt;Exec: Validated Config
+    Exec-&gt;&gt;Exec: Select Interpreter (Bash/Pwsh)
+    Exec-&gt;&gt;OS: Spawn Process
+    
+    par Watchdog
+        Exec-&gt;&gt;Exec: Start Timer (Timeout)
+    and Process
+        OS--&gt;&gt;Exec: Running...
+    end
+    
+    opt Timeout Exceeded
+        Exec-&gt;&gt;OS: Send Kill Signal (SIGTERM)
+    end</div></div>
+<ol>
+<li><strong>Validation:</strong> Zod checks if your settings are valid numbers/strings.</li>
+</ol>
+<ol>
+<li><strong>Selection:</strong> The code checks %%INLINE<em>18%% to decide which executable to spawn (%%INLINE</em>19%% or <code>pwsh.exe</code>).</li>
+</ol>
+<ol>
+<li><strong>Watchdog:</strong> A timer starts alongside the process. If the timer hits zero, the process is killed.</li>
+</ol>
+<h3 id="code-deep-dive">Code Deep Dive</h3>
+<p>
+Let's look at the Zod definition in <code>hooks.ts</code>. We will break it into two parts for clarity.
+</p>
+<h4 id="part-1-the-basics">Part 1: The Basics</h4>
+<p>
+This defines the mandatory fields for a command hook.
+</p>
+<pre data-lang="typescript"><code>// hooks.ts (Snippet 1)
+const BashCommandHookSchema = z.object({
+  // The discriminator (must be "command")
+  type: z.literal('command'), 
+  
+  // The actual script to run
+  command: z.string(),
+  
+  // Which interpreter to use?
+  shell: z.enum(['bash', 'powershell', 'zsh', 'sh']).optional(),
+});
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li>%%INLINE<em>22%%: Must be strictly %%INLINE</em>23%%.</li>
+<li>%%INLINE<em>24%%: Uses %%INLINE</em>25%%. This limits the user to only valid choices. You can't set shell to <code>"minecraft"</code>.</li>
+</ul>
+<h4 id="part-2-the-safety-async-rules">Part 2: The Safety & Async Rules</h4>
+<p>
+This adds the control layers we discussed.
+</p>
+<pre data-lang="typescript"><code>// hooks.ts (Snippet 2)
+  // Safety limit in seconds
+  timeout: z.number().positive().optional(),
+
+  // Fire and forget?
+  async: z.boolean().optional(),
+  
+  // Run in background, but report errors?
+  asyncRewake: z.boolean().optional(),
+});
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li>%%INLINE<em>27%%: Must be a %%INLINE</em>28%% number. You can't have a timeout of -5 seconds.</li>
+<li>%%INLINE<em>29%%: This implies %%INLINE</em>30%%. It's a boolean flag that alters the internal event listener logic to handle crash reports.</li>
+</ul>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>Shell Integration</strong> is about more than just text; it's about managing the execution environment.</li>
+</ol>
+<ol>
+<li><strong><code>shell</code></strong> lets us choose between Bash and PowerShell to ensure compatibility.</li>
+</ol>
+<ol>
+<li><strong><code>timeout</code></strong> prevents infinite loops and hanging processes.</li>
+</ol>
+<ol>
+<li><strong><code>async</code></strong> allows us to run long tasks (like servers) without blocking the AI.</li>
+</ol>
+<p>
+We now have a safe way to run commands. But sometimes, running a command isn't enough. Sometimes, we need the AI to <strong>verify</strong> that the command actually did what it was supposed to do.
+</p>
+<p>
+How do we add a "Brain" to our hooks?
+</p>
+<p>
+<a href="04<em>ai</em>verification<em>_</em>interaction.md">Next Chapter: AI Verification & Interaction</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="schemas.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">schemas/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-its-not-just-about-running-a-command">The Problem: "It's not just about running a command"</a></li>
+<li style="padding-left:10px"><a href="#analogy-the-soldiers-orders">Analogy: The Soldier's Orders</a></li>
+<li style="padding-left:0px"><a href="#the-solution-inline-4">The Solution: %%INLINE_4%%</a></li>
+<li style="padding-left:10px"><a href="#use-case-starting-a-background-server">Use Case: Starting a Background Server</a></li>
+<li style="padding-left:10px"><a href="#concept-1-the-shell-interpreter-inline-7">Concept 1: The Shell Interpreter (%%INLINE_7%%)</a></li>
+<li style="padding-left:10px"><a href="#concept-2-timeouts-inline-11">Concept 2: Timeouts (%%INLINE_11%%)</a></li>
+<li style="padding-left:10px"><a href="#concept-3-background-execution-inline-13">Concept 3: Background Execution (%%INLINE_13%%)</a></li>
+<li style="padding-left:10px"><a href="#concept-4-the-watchdog-inline-15">Concept 4: The Watchdog (%%INLINE_15%%)</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-under-the-hood">Internal Implementation: Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#the-execution-sequence">The Execution Sequence</a></li>
+<li style="padding-left:10px"><a href="#code-deep-dive">Code Deep Dive</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

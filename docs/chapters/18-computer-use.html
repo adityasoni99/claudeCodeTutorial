@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ch.18 Computer Use — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">Ch.18 — Computer Use</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">ADVANCED</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">Chapter 18 · <span class="tag tag-advanced">ADVANCED</span></div>
+  <h1 class="chapter-title-h1">Computer Use</h1>
+  <div class="chapter-meta">
+    <span>📄 18_computer_use.md</span>
+    <span>🏷 Advanced</span>
+  </div>
+</div>
+<h1 id="chapter-18-computer-use">Chapter 18: Computer Use</h1>
+<p>
+In the previous <a href="17<em>unique</em>features.md">Unique Features</a> chapter, we explored special modes like "Auto-Dream" and "Ultraplan" that make the AI smarter.
+</p>
+<p>
+But all those features rely on text. The AI reads text files and writes text commands.
+</p>
+<p>
+What if the task involves something visual? What if you need to test a website's layout, or change a setting in a graphical application where there is no command-line interface?
+</p>
+<p>
+Enter <strong>Computer Use</strong>. This is the ability for <code>claudeCode</code> to see your screen, move your mouse, and type on your keyboard, just like a human user.
+</p>
+<h2 id="what-is-computer-use">What is Computer Use?</h2>
+<p>
+<strong>Computer Use</strong> transforms the AI from a "Terminal Script" into a "Virtual Operator."
+</p>
+<p>
+Instead of using APIs to talk to software, it uses the <strong>GUI (Graphical User Interface)</strong>. It takes screenshots to understand what is happening and sends virtual input events to interact with it.
+</p>
+<h3 id="the-central-use-case-the-ui-test">The Central Use Case: "The UI Test"</h3>
+<p>
+Imagine you are building a website. You want to verify that the "Sign Up" button actually works when clicked.
+</p>
+<p>
+<strong>You ask <code>claudeCode</code>: "Open Safari, go to localhost:3000, and click the Sign Up button."</strong>
+</p>
+<p>
+To do this, the AI must:
+</p>
+<ol>
+<li><strong>See:</strong> Take a screenshot to find the Safari icon.</li>
+</ol>
+<ol>
+<li><strong>Move:</strong> Calculate the X,Y coordinates of the icon and move the mouse.</li>
+</ol>
+<ol>
+<li><strong>Click:</strong> Simulate a mouse click.</li>
+</ol>
+<ol>
+<li><strong>Type:</strong> Type the URL into the address bar.</li>
+</ol>
+<ol>
+<li><strong>Verify:</strong> Take another screenshot to ensure the page loaded.</li>
+</ol>
+<p>
+Without Computer Use, the AI is blind to the graphical world.
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<h3 id="1-the-screen-the-eyes">1. The Screen (The Eyes)</h3>
+<p>
+The AI cannot watch a video stream (that is too much data). Instead, it takes <strong>Screenshots</strong>.
+ 
+It works in a "Stop-Motion" animation style:
+</p>
+<ol>
+<li>Take a picture.</li>
+</ol>
+<ol>
+<li>Analyze the picture.</li>
+</ol>
+<ol>
+<li>Decide the next move.</li>
+</ol>
+<h3 id="2-coordinate-system-the-map">2. Coordinate System (The Map)</h3>
+<p>
+To click a button, the AI needs to know exactly where it is. We use a pixel coordinate system.
+</p>
+<ul>
+<li><strong>(0, 0):</strong> The top-left corner of your screen.</li>
+<li><strong>(1920, 1080):</strong> The bottom-right (on a standard monitor).</li>
+</ul>
+<h3 id="3-action-primitives-the-hands">3. Action Primitives (The Hands)</h3>
+<p>
+We break down complex human actions into tiny atomic steps:
+</p>
+<ul>
+<li><code>mouse_move</code>: Go to X, Y.</li>
+<li><code>left_click</code>: Press the button.</li>
+<li><code>type</code>: Press keys on the keyboard.</li>
+<li><code>key</code>: Press special keys like "Return" or "Command".</li>
+</ul>
+<h2 id="how-to-use-computer-use">How to Use Computer Use</h2>
+<p>
+This feature is currently experimental and often hidden behind <a href="13<em>feature</em>gating.md">Feature Gating</a>.
+</p>
+<p>
+When enabled, the <a href="03<em>query</em>engine.md">Query Engine</a> gains access to a tool usually named <code>computer</code>.
+</p>
+<h3 id="the-input-structure">The Input Structure</h3>
+<p>
+The AI sends a command that includes an %%INLINE<em>7%% and sometimes %%INLINE</em>8%% or <code>text</code>.
+</p>
+<p>
+<strong>Example 1: Taking a look</strong>
+</p>
+<pre data-lang="json"><code>{
+  "action": "screenshot"
+}
+</code></pre>
+<p>
+<strong>Example 2: Clicking a button</strong>
+</p>
+<pre data-lang="json"><code>{
+  "action": "mouse_move",
+  "coordinate": [500, 300]
+}
+</code></pre>
+<p>
+<em>Explanation: This moves the cursor to pixel X=500, Y=300.</em>
+</p>
+<p>
+<strong>Example 3: Typing</strong>
+</p>
+<pre data-lang="json"><code>{
+  "action": "type",
+  "text": "Hello World"
+}
+</code></pre>
+<h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
+<p>
+The implementation relies on a "Loop of Vision." The AI is blind until it asks for a screenshot.
+</p>
+<ol>
+<li><strong>Goal:</strong> User says "Click the Apple menu."</li>
+</ol>
+<ol>
+<li><strong>Vision:</strong> AI calls <code>screenshot</code>.</li>
+</ol>
+<ol>
+<li><strong>Analysis:</strong> AI receives the image. It uses its vision capabilities to find the Apple logo at <code>[20, 10]</code>.</li>
+</ol>
+<ol>
+<li><strong>Action:</strong> AI calls %%INLINE<em>12%% to %%INLINE</em>13%%.</li>
+</ol>
+<ol>
+<li><strong>Action:</strong> AI calls <code>left_click</code>.</li>
+</ol>
+<p>
+Here is the visual flow:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant AI as Claude AI
+    participant Tool as ComputerTool
+    participant OS as macOS System
+
+    AI-&gt;&gt;Tool: Action: "screenshot"
+    Tool-&gt;&gt;OS: Capture Display
+    OS--&gt;&gt;Tool: Returns Image Data (Base64)
+    Tool--&gt;&gt;AI: "Here is what the screen looks like."
+    
+    Note over AI: Analyzes image, finds button at 100, 200
+    
+    AI-&gt;&gt;Tool: Action: "mouse_move" [100, 200]
+    Tool-&gt;&gt;OS: Move Cursor
+    
+    AI-&gt;&gt;Tool: Action: "left_click"
+    Tool-&gt;&gt;OS: Send Click Event</div></div>
+<h3 id="internal-implementation-code">Internal Implementation Code</h3>
+<p>
+Since <code>claudeCode</code> is written in JavaScript (Node.js), it doesn't have built-in access to low-level operating system functions like moving the mouse.
+</p>
+<p>
+To solve this, we usually use a <strong>Bridge Script</strong>. On macOS, we might execute a Python script or a compiled Swift binary that handles the actual hardware control.
+</p>
+<h4 id="1-defining-the-tool">1. Defining the Tool</h4>
+<p>
+The tool definition tells the AI what it can do.
+</p>
+<pre data-lang="typescript"><code>// tools/ComputerTool/index.ts
+import { buildTool } from '../../Tool';
+
+export const ComputerTool = buildTool({
+  name: 'computer',
+  description: 'Control the mouse, keyboard, and take screenshots.',
+  
+  // Input Schema: action (enum), coordinate (array), text (string)
+  inputSchema: computerSchema, 
+  
+  async call(input) {
+    // Pass the command to our execution engine
+    return await executeComputerAction(input);
+  }
+});
+</code></pre>
+<p>
+<em>Explanation: We register the tool just like the <a href="06_bashtool.md">BashTool</a>, but the inputs are specific to UI control.</em>
+</p>
+<h4 id="2-executing-actions-the-bridge">2. Executing Actions (The Bridge)</h4>
+<p>
+This function translates the AI's request into a system command.
+</p>
+<pre data-lang="typescript"><code>// tools/ComputerTool/executor.ts
+import { spawn } from 'child_process';
+
+async function executeComputerAction(action, coords) {
+  if (action === 'screenshot') {
+    // On macOS, use the built-in screencapture utility
+    return await runCommand('screencapture', ['-x', '/tmp/screen.png']);
+  }
+
+  if (action === 'mouse_move') {
+    // Run a python script to move the mouse
+    return await runPython('import pyautogui; pyautogui.moveTo(...)');
+  }
+}
+</code></pre>
+<p>
+<em>Explanation: We rely on external utilities. %%INLINE<em>16%% is a standard Mac command. For mouse movement, we often use Python libraries like %%INLINE</em>17%% or Swift commands.</em>
+</p>
+<h4 id="3-handling-the-image">3. Handling the Image</h4>
+<p>
+When the screenshot is taken, it's just a file. We need to convert it into a format the AI can understand (Base64).
+</p>
+<pre data-lang="typescript"><code>// tools/ComputerTool/screen.ts
+import { readFile } from 'fs/promises';
+
+async function getScreenshotData() {
+  // 1. Read the file we just saved
+  const buffer = await readFile('/tmp/screen.png');
+  
+  // 2. Convert to Base64 string
+  const base64 = buffer.toString('base64');
+  
+  // 3. Return a special object for the AI model
+  return {
+    type: 'image',
+    source: { type: 'base64', media_type: 'image/png', data: base64 }
+  };
+}
+</code></pre>
+<p>
+<em>Explanation: We don't send the filename to the AI; we send the actual image data encoded as text strings. This consumes a lot of bandwidth and tokens!</em>
+</p>
+<h2 id="safety-and-permissions">Safety and Permissions</h2>
+<p>
+Giving an AI control over your mouse is inherently risky. What if it tries to drag your "Documents" folder into the Trash?
+</p>
+<p>
+We rely heavily on the <strong><a href="08<em>permission</em><em>_security</em>system.md">Permission & Security System</a></strong>.
+</p>
+<ol>
+<li><strong>High-Risk Flag:</strong> The <code>ComputerTool</code> is marked as "High Risk."</li>
+</ol>
+<ol>
+<li><strong>Confirmation:</strong> The user typically has to approve the session start.</li>
+</ol>
+<ol>
+<li><strong>Interrupt:</strong> The user can shake the mouse or press a key combo to kill the process immediately (using the Abort Controller logic we learned in <a href="16_teammates.md">Teammates</a>).</li>
+</ol>
+<h2 id="why-is-this-important-for-later">Why is this important for later?</h2>
+<p>
+Computer Use is the most resource-intensive feature in the entire application.
+</p>
+<ul>
+<li><strong><a href="19<em>cost</em>tracking.md">Cost Tracking</a>:</strong> Sending high-definition screenshots to an AI model costs significantly more "tokens" than sending text. In the next chapter, we will see how we track these soaring costs to prevent "Bill Shock."</li>
+<li><strong><a href="14<em>model</em>context<em>protocol</em><em>mcp</em>.md">Model Context Protocol (MCP)</a>:</strong> Eventually, Computer Use can be exposed as an MCP server, allowing <em>other</em> AI agents to control your screen remotely.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have learned that <strong>Computer Use</strong> gives <code>claudeCode</code> eyes and hands. By combining <strong>Screenshots</strong> (to see) with <strong>System Scripts</strong> (to click and type), the AI can interact with any application on your computer, not just those with APIs.
+</p>
+<p>
+However, all these screenshots and complex actions come with a price. How do we keep track of how much money we are spending on API fees?
+</p>
+<p>
+<a href="19<em>cost</em>tracking.md">Next Chapter: Cost Tracking</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="17-unique-features.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">Unique Features</div>
+        </a><a class="chapter-nav-card next" href="19-cost-tracking.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">Cost Tracking</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#what-is-computer-use">What is Computer Use?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case-the-ui-test">The Central Use Case: "The UI Test"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-screen-the-eyes">1. The Screen (The Eyes)</a></li>
+<li style="padding-left:10px"><a href="#2-coordinate-system-the-map">2. Coordinate System (The Map)</a></li>
+<li style="padding-left:10px"><a href="#3-action-primitives-the-hands">3. Action Primitives (The Hands)</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-computer-use">How to Use Computer Use</a></li>
+<li style="padding-left:10px"><a href="#the-input-structure">The Input Structure</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-how-it-works">Under the Hood: How it Works</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-code">Internal Implementation Code</a></li>
+<li style="padding-left:0px"><a href="#safety-and-permissions">Safety and Permissions</a></li>
+<li style="padding-left:0px"><a href="#why-is-this-important-for-later">Why is this important for later?</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 1: Global Configuration & Controls — hooks/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">hooks/01_global_configuration___controls.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🪝 hooks/ · 01_global_configuration___controls.md</div>
+  <h1 class="chapter-title-h1">Chapter 1: Global Configuration & Controls</h1>
+  <div class="chapter-meta"><span>📄 hooks/01_global_configuration___controls.md</span></div>
+</div>
+<h1 id="chapter-1-global-configuration-controls">Chapter 1: Global Configuration & Controls</h1>
+<p>
+Welcome to the <strong>Hooks</strong> project tutorial!
+</p>
+<p>
+Imagine you are building a complex spaceship (our application). You need a central <strong>Cockpit Dashboard</strong> that tells you how fast you're going, controls the engine, and provides emergency buttons that work no matter what planet you are looking at.
+</p>
+<p>
+In our application, this "Cockpit" is built using three specific concepts:
+</p>
+<ol>
+<li><strong>Settings:</strong> The reactive preferences (like "Dark Mode").</li>
+</ol>
+<ol>
+<li><strong>Model Resolution:</strong> Deciding which AI brain to use.</li>
+</ol>
+<ol>
+<li><strong>Global Keybindings:</strong> Shortcuts that work everywhere (like "Toggle Fullscreen").</li>
+</ol>
+<p>
+This chapter explains how we centralize this control so the app behaves consistently.
+</p>
+<hr>
+<h2 id="1-the-reactive-brain-inline-0">1. The Reactive Brain: <code>useSettings</code></h2>
+<h3 id="the-problem">The Problem</h3>
+<p>
+Users can change configuration files (like <code>config.json</code>) while the app is running. We don't want to restart the app every time a user changes a setting. We need the app to "react" instantly.
+</p>
+<h3 id="the-solution">The Solution</h3>
+<p>
+We use the <code>useSettings</code> hook. It connects a component directly to the application's state. If a file changes on the disk, this hook triggers an update, and your component re-renders with the new values.
+</p>
+<h3 id="how-to-use-it">How to use it</h3>
+<p>
+Here is how you get the current configuration in any component:
+</p>
+<pre data-lang="typescript"><code>import { useSettings } from '../hooks/useSettings.js';
+
+export function MyComponent() {
+  // 1. Get the settings object
+  const settings = useSettings();
+
+  // 2. Read a value (e.g., the visual theme)
+  return &lt;Text&gt;Current Theme: {settings.theme}&lt;/Text&gt;;
+}
+</code></pre>
+<p>
+<strong>What happens here?</strong>
+</p>
+<ul>
+<li><strong>Input:</strong> The component calls <code>useSettings()</code>.</li>
+<li><strong>Output:</strong> It receives a read-only object containing all user preferences.</li>
+<li><strong>Reaction:</strong> If the user edits their config file to change <code>theme</code> from "dark" to "light", this component automatically refreshes to show "light".</li>
+</ul>
+<hr>
+<h2 id="2-the-decision-maker-inline-5">2. The Decision Maker: <code>useMainLoopModel</code></h2>
+<h3 id="the-problem">The Problem</h3>
+<p>
+Our application can use many different AI models (like GPT-4, Claude, or local models). Sometimes, we want to force the app to use a specific model for a single session, or a feature flag (a remote switch) might change which model is available. We need one place to decide "Which brain are we using right now?"
+</p>
+<h3 id="the-solution">The Solution</h3>
+<p>
+The <code>useMainLoopModel</code> hook handles this complexity. It checks:
+</p>
+<ol>
+<li>Session overrides (did the user force a model just for now?).</li>
+</ol>
+<ol>
+<li>User config (what is their default?).</li>
+</ol>
+<ol>
+<li>Feature flags (is the server telling us to use something else?).</li>
+</ol>
+<h3 id="how-to-use-it">How to use it</h3>
+<pre data-lang="typescript"><code>import { useMainLoopModel } from '../hooks/useMainLoopModel.js';
+
+export function AIStatus() {
+  // Get the resolved model name
+  const modelName = useMainLoopModel();
+
+  return &lt;Text&gt;Brain: {modelName}&lt;/Text&gt;; // e.g., "gpt-4o"
+}
+</code></pre>
+<p>
+<strong>Why is this special?</strong>
+ 
+If a remote feature flag changes (e.g., an experiment starts), this hook forces the component to re-render immediately with the new model name. You don't have to write logic to check flags manually.
+</p>
+<hr>
+<h2 id="3-the-universal-remote-inline-7">3. The Universal Remote: <code>useGlobalKeybindings</code></h2>
+<h3 id="the-problem">The Problem</h3>
+<p>
+Some shortcuts need to work <strong>everywhere</strong>. For example, <code>Ctrl+O</code> might switch the view from the Input Prompt to the Transcript. This should happen whether you are typing a command, searching history, or looking at a file.
+</p>
+<h3 id="the-solution">The Solution</h3>
+<p>
+We create a dedicated component called <code>GlobalKeybindingHandlers</code>. It renders nothing (it's invisible), but it registers "listeners" for specific keys.
+</p>
+<h3 id="scenario-the-transcript-toggle">Scenario: The Transcript Toggle</h3>
+<p>
+Let's look at how we handle the <code>Ctrl+O</code> shortcut to toggle the Transcript view.
+</p>
+<h4 id="step-1-accessing-global-state">Step 1: Accessing Global State</h4>
+<p>
+First, we need to know what screen we are currently on (%%INLINE<em>11%% vs %%INLINE</em>12%%) and a function to change it.
+</p>
+<pre data-lang="typescript"><code>// Inside GlobalKeybindingHandlers...
+const { screen, setScreen } = props;
+
+// We also check if we are in a special "Brief" mode
+const isBriefOnly = useAppState(s =&gt; s.isBriefOnly);
+</code></pre>
+<h4 id="step-2-defining-the-action">Step 2: Defining the Action</h4>
+<p>
+We define a function that runs when the key is pressed. It switches the screen variable.
+</p>
+<pre data-lang="typescript"><code>const handleToggleTranscript = useCallback(() =&gt; {
+  // If currently on 'transcript', go to 'prompt', else go to 'transcript'
+  setScreen(current =&gt; 
+    current === 'transcript' ? 'prompt' : 'transcript'
+  );
+  
+  // (Analytics logging omitted for brevity)
+}, [screen, setScreen]);
+</code></pre>
+<h4 id="step-3-registering-the-key">Step 3: Registering the Key</h4>
+<p>
+Finally, we use the <code>useKeybinding</code> hook to attach the key combo to the action.
+</p>
+<pre data-lang="typescript"><code>useKeybinding('app:toggleTranscript', handleToggleTranscript, {
+  context: 'Global' // This is the magic word!
+});
+</code></pre>
+<p>
+<strong>Context 'Global'</strong> ensures this shortcut is always listening, unlike specific tools that only listen when they are active.
+</p>
+<hr>
+<h2 id="under-the-hood-how-global-actions-work">Under the Hood: How Global Actions Work</h2>
+<p>
+When a user presses a key like <code>Ctrl+O</code>, the event flows through the system like this:
+</p>
+<ol>
+<li><strong>User</strong> presses the key.</li>
+</ol>
+<ol>
+<li><strong>Keybinding System</strong> detects the input.</li>
+</ol>
+<ol>
+<li>It checks active listeners. Since our listener is "Global", it matches.</li>
+</ol>
+<ol>
+<li>It executes <code>handleToggleTranscript</code>.</li>
+</ol>
+<ol>
+<li><strong>AppState</strong> updates the <code>screen</code> variable.</li>
+</ol>
+<ol>
+<li>The <strong>UI</strong> re-renders to show the new screen.</li>
+</ol>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant KB as Keybinding System
+    participant Handler as Global Handler
+    participant State as App State
+    
+    User-&gt;&gt;KB: Presses Ctrl+O
+    KB-&gt;&gt;Handler: Detects 'app:toggleTranscript'
+    Handler-&gt;&gt;State: setScreen('transcript')
+    State--&gt;&gt;User: App Re-renders UI</div></div>
+<h3 id="deep-dive-handling-conflicts">Deep Dive: Handling Conflicts</h3>
+<p>
+Sometimes, we <em>don't</em> want a global key to fire. For example, if a user is using a search bar inside the transcript, <code>Escape</code> should close the search bar, not exit the transcript entirely.
+</p>
+<p>
+We handle this using the %%INLINE<em>18%% property in %%INLINE</em>19%%.
+</p>
+<pre data-lang="typescript"><code>// Only allow exiting transcript if the search bar is CLOSED
+useKeybinding('transcript:exit', handleExitTranscript, {
+  context: 'Transcript',
+  isActive: isInTranscript &amp;&amp; !searchBarOpen 
+});
+</code></pre>
+<ul>
+<li><strong>%%INLINE<em>20%%</strong>: This is a gate. If it evaluates to %%INLINE</em>21%%, the key press is ignored by this handler, allowing other components to potentially catch it.</li>
+</ul>
+<hr>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we established the "nervous system" of our application:
+</p>
+<ol>
+<li><strong><code>useSettings</code></strong> keeps our UI in sync with configuration files.</li>
+</ol>
+<ol>
+<li><strong><code>useMainLoopModel</code></strong> acts as the brain, resolving complex logic to pick the right AI model.</li>
+</ol>
+<ol>
+<li><strong><code>useGlobalKeybindings</code></strong> acts as the steering wheel, providing controls that work regardless of where the user is looking.</li>
+</ol>
+<p>
+However, not all controls should be global. Sometimes, you need to ask the user a specific question, like "Are you sure?" or "Select a file." For that, we need to temporarily block global controls and focus on a specific task.
+</p>
+<p>
+<a href="02<em>modal</em>input_processing.md">Next Chapter: Modal Input Processing</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="hooks.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">hooks/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#1-the-reactive-brain-inline-0">1. The Reactive Brain: %%INLINE_0%%</a></li>
+<li style="padding-left:10px"><a href="#the-problem">The Problem</a></li>
+<li style="padding-left:10px"><a href="#the-solution">The Solution</a></li>
+<li style="padding-left:10px"><a href="#how-to-use-it">How to use it</a></li>
+<li style="padding-left:0px"><a href="#2-the-decision-maker-inline-5">2. The Decision Maker: %%INLINE_5%%</a></li>
+<li style="padding-left:10px"><a href="#the-problem">The Problem</a></li>
+<li style="padding-left:10px"><a href="#the-solution">The Solution</a></li>
+<li style="padding-left:10px"><a href="#how-to-use-it">How to use it</a></li>
+<li style="padding-left:0px"><a href="#3-the-universal-remote-inline-7">3. The Universal Remote: %%INLINE_7%%</a></li>
+<li style="padding-left:10px"><a href="#the-problem">The Problem</a></li>
+<li style="padding-left:10px"><a href="#the-solution">The Solution</a></li>
+<li style="padding-left:10px"><a href="#scenario-the-transcript-toggle">Scenario: The Transcript Toggle</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-how-global-actions-work">Under the Hood: How Global Actions Work</a></li>
+<li style="padding-left:10px"><a href="#deep-dive-handling-conflicts">Deep Dive: Handling Conflicts</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

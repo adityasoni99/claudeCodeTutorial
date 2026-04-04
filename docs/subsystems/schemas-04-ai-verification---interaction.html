@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: AI Verification & Interaction — schemas/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">schemas/04_ai_verification___interaction.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">📐 schemas/ · 04_ai_verification___interaction.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: AI Verification & Interaction</h1>
+  <div class="chapter-meta"><span>📄 schemas/04_ai_verification___interaction.md</span></div>
+</div>
+<h1 id="chapter-4-ai-verification-interaction">Chapter 4: AI Verification & Interaction</h1>
+<p>
+Welcome to Chapter 4! In the previous chapter, <a href="03<em>shell</em><em>_system</em>integration.md">Shell & System Integration</a>, we learned how to make our system execute "dumb" commands—like running a script or starting a server.
+</p>
+<p>
+But what if you need intelligence? What if you want the system to <strong>think</strong> before it acts?
+</p>
+<p>
+This chapter introduces <strong>AI Verification & Interaction</strong>. We will explore the %%INLINE<em>0%% and %%INLINE</em>1%%. These allow you to pause the automation pipeline and consult a Large Language Model (LLM) to summarize data, generate text, or verify safety.
+</p>
+<h2 id="the-problem-is-this-actually-correct">The Problem: "Is this actually correct?"</h2>
+<p>
+Imagine you have a hook that runs whenever a file is saved.
+</p>
+<ol>
+<li><strong>Chapter 3 approach:</strong> You run a "linter" command. It checks for missing semicolons.</li>
+</ol>
+<ol>
+<li><strong>The limitation:</strong> The linter cannot tell you if the code logic makes sense, or if you accidentally pasted your password into the file.</li>
+</ol>
+<p>
+We need a way to inject a "Brain" into the process. We need a Supervisor.
+</p>
+<h3 id="use-case-the-automatic-code-reviewer">Use Case: The Automatic Code Reviewer</h3>
+<p>
+<strong>Goal:</strong> Every time we finish writing a piece of code, we want an AI to:
+</p>
+<ol>
+<li><strong>Read</strong> the code.</li>
+</ol>
+<ol>
+<li><strong>Analyze</strong> it for security flaws.</li>
+</ol>
+<ol>
+<li><strong>Report</strong> its findings to us.</li>
+</ol>
+<h2 id="concept-1-the-inline-2-the-consultant">Concept 1: The <code>PromptHook</code> (The Consultant)</h2>
+<p>
+The <code>PromptHook</code> is the simplest way to interact with an LLM. It's a "One Question, One Answer" interaction.
+</p>
+<p>
+Think of it like sending a quick message to a consultant: <em>"Hey, look at this and tell me what you think."</em>
+</p>
+<h3 id="how-to-configure-it">How to Configure It</h3>
+<p>
+Here is how we define a prompt hook in our settings.
+</p>
+<pre data-lang="json"><code>{
+  "type": "prompt",
+  "prompt": "Review this code for security leaks: $ARGUMENTS",
+  "model": "claude-3-5-sonnet"
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ol>
+<li><strong>%%INLINE<em>4%%</strong>: Must be %%INLINE</em>5%%. This tells the system to wake up the LLM, not the shell.</li>
+</ol>
+<ol>
+<li><strong><code>prompt</code></strong>: This is the message you send to the AI.</li>
+</ol>
+<ol>
+<li><strong><code>$ARGUMENTS</code></strong>: This is a magic placeholder. When the hook runs, the system replaces this with the actual data (like the file content or tool output).</li>
+</ol>
+<ol>
+<li><strong><code>model</code></strong>: (Optional) You can specify which brain to use. Maybe you want a "smarter" model for security checks.</li>
+</ol>
+<h2 id="concept-2-the-inline-9-the-verifier">Concept 2: The <code>AgentHook</code> (The Verifier)</h2>
+<p>
+The <code>AgentHook</code> is similar, but it implies a more autonomous role. In the system's architecture, an "Agent" hook is often used for <strong>Verification</strong>.
+</p>
+<p>
+Think of it like a Security Guard. It doesn't just chat; it is looking to pass or fail a specific condition.
+</p>
+<pre data-lang="json"><code>{
+  "type": "agent",
+  "prompt": "Verify that the unit tests passed. If not, explain why.",
+  "timeout": 60
+}
+</code></pre>
+<p>
+<strong>Key Differences:</strong>
+</p>
+<ul>
+<li><strong>Purpose:</strong> While a %%INLINE<em>11%% is usually for generating text (summaries, commit messages), an %%INLINE</em>12%% is for checking work.</li>
+<li><strong>Timeouts:</strong> Agent tasks might involve more "thinking" or multiple steps internally, so they often have longer timeouts.</li>
+</ul>
+<h2 id="internal-implementation-under-the-hood">Internal Implementation: Under the Hood</h2>
+<p>
+How does the system go from a JSON configuration to a conversation with an AI?
+</p>
+<h3 id="the-interaction-flow">The Interaction Flow</h3>
+<p>
+When a tool finishes, the system grabs the output and feeds it into your prompt.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant App as Application
+    participant Reg as Registry
+    participant AI as LLM Service
+
+    App-&gt;&gt;Reg: Event: Tool Finished (Output: "const x = 5")
+    Reg-&gt;&gt;Reg: Finds Hook: type="prompt"
+    Reg-&gt;&gt;Reg: Replaces $ARGUMENTS with "const x = 5"
+    Reg-&gt;&gt;AI: Sends: "Review this code: const x = 5"
+    AI--&gt;&gt;App: Returns: "Looks good, no security issues."
+    App-&gt;&gt;App: Displays AI response to user</div></div>
+<ol>
+<li><strong>Substitution:</strong> The system injects the real-world data into your prompt template.</li>
+</ol>
+<ol>
+<li><strong>Dispatch:</strong> It uses the configured <code>model</code> string to select the correct API (e.g., OpenAI, Anthropic).</li>
+</ol>
+<ol>
+<li><strong>Streaming:</strong> The response is usually streamed back to the user's interface in real-time.</li>
+</ol>
+<h3 id="code-deep-dive">Code Deep Dive</h3>
+<p>
+Let's look at <code>hooks.ts</code> to see how these schemas are defined using Zod.
+</p>
+<h4 id="the-prompt-hook-schema">The Prompt Hook Schema</h4>
+<pre data-lang="typescript"><code>// hooks.ts
+const PromptHookSchema = z.object({
+  type: z.literal('prompt'),
+  
+  // The template string
+  prompt: z.string(),
+  
+  // Which AI model to call?
+  model: z.string().optional(),
+});
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li><code>prompt</code>: This is required. You can't have a blank thought.</li>
+<li><code>model</code>: This is optional. If you leave it out, the system usually defaults to a fast, cheap model (like Haiku or GPT-3.5) to save money.</li>
+</ul>
+<h4 id="the-agent-hook-schema">The Agent Hook Schema</h4>
+<p>
+This looks very similar but serves a distinct purpose in the type system.
+</p>
+<pre data-lang="typescript"><code>// hooks.ts
+const AgentHookSchema = z.object({
+  type: z.literal('agent'),
+  
+  prompt: z.string(),
+  
+  // Agents might take longer to verify complex tasks
+  timeout: z.number().positive().optional(), 
+});
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li>%%INLINE<em>17%%: Must be %%INLINE</em>18%%.</li>
+<li><code>timeout</code>: While commands have timeouts to prevent hanging, Agents have timeouts to prevent over-spending or infinite thinking loops.</li>
+</ul>
+<h4 id="integrating-with-the-union">Integrating with the Union</h4>
+<p>
+Just like in Chapter 2, these are tied together in the master <code>HookCommandSchema</code>.
+</p>
+<pre data-lang="typescript"><code>// hooks.ts
+export const HookCommandSchema = lazySchema(() =&gt; {
+  // ... imports
+  return z.discriminatedUnion('type', [
+    BashCommandHookSchema, // Chapter 3
+    PromptHookSchema,      // Chapter 4 (Consultant)
+    AgentHookSchema,       // Chapter 4 (Verifier)
+    HttpHookSchema,        // Webhooks
+  ])
+})
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+ 
+Because we use a discriminated union, the validator is strict. If you set %%INLINE<em>21%%, you are allowed to use %%INLINE</em>22%%. If you set %%INLINE<em>23%%, you are allowed to use %%INLINE</em>24%%. You cannot mix them!
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we added <strong>Intelligence</strong> to our hooks.
+</p>
+<ol>
+<li>We use <strong><code>PromptHook</code></strong> to ask the AI to summarize, explain, or generate text based on tool outputs.</li>
+</ol>
+<ol>
+<li>We use <strong><code>AgentHook</code></strong> for verification tasks where the AI acts as a supervisor.</li>
+</ol>
+<ol>
+<li>We use the <strong><code>$ARGUMENTS</code></strong> placeholder to pass data from the application into the AI's prompt.</li>
+</ol>
+<p>
+We can now run commands (Chapter 3) and ask the AI questions (Chapter 4). But what if we only want to run a hook <em>sometimes</em>? What if we only want to review code when it's a %%INLINE<em>28%% file, but not a %%INLINE</em>29%% file?
+</p>
+<p>
+For that, we need logic.
+</p>
+<p>
+<a href="05<em>conditional</em>execution_logic.md">Next Chapter: Conditional Execution Logic</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="schemas.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">schemas/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-is-this-actually-correct">The Problem: "Is this actually correct?"</a></li>
+<li style="padding-left:10px"><a href="#use-case-the-automatic-code-reviewer">Use Case: The Automatic Code Reviewer</a></li>
+<li style="padding-left:0px"><a href="#concept-1-the-inline-2-the-consultant">Concept 1: The %%INLINE_2%% (The Consultant)</a></li>
+<li style="padding-left:10px"><a href="#how-to-configure-it">How to Configure It</a></li>
+<li style="padding-left:0px"><a href="#concept-2-the-inline-9-the-verifier">Concept 2: The %%INLINE_9%% (The Verifier)</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-under-the-hood">Internal Implementation: Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#the-interaction-flow">The Interaction Flow</a></li>
+<li style="padding-left:10px"><a href="#code-deep-dive">Code Deep Dive</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

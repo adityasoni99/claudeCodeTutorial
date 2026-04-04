@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: Motion Resolution — vim/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">vim/03_motion_resolution.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⌨️ vim/ · 03_motion_resolution.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: Motion Resolution</h1>
+  <div class="chapter-meta"><span>📄 vim/03_motion_resolution.md</span></div>
+</div>
+<h1 id="chapter-3-motion-resolution">Chapter 3: Motion Resolution</h1>
+<p>
+In the previous chapter, <a href="02<em>input</em>transition<em>logic.md">Input Transition Logic</a>, we looked at how Vim acts like a switchboard operator. It receives a key (like %%INLINE</em>0%%) and decides <em>what</em> to do (e.g., "Execute a motion").
+</p>
+<p>
+But knowing <em>that</em> we need to move to the next word is different from knowing <em>where</em> the next word actually is.
+</p>
+<p>
+This brings us to <strong>Motion Resolution</strong>.
+</p>
+<h2 id="the-problem-where-is-the-destination">The Problem: "Where is the destination?"</h2>
+<p>
+Imagine you are driving a car.
+</p>
+<ul>
+<li><strong>The Driver (Transition Logic):</strong> Decides to turn left.</li>
+<li><strong>The GPS (Motion Resolution):</strong> Calculates the coordinates of the destination.</li>
+</ul>
+<p>
+In Vim, motions (like %%INLINE<em>1%%, %%INLINE</em>2%%, %%INLINE<em>3%%, %%INLINE</em>4%%) are used in two very different ways:
+</p>
+<ol>
+<li><strong>Movement:</strong> Just moving the cursor (e.g., press <code>w</code>).</li>
+</ol>
+<ol>
+<li><strong>Operators:</strong> Modifying text from point A to point B (e.g., <code>dw</code> deletes from cursor to the next word).</li>
+</ol>
+<p>
+We don't want to write the logic for "find the next word" twice. We need a shared system that simply calculates coordinates without changing anything.
+</p>
+<h2 id="the-solution-pure-geometry">The Solution: Pure Geometry</h2>
+<p>
+<strong>Motion Resolution</strong> is a layer of "pure" functions. It takes your current location and a command, and it returns your new location. It does <strong>not</strong> update the screen or delete text. It just does the math.
+</p>
+<h3 id="use-case-the-inline-7-command">Use Case: The <code>w</code> Command</h3>
+<p>
+Let's look at the classic "next word" motion (<code>w</code>).
+</p>
+<p>
+<strong>Scenario:</strong>
+</p>
+<ul>
+<li>Text: <code>Hello World</code></li>
+<li>Cursor: On <code>H</code> (Line 0, Column 0)</li>
+<li>Command: <code>w</code></li>
+</ul>
+<p>
+<strong> The Motion Resolver's Job:</strong>
+ 
+It looks at the text and calculates: "If I move to the next word start, I will land on 'W' (Line 0, Column 6)."
+</p>
+<p>
+It returns: <code>{ line: 0, col: 6 }</code>.
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+To implement this, we rely on three simple concepts.
+</p>
+<h3 id="1-the-cursor-object">1. The Cursor Object</h3>
+<p>
+We don't manipulate raw text directly here. We manipulate a <code>Cursor</code> object that knows how to navigate the text grid.
+</p>
+<pre data-lang="typescript"><code>// Conceptual Cursor
+interface Cursor {
+  line: number // Which row?
+  col: number  // Which column?
+  
+  // Helper methods
+  right(): Cursor
+  nextVimWord(): Cursor
+}
+</code></pre>
+<h3 id="2-the-resolver-function">2. The Resolver Function</h3>
+<p>
+This is the main entry point. It takes the <strong>Current Cursor</strong> and the <strong>Key</strong>, and returns the <strong>New Cursor</strong>.
+</p>
+<pre data-lang="typescript"><code>// From motions.ts
+export function resolveMotion(
+  key: string,
+  cursor: Cursor,
+  count: number,
+): Cursor {
+  let result = cursor
+  // If count is 3 (e.g., '3w'), do it 3 times
+  for (let i = 0; i &lt; count; i++) {
+    result = applySingleMotion(key, result)
+  }
+  return result
+}
+</code></pre>
+<h3 id="3-the-mapping-logic">3. The Mapping Logic</h3>
+<p>
+We need a list of rules that maps keys to cursor movements.
+</p>
+<pre data-lang="typescript"><code>// From motions.ts
+function applySingleMotion(key: string, cursor: Cursor): Cursor {
+  switch (key) {
+    case 'h': return cursor.left()
+    case 'l': return cursor.right()
+    case 'w': return cursor.nextVimWord() // The heavy lifting
+    case '$': return cursor.endOfLogicalLine()
+    default:  return cursor
+  }
+}
+</code></pre>
+<p>
+This switch statement is the dictionary of our GPS. It defines what every key means in terms of geometry.
+</p>
+<h2 id="motion-nuances-inclusive-vs-exclusive">Motion Nuances: Inclusive vs. Exclusive</h2>
+<p>
+Not all motions are created equal. When you delete a word (<code>dw</code>), the character under the cursor at the <em>destination</em> is usually NOT deleted. This is called <strong>Exclusive</strong>.
+</p>
+<p>
+However, if you delete to the end of the line (<code>d$</code>), the last character IS deleted. This is called <strong>Inclusive</strong>.
+</p>
+<p>
+Our Motion Resolution layer defines these rules:
+</p>
+<pre data-lang="typescript"><code>// From motions.ts
+export function isInclusiveMotion(key: string): boolean {
+  // 'e' (end of word) and '$' (end of line) are inclusive
+  return 'eE$'.includes(key)
+}
+</code></pre>
+<p>
+This helper allows the Operator (which we will build in the next chapter) to know exactly how much text to cut.
+</p>
+<h2 id="internal-implementation">Internal Implementation</h2>
+<p>
+Let's visualize the flow when the user types <code>2w</code> (Move 2 words forward).
+</p>
+<h3 id="the-flow">The Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Editor
+    participant Resolver as Motion Resolver
+    participant Math as Geometry Math
+
+    Editor-&gt;&gt;Resolver: resolveMotion('w', currentPos, count=2)
+    
+    loop 2 Times
+        Resolver-&gt;&gt;Math: Find Next Word Start
+        Math--&gt;&gt;Resolver: New Coordinate
+    end
+
+    Resolver--&gt;&gt;Editor: Return Final Coordinate
+    Note over Editor: Editor moves cursor&lt;br/&gt;to result</div></div>
+<h3 id="the-code">The Code</h3>
+<p>
+The implementation in <code>motions.ts</code> is designed to be stateless. It doesn't care about the mode you are in; it only cares about geometry.
+</p>
+<p>
+Here is the core function again with annotations:
+</p>
+<pre data-lang="typescript"><code>// From motions.ts
+export function resolveMotion(key: string, cursor: Cursor, count: number): Cursor {
+  let result = cursor
+  
+  // Loop handles counts (like '5j' or '2w')
+  for (let i = 0; i &lt; count; i++) {
+    const next = applySingleMotion(key, result)
+    
+    // Safety check: If we hit a wall (EOF), stop trying
+    if (next.equals(result)) break
+    
+    result = next
+  }
+  return result
+}
+</code></pre>
+<h3 id="why-is-this-separated">Why is this separated?</h3>
+<p>
+You might wonder, "Why not just put this code inside the Delete command?"
+</p>
+<p>
+Imagine we want to add a new command: <strong>Yank</strong> (copy).
+</p>
+<ul>
+<li>If we wrote the logic inside Delete, we'd have to copy-paste it to Yank.</li>
+<li>By separating <strong>Motion Resolution</strong>, both %%INLINE<em>18%% (Delete Word) and %%INLINE</em>19%% (Yank Word) call the exact same <code>resolveMotion</code> function.</li>
+</ul>
+<p>
+They both ask the GPS: "Where is the end of the word?"
+</p>
+<ul>
+<li>Delete says: "Okay, remove everything until there."</li>
+<li>Yank says: "Okay, copy everything until there."</li>
+</ul>
+<h2 id="summary">Summary</h2>
+<p>
+<strong>Motion Resolution</strong> is the geometric brain of Vim.
+</p>
+<ol>
+<li>It is a <strong>Pure Function</strong>: Input (Start) -> Output (Destination).</li>
+</ol>
+<ol>
+<li>It handles <strong>Counts</strong>: <code>3w</code> calculates the "next word" 3 times.</li>
+</ol>
+<ol>
+<li>It defines <strong>Inclusivity</strong>: Whether the target character is included in the range.</li>
+</ol>
+<p>
+Now we have a State Machine (Chapter 1), a Switchboard (Chapter 2), and a GPS (Chapter 3).
+</p>
+<p>
+We have all the pieces needed to actually change the text. It's time to build the <strong>Operator</strong>.
+</p>
+<p>
+<a href="04<em>operator</em>execution.md">Next Chapter: Operator Execution</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="vim.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">vim/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-where-is-the-destination">The Problem: "Where is the destination?"</a></li>
+<li style="padding-left:0px"><a href="#the-solution-pure-geometry">The Solution: Pure Geometry</a></li>
+<li style="padding-left:10px"><a href="#use-case-the-inline-7-command">Use Case: The %%INLINE_7%% Command</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-cursor-object">1. The Cursor Object</a></li>
+<li style="padding-left:10px"><a href="#2-the-resolver-function">2. The Resolver Function</a></li>
+<li style="padding-left:10px"><a href="#3-the-mapping-logic">3. The Mapping Logic</a></li>
+<li style="padding-left:0px"><a href="#motion-nuances-inclusive-vs-exclusive">Motion Nuances: Inclusive vs. Exclusive</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#the-flow">The Flow</a></li>
+<li style="padding-left:10px"><a href="#the-code">The Code</a></li>
+<li style="padding-left:10px"><a href="#why-is-this-separated">Why is this separated?</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

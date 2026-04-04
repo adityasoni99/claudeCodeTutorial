@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 5: Initialization Scaffolding — plugins/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">plugins/05_initialization_scaffolding.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🔌 plugins/ · 05_initialization_scaffolding.md</div>
+  <h1 class="chapter-title-h1">Chapter 5: Initialization Scaffolding</h1>
+  <div class="chapter-meta"><span>📄 plugins/05_initialization_scaffolding.md</span></div>
+</div>
+<h1 id="chapter-5-initialization-scaffolding">Chapter 5: Initialization Scaffolding</h1>
+<p>
+Welcome to the final chapter of the <strong>Plugins</strong> project!
+</p>
+<p>
+In the previous chapter, <a href="04<em>skill</em>to<em>command</em>adaptation.md">Skill-to-Command Adaptation</a>, we created a universal adapter that translates our fancy Plugin Skills into standard Commands the CLI can understand.
+</p>
+<p>
+We now have all the pieces:
+</p>
+<ol>
+<li><strong>The Registry:</strong> A place to store definitions.</li>
+</ol>
+<ol>
+<li><strong>The ID System:</strong> A way to name them uniquely.</li>
+</ol>
+<ol>
+<li><strong>The State Logic:</strong> A way to check if they are on or off.</li>
+</ol>
+<ol>
+<li><strong>The Adapter:</strong> A way to run them.</li>
+</ol>
+<p>
+But there is one final problem: <strong>Who pushes the start button?</strong>
+</p>
+<h2 id="motivation-the-unassembled-furniture">Motivation: The Unassembled Furniture</h2>
+<p>
+Imagine you bought a beautiful bookshelf from a furniture store.
+</p>
+<ul>
+<li><strong>The Parts (The Definitions):</strong> You have the wood, the screws, and the shelves.</li>
+<li><strong>The Manual (The Logic):</strong> You know how it <em>should</em> fit together.</li>
+</ul>
+<p>
+However, if you just leave the box in your living room, you don't have a bookshelf. You have a box. You need an <strong>Assembly Step</strong>—a specific moment where you take the parts out of the box and put them together.
+</p>
+<ul>
+<li><strong>The Problem:</strong> The CLI starts up blank. Even though we wrote code for a "Git Helper" plugin, the system doesn't automatically know it exists.</li>
+<li><strong>The Solution:</strong> We need a dedicated entry point—a "manufacturing assembly line"—that runs exactly once when the app boots up. Its only job is to unbox our features and click them into the main system.</li>
+</ul>
+<p>
+This concept is called <strong>Initialization Scaffolding</strong>.
+</p>
+<h3 id="core-use-case">Core Use Case</h3>
+<p>
+We want the <code>git-helper</code> plugin to be available the moment the user opens the CLI. We need a specific function where we write the line of code that says: <em>"System, please load the Git Helper now."</em>
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+This step is intentionally simple. It acts as a bridge between your static code files and the running application.
+</p>
+<h3 id="the-bootstrapping-function">The Bootstrapping Function</h3>
+<p>
+We define a single function, usually named <code>initBuiltinPlugins</code>.
+</p>
+<ul>
+<li><strong>When it runs:</strong> Immediately when the application starts.</li>
+<li><strong>What it does:</strong> It imports plugin definitions and hands them to the Registry we built in <a href="01<em>built</em>in<em>plugin</em>registry.md">Built-in Plugin Registry</a>.</li>
+</ul>
+<h2 id="how-to-use-the-scaffolding">How to Use the Scaffolding</h2>
+<p>
+Let's say you have defined a new plugin in a file called <code>gitPlugin.ts</code>. Now you need to "wire it up."
+</p>
+<h3 id="1-import-the-tools">1. Import the Tools</h3>
+<p>
+First, we need the tool to register plugins, and the plugin definition itself.
+</p>
+<pre data-lang="typescript"><code>// src/bundled/index.ts
+import { registerBuiltinPlugin } from '../builtinPlugins.js'
+import { gitPluginDefinition } from '../skills/gitPlugin.js'
+</code></pre>
+<h3 id="2-the-assembly-line">2. The Assembly Line</h3>
+<p>
+Inside our scaffolding function, we simply call the register function.
+</p>
+<pre data-lang="typescript"><code>export function initBuiltinPlugins(): void {
+  // The application calls this once at startup.
+  
+  // 1. Load the Git plugin
+  registerBuiltinPlugin(gitPluginDefinition)
+
+  // 2. Load the Calculator plugin
+  registerBuiltinPlugin(calculatorDefinition)
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This is the "Switchboard." If you want to add a new built-in feature, you add one line here. If you want to remove it, you delete the line. The rest of the application doesn't need to change.
+</p>
+<h2 id="internal-implementation">Internal Implementation</h2>
+<p>
+What happens when the user types <code>my-cli start</code>? Let's visualize the sequence.
+</p>
+<h3 id="the-startup-flow">The Startup Flow</h3>
+<ol>
+<li><strong>App Launch:</strong> The main process begins.</li>
+</ol>
+<ol>
+<li><strong>Scaffolding Call:</strong> The main process calls <code>initBuiltinPlugins()</code>.</li>
+</ol>
+<ol>
+<li><strong>Registration:</strong> The function loops through every line of code we wrote above.</li>
+</ol>
+<ol>
+<li><strong>Storage:</strong> The definitions are stored in the global <code>Map</code> (from Chapter 1).</li>
+</ol>
+<ol>
+<li><strong>Ready:</strong> The app continues loading, now aware that these plugins exist.</li>
+</ol>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Main as CLI Main Process
+    participant Init as initBuiltinPlugins()
+    participant Registry as Plugin Registry Map
+
+    Main-&gt;&gt;Init: Start Initialization
+    
+    Init-&gt;&gt;Registry: Register "git-helper"
+    Note over Registry: Stored!
+    
+    Init-&gt;&gt;Registry: Register "calculator"
+    Note over Registry: Stored!
+    
+    Init--&gt;&gt;Main: Done!
+    
+    Note over Main: App is now ready to accept user input</div></div>
+<h3 id="deep-dive-code-breakdown">Deep Dive: Code Breakdown</h3>
+<p>
+Let's look at the actual file <code>src/bundled/index.ts</code>. Currently, it acts as a placeholder waiting for you to add features.
+</p>
+<h4 id="the-file-structure">The File Structure</h4>
+<p>
+This file is the designated "Home" for built-in plugins.
+</p>
+<pre data-lang="typescript"><code>// src/bundled/index.ts
+
+/**
+ * Built-in Plugin Initialization
+ * Initializes plugins that ship with the CLI.
+ */
+
+// This is the function exported to the main app
+export function initBuiltinPlugins(): void {
+  // Currently empty! 
+  // This is where we will migrate hardcoded skills later.
+}
+</code></pre>
+<p>
+<em>Explanation:</em> Right now, it does nothing. This is intentional. It is <strong>Scaffolding</strong>—a structure put in place <em>before</em> the building is built. As developers migrate old, hardcoded features into this new system, they will add lines here.
+</p>
+<h4 id="why-bundled-vs-built-in">Why "Bundled" vs "Built-in"?</h4>
+<p>
+You might notice the folder is named %%INLINE<em>7%%, but the function talks about %%INLINE</em>8%%.
+</p>
+<ul>
+<li><strong>Bundled:</strong> Means "Included in the download."</li>
+<li><strong>Built-in:</strong> Means "Visible in the Plugin Manager."</li>
+</ul>
+<p>
+Not every piece of code shipped with the app needs to be a "Plugin." Some things are just core system utilities. We only use this <code>initBuiltinPlugins</code> function for features we want the user to see, manage, and toggle on/off in their settings.
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+In this final chapter, we learned:
+</p>
+<ol>
+<li><strong>Initialization Scaffolding</strong> is the "main entry point" for plugins.</li>
+</ol>
+<ol>
+<li>It separates the <strong>definition</strong> of a feature from the <strong>act of loading</strong> it.</li>
+</ol>
+<ol>
+<li>It serves as a clean list of exactly which "factory settings" are installed.</li>
+</ol>
+<h3 id="project-wrap-up">Project Wrap-Up</h3>
+<p>
+Congratulations! You have walked through the entire architecture of a modular Plugin System.
+</p>
+<p>
+Let's review what we built:
+</p>
+<ol>
+<li><strong><a href="01<em>built</em>in<em>plugin</em>registry.md">Built-in Plugin Registry</a>:</strong> The storage warehouse (<code>Map</code>) for our features.</li>
+</ol>
+<ol>
+<li><strong><a href="02<em>plugin</em>namespacing.md">Plugin Namespacing</a>:</strong> The naming convention (<code>@builtin</code>) that keeps them safe from conflicts.</li>
+</ol>
+<ol>
+<li><strong><a href="03<em>runtime</em>plugin_state.md">Runtime Plugin State</a>:</strong> The logic ("Smart Switch") that respects user settings.</li>
+</ol>
+<ol>
+<li><strong><a href="04<em>skill</em>to<em>command</em>adaptation.md">Skill-to-Command Adaptation</a>:</strong> The translator that makes plugins compatible with the core CLI.</li>
+</ol>
+<ol>
+<li><strong>Initialization Scaffolding:</strong> The assembly line that wires it all together at startup.</li>
+</ol>
+<p>
+You now have a system that is modular, user-configurable, and ready to scale. Happy coding!
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="plugins.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">plugins/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#motivation-the-unassembled-furniture">Motivation: The Unassembled Furniture</a></li>
+<li style="padding-left:10px"><a href="#core-use-case">Core Use Case</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#the-bootstrapping-function">The Bootstrapping Function</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-the-scaffolding">How to Use the Scaffolding</a></li>
+<li style="padding-left:10px"><a href="#1-import-the-tools">1. Import the Tools</a></li>
+<li style="padding-left:10px"><a href="#2-the-assembly-line">2. The Assembly Line</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#the-startup-flow">The Startup Flow</a></li>
+<li style="padding-left:10px"><a href="#deep-dive-code-breakdown">Deep Dive: Code Breakdown</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li>
+<li style="padding-left:10px"><a href="#project-wrap-up">Project Wrap-Up</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

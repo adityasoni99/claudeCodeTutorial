@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: Teammate View Logic (Domain Actions) — state/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">state/03_teammate_view_logic__domain_actions_.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🗂 state/ · 03_teammate_view_logic__domain_actions_.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: Teammate View Logic (Domain Actions)</h1>
+  <div class="chapter-meta"><span>📄 state/03_teammate_view_logic__domain_actions_.md</span></div>
+</div>
+<h1 id="chapter-3-teammate-view-logic-domain-actions">Chapter 3: Teammate View Logic (Domain Actions)</h1>
+<p>
+In the previous chapter, <a href="02<em>state</em>selectors<em>_derived</em>data_.md">State Selectors (Derived Data)</a>, we learned how to use Selectors to ask questions about our data (like "Who am I talking to?").
+</p>
+<p>
+Now, we need to <strong>change</strong> the data.
+</p>
+<p>
+You might be thinking, "Can't I just use <code>store.setState</code> like we learned in Chapter 1?" You could, but for complex features, that gets dangerous quickly.
+</p>
+<h3 id="the-motivation-the-tv-director">The Motivation: The TV Director</h3>
+<p>
+Imagine your application is a live TV show. You have a main camera (the Leader) and several side cameras (the Teammates).
+</p>
+<p>
+When the user clicks a Teammate, you want to switch views. But it's not just about changing the video feed. You also need to:
+</p>
+<ol>
+<li><strong>Unplug</strong> the previous camera (clean up memory).</li>
+</ol>
+<ol>
+<li><strong>Plug in</strong> the new camera (load logs from disk).</li>
+</ol>
+<ol>
+<li><strong>Switch</strong> the monitor (update the UI ID).</li>
+</ol>
+<p>
+If you do this manually in every button click handler, you might forget to unplug the old camera, causing your app to run out of memory.
+</p>
+<p>
+We solve this with <strong>Domain Actions</strong>. These are specialized functions that handle the entire "choreography" of a complex change in one safe step.
+</p>
+<hr>
+<h3 id="central-use-case-switching-views">Central Use Case: Switching Views</h3>
+<p>
+Our goal is to create a function called <code>enterTeammateView</code>.
+</p>
+<p>
+When a user clicks a teammate's name in the sidebar, we call this function. It ensures that we stop "holding onto" the previous agent's data and start "holding onto" the new one.
+</p>
+<p>
+<strong>The "Bad" Way (Manual updates):</strong>
+</p>
+<pre data-lang="typescript"><code>// Don't do this!
+store.setState(prev =&gt; ({
+  ...prev,
+  viewingAgentTaskId: 'agent-123',
+  // We forgot to clean up the old agent! Memory leak!
+}))
+</code></pre>
+<p>
+<strong>The "Domain Action" Way:</strong>
+</p>
+<pre data-lang="typescript"><code>import { enterTeammateView } from './teammateViewHelpers';
+
+// The UI just gives the command
+enterTeammateView('agent-123', store.setState);
+</code></pre>
+<p>
+This keeps our UI simple and our logic safe.
+</p>
+<hr>
+<h3 id="internal-implementation-the-choreography">Internal Implementation: The Choreography</h3>
+<p>
+Let's visualize what happens inside <code>enterTeammateView</code>. It acts as a transaction manager.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant UI as User Interface
+    participant ACT as Domain Action
+    participant ST as Store
+
+    UI-&gt;&gt;ACT: enterTeammateView("Agent-B")
+    
+    Note over ACT: 1. Identify "Agent-A" (Old)&lt;br/&gt;2. Identify "Agent-B" (New)
+    
+    ACT-&gt;&gt;ST: Update State (Atomic)
+    Note right of ST: Set Agent-A.retain = false&lt;br/&gt;Set Agent-B.retain = true&lt;br/&gt;Set viewingID = "Agent-B"
+    
+    ST--&gt;&gt;UI: New State (UI Re-renders)</div></div>
+<h3 id="code-walkthrough-inline-3">Code Walkthrough: <code>teammateViewHelpers.ts</code></h3>
+<p>
+This file contains our Domain Actions. Let's break down the logic into bite-sized pieces.
+</p>
+<h4 id="1-the-cleanup-helper-inline-4">1. The Cleanup Helper (<code>release</code>)</h4>
+<p>
+First, we need a helper function to "let go" of an agent. When we stop viewing an agent, we want to clear their heavy message logs from RAM (%%INLINE<em>5%%) and potentially schedule them for deletion (%%INLINE</em>6%%).
+</p>
+<pre data-lang="typescript"><code>// Helper function (Simplified)
+function release(task: LocalAgentTaskState) {
+  return {
+    ...task,
+    retain: false,       // Allow garbage collection of logs
+    messages: undefined, // Clear heavy data immediately
+    diskLoaded: false,   // Mark as not loaded
+  }
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This function takes a task and returns a "lighter" version of it. It doesn't update the store itself; it just prepares the data object.
+</p>
+<h4 id="2-the-director-inline-7">2. The Director (<code>enterTeammateView</code>)</h4>
+<p>
+This is the main action. It uses <code>setAppState</code> to perform the swap.
+</p>
+<pre data-lang="typescript"><code>export function enterTeammateView(
+  taskId: string,
+  setAppState: (updater: (prev: AppState) =&gt; AppState) =&gt; void,
+): void {
+  // We pass a function to setAppState to get the 'prev' state
+  setAppState(prev =&gt; {
+    const prevId = prev.viewingAgentTaskId
+    const prevTask = prevId ? prev.tasks[prevId] : undefined
+    
+    // ... logic continues below ...
+</code></pre>
+<p>
+Inside this update function, we handle the swap. Notice how we modify the <code>tasks</code> dictionary. We create a copy of the dictionary, update the old task, update the new task, and return the result.
+</p>
+<pre data-lang="typescript"><code>    // ... inside setAppState ...
+    
+    // 1. Copy the tasks dictionary so we can modify it
+    const nextTasks = { ...prev.tasks }
+
+    // 2. If we were looking at someone else, release them
+    if (prevTask) {
+       nextTasks[prevId] = release(prevTask)
+    }
+
+    // 3. Lock in the new teammate (retain: true)
+    nextTasks[taskId] = { 
+      ...prev.tasks[taskId], 
+      retain: true 
+    }
+
+    // 4. Return the fully updated world
+    return {
+      ...prev,
+      viewingAgentTaskId: taskId,
+      tasks: nextTasks
+    }
+  })
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This block ensures that %%INLINE<em>10%% and the %%INLINE</em>11%% status of both agents update at the exact same time. The UI will never render a frame where the ID is set but the data isn't locked.
+</p>
+<h4 id="3-exiting-the-view-inline-12">3. Exiting the View (<code>exitTeammateView</code>)</h4>
+<p>
+When the user clicks "Back" or hits Escape, we need to return to the main view. This is simpler: we just release the current agent.
+</p>
+<pre data-lang="typescript"><code>export function exitTeammateView(
+  setAppState: (updater: (prev: AppState) =&gt; AppState) =&gt; void,
+): void {
+  setAppState(prev =&gt; {
+    const currentId = prev.viewingAgentTaskId
+    const currentTask = prev.tasks[currentId]
+
+    return {
+      ...prev,
+      viewingAgentTaskId: undefined, // Go back to main view
+      // Release the task we were just looking at
+      tasks: {
+        ...prev.tasks,
+        [currentId]: release(currentTask) 
+      }
+    }
+  })
+}
+</code></pre>
+<hr>
+<h3 id="why-is-this-domain-logic">Why is this "Domain Logic"?</h3>
+<p>
+We call these <strong>Domain Actions</strong> because they contain business rules specific to our "domain" (Agent Management):
+</p>
+<ol>
+<li><strong>Rule:</strong> Only one agent can be viewed at a time.</li>
+</ol>
+<ol>
+<li><strong>Rule:</strong> Viewed agents must be kept in memory (<code>retain: true</code>).</li>
+</ol>
+<ol>
+<li><strong>Rule:</strong> Non-viewed agents should drop their logs to save RAM (<code>messages: undefined</code>).</li>
+</ol>
+<p>
+If we put this logic inside a React Component, it would be mixed with UI code (like %%INLINE<em>15%% or CSS classes). By keeping it in %%INLINE</em>16%%, the logic is pure, testable, and reusable.
+</p>
+<h3 id="conclusion">Conclusion</h3>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>Domain Actions</strong> act like directors, choreographing complex state changes.</li>
+</ol>
+<ol>
+<li><strong>Atomic Updates</strong> prevent bugs by updating related data (like "current ID" and "memory status") simultaneously.</li>
+</ol>
+<ol>
+<li>We encapsulate complex rules (like memory management) inside helper functions like <code>enterTeammateView</code>.</li>
+</ol>
+<p>
+Now we have a Store (Chapter 1), Selectors (Chapter 2), and Logic (Chapter 3). But how do we actually make buttons appear on the screen?
+</p>
+<p>
+<a href="04<em>react</em>integration_layer.md">Next Chapter: React Integration Layer</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="state.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">state/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:10px"><a href="#the-motivation-the-tv-director">The Motivation: The TV Director</a></li>
+<li style="padding-left:10px"><a href="#central-use-case-switching-views">Central Use Case: Switching Views</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-the-choreography">Internal Implementation: The Choreography</a></li>
+<li style="padding-left:10px"><a href="#code-walkthrough-inline-3">Code Walkthrough: %%INLINE_3%%</a></li>
+<li style="padding-left:10px"><a href="#why-is-this-domain-logic">Why is this "Domain Logic"?</a></li>
+<li style="padding-left:10px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

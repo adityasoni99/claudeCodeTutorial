@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 5: Build-Time Code Elimination — voice/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">voice/05_build_time_code_elimination.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🎤 voice/ · 05_build_time_code_elimination.md</div>
+  <h1 class="chapter-title-h1">Chapter 5: Build-Time Code Elimination</h1>
+  <div class="chapter-meta"><span>📄 voice/05_build_time_code_elimination.md</span></div>
+</div>
+<h1 id="chapter-5-build-time-code-elimination">Chapter 5: Build-Time Code Elimination</h1>
+<p>
+In the previous chapter, <a href="04<em>performance</em>aware<em>token</em>access.md">Performance-Aware Token Access</a>, we learned how to make our authentication checks fast using caching so the application doesn't stutter.
+</p>
+<p>
+Now, we face a final challenge: <strong>Weight</strong>.
+</p>
+<p>
+Even if a feature is disabled, the code for it usually sits inside the application file that users download. This makes the app larger and slower to download. In this final chapter, we will learn how to make that code completely vanish when it isn't needed.
+</p>
+<h2 id="the-problem-the-overpacked-suitcase">The Problem: The Overpacked Suitcase</h2>
+<p>
+Imagine you are packing a suitcase for a summer vacation to Hawaii. You have a heavy winter coat in your closet.
+</p>
+<ol>
+<li><strong>Runtime Check (What we usually do):</strong> You pack the winter coat. When you arrive in Hawaii, you look at the weather, say "It's hot," and decide not to wear the coat. But you still had to carry it all the way there!</li>
+</ol>
+<ol>
+<li><strong>Build-Time Elimination (What we want to do):</strong> You look at your itinerary <em>before</em> you leave your house. You realize you are going to Hawaii. You leave the coat in the closet. Your suitcase is lighter.</li>
+</ol>
+<p>
+In software, "leaving the coat at home" is called <strong>Dead Code Elimination</strong> (or Tree Shaking).
+</p>
+<h2 id="the-solution-the-compilers-scissor">The Solution: The Compiler's Scissor</h2>
+<p>
+We use a special function provided by our build tool (Bun) called <code>feature</code>.
+</p>
+<p>
+When we build the app, we tell the compiler: <code>VOICE_MODE = false</code>.
+ 
+The compiler looks through our code. Everywhere it sees a check for that feature, it literally <strong>deletes the code</strong> inside that block before creating the final file.
+</p>
+<h3 id="how-to-use-it">How to Use It</h3>
+<p>
+We wrap our logic in a check using <code>feature('FLAG_NAME')</code>.
+</p>
+<pre data-lang="typescript"><code>import { feature } from 'bun:bundle';
+
+if (feature('VOICE_MODE')) {
+  // This code only exists in the final app 
+  // if we built it with VOICE_MODE turned on.
+  console.log("Voice systems online.");
+}
+</code></pre>
+<p>
+<strong>What happens here:</strong>
+</p>
+<ul>
+<li><strong>If <code>VOICE_MODE</code> is true:</strong> The code stays exactly as you wrote it.</li>
+<li><strong>If <code>VOICE_MODE</code> is false:</strong> The compiler deletes lines 3-6. The final app doesn't even know "Voice systems" existed.</li>
+</ul>
+<hr>
+<h2 id="how-it-works-under-the-hood">How it Works: Under the Hood</h2>
+<p>
+This process happens <strong>before</strong> the user ever downloads the app. It happens on your computer (or the build server) when you run the command to create the executable.
+</p>
+<p>
+Let's visualize the "Tree Shaking" process. Imagine our code is a tree. The compiler shakes the tree, and any branch that is "dead" (disabled) falls off.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Dev as Developer
+    participant Compiler as Build Tool (Bun)
+    participant App as Final App File
+
+    Dev-&gt;&gt;Compiler: Build App (VOICE_MODE = false)
+    
+    Compiler-&gt;&gt;Compiler: Read Source Code
+    Compiler-&gt;&gt;Compiler: Find "if (feature('VOICE_MODE'))"
+    
+    Note right of Compiler: "Aha! This is false."
+    Compiler-&gt;&gt;Compiler: DELETE the code inside the 'if' block
+    
+    Compiler-&gt;&gt;App: Write remaining code to file
+    
+    Note right of App: Result: A smaller file with no Voice code.</div></div>
+<hr>
+<h2 id="deep-dive-the-code">Deep Dive: The Code</h2>
+<p>
+Let's look at <code>voiceModeEnabled.ts</code> one last time. We use this technique in our GrowthBook check.
+</p>
+<h3 id="the-ternary-pattern">The "Ternary" Pattern</h3>
+<p>
+We use a specific coding style here to ensure everything gets deleted properly.
+</p>
+<pre data-lang="typescript"><code>import { feature } from 'bun:bundle'
+
+export function isVoiceGrowthBookEnabled(): boolean {
+  // We use the ternary operator (? :)
+  return feature('VOICE_MODE')
+    ? !getFeatureValue_CACHED('tengu_amber_quartz_disabled', false)
+    : false
+}
+</code></pre>
+<p>
+<strong>Why do we write it this way?</strong>
+</p>
+<p>
+If <code>feature('VOICE_MODE')</code> is <strong>false</strong>, the compiler sees this:
+</p>
+<pre data-lang="typescript"><code>// The compiler simplifies the code to just this:
+return false;
+</code></pre>
+<p>
+Because the first part was false, the compiler knows the second part (checking <code>tengu_amber_quartz_disabled</code>) can <strong>never happen</strong>.
+</p>
+<h3 id="the-vanishing-strings">The Vanishing Strings</h3>
+<p>
+This is powerful because it also removes <strong>Strings</strong>.
+</p>
+<p>
+The string <code>'tengu_amber_quartz_disabled'</code> takes up space. If we use the code above and disable Voice Mode, that string is deleted from the final binary. Hackers won't even be able to find that text in the app's memory because it simply isn't there.
+</p>
+<h3 id="comparing-logic">Comparing Logic</h3>
+<p>
+Let's look at how this fits into the bigger picture we learned in <a href="01<em>composite</em>readiness_logic.md">Composite Readiness Logic</a>.
+</p>
+<pre data-lang="typescript"><code>// 1. If Build Flag is OFF -&gt; Returns false immediately (Code deleted).
+// 2. If Build Flag is ON -&gt; Runs the function.
+// 3. The function checks the Remote Kill Switch.
+const isGo = isVoiceGrowthBookEnabled();
+</code></pre>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+Congratulations! You have completed the tutorial on the Voice project's readiness architecture.
+</p>
+<p>
+Let's review what you have built:
+</p>
+<ol>
+<li><strong><a href="01<em>composite</em>readiness<em>logic.md">Composite Readiness Logic</a>:</strong> You created a single "Master Checklist" (%%INLINE</em>9%%) so the UI doesn't have to guess.</li>
+</ol>
+<ol>
+<li><strong><a href="02<em>remote</em>feature<em>gating</em><em>growthbook</em>.md">Remote Feature Gating</a>:</strong> You added a "Kill Switch" so we can disable the feature remotely if it breaks.</li>
+</ol>
+<ol>
+<li><strong><a href="03<em>provider</em>specific_authentication.md">Provider-Specific Authentication</a>:</strong> You added a "Bouncer" to ensure only users with Anthropic keys can enter.</li>
+</ol>
+<ol>
+<li><strong><a href="04<em>performance</em>aware<em>token</em>access.md">Performance-Aware Token Access</a>:</strong> You taught the Bouncer to remember IDs (Caching) so the app stays fast.</li>
+</ol>
+<ol>
+<li><strong>Build-Time Code Elimination:</strong> You learned how to leave the heavy coat at home, making the app smaller and more secure when the feature isn't needed.</li>
+</ol>
+<p>
+You now have a robust, secure, fast, and lightweight system for managing features. Happy coding!
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="voice.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">voice/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-overpacked-suitcase">The Problem: The Overpacked Suitcase</a></li>
+<li style="padding-left:0px"><a href="#the-solution-the-compilers-scissor">The Solution: The Compiler's Scissor</a></li>
+<li style="padding-left:10px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:0px"><a href="#how-it-works-under-the-hood">How it Works: Under the Hood</a></li>
+<li style="padding-left:0px"><a href="#deep-dive-the-code">Deep Dive: The Code</a></li>
+<li style="padding-left:10px"><a href="#the-ternary-pattern">The "Ternary" Pattern</a></li>
+<li style="padding-left:10px"><a href="#the-vanishing-strings">The Vanishing Strings</a></li>
+<li style="padding-left:10px"><a href="#comparing-logic">Comparing Logic</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

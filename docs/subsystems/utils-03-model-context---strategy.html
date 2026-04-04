@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: Model Context & Strategy — utils/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">utils/03_model_context___strategy.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🛠 utils/ · 03_model_context___strategy.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: Model Context & Strategy</h1>
+  <div class="chapter-meta"><span>📄 utils/03_model_context___strategy.md</span></div>
+</div>
+<h1 id="chapter-3-model-context-strategy">Chapter 3: Model Context & Strategy</h1>
+<p>
+Welcome to the third chapter of the <code>utils</code> project tutorial.
+</p>
+<p>
+In the previous chapter, <a href="02<em>authentication</em>__permissions.md">Authentication & Permissions</a>, we set up the "Security Guard" to verify who you are and control what the agent is allowed to do.
+</p>
+<p>
+Now that the agent is secure, we need to give it a "Brain." But not just any brain—we need to choose the <em>right</em> brain for the job, tell it who it is, and make sure it doesn't run out of memory.
+</p>
+<h2 id="the-problem-the-forgetful-genius">The Problem: The Forgetful Genius</h2>
+<p>
+Imagine you are hiring a genius consultant (the AI Model) to work on your project.
+</p>
+<ol>
+<li><strong>Selection:</strong> Do you need a creative writer (Claude Opus) or a fast, efficient coder (Claude Haiku)?</li>
+</ol>
+<ol>
+<li><strong>Briefing:</strong> You need to tell them their job description: "You are a senior developer, be concise." (This is the <strong>System Prompt</strong>).</li>
+</ol>
+<ol>
+<li><strong>Memory:</strong> This consultant has a limited short-term memory. If the conversation gets too long, they start forgetting the beginning of the meeting. You need to manage this limit (The <strong>Context Window</strong>).</li>
+</ol>
+<p>
+This chapter explains how the <code>utils</code> project handles these three challenges.
+</p>
+<h2 id="key-concept-1-model-selection-choosing-the-brain">Key Concept 1: Model Selection (Choosing the Brain)</h2>
+<p>
+Not all AI models are created equal. Some are smarter but slower; others are fast and cheap. The application allows users to switch models on the fly.
+</p>
+<p>
+This logic lives in <code>model/model.ts</code>. Just like the Settings Hierarchy in Chapter 1, there is a specific order of priority for choosing the model.
+</p>
+<h3 id="the-selection-hierarchy">The Selection Hierarchy</h3>
+<ol>
+<li><strong>Runtime Override:</strong> Did the user type <code>/model opus</code> right now?</li>
+</ol>
+<ol>
+<li><strong>Flag:</strong> Did the user start the app with <code>--model opus</code>?</li>
+</ol>
+<ol>
+<li><strong>Env Variable:</strong> Is <code>ANTHROPIC_MODEL</code> set?</li>
+</ol>
+<ol>
+<li><strong>Settings:</strong> Is it saved in <code>settings.json</code>?</li>
+</ol>
+<ol>
+<li><strong>Default:</strong> If nothing else, use the built-in default (usually Sonnet).</li>
+</ol>
+<div class="mermaid-wrap"><div class="mermaid">graph TD
+    A[Final Model]
+    B[1. Runtime Command /model]
+    C[2. Startup Flag --model]
+    D[3. Env Variable]
+    E[4. Settings File]
+    F[5. Hardcoded Default]
+
+    A --- B
+    B -- overrides --&gt; C
+    C -- overrides --&gt; D
+    D -- overrides --&gt; E
+    E -- overrides --&gt; F</div></div>
+<p>
+Here is the code that makes this decision:
+</p>
+<pre data-lang="typescript"><code>// From model/model.ts - Simplified
+export function getMainLoopModel(): string {
+  // 1. Check for overrides or flags first
+  const specifiedModel = getUserSpecifiedModelSetting()
+  
+  if (specifiedModel) {
+    // 2. Resolve aliases (e.g., "sonnet" -&gt; "claude-3-5-sonnet")
+    return parseUserSpecifiedModel(specifiedModel)
+  }
+
+  // 3. Fallback to default
+  return getDefaultMainLoopModel()
+}
+</code></pre>
+<p>
+<em>Explanation: This function acts as the traffic controller. It looks for user preference first. If the user didn't specify anything, it grabs the default model (currently Sonnet 4.6).</em>
+</p>
+<h2 id="key-concept-2-the-system-prompt-the-job-description">Key Concept 2: The System Prompt (The Job Description)</h2>
+<p>
+Once we have a model, we need to tell it how to behave. This is done via the <strong>System Prompt</strong>.
+</p>
+<p>
+You might think a prompt is just "Help me code," but in a complex application, the prompt is built from multiple layers:
+</p>
+<ol>
+<li><strong>Base Persona:</strong> "You are an expert coding agent."</li>
+</ol>
+<ol>
+<li><strong>Environment:</strong> "You are running on macOS."</li>
+</ol>
+<ol>
+<li><strong>Custom Instructions:</strong> "Always write tests first" (from your settings).</li>
+</ol>
+<p>
+This logic is found in <code>systemPrompt.ts</code>.
+</p>
+<pre data-lang="typescript"><code>// From systemPrompt.ts - Simplified
+export function buildEffectiveSystemPrompt({
+  customSystemPrompt,
+  defaultSystemPrompt,
+  agentDefinition
+}): SystemPrompt {
+  // 1. Start with the default instructions
+  const promptParts = [...defaultSystemPrompt]
+
+  // 2. If there are custom instructions, add them
+  if (customSystemPrompt) {
+    promptParts.push(customSystemPrompt)
+  }
+
+  // 3. Combine into one final block of text
+  return asSystemPrompt(promptParts)
+}
+</code></pre>
+<p>
+<em>Explanation: The code constructs an array of strings. It stacks the default instructions, agent-specific rules, and user customizations into one big text block that gets sent to the AI before the conversation starts.</em>
+</p>
+<h2 id="key-concept-3-context-token-budgets-managing-memory">Key Concept 3: Context & Token Budgets (Managing Memory)</h2>
+<p>
+AI models process text in chunks called <strong>Tokens</strong> (roughly 0.75 of a word). Every model has a "Context Window"—a maximum limit of tokens it can remember at once (e.g., 200,000 tokens).
+</p>
+<p>
+If you send too much code, the model crashes or forgets instructions.
+</p>
+<h3 id="determining-the-limit">Determining the Limit</h3>
+<p>
+The file <code>context.ts</code> figures out how big the model's memory is.
+</p>
+<pre data-lang="typescript"><code>// From context.ts - Simplified
+export function getContextWindowForModel(model: string): number {
+  // 1. Check for explicit 1 Million Context support
+  if (model.includes('[1m]')) {
+    return 1_000_000
+  }
+
+  // 2. Check model capabilities (Sonnet vs Haiku)
+  if (model.includes('sonnet-4-6')) {
+     return 200_000 // Standard limit
+  }
+
+  // 3. Default fallback
+  return 200_000
+}
+</code></pre>
+<p>
+<em>Explanation: The function looks at the model name. If it sees special flags like <code>[1m]</code> (1 million tokens), it expands the limit. Otherwise, it returns the standard safety limit.</em>
+</p>
+<h3 id="budgeting-the-output">Budgeting the Output</h3>
+<p>
+We also need to control how much the AI <em>writes</em> back to us. We don't want it to print 1 million lines of code and freeze the terminal. This is the <strong>Output Token Limit</strong>.
+</p>
+<pre data-lang="typescript"><code>// From context.ts - Simplified
+export function getModelMaxOutputTokens(model: string) {
+  // Newer models can write more
+  if (model.includes('sonnet-3-7')) {
+    return { default: 32_000, upperLimit: 64_000 }
+  }
+
+  // Older models are more restricted
+  return { default: 8_192, upperLimit: 8_192 }
+}
+</code></pre>
+<p>
+<em>Explanation: Different models have different "stamina." This code ensures we don't ask a smaller model to write a novel, which would cause an error.</em>
+</p>
+<h2 id="internal-implementation-the-brain-sequence">Internal Implementation: The Brain Sequence</h2>
+<p>
+Let's visualize what happens when you type a message to the agent.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant ModelSel as Model Selector
+    participant Context as Context Manager
+    participant API as AI Provider
+
+    User-&gt;&gt;ModelSel: "Write a script..."
+    
+    ModelSel-&gt;&gt;ModelSel: Check Settings... 
+    ModelSel--&gt;&gt;Context: Selected: "Claude 3.5 Sonnet"
+    
+    Context-&gt;&gt;Context: Calculate Limits (200k Input / 8k Output)
+    Context-&gt;&gt;Context: Build System Prompt
+    
+    Context-&gt;&gt;API: Send Request + Prompt + Limits
+    API--&gt;&gt;User: "Here is your script..."</div></div>
+<h2 id="deep-dive-handling-aliases">Deep Dive: Handling Aliases</h2>
+<p>
+Users prefer typing %%INLINE<em>10%% instead of %%INLINE</em>11%%. The %%INLINE<em>12%% file handles this translation using a helper function called %%INLINE</em>13%%.
+</p>
+<pre data-lang="typescript"><code>// From model/model.ts - Simplified
+export function parseUserSpecifiedModel(input: string): string {
+  const cleanInput = input.toLowerCase().trim()
+
+  // Map simple names to full versions
+  if (cleanInput === 'sonnet') {
+    return getDefaultSonnetModel() // e.g., claude-3-5-sonnet...
+  }
+  
+  if (cleanInput === 'haiku') {
+    return getDefaultHaikuModel()
+  }
+
+  return cleanInput // Return original if not an alias
+}
+</code></pre>
+<p>
+<em>Explanation: This acts as a dictionary. It ensures that even if internal model IDs change (e.g., Anthropic releases Sonnet 3.6), the user can still just type "sonnet" and get the latest version automatically.</em>
+</p>
+<h2 id="deep-dive-token-budget-parsing">Deep Dive: Token Budget Parsing</h2>
+<p>
+Advanced users might want to tell the agent: "You have a budget of 50k tokens for this task." The file <code>tokenBudget.ts</code> uses Regular Expressions (Regex) to understand these natural language instructions.
+</p>
+<pre data-lang="typescript"><code>// From tokenBudget.ts - Simplified
+export function parseTokenBudget(text: string): number | null {
+  // Looks for patterns like "spend 50k tokens"
+  const match = text.match(/spend\s+(\d+)(k|m)\s+tokens/i)
+  
+  if (match) {
+    const amount = parseFloat(match[1])
+    const multiplier = match[2] === 'k' ? 1000 : 1000000
+    return amount * multiplier
+  }
+  
+  return null
+}
+</code></pre>
+<p>
+<em>Explanation: This allows the user to talk naturally. The code scans the text for numbers followed by 'k' (thousand) or 'm' (million) and converts it into a raw number for the system to track.</em>
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned how the application manages its "Brain":
+</p>
+<ol>
+<li><strong>Model Selection:</strong> <code>model.ts</code> prioritizes user commands over global defaults to pick the right AI.</li>
+</ol>
+<ol>
+<li><strong>System Prompt:</strong> <code>systemPrompt.ts</code> constructs the persona and rules the AI must follow.</li>
+</ol>
+<ol>
+<li><strong>Context Strategy:</strong> <code>context.ts</code> calculates memory limits to prevent crashes and manage costs.</li>
+</ol>
+<p>
+This infrastructure ensures that when we finally ask the AI to do work, it knows <em>who</em> it is, <em>what</em> limits it has, and <em>how</em> to behave.
+</p>
+<p>
+Now that the AI is authenticated, configured, and has a strategy, we need to give it tools to interact with your code. The most important tool for a developer? Version Control.
+</p>
+<p>
+<a href="04<em>git</em>integration.md">Next Chapter: Git Integration</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="utils.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">utils/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-forgetful-genius">The Problem: The Forgetful Genius</a></li>
+<li style="padding-left:0px"><a href="#key-concept-1-model-selection-choosing-the-brain">Key Concept 1: Model Selection (Choosing the Brain)</a></li>
+<li style="padding-left:10px"><a href="#the-selection-hierarchy">The Selection Hierarchy</a></li>
+<li style="padding-left:0px"><a href="#key-concept-2-the-system-prompt-the-job-description">Key Concept 2: The System Prompt (The Job Description)</a></li>
+<li style="padding-left:0px"><a href="#key-concept-3-context-token-budgets-managing-memory">Key Concept 3: Context & Token Budgets (Managing Memory)</a></li>
+<li style="padding-left:10px"><a href="#determining-the-limit">Determining the Limit</a></li>
+<li style="padding-left:10px"><a href="#budgeting-the-output">Budgeting the Output</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-the-brain-sequence">Internal Implementation: The Brain Sequence</a></li>
+<li style="padding-left:0px"><a href="#deep-dive-handling-aliases">Deep Dive: Handling Aliases</a></li>
+<li style="padding-left:0px"><a href="#deep-dive-token-budget-parsing">Deep Dive: Token Budget Parsing</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

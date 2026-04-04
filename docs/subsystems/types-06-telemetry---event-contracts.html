@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 6: Telemetry & Event Contracts — types/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">types/06_telemetry___event_contracts.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">📝 types/ · 06_telemetry___event_contracts.md</div>
+  <h1 class="chapter-title-h1">Chapter 6: Telemetry & Event Contracts</h1>
+  <div class="chapter-meta"><span>📄 types/06_telemetry___event_contracts.md</span></div>
+</div>
+<h1 id="chapter-6-telemetry-event-contracts">Chapter 6: Telemetry & Event Contracts</h1>
+<p>
+In the previous chapter, <a href="05<em>extensibility<strong>plugins</strong></em>hooks_.md">Extensibility (Plugins & Hooks)</a>, we learned how to let outside developers add new features to our agent.
+</p>
+<p>
+But with great power comes great complexity. If a user says "The agent crashed," and they have 5 different plugins installed, running on a specific version of Linux, inside a Docker container... how do you debug that?
+</p>
+<p>
+This chapter introduces <strong>Telemetry & Event Contracts</strong>.
+</p>
+<h2 id="the-motivation-the-black-box-flight-recorder">The Motivation: The "Black Box" Flight Recorder</h2>
+<p>
+In a simple script, you might use <code>console.log("Something went wrong")</code>.
+ 
+In a complex AI agent, "Something went wrong" is useless.
+</p>
+<p>
+We need a <strong>Flight Recorder</strong>.
+ 
+When an airplane flies, it records <em>everything</em>: altitude, speed, wind direction, engine temperature. It doesn't write this in a diary; it writes it in a strict, mathematical format that never changes.
+</p>
+<p>
+Our Telemetry system does the same. It defines a <strong>Strict Contract</strong> (a specific shape of data) that must be sent whenever an event happens. This ensures that whether the event comes from a Mac, a Windows machine, or a GitHub Action, the data looks exactly the same to our analytics backend.
+</p>
+<hr>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+We don't just send JSON blobs. We use strictly typed interfaces generated from <strong>Protobufs</strong> (Protocol Buffers). This is a way of defining data structures that works across any programming language.
+</p>
+<h3 id="1-the-environment-inline-1">1. The Environment (<code>EnvironmentMetadata</code>)</h3>
+<p>
+Context is everything. If the agent fails, the first question is: "Where are we?"
+ 
+This structure captures the state of the machine.
+</p>
+<pre data-lang="typescript"><code>export interface EnvironmentMetadata {
+  platform?: string          // e.g., "darwin" (macOS)
+  node_version?: string      // e.g., "v18.1.0"
+  terminal?: string          // e.g., "iTerm.app"
+  is_ci?: boolean           // Are we running in a robot (CI/CD)?
+  is_github_action?: boolean // Specific CI check
+}
+</code></pre>
+<ul>
+<li><strong>Beginner Tip:</strong> This isn't just about debugging crashes. It helps us answer questions like: <em>"Do most of our users use VS Code or the System Terminal?"</em></li>
+</ul>
+<h3 id="2-the-universal-clock-inline-2">2. The Universal Clock (<code>Timestamp</code>)</h3>
+<p>
+Time is tricky. Timezones, leap seconds, and different formats make sorting logs a nightmare.
+ 
+We use a standardized <code>Timestamp</code> object.
+</p>
+<pre data-lang="typescript"><code>export interface Timestamp {
+  seconds?: number  // Seconds since 1970 (Unix Epoch)
+  nanos?: number    // Nanoseconds (for extreme precision)
+}
+</code></pre>
+<ul>
+<li><strong>Why strict?</strong> This prevents one developer from sending %%INLINE<em>4%% and another sending %%INLINE</em>5%%. The math must match.</li>
+</ul>
+<h3 id="3-the-master-event-inline-6">3. The Master Event (<code>ClaudeCodeInternalEvent</code>)</h3>
+<p>
+This is the envelope that holds everything. It combines <em>what</em> happened with <em>where</em> it happened.
+</p>
+<pre data-lang="typescript"><code>export interface ClaudeCodeInternalEvent {
+  event_name?: string        // e.g., "tengu_api_success"
+  session_id?: string        // The conversation ID from Chapter 2
+  env?: EnvironmentMetadata  // The machine info from above
+  auth?: PublicApiAuth       // Who is this user?
+  client_timestamp?: Date    // When did it happen?
+}
+</code></pre>
+<hr>
+<h2 id="use-case-reporting-a-bug-fix-event">Use Case: Reporting a "Bug Fix" Event</h2>
+<p>
+Let's imagine the agent just successfully fixed a bug in your code. We want to record this victory.
+</p>
+<h3 id="step-1-gather-the-environment">Step 1: Gather the Environment</h3>
+<p>
+First, the system looks at where it is running.
+</p>
+<pre data-lang="typescript"><code>const myEnv: EnvironmentMetadata = {
+  platform: 'darwin',       // macOS
+  terminal: 'vscode',
+  node_version: 'v20.5.0',
+  is_ci: false              // A real human is watching
+}
+</code></pre>
+<h3 id="step-2-construct-the-event">Step 2: Construct the Event</h3>
+<p>
+We create the strictly typed event object. If we try to add a field that doesn't exist (like <code>mood: 'happy'</code>), TypeScript will yell at us. This is the "Contract" in action.
+</p>
+<pre data-lang="typescript"><code>const successEvent: ClaudeCodeInternalEvent = {
+  event_name: 'bug_fix_success',
+  session_id: 'sess_12345',
+  env: myEnv,
+  // usage metrics
+  additional_metadata: JSON.stringify({ 
+    files_changed: 2, 
+    duration_ms: 500 
+  })
+}
+</code></pre>
+<h3 id="step-3-serialization">Step 3: Serialization</h3>
+<p>
+Before sending this over the internet, we convert it to a standard format (JSON or Binary).
+</p>
+<pre data-lang="typescript"><code>// The generated code provides a helper for this
+const payload = ClaudeCodeInternalEvent.toJSON(successEvent);
+
+// Result: A clean object ready for the API
+// { "event_name": "...", "env": { "platform": "darwin" } }
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong> The <code>toJSON</code> method ensures that complex types (like Dates) are converted to strings in the exact format the server expects.</li>
+</ul>
+<hr>
+<h2 id="under-the-hood-the-flight-recorder-flow">Under the Hood: The Flight Recorder Flow</h2>
+<p>
+How does an event get from your code to the database?
+</p>
+<h3 id="visual-flow">Visual Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Agent
+    participant TE as Telemetry Engine
+    participant VB as Validation (Protobuf)
+    participant S as Server
+
+    Agent-&gt;&gt;TE: "Task Completed"
+    TE-&gt;&gt;TE: Gather Environment (OS, Node ver)
+    TE-&gt;&gt;TE: Generate Timestamp
+    TE-&gt;&gt;VB: Create ClaudeCodeInternalEvent
+    
+    rect rgb(20, 20, 20)
+        Note right of VB: The Contract Check
+        VB-&gt;&gt;VB: Ensure types match Schema
+    end
+    
+    VB--&gt;&gt;TE: Validated Object
+    TE-&gt;&gt;S: Send Data</div></div>
+<h3 id="implementation-details">Implementation Details</h3>
+<p>
+Let's look at the generated files provided in the project. These files (%%INLINE<em>9%%) are usually auto-generated from a %%INLINE</em>10%% definition file.
+</p>
+<h4 id="1-the-helper-functions-inline-11">1. The Helper Functions (<code>MessageFns</code>)</h4>
+<p>
+You'll notice objects like <code>EnvironmentMetadata</code> are accompanied by a constant with the same name. This holds the tools to work with that data type.
+</p>
+<pre data-lang="typescript"><code>// From generated/.../claude_code_internal_event.ts
+export const EnvironmentMetadata: MessageFns&lt;EnvironmentMetadata&gt; = {
+  // Converts raw JSON into the strict Type
+  fromJSON(object: any): EnvironmentMetadata {
+    return {
+      platform: isSet(object.platform) ? String(object.platform) : '',
+      is_ci: isSet(object.is_ci) ? Boolean(object.is_ci) : false,
+      // ... checks every single field manually
+    }
+  },
+  
+  // Converts strict Type to JSON for sending
+  toJSON(message: EnvironmentMetadata): unknown {
+    // ...
+  }
+}
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong> This code is verbose so you don't have to be. It handles %%INLINE<em>13%% checks, type conversions (String to Number), and defaults (setting %%INLINE</em>14%% if <code>is_ci</code> is missing).</li>
+</ul>
+<h4 id="2-the-event-union">2. The Event Union</h4>
+<p>
+The <code>ClaudeCodeInternalEvent</code> is designed to be a "Union" of all possible things we might want to track.
+</p>
+<pre data-lang="typescript"><code>export interface ClaudeCodeInternalEvent {
+  // Core Data
+  event_name?: string
+  
+  // Specific Contexts (Optional)
+  slack?: SlackContext        // Only used if running in Slack
+  swe_bench_run_id?: string   // Only used if running benchmarks
+  marketplace_name?: string   // Only used if installed via marketplace
+}
+</code></pre>
+<ul>
+<li><strong>Beginner Tip:</strong> By having one giant event definition with many optional fields, we create a single "Pipeline". We don't need 50 different API endpoints for 50 different events. We just have one endpoint that accepts <code>ClaudeCodeInternalEvent</code>.</li>
+</ul>
+<hr>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+<strong>Telemetry & Event Contracts</strong> provide the nervous system for our agent. 
+</p>
+<ol>
+<li><strong>Strict Types</strong> ensure we speak a consistent language.</li>
+</ol>
+<ol>
+<li><strong>Environment Metadata</strong> gives us the context of the user's machine.</li>
+</ol>
+<ol>
+<li><strong>Generated Code</strong> handles the boring work of validation and serialization.</li>
+</ol>
+<p>
+This "Flight Recorder" ensures that when we improve the <a href="01<em>command</em>architecture.md">Command Architecture</a> or add new <a href="03<em>permission</em><em>_safety</em>system.md">Permissions</a>, we can scientifically measure if we are making the agent better or worse.
+</p>
+<p>
+This concludes the beginner's guide to the <strong>types</strong> project architecture! You now understand the full loop:
+</p>
+<ol>
+<li><strong>Commands</strong> define actions.</li>
+</ol>
+<ol>
+<li><strong>Persistence</strong> remembers history.</li>
+</ol>
+<ol>
+<li><strong>Safety</strong> protects the user.</li>
+</ol>
+<ol>
+<li><strong>Input</strong> handles complex interactions.</li>
+</ol>
+<ol>
+<li><strong>Plugins</strong> allow expansion.</li>
+</ol>
+<ol>
+<li><strong>Telemetry</strong> measures success.</li>
+</ol>
+<p>
+Happy Coding!
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="types.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">types/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-the-black-box-flight-recorder">The Motivation: The "Black Box" Flight Recorder</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-environment-inline-1">1. The Environment (%%INLINE_1%%)</a></li>
+<li style="padding-left:10px"><a href="#2-the-universal-clock-inline-2">2. The Universal Clock (%%INLINE_2%%)</a></li>
+<li style="padding-left:10px"><a href="#3-the-master-event-inline-6">3. The Master Event (%%INLINE_6%%)</a></li>
+<li style="padding-left:0px"><a href="#use-case-reporting-a-bug-fix-event">Use Case: Reporting a "Bug Fix" Event</a></li>
+<li style="padding-left:10px"><a href="#step-1-gather-the-environment">Step 1: Gather the Environment</a></li>
+<li style="padding-left:10px"><a href="#step-2-construct-the-event">Step 2: Construct the Event</a></li>
+<li style="padding-left:10px"><a href="#step-3-serialization">Step 3: Serialization</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-the-flight-recorder-flow">Under the Hood: The Flight Recorder Flow</a></li>
+<li style="padding-left:10px"><a href="#visual-flow">Visual Flow</a></li>
+<li style="padding-left:10px"><a href="#implementation-details">Implementation Details</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

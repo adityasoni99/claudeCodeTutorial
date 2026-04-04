@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: Context & Memory Management — commands/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">commands/04_context___memory_management.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⌨️ commands/ · 04_context___memory_management.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: Context & Memory Management</h1>
+  <div class="chapter-meta"><span>📄 commands/04_context___memory_management.md</span></div>
+</div>
+<h1 id="chapter-4-context-memory-management">Chapter 4: Context & Memory Management</h1>
+<p>
+In the previous chapter, <a href="03<em>authentication</em><em>_session</em>state.md">Authentication & Session State</a>, we gave our user an identity ("The ID Badge").
+</p>
+<p>
+Now, we need to give our AI a <strong>Brain</strong>.
+</p>
+<p>
+When you talk to an AI, it doesn't automatically know everything about your project. You have to feed it information. However, AI models have a limit on how much they can read at once (called the <strong>Context Window</strong>), and reading text costs money (Tokens).
+</p>
+<p>
+This chapter explains how we manage the AI's "Brain" efficiently using <strong>Context</strong> (Short-term memory) and <strong>Memory</strong> (Long-term knowledge).
+</p>
+<hr>
+<h2 id="the-big-analogy-ram-vs-hard-drive">The Big Analogy: RAM vs. Hard Drive</h2>
+<p>
+To understand how this system works, think of a computer:
+</p>
+<ol>
+<li><strong>Context (RAM):</strong> This is the immediate conversation.</li>
+<ul>
+<li><em>Pros:</em> Very fast, contains "What did I just say?".</li>
+<li><em>Cons:</em> Temporary. If you close the app, it's gone. It has a limited size (e.g., 200k tokens).</li>
+</ul>
+</ol>
+<ol>
+<li><strong>Memory (Hard Drive):</strong> This is the <code>CLAUDE.md</code> file.</li>
+<ul>
+<li><em>Pros:</em> Persistent. It remembers project rules forever.</li>
+<li><em>Cons:</em> You have to manually write it.</li>
+</ul>
+</ol>
+<hr>
+<h2 id="concept-1-context-the-conversation-history">Concept 1: Context (The Conversation History)</h2>
+<p>
+Every time you send a message to the AI, we actually send the <strong>entire conversation history</strong> along with it. This allows the AI to answer follow-up questions.
+</p>
+<p>
+Eventually, this history gets too big. The <code>/context</code> command allows the user to see how "full" the AI's brain is.
+</p>
+<h3 id="the-context-command">The Context Command</h3>
+<p>
+Let's look at <code>context/context.tsx</code>. It calculates usage and draws a graph.
+</p>
+<pre data-lang="typescript"><code>// File: context/context.tsx (Simplified)
+import { microcompactMessages } from '../../services/compact/microCompact.js';
+
+export async function call(onDone, context) {
+  const { messages } = context;
+
+  // 1. Compress the messages to see what the AI actually reads
+  // We remove whitespace and unnecessary JSON to save tokens
+  const compactedData = await microcompactMessages(messages);
+
+  // 2. Analyze how many tokens are used
+  const usageData = await analyzeContextUsage(compactedData);
+
+  // 3. Draw the visualization (The graph you see in terminal)
+  const output = renderContextGraph(usageData);
+  
+  onDone(output);
+}
+</code></pre>
+<p>
+<strong>What is Micro-compacting?</strong>
+ 
+To save space, the application "squeezes" the text before sending it to the AI. It might turn a verbose JSON object into a smaller string. The user doesn't see this, but the <code>/context</code> command reveals exactly what the AI sees.
+</p>
+<hr>
+<h2 id="concept-2-memory-persistent-knowledge">Concept 2: Memory (Persistent Knowledge)</h2>
+<p>
+If you tell the AI: <em>"Always use TypeScript in this project,"</em> it will remember it for <em>this</em> session. But tomorrow, it will forget.
+</p>
+<p>
+To fix this, we use <strong>Memory files</strong>, specifically <code>CLAUDE.md</code>. This is a markdown file where you write instructions that the AI reads <em>every single time</em> it starts.
+</p>
+<h3 id="the-memory-command">The Memory Command</h3>
+<p>
+The <code>/memory</code> command is a shortcut to create or edit this file using your computer's text editor (like VS Code, Vim, or Nano).
+</p>
+<pre data-lang="typescript"><code>// File: memory/memory.tsx (Simplified)
+import { editFileInEditor } from '../../utils/promptEditor.js';
+
+const handleSelectMemoryFile = async (memoryPath) =&gt; {
+    // 1. Create the file if it doesn't exist yet
+    await ensureFileExists(memoryPath);
+
+    // 2. Open the user's default text editor
+    // This pauses the terminal until the user closes the editor
+    await editFileInEditor(memoryPath);
+
+    // 3. Notify the user
+    onDone(`Opened memory file at ${memoryPath}`);
+};
+</code></pre>
+<p>
+<strong>Why is this powerful?</strong>
+ 
+By abstracting this into a command, the user doesn't need to know <em>where</em> the file is hidden. They just type <code>/memory</code>, write their rules ("Always use 2 spaces indentation"), save, and the AI becomes smarter instantly.
+</p>
+<hr>
+<h2 id="use-case-exporting-the-brain">Use Case: Exporting the Brain</h2>
+<p>
+Sometimes you want to save a conversation to share with a coworker. This is effectively "dumping the RAM to disk."
+</p>
+<p>
+The %%INLINE<em>7%% command handles this. It takes the context (RAM) and writes it to a %%INLINE</em>8%% file.
+</p>
+<pre data-lang="typescript"><code>// File: export/export.tsx (Simplified)
+export async function call(onDone, context, args) {
+  // 1. Convert the rich message objects into plain text
+  const textContent = await renderMessagesToPlainText(context.messages);
+
+  // 2. Generate a filename (e.g., conversation-2023-10-27.txt)
+  const filename = args || `conversation-${Date.now()}.txt`;
+
+  // 3. Save to disk
+  writeFileSync(filename, textContent);
+  
+  onDone(`Saved conversation to ${filename}`);
+}
+</code></pre>
+<hr>
+<h2 id="how-it-works-under-the-hood">How It Works Under the Hood</h2>
+<p>
+When you chat, the system combines <strong>Memory</strong> and <strong>Context</strong> into one giant prompt for the AI.
+</p>
+<h3 id="the-data-flow">The Data Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant App
+    participant Disk as Hard Drive (CLAUDE.md)
+    participant AI as AI Model
+
+    User-&gt;&gt;App: Types "Hello"
+    
+    rect rgb(20, 20, 20)
+        Note over App: Preparation Phase
+        App-&gt;&gt;Disk: Read CLAUDE.md (Memory)
+        App-&gt;&gt;App: Load Chat History (Context)
+        App-&gt;&gt;App: Compact/Compress Data
+    end
+    
+    App-&gt;&gt;AI: Send (Memory + Context + "Hello")
+    AI--&gt;&gt;App: Response
+    App--&gt;&gt;User: Display Response</div></div>
+<h3 id="context-sliding-window">Context "Sliding Window"</h3>
+<p>
+If the conversation gets too long (exceeds the Token Limit), the system acts like a conveyor belt. It drops the oldest messages to make room for new ones.
+</p>
+<p>
+This is why <code>context.tsx</code> is so important—it helps the user see when they are about to "forget" the beginning of the conversation.
+</p>
+<h3 id="visualizing-context">Visualizing Context</h3>
+<p>
+The %%INLINE<em>10%% command uses a helper called %%INLINE</em>11%%. This is a pure UI component (like we learned in <a href="02<em>interactive</em>tui<em>_text</em>user<em>interface</em>.md">Chapter 2</a>).
+</p>
+<pre data-lang="typescript"><code>// File: components/ContextVisualization.tsx (Conceptual)
+export function ContextVisualization({ data }) {
+  // Shows a progress bar: [########....] 60%
+  const percent = data.usedTokens / data.totalLimit;
+  
+  return (
+    &lt;Box flexDirection="column"&gt;
+      &lt;Text&gt;Brain Capacity: {percent}% full&lt;/Text&gt;
+      &lt;ProgressBar value={percent} /&gt;
+      &lt;Text dimColor&gt;Old messages will be forgotten soon.&lt;/Text&gt;
+    &lt;/Box&gt;
+  );
+}
+</code></pre>
+<hr>
+<h2 id="summary">Summary</h2>
+<ol>
+<li><strong>Context (RAM):</strong> The immediate chat history. We monitor it with <code>/context</code> to ensure we aren't running out of space.</li>
+</ol>
+<ol>
+<li><strong>Memory (Hard Drive):</strong> The %%INLINE<em>13%% file. We edit it with %%INLINE</em>14%% to give the AI permanent instructions.</li>
+</ol>
+<ol>
+<li><strong>Compacting:</strong> We minimize data behind the scenes to save money and space.</li>
+</ol>
+<p>
+Now that our AI has a <strong>Identity</strong> (Auth) and a <strong>Brain</strong> (Memory), we need to teach it how to understand the specific project it is working on.
+</p>
+<p>
+<a href="05<em>project</em>setup<em>_</em>intelligence.md">Next Chapter: Project Setup & Intelligence</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="commands.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">commands/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-big-analogy-ram-vs-hard-drive">The Big Analogy: RAM vs. Hard Drive</a></li>
+<li style="padding-left:0px"><a href="#concept-1-context-the-conversation-history">Concept 1: Context (The Conversation History)</a></li>
+<li style="padding-left:10px"><a href="#the-context-command">The Context Command</a></li>
+<li style="padding-left:0px"><a href="#concept-2-memory-persistent-knowledge">Concept 2: Memory (Persistent Knowledge)</a></li>
+<li style="padding-left:10px"><a href="#the-memory-command">The Memory Command</a></li>
+<li style="padding-left:0px"><a href="#use-case-exporting-the-brain">Use Case: Exporting the Brain</a></li>
+<li style="padding-left:0px"><a href="#how-it-works-under-the-hood">How It Works Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#the-data-flow">The Data Flow</a></li>
+<li style="padding-left:10px"><a href="#context-sliding-window">Context "Sliding Window"</a></li>
+<li style="padding-left:10px"><a href="#visualizing-context">Visualizing Context</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

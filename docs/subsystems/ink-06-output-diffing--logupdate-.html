@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 6: Output Diffing (LogUpdate) — ink/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">ink/06_output_diffing__logupdate_.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🖊 ink/ · 06_output_diffing__logupdate_.md</div>
+  <h1 class="chapter-title-h1">Chapter 6: Output Diffing (LogUpdate)</h1>
+  <div class="chapter-meta"><span>📄 ink/06_output_diffing__logupdate_.md</span></div>
+</div>
+<h1 id="chapter-6-output-diffing-logupdate">Chapter 6: Output Diffing (LogUpdate)</h1>
+<p>
+In the previous chapter, <a href="05<em>frame</em>renderer.md">Frame Renderer</a>, we learned how Ink takes a tree of components and paints them onto an in-memory grid called a <strong>Frame</strong>.
+</p>
+<p>
+We now have a snapshot of what we <em>want</em> the terminal to look like. But there is a problem.
+</p>
+<p>
+If we simply clear the entire terminal screen and print the new frame every time a state changes (like a spinner rotating), the screen will flash white, text will jump, and the user experience will feel "glitchy." This is known as <strong>Flickering</strong>.
+</p>
+<p>
+To fix this, Ink uses <strong>Output Diffing</strong> (implemented in <code>LogUpdate</code>).
+</p>
+<hr>
+<h2 id="the-motivation-the-surgical-artist">The Motivation: The Surgical Artist</h2>
+<p>
+Imagine you are painting a portrait.
+</p>
+<ul>
+<li><strong>The Brute Force Way:</strong> Every time you want to change the eye color, you throw away the canvas, buy a new one, and repaint the entire face from scratch. (This causes flickering).</li>
+<li><strong>The Ink Way:</strong> You look at the canvas, see that the nose and mouth are fine, and carefully paint <em>only</em> over the eyes.</li>
+</ul>
+<p>
+<strong>Output Diffing</strong> is the process of comparing the <strong>Previous Frame</strong> with the <strong>Next Frame</strong> and generating the minimum list of commands needed to transform one into the other.
+</p>
+<h3 id="the-use-case-a-spinner">The Use Case: A Spinner</h3>
+<p>
+Let's look at a simple loading spinner that rotates every 100ms.
+</p>
+<p>
+<strong>Frame A:</strong>
+</p>
+<pre data-lang="text"><code>⠋ Loading...
+</code></pre>
+<p>
+<strong>Frame B:</strong>
+</p>
+<pre data-lang="text"><code>⠙ Loading...
+</code></pre>
+<p>
+Notice that the text " Loading..." didn't change. Only the first character changed from %%INLINE<em>1%% to %%INLINE</em>2%%.
+ 
+Ink should figure this out and send a command to the terminal saying: "Go to column 0, row 0. Draw '⠙'. Done."
+</p>
+<hr>
+<h2 id="concept-1-the-diff">Concept 1: The Diff</h2>
+<p>
+The core logic lives in <code>log-update.ts</code>. Its job is to generate a <strong>Diff</strong>.
+</p>
+<p>
+A Diff is a list of instructions. It might look like this logically:
+</p>
+<ol>
+<li>Move Cursor to X: 5, Y: 2.</li>
+</ol>
+<ol>
+<li>Set Color to Green.</li>
+</ol>
+<ol>
+<li>Write "Success".</li>
+</ol>
+<ol>
+<li>Move Cursor to X: 0, Y: 3.</li>
+</ol>
+<h3 id="comparing-frames">Comparing Frames</h3>
+<p>
+Ink iterates through every cell of the new grid and compares it to the old grid.
+</p>
+<pre data-lang="typescript"><code>// Conceptual Logic
+function calculateDiff(prevScreen, nextScreen) {
+  const patches = [];
+
+  // Loop through every row (y) and column (x)
+  for (let y = 0; y &lt; rows; y++) {
+    for (let x = 0; x &lt; columns; x++) {
+      
+      // If the cell is different...
+      if (prevScreen[y][x] !== nextScreen[y][x]) {
+        // ...add an instruction to fix it
+        patches.push({ type: 'cursorMove', x, y });
+        patches.push({ type: 'write', char: nextScreen[y][x] });
+      }
+    }
+  }
+  return patches;
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+ 
+This loop ensures we only touch the parts of the screen that actually changed. If 90% of your UI is static (like a border or a title), Ink never rewrites it after the first render.
+</p>
+<hr>
+<h2 id="concept-2-cursor-management">Concept 2: Cursor Management</h2>
+<p>
+Terminals are like typewriters. To write text in the middle of the screen, you have to move the carriage (cursor) there first.
+</p>
+<p>
+Ink uses <strong>ANSI Escape Codes</strong> to move the cursor.
+</p>
+<ul>
+<li><code>\x1b[A</code>: Move Up</li>
+<li><code>\x1b[C</code>: Move Right</li>
+</ul>
+<p>
+In <code>log-update.ts</code>, there is a helper to generate these moves efficiently.
+</p>
+<pre data-lang="typescript"><code>// log-update.ts (Simplified)
+function moveCursorTo(screen, targetX, targetY) {
+  const dx = targetX - screen.cursor.x;
+  const dy = targetY - screen.cursor.y;
+
+  // Generate a move instruction
+  return { type: 'cursorMove', x: dx, y: dy };
+}
+</code></pre>
+<p>
+<strong>Why is this hard?</strong>
+ 
+Ink has to track where the cursor <em>currently</em> is. If we just wrote a character at (5, 5), the cursor is now at (6, 5). If the next change is at (6, 5), we don't need to move the cursor at all! This optimization saves bytes and makes rendering faster.
+</p>
+<hr>
+<h2 id="the-flow-from-frame-to-terminal">The Flow: From Frame to Terminal</h2>
+<p>
+Let's trace how the "Spinner" updates.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant React as React State
+    participant Renderer as Frame Renderer
+    participant Diff as LogUpdate (Diff)
+    participant Term as Terminal (Stdout)
+
+    Note over React: State changes (Spinner rotates)
+    React-&gt;&gt;Renderer: Generates Frame B
+    Renderer-&gt;&gt;Diff: render(Frame A, Frame B)
+    
+    Diff-&gt;&gt;Diff: Compare grids
+    Note right of Diff: Difference found at (0,0)
+    
+    Diff-&gt;&gt;Term: Send "\r" (Carriage Return)
+    Diff-&gt;&gt;Term: Send "⠙" (New Character)
+    
+    Note over Diff: "Loading..." is skipped (Identical)</div></div>
+<ol>
+<li><strong>Render:</strong> The <a href="05<em>frame</em>renderer.md">Frame Renderer</a> produces the new grid.</li>
+</ol>
+<ol>
+<li><strong>Compare:</strong> <code>LogUpdate</code> sees that only index 0 changed.</li>
+</ol>
+<ol>
+<li><strong>Patch:</strong> It generates a stream containing a rewind command (<code>\r</code>) and the new character.</li>
+</ol>
+<ol>
+<li><strong>Output:</strong> Node.js writes this string to <code>process.stdout</code>.</li>
+</ol>
+<hr>
+<h2 id="under-the-hood-inline-10">Under the Hood: <code>log-update.ts</code></h2>
+<p>
+This file is the final output stage of Ink. Let's look at the real implementation of the diffing loop.
+</p>
+<h3 id="1-the-diff-loop-inline-11">1. The Diff Loop (<code>diffEach</code>)</h3>
+<p>
+Ink uses a helper <code>diffEach</code> to iterate efficiently.
+</p>
+<pre data-lang="typescript"><code>// log-update.ts (Simplified logic inside render)
+diffEach(prev.screen, next.screen, (x, y, removed, added) =&gt; {
+  // 1. Move the cursor to the location of the change
+  moveCursorTo(screen, x, y);
+
+  // 2. If a new cell exists (Update/Create)
+  if (added) {
+    // Check if color changed and apply codes
+    const styleStr = stylePool.transition(currentStyleId, added.styleId);
+    
+    // Write the actual character
+    writeCellWithStyleStr(screen, added, styleStr);
+  } 
+  // 3. If a cell was removed (Shrink)
+  else if (removed) {
+    // Overwrite with a space
+    writeCellWithStyleStr(screen, { char: ' ' }, '');
+  }
+});
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li><code>moveCursorTo</code>: Logic to get the typewriter head to the right spot.</li>
+<li>%%INLINE<em>14%%: Calculates if we need to switch from "Red" to "Blue". It returns ANSI codes like %%INLINE</em>15%%.</li>
+<li><code>writeCell...</code>: Pushes the character into the output buffer.</li>
+</ul>
+<h3 id="2-handling-resizes-inline-17">2. Handling Resizes (<code>fullResetSequence</code>)</h3>
+<p>
+Sometimes, diffing is too dangerous. If the user resizes the terminal window, the text wraps differently, and our coordinate system (X, Y) becomes invalid.
+</p>
+<p>
+In this case, Ink creates a "Keyframe" (to use video terminology). It clears the screen and redraws everything.
+</p>
+<pre data-lang="typescript"><code>// log-update.ts (Simplified)
+if (next.viewport.width !== prev.viewport.width) {
+  // If width changed, we can't trust the old coordinates.
+  // Force a full re-render.
+  return fullResetSequence_CAUSES_FLICKER(next, 'resize', stylePool);
+}
+</code></pre>
+<p>
+<strong>Note:</strong> The function name <code>_CAUSES_FLICKER</code> is a deliberate warning to developers that this path is expensive and visually jarring, so it's used only when absolutely necessary.
+</p>
+<h3 id="3-outputting-the-buffer">3. Outputting the Buffer</h3>
+<p>
+Finally, all these small move/write instructions are collected into a %%INLINE<em>19%% array. %%INLINE</em>20%% joins them into a single string.
+</p>
+<pre data-lang="typescript"><code>// log-update.ts (Simplified)
+const output = patches.map(p =&gt; {
+  if (p.type === 'cursorMove') return ansi.cursorMove(p.x, p.y);
+  if (p.type === 'stdout') return p.content;
+  return '';
+}).join('');
+
+process.stdout.write(output);
+</code></pre>
+<p>
+This single <code>write</code> call ensures the terminal updates in one "tick," making the animation smooth.
+</p>
+<hr>
+<h2 id="summary-of-the-whole-pipeline">Summary of the Whole Pipeline</h2>
+<p>
+Congratulations! You have navigated the entire architecture of Ink.
+</p>
+<p>
+Let's recap the journey of a single keystroke:
+</p>
+<ol>
+<li><strong>Input:</strong> User presses %%INLINE<em>22%%. <a href="04</em>input<em>processing</em>pipeline.md">Input Processing Pipeline</a> detects it.</li>
+</ol>
+<ol>
+<li><strong>React:</strong> %%INLINE<em>23%% fires, updating React state (%%INLINE</em>24%%).</li>
+</ol>
+<ol>
+<li><strong>Reconciler:</strong> React calls the <a href="03<em>react</em>reconciler.md">Reconciler</a> to update the <a href="02<em>ink</em>dom<em>_</em>layout_engine.md">Ink DOM</a>.</li>
+</ol>
+<ol>
+<li><strong>Layout:</strong> Yoga recalculates the positions of your <code>&lt;Box&gt;</code> elements.</li>
+</ol>
+<ol>
+<li><strong>Render:</strong> The <a href="05<em>frame</em>renderer.md">Frame Renderer</a> paints the DOM onto a grid in memory.</li>
+</ol>
+<ol>
+<li><strong>Diff:</strong> <strong>LogUpdate</strong> compares the new grid to the old one.</li>
+</ol>
+<ol>
+<li><strong>Output:</strong> Ink writes <code>\x1b[C A</code> to the terminal.</li>
+</ol>
+<p>
+The user sees the letter <code>A</code> appear instantly, unaware of the massive amount of engineering that ensured it appeared in exactly the right box, with the right color, without flickering.
+</p>
+<p>
+<strong>This concludes the Ink Architecture Tutorial.</strong>
+ 
+You now possess the knowledge to build, debug, and contribute to complex terminal interfaces. Happy hacking!
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="ink.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">ink/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-the-surgical-artist">The Motivation: The Surgical Artist</a></li>
+<li style="padding-left:10px"><a href="#the-use-case-a-spinner">The Use Case: A Spinner</a></li>
+<li style="padding-left:0px"><a href="#concept-1-the-diff">Concept 1: The Diff</a></li>
+<li style="padding-left:10px"><a href="#comparing-frames">Comparing Frames</a></li>
+<li style="padding-left:0px"><a href="#concept-2-cursor-management">Concept 2: Cursor Management</a></li>
+<li style="padding-left:0px"><a href="#the-flow-from-frame-to-terminal">The Flow: From Frame to Terminal</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-inline-10">Under the Hood: %%INLINE_10%%</a></li>
+<li style="padding-left:10px"><a href="#1-the-diff-loop-inline-11">1. The Diff Loop (%%INLINE_11%%)</a></li>
+<li style="padding-left:10px"><a href="#2-handling-resizes-inline-17">2. Handling Resizes (%%INLINE_17%%)</a></li>
+<li style="padding-left:10px"><a href="#3-outputting-the-buffer">3. Outputting the Buffer</a></li>
+<li style="padding-left:0px"><a href="#summary-of-the-whole-pipeline">Summary of the Whole Pipeline</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

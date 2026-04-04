@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ch.04 FileEditTool — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">Ch.04 — FileEditTool</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-tools">TOOLS</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">Chapter 4 · <span class="tag tag-tools">TOOLS</span></div>
+  <h1 class="chapter-title-h1">FileEditTool</h1>
+  <div class="chapter-meta">
+    <span>📄 04_fileedittool.md</span>
+    <span>🏷 Tools</span>
+  </div>
+</div>
+<h1 id="chapter-4-fileedittool">Chapter 4: FileEditTool</h1>
+<p>
+In the previous <a href="03<em>query</em>engine.md">Query Engine</a> chapter, we built the "brain" that decides <em>what</em> to do. But a brain without hands cannot build anything.
+</p>
+<p>
+Now, we introduce the <strong>FileEditTool</strong>. This is the application's "hands." It is the specific tool <code>claudeCode</code> uses to modify your source code safely and accurately.
+</p>
+<h2 id="what-is-the-fileedittool">What is the FileEditTool?</h2>
+<p>
+Writing code into a file seems simple: just open the file and paste the new code, right?
+</p>
+<p>
+<strong>Wrong.</strong> In a complex software project, "just pasting" is dangerous.
+</p>
+<ul>
+<li>What if the file is 5,000 lines long? Rewriting the whole thing wastes time and AI tokens.</li>
+<li>What if the file changed while the AI was thinking?</li>
+<li>What if the new code has a syntax error?</li>
+</ul>
+<p>
+The <strong>FileEditTool</strong> solves these problems. It performs <strong>surgical, atomic edits</strong>. Instead of rewriting a whole file, it locates a specific piece of code and swaps it out for a new version.
+</p>
+<h3 id="the-central-use-case-the-port-change">The Central Use Case: "The Port Change"</h3>
+<p>
+Imagine you ask %%INLINE<em>1%%: <strong>"Change the server port from 3000 to 8080 in %%INLINE</em>2%%."</strong>
+</p>
+<p>
+The Query Engine will decide to call the FileEditTool. The tool's job is to:
+</p>
+<ol>
+<li>Open <code>config.js</code>.</li>
+</ol>
+<ol>
+<li>Find exactly where "3000" is defined.</li>
+</ol>
+<ol>
+<li>Change it to "8080" without touching anything else.</li>
+</ol>
+<ol>
+<li>Save the file.</li>
+</ol>
+<h2 id="key-concepts">Key Concepts</h2>
+<h3 id="1-search-and-replace-the-patch-method">1. Search and Replace (The "Patch" Method)</h3>
+<p>
+We don't use line numbers (e.g., "Change line 50") because line numbers change easily. Instead, we use <strong>Context</strong>.
+ 
+To change a file, the AI must provide:
+</p>
+<ul>
+<li><strong><code>old_string</code></strong>: The exact code that currently exists.</li>
+<li><strong><code>new_string</code></strong>: The code we want to put there.</li>
+</ul>
+<p>
+If the tool cannot find <code>old_string</code>, it refuses to edit. This prevents the AI from editing the wrong part of the file.
+</p>
+<h3 id="2-staleness-checks">2. Staleness Checks</h3>
+<p>
+Before editing, the tool checks: "Has this file been modified by the user since I last read it?"
+ 
+If you saved the file manually while the AI was thinking, the tool stops and asks for a refresh. This prevents "overwrite conflicts."
+</p>
+<h3 id="3-lsp-integration-the-spellchecker">3. LSP Integration (The Spellchecker)</h3>
+<p>
+LSP (Language Server Protocol) is the technology that powers VS Code's red squiggly lines.
+ 
+When <code>FileEditTool</code> saves a file, it notifies the LSP system. If the edit caused a massive syntax error, the system knows immediately.
+</p>
+<h2 id="how-to-use-fileedittool">How to Use FileEditTool</h2>
+<p>
+The <code>FileEditTool</code> is primarily designed to be called by the AI, not by humans directly. However, understanding its input structure helps you understand how the AI thinks.
+</p>
+<h3 id="the-input-structure">The Input Structure</h3>
+<p>
+The AI sends a JSON object like this to the tool:
+</p>
+<pre data-lang="json"><code>{
+  "file_path": "src/config.js",
+  "old_string": "const PORT = 3000;",
+  "new_string": "const PORT = 8080;"
+}
+</code></pre>
+<h3 id="example-handling-the-edit">Example: Handling the Edit</h3>
+<p>
+Here is a simplified view of how the tool handles that input in code.
+</p>
+<pre data-lang="typescript"><code>// A simplified mental model of the tool's logic
+function performEdit(input) {
+  const fileContent = readFile(input.file_path);
+
+  // 1. Safety Check: Does the text actually exist?
+  if (!fileContent.includes(input.old_string)) {
+    throw new Error("Cannot find the code to replace!");
+  }
+
+  // 2. Perform the swap
+  const newContent = fileContent.replace(
+    input.old_string, 
+    input.new_string
+  );
+  
+  // 3. Save
+  writeFile(input.file_path, newContent);
+}
+</code></pre>
+<p>
+<em>Explanation: The core logic is a strict search-and-replace. If the <code>old_string</code> is essentially a "safety key". If it doesn't match, the lock won't open.</em>
+</p>
+<h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
+<p>
+When the FileEditTool runs, a lot happens in a split second to ensure safety.
+</p>
+<ol>
+<li><strong>Permission Check:</strong> Do we have rights to write to this folder?</li>
+</ol>
+<ol>
+<li><strong>Validation:</strong> logic checks if the file exists and isn't too large (e.g., over 1GB).</li>
+</ol>
+<ol>
+<li><strong>Read:</strong> It reads the file from the disk.</li>
+</ol>
+<ol>
+<li><strong>Locate:</strong> It tries to find the <code>old_string</code>.</li>
+</ol>
+<ol>
+<li><strong>Write:</strong> It saves the new content.</li>
+</ol>
+<ol>
+<li><strong>Notify:</strong> It tells VS Code and the LSP "I changed this file!"</li>
+</ol>
+<p>
+Here is the flow:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant AI
+    participant Tool as FileEditTool
+    participant Disk as File System
+    participant LSP as Language Server
+
+    AI-&gt;&gt;Tool: Request: Replace "A" with "B"
+    Tool-&gt;&gt;Disk: Read File
+    Disk--&gt;&gt;Tool: Return Content
+    
+    Note over Tool: Verifies "A" exists in file
+    
+    Tool-&gt;&gt;Disk: Write New Content
+    Tool-&gt;&gt;LSP: Notify: "File Changed"
+    LSP--&gt;&gt;Tool: (Optional) New Diagnostics
+    
+    Tool-&gt;&gt;AI: Success: "File Updated"</div></div>
+<h3 id="internal-implementation-code">Internal Implementation Code</h3>
+<p>
+Let's look at the real code in <code>tools/FileEditTool/FileEditTool.ts</code>.
+</p>
+<h4 id="1-defining-the-tool">1. Defining the Tool</h4>
+<p>
+We use a builder pattern to define the tool's behavior and help text.
+</p>
+<pre data-lang="typescript"><code>// tools/FileEditTool/FileEditTool.ts
+export const FileEditTool = buildTool({
+  name: 'EditFile', 
+  // Helps the AI know when to use this
+  description: 'A tool for editing files',
+  
+  // The shape of data the AI must provide
+  inputSchema: inputSchema(), 
+  
+  // The function that runs when called
+  async call(input, context) { ... } 
+});
+</code></pre>
+<h4 id="2-the-validation-phase">2. The Validation Phase</h4>
+<p>
+Before writing, we ensure the file is safe to touch.
+</p>
+<pre data-lang="typescript"><code>// Inside validateInput function
+const { size } = await fs.stat(fullFilePath);
+
+// 1. Block massive files to prevent memory crashes
+if (size &gt; MAX_EDIT_FILE_SIZE) {
+  return { 
+    result: false, 
+    message: 'File is too large to edit.' 
+  };
+}
+
+// 2. Check for "Staleness" (User modified file recently?)
+if (lastWriteTime &gt; lastRead.timestamp) {
+  return { result: false, message: 'File was modified externally.' };
+}
+</code></pre>
+<p>
+<em>Explanation: This code acts as a bouncer. If the file is too big (over 1GB) or if the user changed it behind the AI's back, it rejects the edit immediately.</em>
+</p>
+<h4 id="3-the-execution-phase">3. The Execution Phase</h4>
+<p>
+This is where the actual writing happens. Note the notification to other systems.
+</p>
+<pre data-lang="typescript"><code>// Inside the call() function
+
+// 1. Calculate the new file content
+// getPatchForEdit handles the find-and-replace logic
+const { updatedFile } = getPatchForEdit({ ... });
+
+// 2. Write to disk
+writeTextContent(absoluteFilePath, updatedFile, encoding);
+
+// 3. Notify the Language Server (LSP)
+const lspManager = getLspServerManager();
+if (lspManager) {
+  // Tells the intelligent engine code has changed
+  lspManager.changeFile(absoluteFilePath, updatedFile);
+}
+</code></pre>
+<p>
+<em>Explanation: After writing the bytes to disk, we manually trigger <code>lspManager</code>. This ensures that if the AI introduced a bug, the system knows about it instantly so it can warn the user.</em>
+</p>
+<h2 id="why-is-this-important-for-later">Why is this important for later?</h2>
+<p>
+The FileEditTool is the foundation for any persistent change:
+</p>
+<ul>
+<li><strong><a href="05<em>git</em>integration.md">Git Integration</a>:</strong> Once the FileEditTool saves a file, we usually want to commit that change to Git.</li>
+<li><strong><a href="08<em>permission</em><em>_security</em>system.md">Permission & Security System</a>:</strong> This tool checks the security rules before every single write.</li>
+<li><strong><a href="10<em>auto</em>mode_classifier.md">Auto-Mode Classifier</a>:</strong> The classifier uses the diffs generated by this tool to decide if the task is complete.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have learned that the <strong>FileEditTool</strong> is a precise instrument. It doesn't just "dump" code into a file; it verifies context, checks for conflicts, and integrates with the development environment to ensure stability.
+</p>
+<p>
+Now that we have modified the code, we need to save our progress safely.
+</p>
+<p>
+<a href="05<em>git</em>integration.md">Next Chapter: Git Integration</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="03-query-engine.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">Query Engine</div>
+        </a><a class="chapter-nav-card next" href="05-git-integration.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">Git Integration</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#what-is-the-fileedittool">What is the FileEditTool?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case-the-port-change">The Central Use Case: "The Port Change"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-search-and-replace-the-patch-method">1. Search and Replace (The "Patch" Method)</a></li>
+<li style="padding-left:10px"><a href="#2-staleness-checks">2. Staleness Checks</a></li>
+<li style="padding-left:10px"><a href="#3-lsp-integration-the-spellchecker">3. LSP Integration (The Spellchecker)</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-fileedittool">How to Use FileEditTool</a></li>
+<li style="padding-left:10px"><a href="#the-input-structure">The Input Structure</a></li>
+<li style="padding-left:10px"><a href="#example-handling-the-edit">Example: Handling the Edit</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-how-it-works">Under the Hood: How it Works</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-code">Internal Implementation Code</a></li>
+<li style="padding-left:0px"><a href="#why-is-this-important-for-later">Why is this important for later?</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: Modal & Portal Layouts — context/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">context/02_modal___portal_layouts.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">💬 context/ · 02_modal___portal_layouts.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: Modal & Portal Layouts</h1>
+  <div class="chapter-meta"><span>📄 context/02_modal___portal_layouts.md</span></div>
+</div>
+<h1 id="chapter-2-modal-portal-layouts">Chapter 2: Modal & Portal Layouts</h1>
+<p>
+Welcome back! In the previous chapter, <a href="01<em>overlay</em><em>_input</em>coordination.md">Overlay & Input Coordination</a>, we solved the problem of "clipping" by teleporting our UI elements to the top of the screen stack.
+</p>
+<p>
+Now we face a new problem. Once we teleport a component into a floating box (a Modal) or a specific section of the screen (a Slot), that component loses track of reality.
+</p>
+<h2 id="the-problem-the-alice-in-wonderland-effect">The Problem: "The Alice in Wonderland Effect"</h2>
+<p>
+Imagine you have a terminal that is <strong>40 rows</strong> tall.
+ 
+You decide to open a "Slash Command" menu (like <code>/help</code>) at the bottom of the screen. This menu is only <strong>10 rows</strong> tall.
+</p>
+<p>
+If the component inside that menu asks: <em>"How tall is the screen?"</em>, standard tools will answer: <em>"40 rows."</em>
+</p>
+<p>
+<strong>The Consequence:</strong>
+ 
+The component tries to render 40 items.
+</p>
+<ol>
+<li><strong>Pagination breaks:</strong> The user sees items 1-10, but the component thinks items 1-40 are visible.</li>
+</ol>
+<ol>
+<li><strong>Scrolling breaks:</strong> You press "Down", but the list doesn't scroll because it thinks it still has plenty of room.</li>
+</ol>
+<ol>
+<li><strong>Visual Glitches:</strong> Content spills out or looks empty.</li>
+</ol>
+<p>
+This chapter introduces <strong>Modal & Portal Layouts</strong> to give our components "Spatial Awareness."
+</p>
+<hr>
+<h2 id="the-solution-contextual-awareness">The Solution: Contextual Awareness</h2>
+<p>
+We need a way to tell a component: <em>"Ignore the actual terminal size. You are living inside a box that is 10 rows by 50 columns."</em>
+</p>
+<p>
+We achieve this using <code>ModalContext</code>. It acts like a local "Governor" for a specific section of the UI, overriding the global laws of physics (screen size).
+</p>
+<h3 id="use-case-the-pagination-component">Use Case: The Pagination Component</h3>
+<p>
+Let's look at how we solve this for a list of items that needs to paginate (show pages of data).
+</p>
+<p>
+Normally, a component calculates how many items to show like this:
+</p>
+<pre data-lang="tsx"><code>// ❌ The Old Way (Naive)
+const { rows } = useTerminalSize(); // Returns 40 (Full Screen)
+const itemsToShow = rows - 2;       // Tries to show 38 items
+</code></pre>
+<p>
+This crashes our UI if we are inside a small popup. Here is the <strong>Context Way</strong>:
+</p>
+<pre data-lang="tsx"><code>// ✅ The New Way (Smart)
+import { useModalOrTerminalSize } from './modalContext';
+
+const { rows } = useModalOrTerminalSize(); // Returns 10 (Local Box)
+const itemsToShow = rows - 2;              // Shows 8 items. Perfect!
+</code></pre>
+<hr>
+<h2 id="key-concepts">Key Concepts</h2>
+<h3 id="1-the-tape-measure-hook-inline-2">1. The "Tape Measure" Hook (<code>useModalOrTerminalSize</code>)</h3>
+<p>
+This is the most important tool in this chapter. It automatically decides which measurement to use.
+</p>
+<ol>
+<li>It checks: <strong>"Am I inside a Modal?"</strong></li>
+</ol>
+<ol>
+<li><strong>Yes:</strong> Return the Modal's height/width.</li>
+</ol>
+<ol>
+<li><strong>No:</strong> Return the real Terminal's height/width.</li>
+</ol>
+<p>
+This allows you to write components (like a generic <code>&lt;List /&gt;</code>) that work perfectly whether they are full-screen or trapped inside a tiny popup.
+</p>
+<h3 id="2-the-scroll-handle-inline-4">2. The Scroll Handle (<code>useModalScrollRef</code>)</h3>
+<p>
+When you have a tabbed interface inside a modal (e.g., "General" vs "Advanced" settings), switching tabs should reset the scroll position to the top.
+</p>
+<p>
+However, because the component is detached from the main flow, normal browser/terminal scroll behavior might not trigger. <code>ModalContext</code> passes down a <strong>Reference</strong> to the specific scroll box, allowing us to force a reset when tabs change.
+</p>
+<pre data-lang="tsx"><code>const scrollRef = useModalScrollRef();
+
+useEffect(() =&gt; {
+  // When we mount (or switch tabs), snap to top
+  if (scrollRef?.current) {
+    scrollRef.current.scrollTo(0);
+  }
+}, [currentTab]);
+</code></pre>
+<hr>
+<h2 id="internal-implementation-under-the-hood">Internal Implementation: Under the Hood</h2>
+<p>
+How does the data get there? The parent layout (usually <code>FullscreenLayout</code>) does the math before rendering the child.
+</p>
+<h3 id="the-data-flow">The Data Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Layout as FullscreenLayout
+    participant Ctx as ModalContext
+    participant Child as ListComponent
+    participant Hook as useModalOrTerminalSize
+
+    Layout-&gt;&gt;Layout: Calculates Modal Height (e.g., 10 rows)
+    Layout-&gt;&gt;Ctx: Provider value={ rows: 10 }
+    Note over Ctx: "The local law is now 10 rows"
+    
+    Ctx-&gt;&gt;Child: Renders Child
+    Child-&gt;&gt;Hook: "How big is the screen?"
+    Hook-&gt;&gt;Ctx: Checks Context...
+    Ctx--&gt;&gt;Hook: "10 rows"
+    Hook--&gt;&gt;Child: Returns 10</div></div>
+<h3 id="code-walkthrough">Code Walkthrough</h3>
+<p>
+Let's look at <code>modalContext.tsx</code>. It is surprisingly simple because it relies on React's ability to cascade data.
+</p>
+<h4 id="1-defining-the-context">1. Defining the Context</h4>
+<p>
+First, we define what information the "Local Governor" holds.
+</p>
+<pre data-lang="tsx"><code>// modalContext.tsx
+type ModalCtx = {
+  rows: number;
+  columns: number;
+  scrollRef: RefObject&lt;ScrollBoxHandle | null&gt; | null;
+};
+
+export const ModalContext = createContext&lt;ModalCtx | null&gt;(null);
+</code></pre>
+<h4 id="2-the-smart-hook-logic">2. The Smart Hook Logic</h4>
+<p>
+Here is the logic that swaps between the real terminal size and the modal size.
+</p>
+<pre data-lang="tsx"><code>// modalContext.tsx
+export function useModalOrTerminalSize(fallback) {
+  // 1. Try to grab the context
+  const ctx = useContext(ModalContext);
+
+  // 2. If context exists, use IT. If not, use the fallback (real terminal).
+  return ctx 
+    ? { rows: ctx.rows, columns: ctx.columns } 
+    : fallback;
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li><code>useContext(ModalContext)</code> tries to find a provider above the component.</li>
+<li>If the component is just floating in the root (not in a modal), %%INLINE<em>9%% is %%INLINE</em>10%%.</li>
+<li>If %%INLINE<em>11%% is %%INLINE</em>12%%, it returns %%INLINE<em>13%% (which the consumer usually passes in as %%INLINE</em>14%%).</li>
+</ul>
+<h4 id="3-checking-location">3. Checking Location</h4>
+<p>
+Sometimes a component just needs to know <em>where</em> it is to change its styling (e.g., hide a border if it's already inside a bordered modal).
+</p>
+<pre data-lang="tsx"><code>// modalContext.tsx
+export function useIsInsideModal() {
+  // Simple check: Do we have a Governor?
+  return useContext(ModalContext) !== null;
+}
+</code></pre>
+<hr>
+<h2 id="putting-it-together-an-example">Putting it Together: An Example</h2>
+<p>
+Let's say we are building a <code>Selector</code> component (a list of options).
+</p>
+<pre data-lang="tsx"><code>import { useTerminalSize } from 'ink-use-stdout-dimensions';
+import { useModalOrTerminalSize } from './modalContext';
+
+function Selector() {
+  // 1. Get the physical dimensions
+  const terminal = useTerminalSize();
+  
+  // 2. Adjust them based on where we are
+  const size = useModalOrTerminalSize(terminal);
+
+  return (
+    &lt;Text&gt;
+      I think the screen is {size.rows} rows high.
+      (Real size: {terminal.rows})
+    &lt;/Text&gt;
+  );
+}
+</code></pre>
+<p>
+<strong>Scenario A: Full Screen</strong>
+</p>
+<ul>
+<li><code>terminal.rows</code>: 40</li>
+<li><code>ModalContext</code>: null</li>
+<li><strong>Result:</strong> "I think the screen is 40 rows high."</li>
+</ul>
+<p>
+<strong>Scenario B: Inside a Slash Command Menu</strong>
+</p>
+<ul>
+<li><code>terminal.rows</code>: 40</li>
+<li>%%INLINE<em>19%%: %%INLINE</em>20%%</li>
+<li><strong>Result:</strong> "I think the screen is 10 rows high."</li>
+</ul>
+<hr>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we solved the "Alice in Wonderland" sizing problem:
+</p>
+<ol>
+<li><strong>Context Awareness:</strong> We realized components inside portals don't know their own boundaries.</li>
+</ol>
+<ol>
+<li><strong>The Solution:</strong> We used %%INLINE<em>21%% to inject explicit dimensions (%%INLINE</em>22%%, <code>columns</code>).</li>
+</ol>
+<ol>
+<li><strong>The Abstraction:</strong> We used <code>useModalOrTerminalSize</code> to let components automatically adapt to their environment, whether they are full-screen or in a tiny box.</li>
+</ol>
+<p>
+Now that our layouts are stable, floating, and correctly sized, we need to handle the data that flows through them.
+</p>
+<p>
+<a href="03<em>message</em>handling<em>_</em>queues.md">Next Chapter: Message Handling & Queues</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="context.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">context/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-alice-in-wonderland-effect">The Problem: "The Alice in Wonderland Effect"</a></li>
+<li style="padding-left:0px"><a href="#the-solution-contextual-awareness">The Solution: Contextual Awareness</a></li>
+<li style="padding-left:10px"><a href="#use-case-the-pagination-component">Use Case: The Pagination Component</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-tape-measure-hook-inline-2">1. The "Tape Measure" Hook (%%INLINE_2%%)</a></li>
+<li style="padding-left:10px"><a href="#2-the-scroll-handle-inline-4">2. The Scroll Handle (%%INLINE_4%%)</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-under-the-hood">Internal Implementation: Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#the-data-flow">The Data Flow</a></li>
+<li style="padding-left:10px"><a href="#code-walkthrough">Code Walkthrough</a></li>
+<li style="padding-left:0px"><a href="#putting-it-together-an-example">Putting it Together: An Example</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

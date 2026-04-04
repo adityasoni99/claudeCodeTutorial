@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ch.03 Query Engine — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">Ch.03 — Query Engine</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-core">CORE</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">Chapter 3 · <span class="tag tag-core">CORE</span></div>
+  <h1 class="chapter-title-h1">Query Engine</h1>
+  <div class="chapter-meta">
+    <span>📄 03_query_engine.md</span>
+    <span>🏷 Core</span>
+  </div>
+</div>
+<h1 id="chapter-3-query-engine">Chapter 3: Query Engine</h1>
+<p>
+In the previous chapters, we built the application's memory in <a href="01<em>state</em>management.md">State Management</a> and its face in the <a href="02<em>ink</em>ui_framework.md">Ink UI Framework</a>.
+</p>
+<p>
+But right now, our application is like a person who can remember things and smile, but can't hold a conversation. If you type a question, nothing processes it.
+</p>
+<p>
+Enter the <strong>Query Engine</strong>. This is the logic that connects user input to the AI model, decides what to do next, and keeps the conversation going.
+</p>
+<h2 id="what-is-the-query-engine">What is the Query Engine?</h2>
+<p>
+The Query Engine is the "Project Manager" of the application. It doesn't inherently know how to edit files or search the web. Instead, it coordinates everything.
+</p>
+<p>
+Its job is to take your request, package it up with all the necessary context (history, permissions), send it to the AI (Claude), and then handle the AI's response—whether that response is a chat message or a command to run code.
+</p>
+<h3 id="the-central-use-case-the-conversation-loop">The Central Use Case: " The Conversation Loop"</h3>
+<p>
+Imagine you ask: <strong>"Read <code>data.txt</code> and tell me what it says."</strong>
+</p>
+<p>
+Here is what the Query Engine must manage:
+</p>
+<ol>
+<li><strong>Package:</strong> Grab your text and the current file path.</li>
+</ol>
+<ol>
+<li><strong>Send:</strong> Send this to Claude.</li>
+</ol>
+<ol>
+<li><strong>Interpret:</strong> Claude replies: "I need to run the <code>cat</code> command."</li>
+</ol>
+<ol>
+<li><strong>Execute:</strong> The Engine runs the command.</li>
+</ol>
+<ol>
+<li><strong>Loop:</strong> The Engine takes the <em>result</em> of the command and sends it <em>back</em> to Claude.</li>
+</ol>
+<ol>
+<li><strong>Finalize:</strong> Claude replies: "The file contains a list of names." The Engine shows this to you.</li>
+</ol>
+<p>
+Without the Query Engine, the AI would just stop after step 3, waiting for someone to run the command.
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<h3 id="1-context-assembly">1. Context Assembly</h3>
+<p>
+Before we talk to the AI, we need to give it context. We can't just send "fix it." We need to send:
+</p>
+<ul>
+<li>The conversation history (what we said before).</li>
+<li>The current working directory.</li>
+<li>The list of available tools (Can we edit files? Can we use Git?).</li>
+</ul>
+<h3 id="2-the-tool-use-loop">2. The Tool-Use Loop</h3>
+<p>
+This is the most critical part. Modern AIs don't just talk; they can "call functions."
+</p>
+<ul>
+<li>If the AI replies with <strong>Text</strong>, the loop ends, and we show it to the user.</li>
+<li>If the AI replies with a <strong>Tool Call</strong> (like "write file"), the Engine executes it and automatically feeds the result back into the chat.</li>
+</ul>
+<h3 id="3-streaming">3. Streaming</h3>
+<p>
+We don't want to wait 10 seconds for the whole answer. The Query Engine receives the answer in tiny chunks (tokens) so the <a href="02<em>ink</em>ui_framework.md">Ink UI Framework</a> can display typing animations in real-time.
+</p>
+<h2 id="how-to-use-the-query-engine">How to Use the Query Engine</h2>
+<p>
+From a code perspective, using the engine is surprisingly simple because all the complexity is hidden inside.
+</p>
+<p>
+We usually call a main function, often named %%INLINE<em>2%% or %%INLINE</em>3%%.
+</p>
+<h3 id="starting-a-request">Starting a Request</h3>
+<p>
+Here is how the UI triggers the engine when the user hits "Enter."
+</p>
+<pre data-lang="typescript"><code>import { queryEngine } from './engine';
+
+async function handleUserSubmit(userText) {
+  // 1. Start the engine with the user's text
+  const response = await queryEngine.submit({
+    text: userText,
+    mode: 'auto' // Let the AI decide what to do
+  });
+  
+  return response;
+}
+</code></pre>
+<p>
+<em>Explanation: We pass the user's text into the engine. The engine takes over control until the task is done or it needs user input.</em>
+</p>
+<h3 id="handling-the-stream">Handling the Stream</h3>
+<p>
+To show text appearing in real-time, we listen to events.
+</p>
+<pre data-lang="typescript"><code>queryEngine.on('chunk', (token) =&gt; {
+  // Update the UI via State Management
+  updateCurrentResponse((prev) =&gt; prev + token);
+});
+</code></pre>
+<p>
+<em>Explanation: Every time the AI generates a word, the engine emits a 'chunk' event. We grab that word and add it to our display.</em>
+</p>
+<h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
+<p>
+The Query Engine is essentially a <code>while</code> loop that keeps running until the AI says "I'm done."
+</p>
+<p>
+Let's trace the flow when a user says "List files."
+</p>
+<ol>
+<li><strong>Input:</strong> User types "List files".</li>
+</ol>
+<ol>
+<li><strong>API Call:</strong> Engine sends "List files" + Context to Claude.</li>
+</ol>
+<ol>
+<li><strong>Decision:</strong> Claude returns a structured message: <code>ToolCall: ls</code>.</li>
+</ol>
+<ol>
+<li><strong>Execution:</strong> Engine detects the tool call, runs <code>ls</code> in the terminal.</li>
+</ol>
+<ol>
+<li><strong>Feedback:</strong> The terminal output ("file1.txt, file2.txt") is captured.</li>
+</ol>
+<ol>
+<li><strong>Loop:</strong> Engine sends the output <em>back</em> to Claude as a "Tool Result".</li>
+</ol>
+<ol>
+<li><strong>Final:</strong> Claude reads the result and generates text: "You have two files..."</li>
+</ol>
+<p>
+Here is the visual flow:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant Engine as Query Engine
+    participant Claude as AI Model
+    participant Tool as System Tool
+
+    User-&gt;&gt;Engine: "Check current folder"
+    
+    loop Conversation Loop
+        Engine-&gt;&gt;Claude: Send History + Request
+        Claude--&gt;&gt;Engine: Response: "Use Tool: ls"
+        
+        Note over Engine: Detects Tool Call
+        Engine-&gt;&gt;Tool: Execute `ls` command
+        Tool--&gt;&gt;Engine: Result: "index.js, package.json"
+        
+        Engine-&gt;&gt;Claude: Send Tool Result
+        Claude--&gt;&gt;Engine: Response: "I see index.js..."
+    end
+
+    Engine-&gt;&gt;User: Display Final Response</div></div>
+<h3 id="internal-implementation-code">Internal Implementation Code</h3>
+<p>
+The core of the engine is a recursive function (a function that calls itself).
+</p>
+<pre data-lang="typescript"><code>// engine/loop.ts
+
+async function runLoop(messages) {
+  // 1. Send current history to the AI
+  const response = await callClaudeAPI(messages);
+
+  // 2. Check if the AI wants to use a tool
+  if (response.hasToolCall) {
+    // Execute the tool (e.g., run a shell command)
+    const result = await executeTool(response.toolName, response.args);
+    
+    // 3. Add result to history and LOOP AGAIN
+    const newHistory = [...messages, response, result];
+    return runLoop(newHistory); // &lt;--- Recursion
+  }
+
+  // 4. If no tool, we are done. Return the text.
+  return response.text;
+}
+</code></pre>
+<p>
+<em>Explanation: This simplified code shows the heartbeat of %%INLINE<em>7%%. It calls the API. If the API asks for a tool, it runs it and calls %%INLINE</em>8%% again immediately. It only stops when <code>response.hasToolCall</code> is false.</em>
+</p>
+<h3 id="safety-checks">Safety Checks</h3>
+<p>
+Before executing the tool in step 2 above, the Engine checks with the <strong>Permission System</strong>.
+</p>
+<pre data-lang="typescript"><code>// Inside executeTool...
+import { checkPermission } from './security';
+
+async function executeTool(name, args) {
+  // Ask: Is this safe?
+  const isAllowed = await checkPermission(name);
+
+  if (!isAllowed) {
+    throw new Error("User denied permission");
+  }
+
+  // Run the tool...
+}
+</code></pre>
+<p>
+<em>Explanation: This ensures the AI doesn't delete files without your permission. We will cover this in detail in <a href="08<em>permission</em><em>_security</em>system.md">Chapter 8: Permission & Security System</a>.</em>
+</p>
+<h2 id="why-is-this-important-for-later">Why is this important for later?</h2>
+<p>
+The Query Engine is the hub. It connects to almost every other chapter:
+</p>
+<ul>
+<li><strong><a href="04_fileedittool.md">FileEditTool</a>:</strong> The Engine is what calls this tool when the AI wants to write code.</li>
+<li><strong><a href="05<em>git</em>integration.md">Git Integration</a>:</strong> When you ask to "commit changes," the Engine drives this process.</li>
+<li><strong><a href="14<em>model</em>context<em>protocol</em><em>mcp</em>.md">Context Management</a>:</strong> The Engine gathers data using the MCP standard before every request.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have learned that the <strong>Query Engine</strong> is the active brain of the application. It manages the delicate dance between the user, the AI model, and the computer's tools. It uses a loop to perform complex tasks step-by-step without the user needing to type constantly.
+</p>
+<p>
+But what happens when the Engine decides it needs to modify your code? It hands that job off to a specialist.
+</p>
+<p>
+<a href="04_fileedittool.md">Next Chapter: FileEditTool</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="02-ink-ui-framework.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">Ink UI Framework</div>
+        </a><a class="chapter-nav-card next" href="04-fileedittool.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">FileEditTool</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#what-is-the-query-engine">What is the Query Engine?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case-the-conversation-loop">The Central Use Case: " The Conversation Loop"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-context-assembly">1. Context Assembly</a></li>
+<li style="padding-left:10px"><a href="#2-the-tool-use-loop">2. The Tool-Use Loop</a></li>
+<li style="padding-left:10px"><a href="#3-streaming">3. Streaming</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-the-query-engine">How to Use the Query Engine</a></li>
+<li style="padding-left:10px"><a href="#starting-a-request">Starting a Request</a></li>
+<li style="padding-left:10px"><a href="#handling-the-stream">Handling the Stream</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-how-it-works">Under the Hood: How it Works</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-code">Internal Implementation Code</a></li>
+<li style="padding-left:10px"><a href="#safety-checks">Safety Checks</a></li>
+<li style="padding-left:0px"><a href="#why-is-this-important-for-later">Why is this important for later?</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

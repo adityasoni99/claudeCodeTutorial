@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 6: Telemetry & Stats Store — context/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">context/06_telemetry___stats_store.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">💬 context/ · 06_telemetry___stats_store.md</div>
+  <h1 class="chapter-title-h1">Chapter 6: Telemetry & Stats Store</h1>
+  <div class="chapter-meta"><span>📄 context/06_telemetry___stats_store.md</span></div>
+</div>
+<h1 id="chapter-6-telemetry-stats-store">Chapter 6: Telemetry & Stats Store</h1>
+<p>
+Welcome to the final chapter! In the previous chapter, <a href="05<em>notification</em>pipeline.md">Notification Pipeline</a>, we learned how to talk to the user.
+</p>
+<p>
+Now we need to listen to the application itself.
+</p>
+<h2 id="the-problem-flying-blind">The Problem: "Flying Blind"</h2>
+<p>
+Imagine driving a car with a blacked-out dashboard. You are moving, but you don't know your speed, how much gas is left, or if the engine is overheating.
+</p>
+<p>
+In software, this happens when you release an app.
+</p>
+<ul>
+<li><strong>Is it slow?</strong> You don't know.</li>
+<li><strong>Are users clicking the new button?</strong> You don't know.</li>
+<li><strong>Are errors happening silently?</strong> You don't know.</li>
+</ul>
+<p>
+<code>console.log</code> is not enough. It scrolls away and doesn't do math (like calculating averages).
+</p>
+<p>
+This chapter introduces the <strong>Telemetry & Stats Store</strong>. It acts as your application's dashboard, collecting metrics like counters, gauges, and timers to help you diagnose performance and usage.
+</p>
+<hr>
+<h2 id="part-1-the-three-instruments">Part 1: The Three Instruments</h2>
+<p>
+Our Stats Store provides three main tools, similar to a car's dashboard:
+</p>
+<ol>
+<li><strong>Counter:</strong> A simple clicker. Used for counting events (e.g., "Total Errors").</li>
+</ol>
+<ol>
+<li><strong>Gauge:</strong> A needle that moves up and down. Used for current state (e.g., "Memory Usage", "Active Threads").</li>
+</ol>
+<ol>
+<li><strong>Timer (Histogram):</strong> A stopwatch that remembers history. It calculates averages and percentiles (e.g., "How long did the AI take to reply?").</li>
+</ol>
+<h3 id="usage-example-counting-events">Usage Example: Counting Events</h3>
+<p>
+Let's say we want to count how many times a user presses a "Copy" button. We use <code>useCounter</code>.
+</p>
+<pre data-lang="tsx"><code>import { useCounter } from './stats';
+
+function CopyButton() {
+  // 1. Get a counter function tied to a specific metric name
+  const countCopy = useCounter('copy_actions_total');
+
+  return (
+    &lt;Button onPress={() =&gt; {
+      // 2. Increment the counter by 1
+      countCopy(1); 
+      copyTextToClipboard();
+    }}&gt;
+      Copy Text
+    &lt;/Button&gt;
+  );
+}
+</code></pre>
+<p>
+<strong>What happens?</strong>
+ 
+Somewhere in the background, <code>copy_actions_total</code> goes from 0 -> 1. At the end of the session, you'll see exactly how many times this feature was used.
+</p>
+<hr>
+<h2 id="part-2-measuring-performance-timers">Part 2: Measuring Performance (Timers)</h2>
+<p>
+Timers are more complex. If an operation takes 100ms once, but 5 seconds the next time, an "Average" might mislead you. We need to know the distribution.
+</p>
+<p>
+Our <code>useTimer</code> acts as a <strong>Histogram</strong>. It records values and automatically calculates the "P99" (the 99th percentile—meaning "99% of requests were faster than this").
+</p>
+<h3 id="usage-example-timing-an-api-call">Usage Example: Timing an API Call</h3>
+<pre data-lang="tsx"><code>import { useTimer } from './stats';
+
+function AIResponder() {
+  // 1. Create the timer tracker
+  const recordLatency = useTimer('ai_response_time_ms');
+
+  const generate = async () =&gt; {
+    const start = Date.now();
+    
+    await callAI(); // The slow operation
+    
+    const duration = Date.now() - start;
+    // 2. Record the duration
+    recordLatency(duration);
+  };
+  
+  // ...
+}
+</code></pre>
+<p>
+<strong>Result:</strong>
+ 
+When the app closes, the logs will show:
+</p>
+<ul>
+<li><code>ai_response_time_ms_avg</code>: 450ms</li>
+<li><code>ai_response_time_ms_p99</code>: 1200ms (This tells you that occasionally, it is quite slow!)</li>
+</ul>
+<hr>
+<h2 id="part-3-visual-health-fps-metrics">Part 3: Visual Health (FPS Metrics)</h2>
+<p>
+In a Terminal UI, if your logic is too heavy, the interface feels "laggy." We call this a drop in <strong>FPS</strong> (Frames Per Second).
+</p>
+<p>
+The <code>fpsMetrics</code> system is a specialized sensor that watches how often the screen repaints.
+</p>
+<h3 id="usage-example-the-fps-counter">Usage Example: The FPS Counter</h3>
+<p>
+This is usually displayed in a debug footer.
+</p>
+<pre data-lang="tsx"><code>import { useFpsMetrics } from './fpsMetrics';
+
+function DebugFooter() {
+  // 1. Get the metrics getter
+  const getMetrics = useFpsMetrics();
+
+  // 2. Read the current value
+  const fps = getMetrics?.()?.fps ?? 60;
+
+  return &lt;Text color="gray"&gt;FPS: {fps}&lt;/Text&gt;;
+}
+</code></pre>
+<p>
+<strong>Why is this separate?</strong>
+ 
+FPS updates constantly (every few milliseconds). We keep it separate from the main Stats Store to avoid overhead.
+</p>
+<hr>
+<h2 id="internal-implementation-how-it-all-connects">Internal Implementation: How it all connects</h2>
+<p>
+How does the data get saved? The Stats Store is an <strong>In-Memory Database</strong> that lives as long as the app runs. When the app exits, it quickly flushes data to a file.
+</p>
+<h3 id="the-flow">The Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant Comp as Component
+    participant Store as StatsStore
+    participant File as ConfigFile
+
+    User-&gt;&gt;Comp: Clicks Button
+    Comp-&gt;&gt;Store: increment("click_count", 1)
+    Note right of Store: Updates Map: { "click_count": 5 }
+    
+    User-&gt;&gt;Comp: Exits App (Ctrl+C)
+    Note right of Store: Process "exit" event triggers
+    Store-&gt;&gt;File: Saves JSON dump
+    File--&gt;&gt;User: Metrics saved to disk</div></div>
+<h3 id="code-walkthrough-the-store-logic">Code Walkthrough: The Store Logic</h3>
+<p>
+Open <code>stats.tsx</code>. This file contains the logic for aggregating numbers.
+</p>
+<h4 id="1-the-data-structure">1. The Data Structure</h4>
+<p>
+The store is just a collection of JavaScript Maps.
+</p>
+<pre data-lang="tsx"><code>// stats.tsx (Simplified)
+export function createStatsStore() {
+  // Simple counters
+  const metrics = new Map&lt;string, number&gt;();
+  // Complex timers
+  const histograms = new Map&lt;string, Histogram&gt;();
+
+  return {
+    increment(name, value = 1) {
+      // Get current value, add new value, save it.
+      const current = metrics.get(name) ?? 0;
+      metrics.set(name, current + value);
+    },
+    // ... other methods
+  };
+}
+</code></pre>
+<h4 id="2-the-histogram-logic-math">2. The Histogram Logic (Math)</h4>
+<p>
+When you record a time, we don't just save one number. We add it to a "Reservoir" (a sample list) so we can calculate percentiles later.
+</p>
+<pre data-lang="tsx"><code>// stats.tsx (Simplified)
+observe(name, value) {
+  let h = histograms.get(name);
+  if (!h) {
+    // Initialize if new
+    h = { reservoir: [], count: 0, sum: 0, min: value, max: value };
+    histograms.set(name, h);
+  }
+  
+  h.count++;
+  h.sum += value;
+  // Add to the list of samples
+  h.reservoir.push(value);
+}
+</code></pre>
+<h4 id="3-the-auto-save-feature">3. The Auto-Save Feature</h4>
+<p>
+The most important part of telemetry is ensuring data isn't lost when the user quits. We use <code>process.on('exit')</code> inside the Provider.
+</p>
+<pre data-lang="tsx"><code>// stats.tsx (Simplified)
+useEffect(() =&gt; {
+  const flush = () =&gt; {
+    const data = store.getAll();
+    // Save to disk function
+    saveCurrentProjectConfig(cfg =&gt; ({ 
+      ...cfg, 
+      lastSessionMetrics: data 
+    }));
+  };
+
+  // Listen for the "death" of the process
+  process.on('exit', flush);
+  
+  return () =&gt; process.off('exit', flush);
+}, [store]);
+</code></pre>
+<p>
+This ensures that even if you press <code>Ctrl+C</code>, the application takes a millisecond to dump its stats to your config file before closing.
+</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<p>
+In this final chapter, we built the "Black Box" recorder for our application:
+</p>
+<ol>
+<li><strong>Counters & Timers:</strong> We used %%INLINE<em>10%% and %%INLINE</em>11%% to track <em>what</em> users do and <em>how long</em> it takes.</li>
+</ol>
+<ol>
+<li><strong>Aggregation:</strong> Instead of logging every single event, the <code>StatsStore</code> mathematically combines them into useful summaries (averages, totals).</li>
+</ol>
+<ol>
+<li><strong>Persistence:</strong> We learned how to hook into the process exit signal to save our data at the last possible second.</li>
+</ol>
+<h3 id="course-conclusion">Course Conclusion</h3>
+<p>
+Congratulations! You have completed the <strong>context</strong> project tutorial. You now understand the core architecture of a complex Terminal User Interface:
+</p>
+<ol>
+<li><a href="01<em>overlay</em><em>_input</em>coordination.md"><strong>Overlay:</strong></a> How to make things float.</li>
+</ol>
+<ol>
+<li><a href="02<em>modal</em><em>_portal</em>layouts.md"><strong>Modals:</strong></a> How to handle sizes in virtual windows.</li>
+</ol>
+<ol>
+<li><a href="03<em>message</em>handling<em>_</em>queues.md"><strong>Messages:</strong></a> How components talk to each other.</li>
+</ol>
+<ol>
+<li><a href="04<em>voice</em>state_manager.md"><strong>Voice:</strong></a> How to handle high-speed data.</li>
+</ol>
+<ol>
+<li><a href="05<em>notification</em>pipeline.md"><strong>Notifications:</strong></a> How to queue user alerts.</li>
+</ol>
+<ol>
+<li><strong>Telemetry:</strong> How to track if it all works.</li>
+</ol>
+<p>
+You are now ready to build powerful, performant, and robust terminal applications. Happy coding!
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="context.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">context/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-flying-blind">The Problem: "Flying Blind"</a></li>
+<li style="padding-left:0px"><a href="#part-1-the-three-instruments">Part 1: The Three Instruments</a></li>
+<li style="padding-left:10px"><a href="#usage-example-counting-events">Usage Example: Counting Events</a></li>
+<li style="padding-left:0px"><a href="#part-2-measuring-performance-timers">Part 2: Measuring Performance (Timers)</a></li>
+<li style="padding-left:10px"><a href="#usage-example-timing-an-api-call">Usage Example: Timing an API Call</a></li>
+<li style="padding-left:0px"><a href="#part-3-visual-health-fps-metrics">Part 3: Visual Health (FPS Metrics)</a></li>
+<li style="padding-left:10px"><a href="#usage-example-the-fps-counter">Usage Example: The FPS Counter</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-how-it-all-connects">Internal Implementation: How it all connects</a></li>
+<li style="padding-left:10px"><a href="#the-flow">The Flow</a></li>
+<li style="padding-left:10px"><a href="#code-walkthrough-the-store-logic">Code Walkthrough: The Store Logic</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li>
+<li style="padding-left:10px"><a href="#course-conclusion">Course Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

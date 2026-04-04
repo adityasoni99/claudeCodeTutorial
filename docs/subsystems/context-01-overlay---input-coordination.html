@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 1: Overlay & Input Coordination — context/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">context/01_overlay___input_coordination.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">💬 context/ · 01_overlay___input_coordination.md</div>
+  <h1 class="chapter-title-h1">Chapter 1: Overlay & Input Coordination</h1>
+  <div class="chapter-meta"><span>📄 context/01_overlay___input_coordination.md</span></div>
+</div>
+<h1 id="chapter-1-overlay-input-coordination">Chapter 1: Overlay & Input Coordination</h1>
+<p>
+Welcome to the <strong>context</strong> project tutorial! This is the first chapter, so we are going to start with a fundamental challenge in building Terminal User Interfaces (TUIs): <strong>Layers</strong>.
+</p>
+<h2 id="the-problem-the-box-within-a-box">The Problem: "The Box within a Box"</h2>
+<p>
+Imagine you are building a text interface. You have a main scrollable area where the chat history lives. You decide to add an <strong>Autocomplete</strong> menu that pops up when the user starts typing.
+</p>
+<p>
+You hit two major problems immediately:
+</p>
+<ol>
+<li><strong>Clipping (Visuals):</strong> If the autocomplete menu is inside the scrollable chat box, and the menu is tall, it gets cut off by the edge of the chat box.</li>
+</ol>
+<ol>
+<li><strong>Confusion (Input):</strong> If the user presses the <code>Escape</code> key, should it close the autocomplete menu, or should it cancel the whole program?</li>
+</ol>
+<p>
+This chapter explains how <strong>Overlay & Input Coordination</strong> solves these problems using two specific tools: %%INLINE<em>1%% (Visuals) and %%INLINE</em>2%% (Input).
+</p>
+<hr>
+<h2 id="part-1-the-visual-portal-inline-3">Part 1: The Visual Portal (<code>promptOverlayContext</code>)</h2>
+<p>
+In web development, we have %%INLINE<em>4%% to make things float on top. In a terminal using Ink (our rendering engine), we don't have %%INLINE</em>5%%. If an element is inside a box with <code>overflow: hidden</code>, it gets cut off.
+</p>
+<p>
+To fix this, we use a <strong>Portal</strong> strategy. We "teleport" the UI element out of the scrollable box and render it near the root of the application, where nothing can clip it.
+</p>
+<h3 id="how-it-works">How it Works</h3>
+<ol>
+<li>A deeply nested component (like the Input bar) says, "I have a dialog to show."</li>
+</ol>
+<ol>
+<li>It sends that dialog up to the <code>PromptOverlayProvider</code>.</li>
+</ol>
+<ol>
+<li>The Provider renders it <strong>outside</strong> the main layout structure, floating it at the bottom of the screen.</li>
+</ol>
+<h3 id="usage-example">Usage Example</h3>
+<p>
+Let's say we want to show a "Confirmation Dialog" floating above the prompt.
+</p>
+<pre data-lang="tsx"><code>// Inside your deep component (e.g., PromptInput)
+import { useSetPromptOverlayDialog } from './promptOverlayContext';
+
+function MyInputComponent() {
+  // Access the "teleporter" hook
+  const setDialog = useSetPromptOverlayDialog();
+
+  // When we mount, send our JSX to the top layer
+  useEffect(() =&gt; {
+     setDialog(&lt;Text color="green"&gt;I am floating!&lt;/Text&gt;);
+     
+     // Cleanup: remove dialog when we unmount
+     return () =&gt; setDialog(null);
+  }, [setDialog]);
+
+  return &lt;Text&gt;Normal Input Here...&lt;/Text&gt;;
+}
+</code></pre>
+<p>
+<strong>What happens?</strong>
+ 
+Even though <code>MyInputComponent</code> might be buried inside a scrollable box, the text "I am floating!" will render at the very bottom of the terminal, completely visible and unclipped.
+</p>
+<hr>
+<h2 id="part-2-the-input-manager-inline-9">Part 2: The Input Manager (<code>overlayContext</code>)</h2>
+<p>
+Now that our dialog is visible, we need to manage the keyboard. Specifically, the <strong>Escape</strong> key.
+</p>
+<p>
+If a dropdown is open, %%INLINE<em>10%% should close the dropdown. If nothing is open, %%INLINE</em>11%% might cancel the current generation or exit a mode. To do this, the app needs to know: <strong>Is an overlay currently active?</strong>
+</p>
+<h3 id="how-it-works">How it Works</h3>
+<ol>
+<li>When an overlay opens, it <strong>registers</strong> itself with a unique ID (e.g., "autocomplete").</li>
+</ol>
+<ol>
+<li>The global state adds this ID to a list of <code>activeOverlays</code>.</li>
+</ol>
+<ol>
+<li>The Input Handler checks %%INLINE<em>13%%. If true, %%INLINE</em>14%% closes the overlay. If false, it does the default action.</li>
+</ol>
+<h3 id="usage-example">Usage Example</h3>
+<p>
+Here is how a component tells the system "I am open and active":
+</p>
+<pre data-lang="tsx"><code>// Inside your overlay component
+import { useRegisterOverlay } from './overlayContext';
+
+function MyDropdown() {
+  // 1. Register this component as an active overlay
+  // The ID is 'my-dropdown'. The second arg 'true' means it's active.
+  useRegisterOverlay('my-dropdown', true);
+
+  return &lt;Border&gt;Select an option...&lt;/Border&gt;;
+}
+</code></pre>
+<h3 id="checking-the-state">Checking the State</h3>
+<p>
+Other parts of the app can now check if they should listen to keys:
+</p>
+<pre data-lang="tsx"><code>import { useIsOverlayActive } from './overlayContext';
+
+function KeyHandler() {
+  const isBlocked = useIsOverlayActive();
+
+  // If an overlay is up, don't run global shortcuts!
+  if (isBlocked) return null;
+
+  return &lt;HandleGlobalKeys /&gt;;
+}
+</code></pre>
+<hr>
+<h2 id="internal-implementation-how-it-all-connects">Internal Implementation: How it all connects</h2>
+<p>
+Let's look under the hood. The implementation relies heavily on <strong>React Context</strong> to pass data up and down the tree without "prop drilling" (passing data through every single parent).
+</p>
+<h3 id="the-flow">The Flow</h3>
+<p>
+Here is what happens when you open an Autocomplete menu:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant Component as AutocompleteComponent
+    participant OverlayCtx as OverlayContext (Input)
+    participant PromptCtx as PromptOverlayContext (Visual)
+    participant Root as AppRoot
+
+    User-&gt;&gt;Component: Types text
+    Component-&gt;&gt;OverlayCtx: useRegisterOverlay("auto", true)
+    Note right of OverlayCtx: App knows "Busy with overlay"
+    
+    Component-&gt;&gt;PromptCtx: useSetPromptOverlay(SuggestionsData)
+    Note right of PromptCtx: Stores JSX/Data in state
+    
+    PromptCtx-&gt;&gt;Root: Re-renders with new Data
+    Root-&gt;&gt;User: Draws Suggestions ON TOP of everything</div></div>
+<h3 id="code-walkthrough-the-visual-teleporter">Code Walkthrough: The Visual Teleporter</h3>
+<p>
+Open <code>promptOverlayContext.tsx</code>. The magic happens in two parts.
+</p>
+<p>
+First, the <strong>Provider</strong> holds the state (%%INLINE<em>16%% or %%INLINE</em>17%%) and exposes a "Setter".
+</p>
+<pre data-lang="tsx"><code>// promptOverlayContext.tsx (Simplified)
+export function PromptOverlayProvider({ children }) {
+  // This state holds the floating UI node
+  const [dialog, setDialog] = useState(null);
+
+  return (
+    // We provide the "setter" to children...
+    &lt;SetDialogContext.Provider value={setDialog}&gt;
+       {/* ...and we provide the "value" to the Root Layout */}
+      &lt;DialogContext.Provider value={dialog}&gt;
+        {children}
+      &lt;/DialogContext.Provider&gt;
+    &lt;/SetDialogContext.Provider&gt;
+  );
+}
+</code></pre>
+<p>
+Second, the <strong>Hook</strong> gives components a safe way to write to that state.
+</p>
+<pre data-lang="tsx"><code>// promptOverlayContext.tsx (Simplified)
+export function useSetPromptOverlayDialog(node) {
+  const set = useContext(SetDialogContext);
+  
+  // This effect runs whenever 'node' changes
+  useEffect(() =&gt; {
+    set(node); // "Teleport" the node up
+    return () =&gt; set(null); // Clear it when unmounting
+  }, [set, node]);
+}
+</code></pre>
+<h3 id="code-walkthrough-the-input-tracker">Code Walkthrough: The Input Tracker</h3>
+<p>
+Open %%INLINE<em>18%%. This file manages a %%INLINE</em>19%% of strings.
+</p>
+<pre data-lang="tsx"><code>// overlayContext.tsx (Simplified)
+export function useRegisterOverlay(id, enabled = true) {
+  const store = useContext(AppStoreContext);
+  
+  useEffect(() =&gt; {
+    if (!enabled) return;
+    
+    // Add ID to the global Set
+    store.setState(prev =&gt; ({
+      ...prev,
+      activeOverlays: new Set(prev.activeOverlays).add(id)
+    }));
+
+    // Remove ID on cleanup
+    return () =&gt; {
+      store.setState(prev =&gt; {
+        const next = new Set(prev.activeOverlays);
+        next.delete(id);
+        return { ...prev, activeOverlays: next };
+      });
+    };
+  }, [id, enabled]);
+}
+</code></pre>
+<p>
+This logic ensures that if the component crashes or unmounts for any reason, the "Active Overlay" lock is automatically removed, preventing the app from getting stuck.
+</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned how <code>context</code> handles complex UI layering in a terminal:
+</p>
+<ol>
+<li><strong>Visuals:</strong> We use <code>promptOverlayContext</code> to "teleport" UI elements out of clipped containers so they float on top.</li>
+</ol>
+<ol>
+<li><strong>Input:</strong> We use %%INLINE<em>22%% to register active components, ensuring keys like %%INLINE</em>23%% interact with the popup instead of the main app.</li>
+</ol>
+<p>
+This foundation allows us to build complex, window-like interfaces inside a simple text terminal.
+</p>
+<p>
+In the next chapter, we will see how these overlays are used inside larger layout structures.
+</p>
+<p>
+<a href="02<em>modal</em><em>_portal</em>layouts.md">Next Chapter: Modal & Portal Layouts</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="context.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">context/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-box-within-a-box">The Problem: "The Box within a Box"</a></li>
+<li style="padding-left:0px"><a href="#part-1-the-visual-portal-inline-3">Part 1: The Visual Portal (%%INLINE_3%%)</a></li>
+<li style="padding-left:10px"><a href="#how-it-works">How it Works</a></li>
+<li style="padding-left:10px"><a href="#usage-example">Usage Example</a></li>
+<li style="padding-left:0px"><a href="#part-2-the-input-manager-inline-9">Part 2: The Input Manager (%%INLINE_9%%)</a></li>
+<li style="padding-left:10px"><a href="#how-it-works">How it Works</a></li>
+<li style="padding-left:10px"><a href="#usage-example">Usage Example</a></li>
+<li style="padding-left:10px"><a href="#checking-the-state">Checking the State</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-how-it-all-connects">Internal Implementation: How it all connects</a></li>
+<li style="padding-left:10px"><a href="#the-flow">The Flow</a></li>
+<li style="padding-left:10px"><a href="#code-walkthrough-the-visual-teleporter">Code Walkthrough: The Visual Teleporter</a></li>
+<li style="padding-left:10px"><a href="#code-walkthrough-the-input-tracker">Code Walkthrough: The Input Tracker</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: Authentication & Permissions — utils/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">utils/02_authentication___permissions.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🛠 utils/ · 02_authentication___permissions.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: Authentication & Permissions</h1>
+  <div class="chapter-meta"><span>📄 utils/02_authentication___permissions.md</span></div>
+</div>
+<h1 id="chapter-2-authentication-permissions">Chapter 2: Authentication & Permissions</h1>
+<p>
+Welcome to the second chapter of the <code>utils</code> project tutorial. 
+</p>
+<p>
+In the previous chapter, <a href="01<em>configuration</em><em>_settings</em>hierarchy.md">Configuration & Settings Hierarchy</a>, we learned how the application adapts to different environments (laptop vs. server) and loads user preferences.
+</p>
+<p>
+Now that the application knows <em>how</em> you want it to behave, it needs to answer two critical security questions:
+</p>
+<ol>
+<li><strong>Who are you?</strong> (Authentication)</li>
+</ol>
+<ol>
+<li><strong>What are you allowed to do?</strong> (Permissions)</li>
+</ol>
+<h2 id="the-problem-the-over-enthusiastic-intern">The Problem: The Over-Enthusiastic Intern</h2>
+<p>
+Imagine you hire an intern (the AI Agent) to help organize your files.
+</p>
+<ul>
+<li><strong>Authentication:</strong> First, you need to verify their identity so you can give them an access badge. You don't want a stranger walking in.</li>
+<li><strong>Permissions:</strong> Once inside, you want them to organize your "Documents" folder, but you definitely <strong>do not</strong> want them to delete your "System32" folder or email your boss.</li>
+</ul>
+<p>
+Without a strict security layer, the AI might accidentally execute dangerous commands. This layer acts as the <strong>Security Guard</strong>.
+</p>
+<h2 id="key-concept-1-authentication-the-id-badge">Key Concept 1: Authentication (The ID Badge)</h2>
+<p>
+Authentication handles how the application connects to the AI provider (Anthropic). There are two main ways this happens:
+</p>
+<ol>
+<li><strong>OAuth (The modern way):</strong> You log in via a browser. The app gets a "Token" (like a temporary badge) that expires and needs refreshing.</li>
+</ol>
+<ol>
+<li><strong>API Key (The developer way):</strong> You provide a long string (sk-ant-...) in an environment variable.</li>
+</ol>
+<h3 id="how-the-code-finds-your-credentials">How the Code Finds Your Credentials</h3>
+<p>
+The file <code>auth.ts</code> is responsible for hunting down valid credentials. It looks in a specific order:
+</p>
+<ol>
+<li><strong>Environment Variables:</strong> Is <code>ANTHROPIC_API_KEY</code> set in your terminal?</li>
+</ol>
+<ol>
+<li><strong>OAuth Token:</strong> Do we have a valid token from a previous login?</li>
+</ol>
+<ol>
+<li><strong>Config Files:</strong> Is a key saved in a settings file?</li>
+</ol>
+<p>
+Here is a simplified view of how the system decides which credential to use:
+</p>
+<pre data-lang="typescript"><code>// From auth.ts - Simplified
+export function getAuthTokenSource() {
+  // 1. Check for API Key in environment (Highest Priority)
+  if (process.env.ANTHROPIC_API_KEY) {
+    return { source: 'ANTHROPIC_API_KEY', hasToken: true }
+  }
+
+  // 2. Check for OAuth Token from login
+  const oauthTokens = getClaudeAIOAuthTokens()
+  if (oauthTokens?.accessToken) {
+    return { source: 'claude.ai', hasToken: true }
+  }
+
+  // 3. No credentials found
+  return { source: 'none', hasToken: false }
+}
+</code></pre>
+<p>
+<em>Explanation: The code prioritizes explicit environment variables (often used in CI/CD or servers) over the user's local login session.</em>
+</p>
+<h3 id="storing-secrets-securely">Storing Secrets Securely</h3>
+<p>
+When you log in via OAuth, we need to save your token so you don't have to log in every time you run a command. We shouldn't just save this in a plain text file if we can avoid it.
+</p>
+<p>
+The system uses <code>secureStorage</code> to interact with the operating system's native keychain (like macOS Keychain).
+</p>
+<pre data-lang="typescript"><code>// From secureStorage/index.ts - Simplified
+export function getSecureStorage() {
+  // If on macOS, use the system Keychain
+  if (process.platform === 'darwin') {
+    return macOsKeychainStorage
+  }
+
+  // If on Linux/Windows, fallback to a file (encrypted or plain)
+  return plainTextStorage
+}
+</code></pre>
+<p>
+<em>Explanation: The application attempts to use the most secure storage available on your specific Operating System.</em>
+</p>
+<h2 id="key-concept-2-permissions-the-access-list">Key Concept 2: Permissions (The Access List)</h2>
+<p>
+Once authenticated, the Agent tries to use <strong>Tools</strong> (like %%INLINE<em>4%% to run commands or %%INLINE</em>5%% to save code). Before a tool runs, the Permission System intercepts the request.
+</p>
+<p>
+This logic lives in <code>permissions/permissions.ts</code>. It classifies every action into three buckets:
+</p>
+<ol>
+<li><strong>Allow:</strong> Run immediately.</li>
+</ol>
+<ol>
+<li><strong>Deny:</strong> Block immediately.</li>
+</ol>
+<ol>
+<li><strong>Ask:</strong> Pause and ask the human for approval.</li>
+</ol>
+<h3 id="the-decision-logic">The Decision Logic</h3>
+<p>
+The system checks rules in a specific order. If a rule matches, it stops checking.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">graph TD
+    A[Agent Requests Tool Use] --&gt; B{1. Is it explicitly DENIED?}
+    B -- Yes --&gt; C[Stop: Block Action]
+    B -- No --&gt; D{2. Is it explicitly ALLOWED?}
+    D -- Yes --&gt; E[Success: Run Tool]
+    D -- No --&gt; F[Default: ASK User]</div></div>
+<h3 id="modes-of-operation">Modes of Operation</h3>
+<p>
+The behavior changes based on the <strong>Mode</strong> the user has selected:
+</p>
+<ul>
+<li><strong>Safe Mode:</strong> Asks permission for almost everything.</li>
+<li><strong>Auto Mode:</strong> Uses a secondary, smaller AI "Classifier" to judge if an action is safe. If the classifier says it's safe, it allows it automatically. If it looks dangerous (like deleting files), it falls back to "Ask".</li>
+</ul>
+<h3 id="checking-permissions-in-code">Checking Permissions in Code</h3>
+<p>
+Here is how the code evaluates if a tool can run:
+</p>
+<pre data-lang="typescript"><code>// From permissions/permissions.ts - Simplified
+async function hasPermissionsToUseTool(tool, input, context) {
+  // 1. Check Deny Rules (e.g., "Never run rm -rf")
+  const denyRule = getDenyRuleForTool(context, tool)
+  if (denyRule) {
+    return { behavior: 'deny', message: "Blocked by rule" }
+  }
+
+  // 2. Check Allow Rules (e.g., "Always allow ls")
+  const allowRule = toolAlwaysAllowedRule(context, tool)
+  if (allowRule) {
+    return { behavior: 'allow' }
+  }
+
+  // 3. Default: Ask the user
+  return { behavior: 'ask', message: "Allow this command?" }
+}
+</code></pre>
+<p>
+<em>Explanation: This function returns a <code>PermissionDecision</code>. It doesn't run the tool itself; it just tells the system whether to proceed, stop, or prompt the user.</em>
+</p>
+<h2 id="internal-implementation-the-safety-sequence">Internal Implementation: The Safety Sequence</h2>
+<p>
+Let's visualize what happens when the Agent wants to run a command, for example, listing files (<code>ls -la</code>).
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Agent
+    participant Perms as Permissions Layer
+    participant Config as Settings
+    participant User
+
+    Agent-&gt;&gt;Perms: I want to use Tool "Bash" with input "ls -la"
+    
+    Perms-&gt;&gt;Config: Check User Rules
+    Config--&gt;&gt;Perms: Rule found: "Always Allow 'ls'"
+    
+    Perms--&gt;&gt;Agent: Approved (Behavior: Allow)
+    
+    Agent-&gt;&gt;Agent: Executes "ls -la"</div></div>
+<p>
+Now, imagine the Agent tries to do something ambiguous, and there are no specific rules for it.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Agent
+    participant Perms as Permissions Layer
+    participant User
+
+    Agent-&gt;&gt;Perms: I want to use Tool "WriteFile"
+    
+    Perms-&gt;&gt;Perms: No Allow/Deny rules found
+    
+    Perms-&gt;&gt;User: "Claude wants to write a file. Allow?"
+    User--&gt;&gt;Perms: User clicks "Approve"
+    
+    Perms--&gt;&gt;Agent: Approved (Behavior: Allow)</div></div>
+<h2 id="deep-dive-the-auto-mode-classifier">Deep Dive: The "Auto Mode" Classifier</h2>
+<p>
+In <code>permissions.ts</code>, there is special logic for "Auto Mode". We don't want to annoy the user with 100 popups, but we don't want to be insecure.
+</p>
+<p>
+We use a "YOLO" (You Only Look Once) Classifier. This is a lightweight check that happens before asking the user.
+</p>
+<pre data-lang="typescript"><code>// From permissions/permissions.ts - Simplified
+if (mode === 'auto') {
+  // 1. Ask a fast AI model: "Is this dangerous?"
+  const classifierResult = await classifyYoloAction(tool, input)
+
+  // 2. If the model says it's safe, allow it
+  if (!classifierResult.shouldBlock) {
+    return { behavior: 'allow' }
+  }
+  
+  // 3. If dangerous, fall back to denying or asking
+  return { behavior: 'deny', message: "Classifier blocked this." }
+}
+</code></pre>
+<p>
+<em>Explanation: This block creates a hybrid experience. It feels magical (no popups) but keeps a safety net for risky actions.</em>
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we secured our application:
+</p>
+<ol>
+<li><strong>Authentication:</strong> %%INLINE<em>10%% verifies identity using Environment Variables or OAuth, storing secrets in %%INLINE</em>11%%.</li>
+</ol>
+<ol>
+<li><strong>Permissions:</strong> <code>permissions.ts</code> acts as a gatekeeper. It checks a list of rules (Allow/Deny) and user preferences (Safe/Auto Mode) before letting the Agent touch your system.</li>
+</ol>
+<p>
+Now that the Agent is configured and authenticated, it needs to understand the task you want it to perform. This involves managing the history of the conversation and the context window.
+</p>
+<p>
+<a href="03<em>model</em>context<em>_</em>strategy.md">Next Chapter: Model Context & Strategy</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="utils.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">utils/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-over-enthusiastic-intern">The Problem: The Over-Enthusiastic Intern</a></li>
+<li style="padding-left:0px"><a href="#key-concept-1-authentication-the-id-badge">Key Concept 1: Authentication (The ID Badge)</a></li>
+<li style="padding-left:10px"><a href="#how-the-code-finds-your-credentials">How the Code Finds Your Credentials</a></li>
+<li style="padding-left:10px"><a href="#storing-secrets-securely">Storing Secrets Securely</a></li>
+<li style="padding-left:0px"><a href="#key-concept-2-permissions-the-access-list">Key Concept 2: Permissions (The Access List)</a></li>
+<li style="padding-left:10px"><a href="#the-decision-logic">The Decision Logic</a></li>
+<li style="padding-left:10px"><a href="#modes-of-operation">Modes of Operation</a></li>
+<li style="padding-left:10px"><a href="#checking-permissions-in-code">Checking Permissions in Code</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-the-safety-sequence">Internal Implementation: The Safety Sequence</a></li>
+<li style="padding-left:0px"><a href="#deep-dive-the-auto-mode-classifier">Deep Dive: The "Auto Mode" Classifier</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

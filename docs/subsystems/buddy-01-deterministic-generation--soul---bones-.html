@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 1: Deterministic Generation (Soul & Bones) — buddy/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">buddy/01_deterministic_generation__soul___bones_.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">👥 buddy/ · 01_deterministic_generation__soul___bones_.md</div>
+  <h1 class="chapter-title-h1">Chapter 1: Deterministic Generation (Soul & Bones)</h1>
+  <div class="chapter-meta"><span>📄 buddy/01_deterministic_generation__soul___bones_.md</span></div>
+</div>
+<h1 id="chapter-1-deterministic-generation-soul-bones">Chapter 1: Deterministic Generation (Soul & Bones)</h1>
+<p>
+Welcome to the world of <strong>buddy</strong>! In this project, we are building a CLI companion that lives in your terminal.
+</p>
+<p>
+The first question we face is: <strong>Where does the companion come from?</strong>
+</p>
+<p>
+We could generate a random pet every time you log in, but then you wouldn't bond with it. We could store every detail in a database, but that requires complex storage.
+</p>
+<p>
+Instead, we use <strong>Deterministic Generation</strong>. We split your companion into two parts:
+</p>
+<ol>
+<li><strong>Bones:</strong> Traits determined by math (Species, Stats, Rarity). These never change.</li>
+</ol>
+<ol>
+<li><strong>Soul:</strong> Traits stored in a config file (Name, Personality). These can change.</li>
+</ol>
+<p>
+It is like <strong>Digital DNA</strong>. Your User ID is the seed. No matter how many times we run the code, your unique ID will always grow the exact same creature.
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<h3 id="1-the-seed-user-id">1. The Seed (User ID)</h3>
+<p>
+Everything starts with a unique string, usually your User ID (e.g., <code>user_123</code> or an email). This is the source of truth. If you have the ID, you can recreate the creature.
+</p>
+<h3 id="2-bones-immutable">2. Bones (Immutable)</h3>
+<p>
+"Bones" are the structural parts of the companion. Since they are generated mathematically from your ID, we don't need to save them in a database! We just recalculate them when the program starts.
+</p>
+<h3 id="3-soul-mutable">3. Soul (Mutable)</h3>
+<p>
+The "Soul" consists of the things that make your buddy unique to <em>you</em>, like the name you give it ("Sir Quacks-a-Lot"). This small amount of data is the only thing we actually need to save to a file.
+</p>
+<hr>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+Let's look at how the application uses this logic to "find" your companion.
+</p>
+<h3 id="step-1-hashing-the-id">Step 1: Hashing the ID</h3>
+<p>
+Computers are bad at predicting "random" things from text. They prefer numbers. We turn your User ID into a large number called a <strong>Hash</strong>.
+</p>
+<pre data-lang="typescript"><code>// types.ts &amp; companion.ts context
+const userId = "alice_doe"
+const SALT = "friend-2026-401" // A secret ingredient
+
+// We combine them to ensure unique results for this app
+const uniqueKey = userId + SALT 
+// Result: "alice_doefriend-2026-401"
+</code></pre>
+<p>
+<em>We add a "Salt" (a secret string) so users can't simply guess which ID will result in a "Legendary" rarity.</em>
+</p>
+<h3 id="step-2-the-dice-roll">Step 2: The Dice Roll</h3>
+<p>
+We use that hash to create a <strong>Seeded Random Number Generator (RNG)</strong>. Normal random numbers change every time. <strong>Seeded</strong> random numbers are always the same sequence if the seed is the same.
+</p>
+<pre data-lang="typescript"><code>// From companion.ts
+// Create a generator that creates the SAME numbers for this user
+const rng = mulberry32(hashString(uniqueKey))
+
+// If we ask for a number, it might give 0.42
+// If we restart the app and ask again, it gives 0.42 again!
+const roll = rng() 
+</code></pre>
+<h3 id="step-3-determining-species">Step 3: Determining Species</h3>
+<p>
+Now we just use that predictable number to pick from our list of species.
+</p>
+<pre data-lang="typescript"><code>// From types.ts
+export const SPECIES = ['duck', 'cat', 'robot', /*...*/] as const
+
+// From companion.ts
+function pick&lt;T&gt;(rng: () =&gt; number, arr: readonly T[]): T {
+  // Uses the predictable random number to pick an index
+  return arr[Math.floor(rng() * arr.length)]!
+}
+</code></pre>
+<p>
+<em>If your ID results in the number <code>0</code>, you get a Duck. Always.</em>
+</p>
+<hr>
+<h2 id="under-the-hood-implementation">Under the Hood: Implementation</h2>
+<p>
+How does the data flow when the application starts?
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant Logic as Generation Logic
+    participant Config as Saved Config (Soul)
+    participant Result as Final Companion
+
+    User-&gt;&gt;Logic: Provides User ID ("alice")
+    Logic-&gt;&gt;Logic: Calculates Hash (Seed)
+    Logic-&gt;&gt;Logic: Generates "Bones" (Species: Cat, Rarity: Epic)
+    Logic-&gt;&gt;Config: Checks for saved data
+    Config--&gt;&gt;Logic: Returns "Soul" (Name: "Luna")
+    Logic-&gt;&gt;Result: Merges Bones + Soul
+    Result--&gt;&gt;User: Returns "Luna the Epic Cat"</div></div>
+<h3 id="the-inline-2-function">The <code>roll</code> Function</h3>
+<p>
+The core of this system is in <code>companion.ts</code>. This function coordinates the creation of the Bones.
+</p>
+<pre data-lang="typescript"><code>// companion.ts simplified
+function rollFrom(rng: () =&gt; number): Roll {
+  const rarity = rollRarity(rng) // e.g., 'rare'
+  
+  const bones = {
+    rarity,
+    species: pick(rng, SPECIES), // e.g., 'robot'
+    eye: pick(rng, EYES),        // e.g., '◉'
+    stats: rollStats(rng, rarity) // e.g., { WISDOM: 80 }
+  }
+  return { bones, inspirationSeed: rng() }
+}
+</code></pre>
+<p>
+<em>Notice how we pass <code>rng</code> into everything? That ensures every trait is tied to that original seed.</em>
+</p>
+<h3 id="generating-stats">Generating Stats</h3>
+<p>
+We even generate RPG-like stats (Wisdom, Chaos, Patience) deterministically. We make sure every companion has at least one "Peak" stat (really good) and one "Dump" stat (really bad).
+</p>
+<pre data-lang="typescript"><code>// companion.ts simplified
+function rollStats(rng, rarity) {
+  const peak = pick(rng, STAT_NAMES) // Pick one stat to be high
+  let dump = pick(rng, STAT_NAMES)   // Pick one stat to be low
+  
+  // Logic ensures 'dump' isn't the same as 'peak'
+  // Then assigns numbers based on Rarity tier
+  // ...
+}
+</code></pre>
+<h3 id="merging-soul-and-bones">Merging Soul and Bones</h3>
+<p>
+Finally, when the app asks <code>getCompanion()</code>, we combine the calculated reality with the saved data.
+</p>
+<pre data-lang="typescript"><code>// companion.ts
+export function getCompanion(): Companion | undefined {
+  const stored = getGlobalConfig().companion // Get Name (Soul)
+  if (!stored) return undefined
+
+  // Re-calculate the immutable traits (Bones)
+  const { bones } = roll(companionUserId())
+  
+  // Combine them!
+  return { ...stored, ...bones }
+}
+</code></pre>
+<h2 id="why-this-is-cool">Why this is cool</h2>
+<ol>
+<li><strong>Cheating Prevention:</strong> A user can edit their config file to change their pet's name, but they can't change %%INLINE<em>6%% to %%INLINE</em>7%%. The app ignores the config for "Bones" and recalculates them from the ID every time.</li>
+</ol>
+<ol>
+<li><strong>Lightweight:</strong> We don't need a massive database of user pets.</li>
+</ol>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have now learned how <code>buddy</code> creates a unique friend for you using nothing but your User ID and some math. We have our <strong>Bones</strong> (the data).
+</p>
+<p>
+But data is boring to look at. We need to visualize our new friend!
+</p>
+<p>
+In the next chapter, we will take these "Bones" and draw them to the screen using ASCII art.
+</p>
+<p>
+<a href="02<em>ascii</em>sprite_renderer.md">Next: ASCII Sprite Renderer</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="buddy.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">buddy/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-seed-user-id">1. The Seed (User ID)</a></li>
+<li style="padding-left:10px"><a href="#2-bones-immutable">2. Bones (Immutable)</a></li>
+<li style="padding-left:10px"><a href="#3-soul-mutable">3. Soul (Mutable)</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:10px"><a href="#step-1-hashing-the-id">Step 1: Hashing the ID</a></li>
+<li style="padding-left:10px"><a href="#step-2-the-dice-roll">Step 2: The Dice Roll</a></li>
+<li style="padding-left:10px"><a href="#step-3-determining-species">Step 3: Determining Species</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-implementation">Under the Hood: Implementation</a></li>
+<li style="padding-left:10px"><a href="#the-inline-2-function">The %%INLINE_2%% Function</a></li>
+<li style="padding-left:10px"><a href="#generating-stats">Generating Stats</a></li>
+<li style="padding-left:10px"><a href="#merging-soul-and-bones">Merging Soul and Bones</a></li>
+<li style="padding-left:0px"><a href="#why-this-is-cool">Why this is cool</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

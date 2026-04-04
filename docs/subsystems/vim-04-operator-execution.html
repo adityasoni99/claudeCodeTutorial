@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: Operator Execution — vim/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">vim/04_operator_execution.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⌨️ vim/ · 04_operator_execution.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: Operator Execution</h1>
+  <div class="chapter-meta"><span>📄 vim/04_operator_execution.md</span></div>
+</div>
+<h1 id="chapter-4-operator-execution">Chapter 4: Operator Execution</h1>
+<p>
+In the previous chapter, <a href="03<em>motion</em>resolution.md">Motion Resolution</a>, we built the "GPS" for our editor. We learned how to calculate where the cursor <em>should</em> go (e.g., "End of the word").
+</p>
+<p>
+However, calculating a destination doesn't change the text. It just gives us coordinates.
+</p>
+<p>
+Now, we need to actually do the work. We need to take those coordinates and apply a transformation: <strong>Delete</strong>, <strong>Change</strong>, or <strong>Copy (Yank)</strong>.
+</p>
+<h2 id="the-motivation-the-construction-crew">The Motivation: The Construction Crew</h2>
+<p>
+Imagine a road construction project.
+</p>
+<ol>
+<li><strong>The Surveyor (Motion):</strong> Walks out, measures 10 feet, and plants a flag. They don't dig; they just mark the range.</li>
+</ol>
+<ol>
+<li><strong>The Construction Crew (Operator):</strong> Looks at the starting point (User) and the flag (Surveyor). They perform the heavy lifting within that area.</li>
+</ol>
+<p>
+In Vim, this separation is powerful.
+</p>
+<ul>
+<li>If you have a <strong>"Delete"</strong> crew (Operator), they can work with <em>any</em> Surveyor (Motion).</li>
+<li>%%INLINE<em>0%% (Delete Word), %%INLINE</em>1%% (Delete to end of line), <code>dgg</code> (Delete to start of file).</li>
+</ul>
+<p>
+The logic for "Deleting" is written once. The logic for "Finding the end of the word" is written once. They combine to form a command.
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+To understand how we implement this in <code>operators.ts</code>, we need to define three things.
+</p>
+<h3 id="1-the-operator-the-verb">1. The Operator (The Verb)</h3>
+<p>
+This is the action. It defines <em>what</em> we are doing to the text.
+</p>
+<ul>
+<li><code>d</code>: Delete (Remove text)</li>
+<li><code>c</code>: Change (Remove text + Enter Insert Mode)</li>
+<li><code>y</code>: Yank (Copy text to clipboard)</li>
+</ul>
+<h3 id="2-the-range-the-area">2. The Range (The Area)</h3>
+<p>
+An operator needs a <strong>Start Point</strong> and an <strong>End Point</strong>.
+</p>
+<ul>
+<li><strong>Start:</strong> Where your cursor is right now.</li>
+<li><strong>End:</strong> Calculated by the Motion (from Chapter 3).</li>
+</ul>
+<h3 id="3-the-context-the-world">3. The Context (The World)</h3>
+<p>
+Because we are finally changing the text, we need full access to the editor's data. We bundle this into an object called <code>OperatorContext</code>.
+</p>
+<pre data-lang="typescript"><code>export type OperatorContext = {
+  cursor: Cursor        // Where are we?
+  text: string          // The document content
+  setText: (t: string) =&gt; void // Function to update text
+  // ... helper functions for registers/clipboard
+}
+</code></pre>
+<h2 id="use-case-deleting-a-word-inline-8">Use Case: Deleting a Word (<code>dw</code>)</h2>
+<p>
+Let's look at the flow for the command <code>dw</code>.
+</p>
+<ul>
+<li><strong>Current Text:</strong> <code>Hello World</code></li>
+<li><strong>Cursor:</strong> Index 0 ('H')</li>
+<li><strong>Input:</strong> %%INLINE<em>11%% (Operator) + %%INLINE</em>12%% (Motion)</li>
+</ul>
+<h3 id="step-1-the-orchestrator">Step 1: The Orchestrator</h3>
+<p>
+When the State Machine (Chapter 2) detects a complete Operator+Motion command, it calls <code>executeOperatorMotion</code>.
+</p>
+<p>
+This function is the manager. It coordinates the Surveyor and the Crew.
+</p>
+<pre data-lang="typescript"><code>// From operators.ts (Simplified)
+export function executeOperatorMotion(
+  op: Operator,       // 'delete'
+  motion: string,     // 'w'
+  count: number,      // 1
+  ctx: OperatorContext 
+): void {
+  // 1. Ask the Motion Resolver (The Surveyor) for the target
+  const target = resolveMotion(motion, ctx.cursor, count)
+
+  // 2. Calculate the exact start and end points
+  const range = getOperatorRange(ctx.cursor, target, motion, op, count)
+
+  // 3. Perform the actual work (The Crew)
+  applyOperator(op, range.from, range.to, ctx, range.linewise)
+}
+</code></pre>
+<h3 id="step-2-calculating-the-range">Step 2: Calculating the Range</h3>
+<p>
+You might think the range is just <code>[Cursor, Target]</code>. Usually, yes. But there are edge cases:
+</p>
+<ol>
+<li><strong>Backwards Motions:</strong> If you press %%INLINE<em>15%% (delete back), the Target is <em>before</em> the Cursor. We need to swap them so %%INLINE</em>16%% is always smaller than <code>to</code>.</li>
+</ol>
+<ol>
+<li><strong>Inclusivity:</strong> If you use %%INLINE<em>18%% (end of word), the last character should be included. If you use %%INLINE</em>19%% (start of next word), the destination character is <em>not</em> deleted.</li>
+</ol>
+<p>
+We use a helper function to normalize this math.
+</p>
+<pre data-lang="typescript"><code>// From operators.ts
+function getOperatorRange(cursor, target, motion, op, count) {
+  // Ensure 'from' is always the lower number
+  let from = Math.min(cursor.offset, target.offset)
+  let to = Math.max(cursor.offset, target.offset)
+
+  // Adjust for inclusive motions (like '$' or 'e')
+  if (isInclusiveMotion(motion)) {
+    to = cursor.measuredText.nextOffset(to)
+  }
+  
+  return { from, to }
+}
+</code></pre>
+<h3 id="step-3-applying-the-operator">Step 3: Applying the Operator</h3>
+<p>
+Now we have clean coordinates: %%INLINE<em>20%%, %%INLINE</em>21%%. We simply slice the string.
+</p>
+<pre data-lang="typescript"><code>// From operators.ts
+function applyOperator(op, from, to, ctx) {
+  // 1. Slice the string to remove the range
+  if (op === 'delete') {
+    const newText = ctx.text.slice(0, from) + ctx.text.slice(to)
+    
+    // Update the editor state
+    ctx.setText(newText)
+    ctx.setOffset(from) // Move cursor to the cut point
+  }
+  
+  // 2. Handle 'change' and 'yank' similarly...
+}
+</code></pre>
+<h2 id="visualizing-the-execution">Visualizing the Execution</h2>
+<p>
+Here is the complete lifecycle of a <code>dw</code> command.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant Exec as executeOperatorMotion
+    participant Motion as Motion Resolver
+    participant Range as Range Calculator
+    participant Crew as applyOperator
+
+    User-&gt;&gt;Exec: Input: "d" + "w"
+    
+    Exec-&gt;&gt;Motion: "Where does 'w' go?"
+    Motion--&gt;&gt;Exec: "Index 6"
+    
+    Exec-&gt;&gt;Range: Start: 0, End: 6. Fix details.
+    Range--&gt;&gt;Exec: Range: [0, 6)
+    
+    Exec-&gt;&gt;Crew: "Delete everything from 0 to 6"
+    Crew--&gt;&gt;User: Text updated to "World"</div></div>
+<h2 id="internal-implementation-special-cases">Internal Implementation: Special Cases</h2>
+<p>
+While <code>dw</code> is standard, Vim has other types of executions that behave differently.
+</p>
+<h3 id="linewise-operations-inline-24">Linewise Operations (<code>dd</code>)</h3>
+<p>
+When you type %%INLINE<em>25%%, you aren't moving a cursor. You are selecting a whole line. The logic here is slightly different because it ignores specific character columns and looks for newline characters (%%INLINE</em>26%%).
+</p>
+<pre data-lang="typescript"><code>// From operators.ts
+export function executeLineOp(op: Operator, count: number, ctx: OperatorContext) {
+  // Find where the current line starts
+  const lineStart = ctx.cursor.startOfLogicalLine().offset
+  
+  // Find where the next line starts
+  let lineEnd = lineStart
+  // ... loop to find the next \n character ...
+
+  // Apply the operator to that whole chunk
+  applyOperator(op, lineStart, lineEnd, ctx, true)
+}
+</code></pre>
+<h3 id="visualizing-linewise-logic">Visualizing Linewise Logic</h3>
+<p>
+If you have:
+</p>
+<pre data-lang="text"><code>Line 1
+Line 2
+Line 3
+</code></pre>
+<p>
+And cursor is on "Line 2":
+</p>
+<ol>
+<li><code>lineStart</code> finds the newline after "Line 1".</li>
+</ol>
+<ol>
+<li><code>lineEnd</code> finds the newline after "Line 2".</li>
+</ol>
+<ol>
+<li><code>applyOperator</code> snips that entire section out.</li>
+</ol>
+<h2 id="summary">Summary</h2>
+<p>
+<strong>Operator Execution</strong> is where the magic happens. It combines the geometric calculations of <strong>Motions</strong> (Chapter 3) with text transformations.
+</p>
+<ul>
+<li><strong>Motions</strong> tell us "Where".</li>
+<li><strong>Operators</strong> tell us "What".</li>
+<li><strong>Execution</strong> Logic brings them together to modify the document.</li>
+</ul>
+<p>
+So far, we have covered motions like %%INLINE<em>30%% (word) and %%INLINE</em>31%% (down). But what if you want to "Delete inside parentheses" (%%INLINE<em>32%%)? %%INLINE</em>33%% isn't a movement; you can't type <code>i)</code> to move your cursor there.
+</p>
+<p>
+These are called <strong>Text Objects</strong>, and they require a special kind of range calculation.
+</p>
+<p>
+<a href="05<em>text</em>objects.md">Next Chapter: Text Objects</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="vim.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">vim/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-the-construction-crew">The Motivation: The Construction Crew</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-operator-the-verb">1. The Operator (The Verb)</a></li>
+<li style="padding-left:10px"><a href="#2-the-range-the-area">2. The Range (The Area)</a></li>
+<li style="padding-left:10px"><a href="#3-the-context-the-world">3. The Context (The World)</a></li>
+<li style="padding-left:0px"><a href="#use-case-deleting-a-word-inline-8">Use Case: Deleting a Word (%%INLINE_8%%)</a></li>
+<li style="padding-left:10px"><a href="#step-1-the-orchestrator">Step 1: The Orchestrator</a></li>
+<li style="padding-left:10px"><a href="#step-2-calculating-the-range">Step 2: Calculating the Range</a></li>
+<li style="padding-left:10px"><a href="#step-3-applying-the-operator">Step 3: Applying the Operator</a></li>
+<li style="padding-left:0px"><a href="#visualizing-the-execution">Visualizing the Execution</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-special-cases">Internal Implementation: Special Cases</a></li>
+<li style="padding-left:10px"><a href="#linewise-operations-inline-24">Linewise Operations (%%INLINE_24%%)</a></li>
+<li style="padding-left:10px"><a href="#visualizing-linewise-logic">Visualizing Linewise Logic</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: Live Component & Animation — buddy/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">buddy/03_live_component___animation.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">👥 buddy/ · 03_live_component___animation.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: Live Component & Animation</h1>
+  <div class="chapter-meta"><span>📄 buddy/03_live_component___animation.md</span></div>
+</div>
+<h1 id="chapter-3-live-component-animation">Chapter 3: Live Component & Animation</h1>
+<p>
+In the previous chapter, <a href="02<em>ascii</em>sprite_renderer.md">ASCII Sprite Renderer</a>, we built a "Paper Doll" system. We can generate a Duck, put a hat on it, and render it to text strings.
+</p>
+<p>
+But right now, our friend is frozen in time. It is a statue.
+</p>
+<p>
+To turn a statue into a companion, it needs a <strong>Heartbeat</strong>. It needs to breathe, blink, and look around, even when you aren't typing commands.
+</p>
+<p>
+In this chapter, we will build the stage where our actor performs: the <strong>Live Component</strong>.
+</p>
+<h2 id="the-concept-the-infinite-loop">The Concept: The Infinite Loop</h2>
+<p>
+Standard command-line tools run once and exit (like %%INLINE<em>0%% or %%INLINE</em>1%%). They print text and die.
+</p>
+<p>
+<code>buddy</code> is different. It uses a library called <strong>Ink</strong> (React for the terminal) to stay alive. It redraws the screen many times per second.
+</p>
+<p>
+To animate our companion, we need three things:
+</p>
+<ol>
+<li><strong>The Tick:</strong> A metronome that counts time.</li>
+</ol>
+<ol>
+<li><strong>The Choreography:</strong> A script telling the pet when to move.</li>
+</ol>
+<ol>
+<li><strong>The Stage:</strong> A layout system to hold the pet and its speech bubbles.</li>
+</ol>
+<h2 id="key-concepts">Key Concepts</h2>
+<h3 id="1-the-tick-state">1. The Tick (State)</h3>
+<p>
+We use a React state variable to count time. Every 500 milliseconds (half a second), we increase this number by 1.
+</p>
+<ul>
+<li>Tick 0: Start</li>
+<li>Tick 1: 0.5s passed</li>
+<li>Tick 2: 1.0s passed...</li>
+</ul>
+<h3 id="2-the-choreography-sequence">2. The Choreography (Sequence)</h3>
+<p>
+We don't want our pet to move constantly; that would be distracting. We want it to sit still mostly, and occasionally blink or wiggle.
+</p>
+<p>
+Instead of complex AI, we use a simple array of numbers called the <code>IDLE_SEQUENCE</code>.
+</p>
+<pre data-lang="typescript"><code>// 0 = Stand Still, 1 = Wiggle, -1 = Blink
+const IDLE_SEQUENCE = [0, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0];
+</code></pre>
+<p>
+As the <strong>Tick</strong> counts up, we step through this list.
+</p>
+<h3 id="3-the-layout-flexbox">3. The Layout (Flexbox)</h3>
+<p>
+Terminals are usually just lines of text. But <strong>Ink</strong> allows us to use <strong>Flexbox</strong> (like in web design). This lets us put a Speech Bubble <em>next to</em> the Companion, or float hearts <em>above</em> it.
+</p>
+<hr>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+From the perspective of the main application, using the companion is as simple as dropping a generic HTML tag into the code.
+</p>
+<pre data-lang="tsx"><code>import { CompanionSprite } from './CompanionSprite'
+
+// Inside our main App layout
+export function App() {
+  return (
+    &lt;Box&gt;
+      &lt;Header /&gt;
+      &lt;CompanionSprite /&gt; 
+      &lt;Footer /&gt;
+    &lt;/Box&gt;
+  )
+}
+</code></pre>
+<p>
+The <code>CompanionSprite</code> handles its own internal time. The main app doesn't need to tell it to blink; it just does.
+</p>
+<hr>
+<h2 id="under-the-hood-implementation">Under the Hood: Implementation</h2>
+<p>
+Let's visualize the "Heartbeat" loop.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Timer
+    participant Component as Live Component
+    participant Logic as Choreography
+    participant Renderer as Sprite Renderer
+
+    Timer-&gt;&gt;Component: Tick! (Time + 1)
+    Component-&gt;&gt;Logic: What frame is it?
+    Logic-&gt;&gt;Logic: Look up IDLE_SEQUENCE
+    Logic--&gt;&gt;Component: Frame 1 (Wiggle)
+    Component-&gt;&gt;Renderer: renderSprite(duck, frame: 1)
+    Renderer--&gt;&gt;Component: Returns ASCII Art
+    Component--&gt;&gt;Component: Redraws to screen</div></div>
+<h3 id="step-1-setting-the-heartbeat">Step 1: Setting the Heartbeat</h3>
+<p>
+We use %%INLINE<em>5%% to start a timer when the component loads. This timer updates the %%INLINE</em>6%% state variable every 500ms (<code>TICK_MS</code>).
+</p>
+<pre data-lang="typescript"><code>// CompanionSprite.tsx
+const TICK_MS = 500;
+
+export function CompanionSprite() {
+  const [tick, setTick] = useState(0);
+
+  useEffect(() =&gt; {
+    // Start the metronome
+    const timer = setInterval(() =&gt; setTick(t =&gt; t + 1), TICK_MS);
+    
+    // Cleanup when component closes
+    return () =&gt; clearInterval(timer);
+  }, []);
+  
+  // ... rest of code
+}
+</code></pre>
+<p>
+<em>Result: Every 0.5 seconds, the component re-runs its code with a new <code>tick</code> number.</em>
+</p>
+<h3 id="step-2-deciding-the-frame">Step 2: Deciding the Frame</h3>
+<p>
+Now that we have a changing number (<code>tick</code>), we use it to pick a frame from our sequence.
+</p>
+<p>
+We use the <strong>Modulo Operator (<code>%</code>)</strong>. This effectively loops the array forever. If the array has 10 items, tick 11 becomes index 1.
+</p>
+<pre data-lang="typescript"><code>// CompanionSprite.tsx
+// 0=Rest, 1=Move, -1=Blink
+const IDLE_SEQUENCE = [0, 0, 0, 0, 1, 0, 0, 0, -1, 0];
+
+// Inside the component...
+const stepIndex = tick % IDLE_SEQUENCE.length; // Loops 0 to 9
+const action = IDLE_SEQUENCE[stepIndex];       // Get the action
+
+let frame = 0;
+let blink = false;
+
+if (action === -1) blink = true; // Special blink flag
+else frame = action;             // Standard frame (0 or 1)
+</code></pre>
+<h3 id="step-3-drawing-the-frame">Step 3: Drawing the Frame</h3>
+<p>
+Now we connect back to <a href="02<em>ascii</em>sprite_renderer.md">Chapter 2: ASCII Sprite Renderer</a>. We pass our calculated frame to the renderer.
+</p>
+<pre data-lang="typescript"><code>// CompanionSprite.tsx
+const companion = getCompanion(); // From Chapter 1
+
+// Get the raw lines for this specific frame
+const lines = renderSprite(companion, frame);
+
+// If we need to blink, we replace eyes with dashes '-'
+const finalLines = blink 
+  ? lines.map(l =&gt; l.replaceAll(companion.eye, '-'))
+  : lines;
+</code></pre>
+<h3 id="step-4-layout-and-speech-bubbles">Step 4: Layout and Speech Bubbles</h3>
+<p>
+Finally, we render the result using <strong>Ink</strong> components (%%INLINE<em>11%% and %%INLINE</em>12%%). We check if there is a <code>reaction</code> (text to say).
+</p>
+<p>
+If there is a reaction, we render a <code>SpeechBubble</code> component next to the sprite.
+</p>
+<pre data-lang="tsx"><code>// CompanionSprite.tsx (Simplified Return)
+return (
+  &lt;Box flexDirection="row" alignItems="flex-end"&gt;
+    
+    {/* 1. The Speech Bubble (Optional) */}
+    {reaction &amp;&amp; (
+      &lt;SpeechBubble text={reaction} color="green" /&gt;
+    )}
+
+    {/* 2. The Sprite Body */}
+    &lt;Box flexDirection="column"&gt;
+      {finalLines.map((line, i) =&gt; (
+        &lt;Text key={i}&gt;{line}&lt;/Text&gt;
+      ))}
+    &lt;/Box&gt;
+
+  &lt;/Box&gt;
+);
+</code></pre>
+<h2 id="why-this-is-cool">Why this is cool</h2>
+<ol>
+<li><strong>Low CPU Usage:</strong> We aren't calculating 60 frames per second like a video game. We update twice a second. It's very lightweight.</li>
+</ol>
+<ol>
+<li><strong>Personality:</strong> By changing %%INLINE<em>15%%, we can make the pet look hyperactive (lots of %%INLINE</em>16%%s) or sleepy (mostly <code>0</code>s).</li>
+</ol>
+<ol>
+<li><strong>Responsive:</strong> Because it's a React component, if the window resizes, the <code>Box</code> layout automatically adjusts the speech bubble position.</li>
+</ol>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+We have breathed life into our companion!
+</p>
+<ol>
+<li><strong>Chapter 1</strong> gave it a Soul (Name/Stats).</li>
+</ol>
+<ol>
+<li><strong>Chapter 2</strong> gave it a Body (ASCII Art).</li>
+</ol>
+<ol>
+<li><strong>Chapter 3</strong> gave it a Heartbeat (Animation Loop).</li>
+</ol>
+<p>
+Currently, our buddy is alive, but it is living in a bubble. It doesn't know what you are doing in the terminal. It creates animations, but it doesn't <em>react</em> to your work.
+</p>
+<p>
+In the next chapter, we will learn how to inject "Context" so the companion can see what command you just ran and comment on it.
+</p>
+<p>
+<a href="04<em>context</em>injection.md">Next: Context Injection</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="buddy.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">buddy/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-concept-the-infinite-loop">The Concept: The Infinite Loop</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-tick-state">1. The Tick (State)</a></li>
+<li style="padding-left:10px"><a href="#2-the-choreography-sequence">2. The Choreography (Sequence)</a></li>
+<li style="padding-left:10px"><a href="#3-the-layout-flexbox">3. The Layout (Flexbox)</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-implementation">Under the Hood: Implementation</a></li>
+<li style="padding-left:10px"><a href="#step-1-setting-the-heartbeat">Step 1: Setting the Heartbeat</a></li>
+<li style="padding-left:10px"><a href="#step-2-deciding-the-frame">Step 2: Deciding the Frame</a></li>
+<li style="padding-left:10px"><a href="#step-3-drawing-the-frame">Step 3: Drawing the Frame</a></li>
+<li style="padding-left:10px"><a href="#step-4-layout-and-speech-bubbles">Step 4: Layout and Speech Bubbles</a></li>
+<li style="padding-left:0px"><a href="#why-this-is-cool">Why this is cool</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: Git Integration — utils/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">utils/04_git_integration.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🛠 utils/ · 04_git_integration.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: Git Integration</h1>
+  <div class="chapter-meta"><span>📄 utils/04_git_integration.md</span></div>
+</div>
+<h1 id="chapter-4-git-integration">Chapter 4: Git Integration</h1>
+<p>
+Welcome to Chapter 4 of the <code>utils</code> project tutorial.
+</p>
+<p>
+In the previous chapter, <a href="03<em>model</em>context<em>_</em>strategy.md">Model Context & Strategy</a>, we gave our AI Agent a "Brain"—we taught it how to select the right model, manage its memory, and understand its persona.
+</p>
+<p>
+Now that the AI knows <em>how</em> to think, it needs to understand the project it is working on. For developers, the history and state of a project live in <strong>Git</strong>.
+</p>
+<h2 id="the-problem-the-raw-text-nightmare">The Problem: The "Raw Text" Nightmare</h2>
+<p>
+Imagine you want to ask the computer: <em>"What files have changed?"</em>
+</p>
+<p>
+If you were typing in a terminal, you would run <code>git status</code>. The computer might reply:
+</p>
+<pre data-lang="text"><code>On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add &lt;file&gt;..." to update what will be committed)
+  modified:   src/app.ts
+</code></pre>
+<p>
+This text is great for humans, but <strong>terrible</strong> for software. To make an app understand this, you would have to write code to read every line, look for the word "modified," and extract the filename. If Git updates and changes the text slightly, your code breaks.
+</p>
+<p>
+We need a <strong>Git Integration Layer</strong>. This layer acts as a <strong>Translator</strong>. It runs Git commands behind the scenes and converts the messy text output into clean, structured data that our code can easily use.
+</p>
+<h2 id="key-concept-1-finding-the-anchor-git-root">Key Concept 1: Finding the Anchor (Git Root)</h2>
+<p>
+Before we can run any Git commands, we need to know <em>where</em> the project is.
+</p>
+<p>
+If you are currently working in a deep folder like %%INLINE<em>2%%, simply running a command might not work if the system doesn't know where the %%INLINE</em>3%% folder lives.
+</p>
+<p>
+The function <code>findGitRoot</code> solves this. It acts like a homing pigeon finding its way home.
+</p>
+<h3 id="how-to-use-it">How to use it</h3>
+<pre data-lang="typescript"><code>// From git.ts
+import { findGitRoot } from './git.js'
+
+// Imagine we are deep inside a subfolder
+const currentFolder = '/Users/me/projects/app/src'
+
+// This function hunts down the main folder
+const root = findGitRoot(currentFolder)
+
+console.log(root) // Output: "/Users/me/projects/app"
+</code></pre>
+<p>
+<em>Explanation: The function looks at the current folder. If it doesn't see <code>.git</code>, it moves to the parent folder. It keeps going up until it finds the repository root or hits the top of the file system.</em>
+</p>
+<h2 id="key-concept-2-the-dashboard-reading-state">Key Concept 2: The Dashboard (Reading State)</h2>
+<p>
+The Agent frequently needs a snapshot of the repository. It asks: <em>"Is the directory clean? What branch am I on? Are there new files?"</em>
+</p>
+<p>
+Instead of running five different commands, we use <code>getGitState</code>. This consolidates everything into one object.
+</p>
+<h3 id="how-to-use-it">How to use it</h3>
+<pre data-lang="typescript"><code>// From git.ts
+import { getGitState } from './git.js'
+
+async function checkRepo() {
+  const state = await getGitState()
+
+  if (state.isClean) {
+    console.log("Nothing to do here!")
+  } else {
+    console.log(`Working on branch: ${state.branchName}`)
+  }
+}
+</code></pre>
+<p>
+<em>Explanation: This function returns a structured object (JSON) with boolean flags (%%INLINE<em>7%%) and strings (%%INLINE</em>8%%). The rest of the app doesn't need to know <code>git status --porcelain</code> was run behind the scenes.</em>
+</p>
+<h2 id="key-concept-3-the-safety-net-stashing">Key Concept 3: The Safety Net (Stashing)</h2>
+<p>
+One of the most dangerous things an automated tool can do is overwrite your uncommitted work.
+</p>
+<p>
+Before the Agent tries to apply a complex patch or change branches, we often want to "save the game" so we don't lose progress. We use <code>stashToCleanState</code>.
+</p>
+<h3 id="how-to-use-it">How to use it</h3>
+<pre data-lang="typescript"><code>// From git.ts
+import { stashToCleanState } from './git.js'
+
+async function prepareForChanges() {
+  // Save everything (including new 'untracked' files)
+  const success = await stashToCleanState("Auto-save before AI run")
+  
+  if (success) {
+    console.log("Work saved safely. Repository is now clean.")
+  }
+}
+</code></pre>
+<p>
+<em>Explanation: Standard <code>git stash</code> sometimes leaves new files behind. This wrapper explicitly finds "untracked" files and ensures they are included in the stash, preventing accidental data loss.</em>
+</p>
+<h2 id="internal-implementation-the-workflow">Internal Implementation: The Workflow</h2>
+<p>
+When the application asks for the Git status, it doesn't speak directly to the Git executable. It goes through our wrapper.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant App
+    participant GitWrapper as git.ts
+    participant Shell as Shell/Terminal
+    participant Parser
+
+    App-&gt;&gt;GitWrapper: getChangedFiles()
+    
+    GitWrapper-&gt;&gt;Shell: Exec "git status --porcelain"
+    Shell--&gt;&gt;GitWrapper: Returns "M src/index.ts\n?? new.txt"
+    
+    GitWrapper-&gt;&gt;Parser: Parse this text string
+    Parser--&gt;&gt;GitWrapper: ["src/index.ts", "new.txt"]
+    
+    GitWrapper--&gt;&gt;App: Returns Array of Strings</div></div>
+<h2 id="deep-dive-walking-the-tree">Deep Dive: Walking the Tree</h2>
+<p>
+Let's look under the hood of %%INLINE<em>12%%. How does it actually find the folder? It uses a %%INLINE</em>13%% loop to traverse the file system upwards.
+</p>
+<pre data-lang="typescript"><code>// From git.ts - Simplified
+const findGitRootImpl = (startPath: string) =&gt; {
+  let current = resolve(startPath)
+  
+  // Loop until we hit the top of the drive
+  while (current !== root) {
+    // Check if .git exists right here
+    if (pathExists(join(current, '.git'))) {
+      return current // Found it!
+    }
+
+    // Move one level up
+    current = dirname(current)
+  }
+  return null // Not found
+}
+</code></pre>
+<p>
+<em>Explanation: This is a classic "Tree Traversal." It checks %%INLINE<em>14%%, then %%INLINE</em>15%%, then %%INLINE<em>16%%. It stops as soon as it finds the treasure (the %%INLINE</em>17%% folder). To make this fast, the real code uses "Memoization" (caching), so if we ask for the same path twice, it remembers the answer instantly.</em>
+</p>
+<h2 id="deep-dive-privacy-hashing">Deep Dive: Privacy & Hashing</h2>
+<p>
+We often need to identify a repository for telemetry (logs), but we <strong>cannot</strong> upload the name of your private project (e.g., <code>secret-launch-v2</code>) to a server. That would be a privacy leak.
+</p>
+<p>
+The solution is <code>getRepoRemoteHash</code>. It creates a unique "fingerprint" for the repository without revealing its name.
+</p>
+<pre data-lang="typescript"><code>// From git.ts - Simplified
+export async function getRepoRemoteHash() {
+  // 1. Get the URL: "git@github.com:MyCompany/SecretProject.git"
+  const url = await getRemoteUrl()
+  
+  // 2. Normalize it: "github.com/mycompany/secretproject"
+  const cleanUrl = normalizeGitRemoteUrl(url)
+
+  // 3. Hash it: Turn it into random-looking characters
+  const hash = createHash('sha256').update(cleanUrl).digest('hex')
+  
+  // Returns: "a1b2c3d4..." (The original name is gone)
+  return hash.substring(0, 16)
+}
+</code></pre>
+<p>
+<em>Explanation: We use a cryptographic hash (SHA-256). This is a one-way street. We can tell if two users are working on the same repo (the hashes will match), but we can never read the hash and figure out the original project name.</em>
+</p>
+<h2 id="deep-dive-handling-untracked-files">Deep Dive: Handling "Untracked" Files</h2>
+<p>
+Standard Git commands like <code>git diff</code> usually ignore files that haven't been added yet (Untracked files). But if you just created a new file and asked the AI to fix it, the AI needs to see it!
+</p>
+<p>
+We have a special function <code>captureUntrackedFiles</code> that manually reads these files.
+</p>
+<pre data-lang="typescript"><code>// From git.ts - Simplified
+async function captureUntrackedFiles() {
+  // 1. Ask git for list of new files only
+  const output = await exec('git ls-files --others --exclude-standard')
+  const filePaths = output.split('\n')
+
+  // 2. Read the content of each file manually
+  const results = []
+  for (const file of filePaths) {
+    // Skip huge files or binary files (like images)
+    if (isBinary(file) || isTooBig(file)) continue;
+
+    const content = await readFile(file)
+    results.push({ path: file, content: content })
+  }
+
+  return results
+}
+</code></pre>
+<p>
+<em>Explanation: This bridges a gap in Git's default behavior. By combining <code>git ls-files</code> with manual file reading, we ensure the AI has the complete context, not just the stuff that has already been committed.</em>
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we explored how the application interacts with Version Control:
+</p>
+<ol>
+<li><strong>Finding the Root:</strong> <code>findGitRoot</code> anchors us to the project base.</li>
+</ol>
+<ol>
+<li><strong>Reading State:</strong> <code>getGitState</code> converts raw text output into easy-to-use data.</li>
+</ol>
+<ol>
+<li><strong>Safety:</strong> <code>stashToCleanState</code> protects user data before automated actions occur.</li>
+</ol>
+<ol>
+<li><strong>Privacy:</strong> Hashing ensures we can identify repositories in logs without spying on project names.</li>
+</ol>
+<p>
+Now that the Agent can understand the project structure and history, it needs to interact with the machine itself—running commands and editing files.
+</p>
+<p>
+<a href="05<em>operating</em>system<em>interface<strong>shell</strong></em>fs_.md">Next Chapter: Operating System Interface (Shell & FS)</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="utils.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">utils/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-raw-text-nightmare">The Problem: The "Raw Text" Nightmare</a></li>
+<li style="padding-left:0px"><a href="#key-concept-1-finding-the-anchor-git-root">Key Concept 1: Finding the Anchor (Git Root)</a></li>
+<li style="padding-left:10px"><a href="#how-to-use-it">How to use it</a></li>
+<li style="padding-left:0px"><a href="#key-concept-2-the-dashboard-reading-state">Key Concept 2: The Dashboard (Reading State)</a></li>
+<li style="padding-left:10px"><a href="#how-to-use-it">How to use it</a></li>
+<li style="padding-left:0px"><a href="#key-concept-3-the-safety-net-stashing">Key Concept 3: The Safety Net (Stashing)</a></li>
+<li style="padding-left:10px"><a href="#how-to-use-it">How to use it</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-the-workflow">Internal Implementation: The Workflow</a></li>
+<li style="padding-left:0px"><a href="#deep-dive-walking-the-tree">Deep Dive: Walking the Tree</a></li>
+<li style="padding-left:0px"><a href="#deep-dive-privacy-hashing">Deep Dive: Privacy & Hashing</a></li>
+<li style="padding-left:0px"><a href="#deep-dive-handling-untracked-files">Deep Dive: Handling "Untracked" Files</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

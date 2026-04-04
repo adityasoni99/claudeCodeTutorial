@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 1: Task State Polymorphism — tasks/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">tasks/01_task_state_polymorphism.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">📋 tasks/ · 01_task_state_polymorphism.md</div>
+  <h1 class="chapter-title-h1">Chapter 1: Task State Polymorphism</h1>
+  <div class="chapter-meta"><span>📄 tasks/01_task_state_polymorphism.md</span></div>
+</div>
+<h1 id="chapter-1-task-state-polymorphism">Chapter 1: Task State Polymorphism</h1>
+<p>
+Welcome to the <code>tasks</code> project! In this first chapter, we are going to look at the foundation that makes everything else possible.
+</p>
+<h2 id="the-problem-comparing-apples-and-oranges">The Problem: Comparing Apples and Oranges</h2>
+<p>
+Imagine you are building a dashboard. You want to show a list of everything the system is doing. Currently, the system might be doing three very different things:
+</p>
+<ol>
+<li>Running a simple command in the terminal (like <code>ls -la</code>).</li>
+</ol>
+<ol>
+<li>Running a complex AI Agent that is thinking and planning.</li>
+</ol>
+<ol>
+<li>Running a "Dream" process (a background simulation).</li>
+</ol>
+<p>
+These three activities work very differently under the hood. However, your dashboard needs a simple way to answer one question for all of them: <strong>"Is this task currently running?"</strong>
+</p>
+<p>
+If we didn't use <strong>Task State Polymorphism</strong>, we would have to write messy code like this:
+</p>
+<ul>
+<li>"If it's a shell command, check the process ID."</li>
+<li>"If it's an AI agent, check its thought loop."</li>
+<li>"If it's a dream, check the simulation engine."</li>
+</ul>
+<h2 id="the-solution-the-universal-adapter">The Solution: The Universal Adapter</h2>
+<p>
+<strong>Task State Polymorphism</strong> is our solution. Think of it like a universal travel adapter for power outlets.
+</p>
+<p>
+Whether you plug in a hair dryer (Shell Command), a laptop (AI Agent), or a phone charger (Dream), the wall socket treats them all exactly the same. It simply provides power.
+</p>
+<p>
+In our system, we treat every activity as a <code>TaskState</code>. This allows us to interact with any task using a shared interface, regardless of what that task actually does.
+</p>
+<h3 id="core-concept-the-union-type">Core Concept: The Union Type</h3>
+<p>
+At the code level, we define a "Task" not as one single thing, but as a collection of possibilities.
+</p>
+<p>
+Here is the actual definition from our %%INLINE<em>3%% file. Notice how %%INLINE</em>4%% is just a list of other specific types joined by <code>|</code> (which means "OR").
+</p>
+<pre data-lang="typescript"><code>// From types.ts
+// This tells the system: "A TaskState can be ANY of these things"
+export type TaskState =
+  | LocalShellTaskState
+  | LocalAgentTaskState
+  | RemoteAgentTaskState
+  | InProcessTeammateTaskState
+  // ... and others
+</code></pre>
+<p>
+Because of this definition, we can create functions that accept <code>TaskState</code> as an input. These functions don't need to know exactly which one it is to do basic things.
+</p>
+<h3 id="solving-the-use-case-the-stop-button">Solving the Use Case: The "Stop" Button</h3>
+<p>
+Let's solve our main problem: <strong>How do we stop any task without knowing what it is?</strong>
+</p>
+<p>
+Because every item in that list above shares common properties (like <code>status</code>), we can check them easily.
+</p>
+<pre data-lang="typescript"><code>// Example: Checking if ANY task is running
+function isTaskActive(task: TaskState): boolean {
+  // We don't care if it's a Shell or an Agent task.
+  // They ALL have a 'status' property.
+  return task.status === 'running' || task.status === 'pending';
+}
+</code></pre>
+<p>
+<strong>What happens here:</strong>
+</p>
+<ol>
+<li><strong>Input:</strong> You pass in a Shell Task or an Agent Task.</li>
+</ol>
+<ol>
+<li><strong>Processing:</strong> TypeScript knows that both types have a field called <code>status</code>.</li>
+</ol>
+<ol>
+<li><strong>Output:</strong> Returns %%INLINE<em>9%% if it's active, %%INLINE</em>10%% otherwise.</li>
+</ol>
+<h2 id="internal-implementation">Internal Implementation</h2>
+<p>
+Now let's see how the system actually handles stopping a task under the hood. We will look at <code>stopTask.ts</code>.
+</p>
+<h3 id="visual-walkthrough">Visual Walkthrough</h3>
+<p>
+When you ask the system to "Stop Task #123", it follows this flow. Notice how step 3 is generic (polymorphic), but Step 5 is specific.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant U as User
+    participant S as System (stopTask)
+    participant T as Task List
+    participant I as Implementation
+
+    U-&gt;&gt;S: Stop Task "123"
+    S-&gt;&gt;T: Get Task "123"
+    T--&gt;&gt;S: Returns Generic TaskState
+    
+    note over S: Polymorphic Check
+    S-&gt;&gt;S: Check task.status === 'running'
+    
+    note over S: Specific Lookup
+    S-&gt;&gt;S: Check task.type (e.g., 'LocalShell')
+    S-&gt;&gt;I: Find tool for 'LocalShell'
+    S-&gt;&gt;I: Execute .kill()</div></div>
+<h3 id="code-deep-dive">Code Deep Dive</h3>
+<p>
+Let's look at the real code in <code>stopTask.ts</code> to see this in action.
+</p>
+<p>
+<strong>Step 1: The Generic Check</strong>
+ 
+First, we retrieve the task and check its status. At this point, the code doesn't care <em>how</em> to stop the task, only <em>if</em> it should be stopped.
+</p>
+<pre data-lang="typescript"><code>// From stopTask.ts
+// We get the task generically
+const task = appState.tasks?.[taskId] as TaskStateBase | undefined
+
+// Polymorphic check: works for ALL task types
+if (task.status !== 'running') {
+  throw new StopTaskError(
+    `Task ${taskId} is not running`,
+    'not_running',
+  )
+}
+</code></pre>
+<p>
+<strong>Step 2: Switching to Specifics</strong>
+ 
+Once we know the task is running, we need to know <em>how</em> to kill it. A shell command is killed differently than an AI agent. We use the <code>type</code> property to find the specific "driver" (implementation) for that task.
+</p>
+<pre data-lang="typescript"><code>// From stopTask.ts
+// Now we look up the specific logic based on the type string
+const taskImpl = getTaskByType(task.type)
+
+if (!taskImpl) {
+  throw new StopTaskError(`Unsupported type`, 'unsupported_type')
+}
+
+// Execute the specific kill logic
+await taskImpl.kill(taskId, setAppState)
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li><code>task.type</code>: Every task has a label, e.g., "LocalShell" or "LocalAgent".</li>
+<li><code>getTaskByType</code>: This factory function returns the specific code needed to control that task.</li>
+<li><code>taskImpl.kill()</code>: If it's a shell task, this sends a UNIX kill signal. If it's an Agent, it might cancel a network request.</li>
+</ul>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>Task State Polymorphism</strong> allows us to treat different activities (Shell, Agent, Dream) as the same object type: <code>TaskState</code>.</li>
+</ol>
+<ol>
+<li>We can access shared properties like <code>.status</code> without knowing the specific task type.</li>
+</ol>
+<ol>
+<li>When we need to perform specific actions (like stopping a task), we use the <code>.type</code> property to find the correct implementation.</li>
+</ol>
+<p>
+This foundation allows our system to be extensible. We can add new types of tasks later without rewriting our entire dashboard or control logic!
+</p>
+<p>
+In the next chapter, we will look at the most common specific implementation of a task: running commands on your computer.
+</p>
+<p>
+<a href="02<em>local</em>shell_execution.md">Next Chapter: Local Shell Execution</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="tasks.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">tasks/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-comparing-apples-and-oranges">The Problem: Comparing Apples and Oranges</a></li>
+<li style="padding-left:0px"><a href="#the-solution-the-universal-adapter">The Solution: The Universal Adapter</a></li>
+<li style="padding-left:10px"><a href="#core-concept-the-union-type">Core Concept: The Union Type</a></li>
+<li style="padding-left:10px"><a href="#solving-the-use-case-the-stop-button">Solving the Use Case: The "Stop" Button</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#visual-walkthrough">Visual Walkthrough</a></li>
+<li style="padding-left:10px"><a href="#code-deep-dive">Code Deep Dive</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

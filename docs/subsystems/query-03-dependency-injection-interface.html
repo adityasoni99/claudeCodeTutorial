@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: Dependency Injection Interface — query/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">query/03_dependency_injection_interface.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⚙️ query/ · 03_dependency_injection_interface.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: Dependency Injection Interface</h1>
+  <div class="chapter-meta"><span>📄 query/03_dependency_injection_interface.md</span></div>
+</div>
+<h1 id="chapter-3-dependency-injection-interface">Chapter 3: Dependency Injection Interface</h1>
+<p>
+Welcome back! In <a href="02<em>token</em>budget_control.md">Chapter 2: Token Budget Control</a>, we learned how to stop our agent from spending too much money (tokens) by monitoring its fuel usage.
+</p>
+<p>
+Now, we need to talk about the tools the agent uses to drive.
+</p>
+<h2 id="the-motivation-the-stunt-double-problem">The Motivation: The "Stunt Double" Problem</h2>
+<p>
+Imagine you are filming a movie. You have a scene where the main character jumps off a building.
+</p>
+<ol>
+<li><strong>Production:</strong> You want the real actor to do the scene (or a professional stunt person) to make it look real.</li>
+</ol>
+<ol>
+<li><strong>Rehearsal:</strong> You don't want the actor jumping off a building 50 times just to practice the lines. It’s dangerous and expensive. You want them to jump onto a soft mattress in a gym instead.</li>
+</ol>
+<p>
+In software, our "Building Jump" is calling the <strong>LLM API</strong> (like Claude or GPT).
+</p>
+<ul>
+<li><strong>Real API:</strong> Costs money, takes time, and sometimes gives different answers (non-deterministic).</li>
+<li><strong>Testing:</strong> We want to run our tests 1,000 times a second for free.</li>
+</ul>
+<p>
+<strong>The Solution:</strong> We create a <strong>Dependency Injection Interface</strong>. This is a "Plugboard." We don't hard-code the API call inside the agent. Instead, we say: <em>"Hey Agent, here is a box of tools. Use whatever is inside."</em>
+</p>
+<p>
+In production, we put the Real API in the box. In testing, we put a "Fake" API in the box.
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<ol>
+<li><strong>Dependency:</strong> Something your code needs to work (e.g., an internet connection, a random number generator).</li>
+</ol>
+<ol>
+<li><strong>Injection:</strong> Passing the tools <em>into</em> the function from the outside, rather than the function reaching out and grabbing them itself.</li>
+</ol>
+<ol>
+<li><strong>Interface:</strong> A strict contract defining what the tool must look like (e.g., "It must be a function that takes a string and returns a promise").</li>
+</ol>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+We use a specific type called <code>QueryDeps</code> to define our tool belt.
+</p>
+<h3 id="step-1-defining-the-interface">Step 1: Defining the Interface</h3>
+<p>
+First, we define the shape of the tools we need. We don't care <em>how</em> they work yet, just what they look like.
+</p>
+<pre data-lang="typescript"><code>// deps.ts - The Contract
+import { queryModelWithStreaming } from '../services/api/claude.js'
+
+export type QueryDeps = {
+  // The heavy lifter: Calling the AI Model
+  callModel: typeof queryModelWithStreaming
+
+  // A simple utility: Generating IDs
+  uuid: () =&gt; string
+  
+  // (We also include compaction tools here, omitted for brevity)
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This %%INLINE<em>1%% is our socket. It says: "If you want to run a query, you must provide a %%INLINE</em>2%% function and a <code>uuid</code> function."
+</p>
+<h3 id="step-2-creating-production-tools">Step 2: Creating Production Tools</h3>
+<p>
+Now we create the "Real" tool belt. This is what we use when the application is actually running live.
+</p>
+<pre data-lang="typescript"><code>// deps.ts - The Real Deal
+import { randomUUID } from 'crypto'
+// Import the REAL api client
+import { queryModelWithStreaming } from '../services/api/claude.js'
+
+export function productionDeps(): QueryDeps {
+  return {
+    callModel: queryModelWithStreaming,
+    uuid: randomUUID,
+    // ... other real tools
+  }
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This factory function bundles up the heavy, expensive, real-world functions into a single object that matches our interface.
+</p>
+<h3 id="step-3-creating-fake-tools-for-testing">Step 3: Creating Fake Tools (For Testing)</h3>
+<p>
+This is where the magic happens. When writing a test, we create a "Fake" tool belt.
+</p>
+<pre data-lang="typescript"><code>// test-file.ts - The Stunt Double
+const mockDeps: QueryDeps = {
+  // Fake Model: Always returns "Hello" instantly for free
+  callModel: async () =&gt; ({ text: "Hello from Mock!", usage: 10 }),
+  
+  // Fake UUID: Always returns "123" so tests are predictable
+  uuid: () =&gt; "123-123-123",
+  
+  // ... other fake tools
+}
+</code></pre>
+<p>
+<em>Explanation:</em> The agent doesn't know the difference! It calls <code>callModel</code>, gets a response, and keeps working. But we didn't spend a penny or wait for a network request.
+</p>
+<h2 id="under-the-hood">Under the Hood</h2>
+<p>
+How does the agent use these tools? It's all about passing arguments.
+</p>
+<h3 id="visual-flow">Visual Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Main as Main App (or Test)
+    participant Query as Query Engine
+    participant Deps as The "Plugboard" (Deps)
+    participant API as External Service
+
+    rect rgb(200, 255, 200)
+    Note over Main, API: Scenario A: Production
+    Main-&gt;&gt;Deps: Load productionDeps()
+    Main-&gt;&gt;Query: Run(Prompt, Deps)
+    Query-&gt;&gt;Deps: callModel("Hi")
+    Deps-&gt;&gt;API: Sends Network Request...
+    end
+
+    rect rgb(255, 230, 230)
+    Note over Main, API: Scenario B: Testing
+    Main-&gt;&gt;Deps: Load mockDeps()
+    Main-&gt;&gt;Query: Run(Prompt, Deps)
+    Query-&gt;&gt;Deps: callModel("Hi")
+    Deps--&gt;&gt;Query: Returns "Fake Answer" (Instant)
+    end</div></div>
+<h3 id="internal-implementation">Internal Implementation</h3>
+<p>
+Inside the core %%INLINE<em>5%% function, we don't import %%INLINE</em>6%% or the API client directly. We simply use the <code>deps</code> object passed to us.
+</p>
+<h4 id="the-function-signature">The Function Signature</h4>
+<p>
+The %%INLINE<em>8%% function requires %%INLINE</em>9%% as an argument.
+</p>
+<pre data-lang="typescript"><code>// query.ts (Simplified)
+import type { QueryDeps } from './deps.js'
+
+// The function asks for dependencies explicitly
+export async function query(
+  prompt: string, 
+  deps: QueryDeps // &lt;--- INJECTED HERE
+) {
+  // Logic follows...
+}
+</code></pre>
+<h4 id="using-the-tools">Using the Tools</h4>
+<p>
+Inside the function, we access the tools via <code>deps.toolName</code>.
+</p>
+<pre data-lang="typescript"><code>// Inside query.ts logic
+
+  // 1. We need an ID. Don't import randomUUID! Use deps.
+  const completionId = deps.uuid()
+
+  // 2. We need to talk to the AI. Use deps.
+  const response = await deps.callModel({
+    prompt: prompt,
+    id: completionId
+  })
+
+  return response
+</code></pre>
+<p>
+<em>Explanation:</em> By forcing the code to use %%INLINE<em>11%% instead of %%INLINE</em>12%%, we gain complete control over the behavior of the system from the outside.
+</p>
+<h2 id="why-is-this-beginner-friendly">Why is this "Beginner Friendly"?</h2>
+<p>
+Without Dependency Injection, writing tests for AI agents is a nightmare. You have to use complex "Mocking" libraries (like <code>jest.spyOn</code>) to hack the module loading system and intercept imports. It is brittle and hard to debug.
+</p>
+<p>
+With this pattern, testing is simple plain JavaScript:
+</p>
+<ol>
+<li>Create an object.</li>
+</ol>
+<ol>
+<li>Pass it to the function.</li>
+</ol>
+<ol>
+<li>Check the result.</li>
+</ol>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>The "Plugboard" Concept:</strong> We separate the logic of the agent from the heavy tools it uses (API, UUIDs).</li>
+</ol>
+<ol>
+<li><strong>Swappability:</strong> We can plug in "Real" tools for production and "Fake" tools for testing.</li>
+</ol>
+<ol>
+<li><strong>Stability:</strong> This allows us to test complex logic without making expensive, slow, or random network calls.</li>
+</ol>
+<p>
+Now the agent has its <strong>Configuration</strong>, its <strong>Budget</strong>, and its <strong>Tools</strong>. But what happens when the agent finishes a turn? We might need to save data or log analytics.
+</p>
+<p>
+<a href="04<em>post</em>turn<em>lifecycle</em>hooks.md">Next Chapter: Post-Turn Lifecycle Hooks</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="query.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">query/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-the-stunt-double-problem">The Motivation: The "Stunt Double" Problem</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:10px"><a href="#step-1-defining-the-interface">Step 1: Defining the Interface</a></li>
+<li style="padding-left:10px"><a href="#step-2-creating-production-tools">Step 2: Creating Production Tools</a></li>
+<li style="padding-left:10px"><a href="#step-3-creating-fake-tools-for-testing">Step 3: Creating Fake Tools (For Testing)</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood">Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#visual-flow">Visual Flow</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:0px"><a href="#why-is-this-beginner-friendly">Why is this "Beginner Friendly"?</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

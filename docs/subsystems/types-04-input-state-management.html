@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: Input State Management — types/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">types/04_input_state_management.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">📝 types/ · 04_input_state_management.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: Input State Management</h1>
+  <div class="chapter-meta"><span>📄 types/04_input_state_management.md</span></div>
+</div>
+<h1 id="chapter-4-input-state-management">Chapter 4: Input State Management</h1>
+<p>
+In the previous chapter, <a href="03<em>permission</em><em>_safety</em>system.md">Permission & Safety System</a>, we established the "Bouncer" that stops the agent from doing dangerous things.
+</p>
+<p>
+Now that we are safe, we need to talk. You might think handling user input is easy: just an empty box where you type letters. But in a professional agent system, the input box is a complex engine. It handles <strong>Vim keybindings</strong>, <strong>image pasting</strong>, <strong>autocomplete suggestions</strong>, and <strong>history navigation</strong>.
+</p>
+<p>
+This chapter covers <strong>Input State Management</strong>: the cockpit controls of our application.
+</p>
+<h2 id="the-motivation-more-than-just-a-string">The Motivation: More Than Just a String</h2>
+<p>
+If you are building a simple web form, you just care about the text value: <code>const name = "Alice"</code>.
+</p>
+<p>
+But for an AI Agent running in a terminal, we need to manage the <strong>entire experience</strong> of typing.
+</p>
+<ol>
+<li><strong>Cursor Logic:</strong> If the user presses the <code>Up Arrow</code>, do we move the cursor up a line, or do we fetch the previous command from history?</li>
+</ol>
+<ol>
+<li><strong>Modes:</strong> Are we typing text (%%INLINE<em>2%%) or navigating code (%%INLINE</em>3%%)?</li>
+</ol>
+<ol>
+<li><strong>Rich Content:</strong> What happens if the user pastes a generic screenshot? We can't put binary image data into a text string.</li>
+</ol>
+<ol>
+<li><strong>Ghost Text:</strong> How do we show autocomplete suggestions (like greyed-out text) without actually changing what the user typed?</li>
+</ol>
+<p>
+The Input State Manager acts as the translation layer between your keyboard and the agent's brain.
+</p>
+<hr>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+The input system is defined primarily in <code>textInputTypes.ts</code>. Here are the core components used to manage this complexity.
+</p>
+<h3 id="1-the-input-state-inline-5">1. The Input State (<code>TextInputState</code>)</h3>
+<p>
+This tracks where you are physically on the screen. It's not enough to know <em>what</em> was typed; we must know <em>how</em> it is displayed.
+</p>
+<pre data-lang="typescript"><code>export type BaseInputState = {
+  renderedValue: string  // What the user sees
+  offset: number         // Where the cursor is (index 0-100)
+  cursorLine: number     // Vertical position
+  cursorColumn: number   // Horizontal position
+  
+  // Is the user currently pasting a massive block of text?
+  isPasting?: boolean    
+}
+</code></pre>
+<ul>
+<li><strong>Beginner Tip:</strong> %%INLINE<em>6%% is crucial. If a user wants to delete a character, we don't just delete the last letter; we delete the letter at the %%INLINE</em>7%%.</li>
+</ul>
+<h3 id="2-ghost-text-inline-8">2. Ghost Text (<code>InlineGhostText</code>)</h3>
+<p>
+"Ghost Text" is the grey text that appears ahead of your cursor to suggest a command. It guides the user without forcing them to commit to the text.
+</p>
+<pre data-lang="typescript"><code>export type InlineGhostText = {
+  text: string           // e.g., "mit" (completing "com" -&gt; "commit")
+  fullCommand: string    // e.g., "commit"
+  insertPosition: number // Where does this ghost start?
+}
+</code></pre>
+<ul>
+<li><strong>Analogy:</strong> This is like the "Heads-Up Display" (HUD) in a video game. It overlays information on the real world (your input) to help you aim.</li>
+</ul>
+<h3 id="3-vim-modes-inline-9">3. Vim Modes (<code>VimInputState</code>)</h3>
+<p>
+For power users, we support Vim bindings. This introduces the concept of <strong>Modal Editing</strong>.
+</p>
+<pre data-lang="typescript"><code>export type VimMode = 'INSERT' | 'NORMAL'
+
+export type VimInputState = BaseInputState &amp; {
+  mode: VimMode               // Are we typing or commanding?
+  setMode: (mode: VimMode) =&gt; void
+}
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong> In %%INLINE<em>10%% mode, pressing 'i' types the letter 'i'. In %%INLINE</em>11%% mode, pressing 'i' switches you to Insert mode. The state manager must listen to every keystroke to decide what to do.</li>
+</ul>
+<hr>
+<h2 id="use-case-the-smart-paste">Use Case: The "Smart Paste"</h2>
+<p>
+Let's look at a common scenario: <strong>The User copies a screenshot of an error and pastes it into the terminal.</strong>
+</p>
+<p>
+Standard terminals would crash or print gibberish characters. Our Input Manager handles this gracefully.
+</p>
+<h3 id="step-1-detecting-the-paste">Step 1: Detecting the Paste</h3>
+<p>
+The <code>BaseTextInputProps</code> defines a handler specifically for images.
+</p>
+<pre data-lang="typescript"><code>// Inside BaseTextInputProps
+readonly onImagePaste?: (
+  base64Image: string, // The raw image data
+  mediaType?: string,  // e.g., "image/png"
+  filename?: string    // e.g., "screenshot.png"
+) =&gt; void
+</code></pre>
+<h3 id="step-2-queuing-the-command">Step 2: Queuing the Command</h3>
+<p>
+When the user hits "Enter", we don't just send a string. We bundle the text <em>and</em> the image into a <code>QueuedCommand</code>.
+</p>
+<pre data-lang="typescript"><code>export type QueuedCommand = {
+  value: string          // The text: "Fix this error"
+  mode: 'prompt'         // Standard chat mode
+  
+  // The magic happens here:
+  pastedContents?: Record&lt;number, PastedContent&gt; 
+}
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong> The %%INLINE<em>14%% field acts like an email attachment. The %%INLINE</em>15%% is the body of the email, and <code>pastedContents</code> holds the heavy files.</li>
+</ul>
+<hr>
+<h2 id="under-the-hood-the-input-pipeline">Under the Hood: The Input Pipeline</h2>
+<p>
+How does a keystroke become a command? It goes through a pipeline of filtering, ghost-text checking, and finally, queuing.
+</p>
+<h3 id="visual-flow">Visual Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant U as User
+    participant IM as Input Manager
+    participant GT as Ghost Text Logic
+    participant Q as Command Queue
+
+    U-&gt;&gt;IM: Types "/com"
+    IM-&gt;&gt;GT: Check for matches
+    GT--&gt;&gt;IM: Suggest "mit" (Ghost Text)
+    
+    IM-&gt;&gt;U: Renders "/com" with grey "mit"
+    
+    U-&gt;&gt;IM: Presses Tab
+    IM-&gt;&gt;IM: Auto-completes to "/commit "
+    
+    U-&gt;&gt;IM: Types "message" &amp; Hits Enter
+    IM-&gt;&gt;Q: Create QueuedCommand
+    Q-&gt;&gt;Q: Attach Metadata (Priority: 'now')</div></div>
+<h3 id="implementation-details">Implementation Details</h3>
+<p>
+Let's look deeper into the %%INLINE<em>17%% in %%INLINE</em>18%%. This is the final output of the Input State Manager. It prepares the data for the <a href="01<em>command</em>architecture.md">Command Architecture</a>.
+</p>
+<h4 id="1-prioritization-inline-19">1. Prioritization (<code>QueuePriority</code>)</h4>
+<p>
+Not all inputs are equal. If the agent is running a long loop, and you press <code>Esc</code>, you want that to happen <em>now</em>.
+</p>
+<pre data-lang="typescript"><code>/**
+ * now   - Interrupt immediately (Abort current tool)
+ * next  - Wait for current tool, but go before next API call
+ * later - Wait for the agent to finish its whole turn
+ */
+export type QueuePriority = 'now' | 'next' | 'later'
+</code></pre>
+<h4 id="2-the-bridge-guard-inline-21">2. The Bridge Guard (<code>skipSlashCommands</code>)</h4>
+<p>
+Sometimes, input comes from a remote UI (like a phone app connected to the agent). In these cases, we might want to disable local slash commands to prevent security issues or confusion.
+</p>
+<pre data-lang="typescript"><code>export type QueuedCommand = {
+  // ... other fields
+  
+  // If true, "/quit" is treated as plain text, not a command.
+  skipSlashCommands?: boolean
+  
+  // Did this come from a remote bridge?
+  bridgeOrigin?: boolean
+}
+</code></pre>
+<ul>
+<li><strong>Beginner Tip:</strong> This is a safety feature. It ensures that inputs from untrusted sources (or sources that can't see the terminal) don't accidentally trigger powerful local actions.</li>
+</ul>
+<hr>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+<strong>Input State Management</strong> is about robustly handling the chaotic nature of human interaction. By treating input as a complex state object—containing cursor positions, modes, and attachments—rather than a simple string, we enable features like:
+</p>
+<ol>
+<li><strong>Rich Media:</strong> Pasting images directly into the flow.</li>
+</ol>
+<ol>
+<li><strong>Developer Experience:</strong> Vim bindings and Autocomplete.</li>
+</ol>
+<ol>
+<li><strong>Responsiveness:</strong> Prioritizing "Abort" signals over standard chat.</li>
+</ol>
+<p>
+Now that we have collected the user's input, processed it, and queued it, we might want to extend the agent's capabilities beyond what came in the box.
+</p>
+<p>
+<a href="05<em>extensibility<strong>plugins</strong></em>hooks_.md">Next Chapter: Extensibility (Plugins & Hooks)</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="types.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">types/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-more-than-just-a-string">The Motivation: More Than Just a String</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-input-state-inline-5">1. The Input State (%%INLINE_5%%)</a></li>
+<li style="padding-left:10px"><a href="#2-ghost-text-inline-8">2. Ghost Text (%%INLINE_8%%)</a></li>
+<li style="padding-left:10px"><a href="#3-vim-modes-inline-9">3. Vim Modes (%%INLINE_9%%)</a></li>
+<li style="padding-left:0px"><a href="#use-case-the-smart-paste">Use Case: The "Smart Paste"</a></li>
+<li style="padding-left:10px"><a href="#step-1-detecting-the-paste">Step 1: Detecting the Paste</a></li>
+<li style="padding-left:10px"><a href="#step-2-queuing-the-command">Step 2: Queuing the Command</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-the-input-pipeline">Under the Hood: The Input Pipeline</a></li>
+<li style="padding-left:10px"><a href="#visual-flow">Visual Flow</a></li>
+<li style="padding-left:10px"><a href="#implementation-details">Implementation Details</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

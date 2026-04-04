@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: Dynamic Context Injection — coordinator/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">coordinator/04_dynamic_context_injection.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🎯 coordinator/ · 04_dynamic_context_injection.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: Dynamic Context Injection</h1>
+  <div class="chapter-meta"><span>📄 coordinator/04_dynamic_context_injection.md</span></div>
+</div>
+<h1 id="chapter-4-dynamic-context-injection">Chapter 4: Dynamic Context Injection</h1>
+<p>
+Welcome to Chapter 4! In the previous chapter, <a href="03<em>task</em>notification_protocol.md">Task Notification Protocol</a>, we learned how workers report their results back to the Coordinator using XML envelopes.
+</p>
+<p>
+We know <em>how</em> they communicate. But how do the Coordinator and its workers know <strong>what tools</strong> they are allowed to use? Does every worker have access to the database? Does the Coordinator know about your local file system?
+</p>
+<p>
+In this chapter, we will explore <strong>Dynamic Context Injection</strong>, the mechanism that builds the "Employee Handbook" and "Toolbelt" for our agents at the exact moment they start working.
+</p>
+<h2 id="the-motivation-the-briefcase-analogy">The Motivation: The "Briefcase" Analogy</h2>
+<p>
+Imagine you are sending a repairman (a Worker) to fix a sink. Before they leave, you need to hand them a briefcase.
+</p>
+<ol>
+<li><strong>The Scenario</strong>: You are in a secure building.</li>
+</ol>
+<ol>
+<li><strong>The Problem</strong>: If you give them a hammer, they can fix the sink. If you <em>don't</em> give them a hammer, they will stare at the sink and say "I can't do this."</li>
+</ol>
+<ol>
+<li><strong>The Dynamic Part</strong>: Sometimes you want to give them a <strong>Master Key</strong> (Full Mode), and sometimes you only want to give them a <strong>Guest Pass</strong> (Safe/Simple Mode).</li>
+</ol>
+<p>
+We cannot hardcode these tools. We need a system that checks the environment (Are we in Safe Mode? Are there extra plugins connected?) and <strong>injects</strong> the correct list of capabilities into the AI's brain.
+</p>
+<h3 id="central-use-case-mcp-servers">Central Use Case: "MCP Servers"</h3>
+<p>
+You might have an <strong>MCP Server</strong> (Model Context Protocol) connected that allows the AI to talk to GitHub.
+</p>
+<ul>
+<li><strong>Without Injection</strong>: The Coordinator doesn't know GitHub exists. It won't try to use it.</li>
+<li><strong>With Injection</strong>: The system detects the GitHub server and adds: <em>"Workers have access to GitHub tools"</em> to the prompt.</li>
+</ul>
+<h2 id="core-concepts">Core Concepts</h2>
+<h3 id="1-the-coordinator-flag-inline-0">1. The Coordinator Flag (<code>isCoordinatorMode</code>)</h3>
+<p>
+First, we need to know if we are even playing the role of the Manager. This is determined by a "Feature Flag" or an environment variable.
+</p>
+<h3 id="2-the-context-builder">2. The Context Builder</h3>
+<p>
+This is a function that looks at the world and constructs a string of text. It asks:
+</p>
+<ul>
+<li>Is "Simple Mode" on? (Only allow basic file reading).</li>
+<li>Are there MCP servers? (Allow external tools).</li>
+<li>Is there a "Scratchpad"? (Allow shared memory files).</li>
+</ul>
+<h3 id="3-the-injection">3. The Injection</h3>
+<p>
+Finally, we take that constructed string and paste it into the <strong>System Prompt</strong> (for the Coordinator's identity) or the <strong>User Context</strong> (for the Coordinator's knowledge of its workers).
+</p>
+<h2 id="implementation-under-the-hood">Implementation: Under the Hood</h2>
+<p>
+Let's visualize how the system assembles the Coordinator's brain before the first message is even sent.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant S as System (Boot)
+    participant E as Environment
+    participant C as Context Builder
+    participant AI as Coordinator (LLM)
+
+    S-&gt;&gt;E: Check: Is Simple Mode on?
+    E--&gt;&gt;C: No (Full Mode)
+    
+    S-&gt;&gt;E: Check: Any MCP Servers?
+    E--&gt;&gt;C: Yes (GitHub, PostgreSQL)
+    
+    Note over C: Assembles string:&lt;br/&gt;"Workers have access to:&lt;br/&gt;Bash, FileEdit, GitHub, DB"
+
+    C-&gt;&gt;AI: Inject "User Context"
+    
+    Note over AI: AI now knows it can&lt;br/&gt;command workers to use GitHub.</div></div>
+<h3 id="the-code-building-the-toolbelt">The Code: Building the Toolbelt</h3>
+<p>
+The logic lives in <code>coordinatorMode.ts</code>. Let's look at how it builds the list of tools available to workers.
+</p>
+<h4 id="step-1-selecting-the-core-tools">Step 1: Selecting the Core Tools</h4>
+<p>
+The Coordinator doesn't use %%INLINE<em>2%% directly; it delegates %%INLINE</em>3%% tasks to workers. Here, we decide which tools the workers get.
+</p>
+<pre data-lang="typescript"><code>// From coordinatorMode.ts
+const workerTools = isEnvTruthy(process.env.CLAUDE_CODE_SIMPLE)
+  // If Simple Mode: restrict to basic reading/editing
+  ? [BASH_TOOL_NAME, FILE_READ_TOOL_NAME, FILE_EDIT_TOOL_NAME].join(', ')
+  // If Full Mode: give them everything (Bash, etc.)
+  : Array.from(ASYNC_AGENT_ALLOWED_TOOLS).join(', ')
+</code></pre>
+<p>
+<em>Explanation</em>: We check the environment variable. If it's "Simple," the briefcase contains only basic tools. If not, it contains the full set.
+</p>
+<h4 id="step-2-injecting-mcp-tools">Step 2: Injecting MCP Tools</h4>
+<p>
+If the user has connected external tools (like a database connector), we append them here.
+</p>
+<pre data-lang="typescript"><code>// From coordinatorMode.ts
+if (mcpClients.length &gt; 0) {
+  const serverNames = mcpClients.map(c =&gt; c.name).join(', ')
+  // Tell the Coordinator that its workers can use these servers
+  content += `\n\nWorkers also have access to MCP tools: ${serverNames}`
+}
+</code></pre>
+<p>
+<em>Explanation</em>: This dynamically adds capabilities. The Coordinator reads this line and thinks: <em>"Oh, my workers can talk to the database! I can plan tasks that involve SQL queries."</em>
+</p>
+<h4 id="step-3-the-scratchpad-shared-memory">Step 3: The Scratchpad (Shared Memory)</h4>
+<p>
+Workers are separate instances. To share large files or notes, they need a "Scratchpad" (a specific folder on the disk).
+</p>
+<pre data-lang="typescript"><code>// From coordinatorMode.ts
+if (scratchpadDir &amp;&amp; isScratchpadGateEnabled()) {
+  content += `\n\nScratchpad directory: ${scratchpadDir}`
+  content += `\nWorkers can read/write here without permission prompts.`
+}
+</code></pre>
+<p>
+<em>Explanation</em>: This tells the Coordinator: <em>"If Worker A learns something, tell them to write it to this folder so Worker B can read it."</em>
+</p>
+<h3 id="the-result-the-inline-4">The Result: The <code>UserContext</code></h3>
+<p>
+All of these pieces are combined into one object returned by <code>getCoordinatorUserContext</code>.
+</p>
+<pre data-lang="typescript"><code>export function getCoordinatorUserContext(...): { [k: string]: string } {
+  // ... (logic from above) ...
+  
+  return { 
+    // This key is injected into the prompt context
+    workerToolsContext: content 
+  }
+}
+</code></pre>
+<h2 id="putting-it-together">Putting It Together</h2>
+<p>
+When the Coordinator starts, it receives a prompt that might look like this (generated dynamically):
+</p>
+<blockquote><p>"Workers spawned via the AgentTool have access to these tools: Bash, FileRead, FileEdit.</p></blockquote>
+<blockquote><p>Workers also have access to MCP tools from connected MCP servers: GitHub, Postgres.</p></blockquote>
+<blockquote><p>Scratchpad directory: /tmp/tengu_scratch/..."</p></blockquote>
+<h3 id="how-the-coordinator-uses-this">How the Coordinator Uses This</h3>
+<p>
+Because of this text, if you ask: <em>"Check the database for user 123,"</em> the Coordinator follows this logic:
+</p>
+<ol>
+<li><strong>Check Capability</strong>: "Do my workers have a database tool?"</li>
+</ol>
+<ol>
+<li><strong>Verify Injection</strong>: "Yes, the context says <code>Postgres</code> is available."</li>
+</ol>
+<ol>
+<li><strong>Action</strong>: Spawn a worker with the prompt: "Use the Postgres tool to select * from users..."</li>
+</ol>
+<p>
+If the injection had failed (or if the MCP server wasn't connected), the Coordinator would say: "I don't have tools to access the database."
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>Dynamic Context</strong>: We don't hardcode capabilities; we assemble them at runtime based on the environment.</li>
+</ol>
+<ol>
+<li><strong>Tool Injection</strong>: We explicitly tell the Coordinator what tools its workers have (Bash, MCP, etc.) so it can plan accordingly.</li>
+</ol>
+<ol>
+<li><strong>Environment Awareness</strong>: Features like "Simple Mode" or "Scratchpads" change the shape of the context provided to the AI.</li>
+</ol>
+<p>
+Now the Coordinator knows <strong>who</strong> it is (Chapter 1), <strong>how</strong> to hire workers (Chapter 2), <strong>how</strong> to listen to them (Chapter 3), and <strong>what</strong> tools they have (Chapter 4).
+</p>
+<p>
+But wait—if we have 3 workers running at once, and the user asks a new question, how do we prevent chaos? How do we keep the "Project Plan" up to date?
+</p>
+<p>
+<a href="05<em>session</em>state_synchronization.md">Next Chapter: Session State Synchronization</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="coordinator.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">coordinator/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-the-briefcase-analogy">The Motivation: The "Briefcase" Analogy</a></li>
+<li style="padding-left:10px"><a href="#central-use-case-mcp-servers">Central Use Case: "MCP Servers"</a></li>
+<li style="padding-left:0px"><a href="#core-concepts">Core Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-coordinator-flag-inline-0">1. The Coordinator Flag (%%INLINE_0%%)</a></li>
+<li style="padding-left:10px"><a href="#2-the-context-builder">2. The Context Builder</a></li>
+<li style="padding-left:10px"><a href="#3-the-injection">3. The Injection</a></li>
+<li style="padding-left:0px"><a href="#implementation-under-the-hood">Implementation: Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#the-code-building-the-toolbelt">The Code: Building the Toolbelt</a></li>
+<li style="padding-left:10px"><a href="#the-result-the-inline-4">The Result: The %%INLINE_4%%</a></li>
+<li style="padding-left:0px"><a href="#putting-it-together">Putting It Together</a></li>
+<li style="padding-left:10px"><a href="#how-the-coordinator-uses-this">How the Coordinator Uses This</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

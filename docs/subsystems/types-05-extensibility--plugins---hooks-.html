@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 5: Extensibility (Plugins & Hooks) — types/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">types/05_extensibility__plugins___hooks_.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">📝 types/ · 05_extensibility__plugins___hooks_.md</div>
+  <h1 class="chapter-title-h1">Chapter 5: Extensibility (Plugins & Hooks)</h1>
+  <div class="chapter-meta"><span>📄 types/05_extensibility__plugins___hooks_.md</span></div>
+</div>
+<h1 id="chapter-5-extensibility-plugins-hooks">Chapter 5: Extensibility (Plugins & Hooks)</h1>
+<p>
+In the previous chapter, <a href="04<em>input</em>state_management.md">Input State Management</a>, we learned how the system handles what the user types. But what if the user wants the agent to do something it wasn't originally programmed to do?
+</p>
+<p>
+This chapter introduces <strong>Extensibility</strong>.
+</p>
+<h2 id="the-motivation-the-browser-extension-model">The Motivation: The "Browser Extension" Model</h2>
+<p>
+Think about your web browser. Out of the box, it can browse the web. But if you want to block ads, manage passwords, or check your grammar, you install <strong>Extensions</strong>.
+</p>
+<p>
+We apply the same logic here:
+</p>
+<ol>
+<li><strong>Core Agent:</strong> The base system (safe, fast, minimal).</li>
+</ol>
+<ol>
+<li><strong>Plugins:</strong> Optional packages you install to add new skills.</li>
+</ol>
+<ol>
+<li><strong>Hooks:</strong> The mechanism plugins use to "listen" and react to what the agent is doing.</li>
+</ol>
+<p>
+If you wanted to build a feature that says, <em>"Stop the agent if it tries to commit code without running tests first,"</em> you wouldn't rewrite the agent's source code. You would write a <strong>Plugin</strong> with a <strong>Hook</strong>.
+</p>
+<hr>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+The system separates the <em>definition</em> of a plugin from the <em>logic</em> that runs when events happen.
+</p>
+<h3 id="1-the-plugin-manifest">1. The Plugin Manifest</h3>
+<p>
+Just like a shipping manifest lists what is inside a container, a <strong>Plugin Manifest</strong> tells the system what is inside the plugin. Does it have new commands? Does it have specialized tools (MCP Servers)?
+</p>
+<pre data-lang="typescript"><code>// From plugin.ts
+export type LoadedPlugin = {
+  name: string          // e.g., "git-safety-check"
+  manifest: PluginManifest
+  enabled?: boolean     // Is it turned on?
+  
+  // What does this plugin provide?
+  hooksConfig?: HooksSettings
+  mcpServers?: Record&lt;string, McpServerConfig&gt;
+}
+</code></pre>
+<ul>
+<li><strong>Beginner Tip:</strong> Think of <code>LoadedPlugin</code> as the installation record. It tells the system: "The 'git-safety-check' plugin is installed, enabled, and located at this folder path."</li>
+</ul>
+<h3 id="2-the-hook-event">2. The Hook Event</h3>
+<p>
+A <strong>Hook</strong> is an event listener. It waits for a specific moment in the agent's lifecycle.
+</p>
+<p>
+Common events (defined in <code>hooks.ts</code>) include:
+</p>
+<ul>
+<li><code>SessionStart</code>: The user just opened the app.</li>
+<li>%%INLINE<em>3%%: The agent is <em>about</em> to run a command (e.g., %%INLINE</em>4%%).</li>
+<li><code>PostToolUse</code>: The agent <em>just finished</em> running a command.</li>
+<li><code>UserPromptSubmit</code>: The user just hit "Enter".</li>
+</ul>
+<h3 id="3-the-hook-result">3. The Hook Result</h3>
+<p>
+When a Hook triggers, it must give an answer back to the main system. It can say:
+</p>
+<ul>
+<li><strong>"Carry on."</strong> (Do nothing).</li>
+<li><strong>"Stop!"</strong> (Block the action).</li>
+<li><strong>"Here is extra info."</strong> (Inject context into the conversation).</li>
+</ul>
+<hr>
+<h2 id="use-case-the-safety-net-plugin">Use Case: The "Safety Net" Plugin</h2>
+<p>
+Let's imagine a plugin that prevents the agent from editing <code>.env</code> files (which contain secrets) without explicit permission, even if the global safety settings usually allow edits.
+</p>
+<h3 id="step-1-listening-for-the-event">Step 1: Listening for the Event</h3>
+<p>
+The plugin registers a hook for <code>PreToolUse</code>. This event fires <em>before</em> the tool runs.
+</p>
+<h3 id="step-2-the-logic-conceptual">Step 2: The Logic (Conceptual)</h3>
+<p>
+The hook receives the input:
+</p>
+<blockquote><p><em>Agent is trying to use %%INLINE<em>9%% on %%INLINE</em>10%%</em></p></blockquote>
+<p>
+The hook logic checks the filename. It sees <code>.env</code>.
+</p>
+<h3 id="step-3-the-response">Step 3: The Response</h3>
+<p>
+The hook returns a specific object to block the action.
+</p>
+<pre data-lang="typescript"><code>// Conceptual response object
+{
+  hookEventName: 'PreToolUse',
+  permissionDecision: 'deny', // Block it!
+  permissionDecisionReason: 'Plugins are not allowed to touch .env files'
+}
+</code></pre>
+<h3 id="step-4-the-outcome">Step 4: The Outcome</h3>
+<p>
+The agent receives this "Deny" signal. Instead of writing the file, it sees an error: <em>"Action blocked by plugin: Plugins are not allowed to touch .env files."</em>
+</p>
+<hr>
+<h2 id="under-the-hood-the-hook-lifecycle">Under the Hood: The Hook Lifecycle</h2>
+<p>
+How does the system ensure plugins don't freeze the application? It uses a strict schema for communication.
+</p>
+<h3 id="visual-flow">Visual Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Agent
+    participant HM as Hook Manager
+    participant Plugin
+
+    Agent-&gt;&gt;HM: "I am about to write a file." (PreToolUse)
+    HM-&gt;&gt;Plugin: "Do you have any objections?"
+    
+    Note right of Plugin: Plugin checks file name...
+    
+    alt File is Safe
+        Plugin--&gt;&gt;HM: { decision: "approve" }
+        HM--&gt;&gt;Agent: "Proceed."
+    else File is Restricted
+        Plugin--&gt;&gt;HM: { decision: "block", reason: "Unsafe!" }
+        HM--&gt;&gt;Agent: "STOP. Permission Denied."
+    end</div></div>
+<h3 id="implementation-details">Implementation Details</h3>
+<p>
+Let's look at the actual types in <code>hooks.ts</code>.
+</p>
+<h4 id="1-defining-the-response-schema">1. Defining the Response Schema</h4>
+<p>
+Because plugins might be written in other languages or run in different processes, we use <strong>Zod</strong> (a validation library) to ensure the data they send back is perfect.
+</p>
+<pre data-lang="typescript"><code>// From hooks.ts
+export const syncHookResponseSchema = lazySchema(() =&gt;
+  z.object({
+    // Can we proceed?
+    decision: z.enum(['approve', 'block']).optional(),
+    
+    // If we block, why?
+    reason: z.string().optional(),
+    
+    // Updates to permissions
+    permissionDecision: permissionBehaviorSchema().optional(),
+  })
+)
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong> This code creates a strict contract. If a plugin sends a response with a typo (like %%INLINE<em>13%% instead of %%INLINE</em>14%%), the system rejects it immediately to prevent crashes.</li>
+</ul>
+<h4 id="2-the-aggregated-result">2. The Aggregated Result</h4>
+<p>
+Since you might have 10 plugins installed, the system has to collect answers from <em>all</em> of them. This is the <code>AggregatedHookResult</code>.
+</p>
+<pre data-lang="typescript"><code>export type AggregatedHookResult = {
+  // Did any plugin say "Stop"?
+  preventContinuation?: boolean
+  stopReason?: string
+
+  // Did any plugin add new data to the prompt?
+  additionalContexts?: string[]
+  
+  // Did any plugin change the input arguments?
+  updatedInput?: Record&lt;string, unknown&gt;
+}
+</code></pre>
+<ul>
+<li><strong>Beginner Tip:</strong> If Plugin A says "Allow" but Plugin B says "Block", the %%INLINE<em>16%% flag will be set to %%INLINE</em>17%%. Safety always wins.</li>
+</ul>
+<h4 id="3-injecting-context">3. Injecting Context</h4>
+<p>
+Hooks aren't just for blocking. They can be helpful! A <code>SessionStart</code> hook might check your project folder and say:
+</p>
+<pre data-lang="typescript"><code>{
+  hookEventName: 'SessionStart',
+  additionalContext: 'NOTICE: This project uses Python 2.7. Be careful.'
+}
+</code></pre>
+<p>
+The system takes this string and secretly whispers it to the Agent so it knows how to behave, without the user having to type it manually.
+</p>
+<hr>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+<strong>Extensibility</strong> turns our agent from a static tool into a platform.
+</p>
+<ol>
+<li><strong>Plugins</strong> bundle capabilities (<code>LoadedPlugin</code>).</li>
+</ol>
+<ol>
+<li><strong>Hooks</strong> intercept events (%%INLINE<em>20%%, %%INLINE</em>21%%).</li>
+</ol>
+<ol>
+<li><strong>Schemas</strong> ensure that plugins—even buggy ones—cannot crash the core system (<code>hookJSONOutputSchema</code>).</li>
+</ol>
+<p>
+By using this architecture, developers can build tools that inspect, modify, and improve the agent's workflow without ever touching the core source code.
+</p>
+<p>
+This concludes the core logic of the agent. But how do we know if the agent is working correctly? How do we track errors across all these plugins and sessions?
+</p>
+<p>
+<a href="06<em>telemetry</em><em>_event</em>contracts.md">Next Chapter: Telemetry & Event Contracts</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="types.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">types/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-the-browser-extension-model">The Motivation: The "Browser Extension" Model</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-plugin-manifest">1. The Plugin Manifest</a></li>
+<li style="padding-left:10px"><a href="#2-the-hook-event">2. The Hook Event</a></li>
+<li style="padding-left:10px"><a href="#3-the-hook-result">3. The Hook Result</a></li>
+<li style="padding-left:0px"><a href="#use-case-the-safety-net-plugin">Use Case: The "Safety Net" Plugin</a></li>
+<li style="padding-left:10px"><a href="#step-1-listening-for-the-event">Step 1: Listening for the Event</a></li>
+<li style="padding-left:10px"><a href="#step-2-the-logic-conceptual">Step 2: The Logic (Conceptual)</a></li>
+<li style="padding-left:10px"><a href="#step-3-the-response">Step 3: The Response</a></li>
+<li style="padding-left:10px"><a href="#step-4-the-outcome">Step 4: The Outcome</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-the-hook-lifecycle">Under the Hood: The Hook Lifecycle</a></li>
+<li style="padding-left:10px"><a href="#visual-flow">Visual Flow</a></li>
+<li style="padding-left:10px"><a href="#implementation-details">Implementation Details</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

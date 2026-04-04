@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 1: Built-in Plugin Registry — plugins/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">plugins/01_built_in_plugin_registry.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🔌 plugins/ · 01_built_in_plugin_registry.md</div>
+  <h1 class="chapter-title-h1">Chapter 1: Built-in Plugin Registry</h1>
+  <div class="chapter-meta"><span>📄 plugins/01_built_in_plugin_registry.md</span></div>
+</div>
+<h1 id="chapter-1-built-in-plugin-registry">Chapter 1: Built-in Plugin Registry</h1>
+<p>
+Welcome to the first chapter of the <strong>Plugins</strong> project! In this series, we will explore how a Command Line Interface (CLI) manages modular features.
+</p>
+<h2 id="motivation-the-factory-settings-problem">Motivation: The "Factory Settings" Problem</h2>
+<p>
+Imagine you are building a smartphone. You want it to come with pre-installed apps like "Camera" or "Calculator."
+</p>
+<ul>
+<li><strong>The Problem:</strong> You could hardcode these features deep into the operating system, but then they wouldn't behave like normal apps. Users couldn't disable them, and they wouldn't appear in your "All Apps" list.</li>
+<li><strong>The Solution:</strong> You need a way to ship features <em>inside</em> the code but treat them as modular components.</li>
+</ul>
+<p>
+This is exactly what the <strong>Built-in Plugin Registry</strong> does. It acts as a catalog for features shipped directly with the CLI (the "factory settings"), allowing the system to list, enable, or disable them just like plugins downloaded from the internet.
+</p>
+<h3 id="core-use-case">Core Use Case</h3>
+<p>
+We want to ship a "Git Helper" plugin inside our CLI. Even though it's compiled into the binary, the user should be able to go to their settings and turn it off if they don't use Git.
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+To solve this, we use three main concepts:
+</p>
+<ol>
+<li><strong>The Registry Map:</strong> A simple in-memory list (a <code>Map</code>) that holds the definitions of all pre-installed plugins.</li>
+</ol>
+<ol>
+<li><strong>The Built-in Suffix:</strong> We tag these plugins with a specific ID format (ending in <code>@builtin</code>) so the system knows they don't need to be downloaded.</li>
+</ol>
+<ol>
+<li><strong>Lifecycle Management:</strong> A function that checks the user's settings file to decide if a built-in plugin is currently %%INLINE<em>2%% or %%INLINE</em>3%%.</li>
+</ol>
+<h2 id="how-to-use-the-registry">How to Use the Registry</h2>
+<p>
+Let's look at how we interact with this registry. We primarily need to <strong>register</strong> plugins when the app starts and <strong>retrieve</strong> them when the UI needs to show a list.
+</p>
+<h3 id="1-registering-a-plugin">1. Registering a Plugin</h3>
+<p>
+When the application starts up, we need to tell the registry which plugins are available.
+</p>
+<pre data-lang="typescript"><code>import { registerBuiltinPlugin } from './builtinPlugins'
+
+// We call this at startup
+registerBuiltinPlugin({
+  name: 'git-helper',
+  description: 'Helps with git commits',
+  version: '1.0.0',
+  // ... skills and hooks go here
+})
+</code></pre>
+<p>
+<em>Explanation:</em> This adds "git-helper" to our internal list. It is now ready to be discovered.
+</p>
+<h3 id="2-retrieving-plugins">2. Retrieving Plugins</h3>
+<p>
+When the UI wants to show the user what plugins they have, it asks the registry.
+</p>
+<pre data-lang="typescript"><code>import { getBuiltinPlugins } from './builtinPlugins'
+
+// Get the lists based on user settings
+const { enabled, disabled } = getBuiltinPlugins()
+
+console.log('Active Plugins:', enabled.map(p =&gt; p.name))
+// Output: ['git-helper'] (if enabled in settings)
+</code></pre>
+<p>
+<em>Explanation:</em> This function doesn't just return a list; it splits plugins into %%INLINE<em>4%% and %%INLINE</em>5%% arrays based on what the user prefers.
+</p>
+<h2 id="internal-implementation">Internal Implementation</h2>
+<p>
+How does the system know if a plugin is enabled? How does it turn a "definition" into a usable feature? Let's walk through the flow.
+</p>
+<h3 id="the-flow">The Flow</h3>
+<ol>
+<li><strong>Startup:</strong> The CLI initializes and registers all internal definitions into the <code>BUILTIN_PLUGINS</code> map.</li>
+</ol>
+<ol>
+<li><strong>Query:</strong> The UI requests the list of plugins.</li>
+</ol>
+<ol>
+<li><strong>Check Settings:</strong> The registry looks at the user's persistent settings (e.g., a JSON file).</li>
+</ol>
+<ol>
+<li><strong>Decision:</strong></li>
+<ul>
+<li>If the user specifically set it to <code>false</code>, it goes to the <strong>disabled</strong> list.</li>
+<li>Otherwise, it defaults to the plugin's preference (usually <code>true</code>) and goes to the <strong>enabled</strong> list.</li>
+</ul>
+</ol>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Startup
+    participant Registry as Built-in Registry
+    participant Settings as User Settings
+    participant UI
+
+    Startup-&gt;&gt;Registry: registerBuiltinPlugin(git-helper)
+    Note over Registry: Stored in Map
+
+    UI-&gt;&gt;Registry: getBuiltinPlugins()
+    Registry-&gt;&gt;Settings: Check "git-helper@builtin"
+    Settings--&gt;&gt;Registry: returns enabled: true
+    Registry--&gt;&gt;UI: returns { enabled: [git-helper], disabled: [] }</div></div>
+<h3 id="deep-dive-code-breakdown">Deep Dive: Code Breakdown</h3>
+<p>
+Let's look at the implementation in <code>builtinPlugins.ts</code>.
+</p>
+<h4 id="the-storage">The Storage</h4>
+<p>
+First, we need a place to store the definitions.
+</p>
+<pre data-lang="typescript"><code>// builtinPlugins.ts
+import type { BuiltinPluginDefinition } from '../types/plugin.js'
+
+// The central catalog
+const BUILTIN_PLUGINS: Map&lt;string, BuiltinPluginDefinition&gt; = new Map()
+
+export const BUILTIN_MARKETPLACE_NAME = 'builtin'
+</code></pre>
+<p>
+<em>Explanation:</em> We use a %%INLINE<em>10%% because it allows quick lookups by name. The %%INLINE</em>11%% constant helps us identify these plugins later. You will see how this naming convention works in detail in <a href="02<em>plugin</em>namespacing.md">Plugin Namespacing</a>.
+</p>
+<h4 id="separating-enabled-vs-disabled">separating Enabled vs. Disabled</h4>
+<p>
+This is the "brain" of the registry. It converts raw definitions into <code>LoadedPlugin</code> objects with state.
+</p>
+<pre data-lang="typescript"><code>// Inside getBuiltinPlugins() function...
+for (const [name, definition] of BUILTIN_PLUGINS) {
+  // Construct the ID, e.g., "git-helper@builtin"
+  const pluginId = `${name}@${BUILTIN_MARKETPLACE_NAME}`
+  
+  // Check user settings
+  const userSetting = settings?.enabledPlugins?.[pluginId]
+  
+  // Logic: User preference &gt; Plugin default &gt; true
+  const isEnabled = userSetting !== undefined 
+    ? userSetting === true 
+    : (definition.defaultEnabled ?? true)
+
+  // ... create plugin object and push to list ...
+}
+</code></pre>
+<p>
+<em>Explanation:</em> We construct a unique ID using the %%INLINE<em>13%% suffix. We then check %%INLINE</em>14%%. If the user hasn't made a choice yet, we fall back to the plugin's default (usually on). To understand how this state affects the app at runtime, see <a href="03<em>runtime</em>plugin_state.md">Runtime Plugin State</a>.
+</p>
+<h4 id="converting-skills-to-commands">Converting Skills to Commands</h4>
+<p>
+A plugin contains "skills" (functions it can perform). The CLI needs to treat these as "commands."
+</p>
+<pre data-lang="typescript"><code>// builtinPlugins.ts
+function skillDefinitionToCommand(definition: BundledSkillDefinition): Command {
+  return {
+    type: 'prompt',
+    name: definition.name,
+    // ... maps description, usage, etc ...
+    source: 'bundled', // Important!
+    isEnabled: definition.isEnabled ?? (() =&gt; true),
+    // ...
+  }
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This helper function transforms a skill definition into a %%INLINE<em>15%% object the CLI understands. Notice the %%INLINE</em>16%%. Even though the <em>Plugin</em> is "builtin," the <em>Command</em> source is marked as "bundled" to ensure it shows up in analytics and tool listings correctly. We will explore this conversion logic further in <a href="04<em>skill</em>to<em>command</em>adaptation.md">Skill-to-Command Adaptation</a>.
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>Built-in Plugins</strong> allow us to ship features inside the CLI while keeping them modular.</li>
+</ol>
+<ol>
+<li>The <strong>Registry</strong> is a <code>Map</code> that stores these plugin definitions.</li>
+</ol>
+<ol>
+<li>We separate plugins into <strong>Enabled</strong> and <strong>Disabled</strong> lists based on user settings.</li>
+</ol>
+<p>
+Now that we understand how to store and retrieve these plugins, we need to understand how to name them correctly so they don't clash with plugins from the internet.
+</p>
+<p>
+<a href="02<em>plugin</em>namespacing.md">Next Chapter: Plugin Namespacing</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="plugins.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">plugins/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#motivation-the-factory-settings-problem">Motivation: The "Factory Settings" Problem</a></li>
+<li style="padding-left:10px"><a href="#core-use-case">Core Use Case</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-the-registry">How to Use the Registry</a></li>
+<li style="padding-left:10px"><a href="#1-registering-a-plugin">1. Registering a Plugin</a></li>
+<li style="padding-left:10px"><a href="#2-retrieving-plugins">2. Retrieving Plugins</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#the-flow">The Flow</a></li>
+<li style="padding-left:10px"><a href="#deep-dive-code-breakdown">Deep Dive: Code Breakdown</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

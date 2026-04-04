@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 1: Coordinator Role — coordinator/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">coordinator/01_coordinator_role.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🎯 coordinator/ · 01_coordinator_role.md</div>
+  <h1 class="chapter-title-h1">Chapter 1: Coordinator Role</h1>
+  <div class="chapter-meta"><span>📄 coordinator/01_coordinator_role.md</span></div>
+</div>
+<h1 id="chapter-1-coordinator-role">Chapter 1: Coordinator Role</h1>
+<p>
+Welcome to the <strong>Coordinator</strong> project! In this first chapter, we are going to explore the core philosophy behind this system: the <strong>Coordinator Role</strong>.
+</p>
+<h2 id="the-problem-the-overwhelmed-solo-developer">The Problem: The Overwhelmed Solo Developer</h2>
+<p>
+Imagine you are building a house. If you try to lay the bricks, install the plumbing, wire the electricity, and paint the walls all by yourself, at the exact same time, you will likely make mistakes or get exhausted.
+</p>
+<p>
+Standard AI coding assistants often act like this "solo developer." They try to hold the entire context of a complex project in one thread, executing tasks sequentially. This leads to:
+</p>
+<ol>
+<li><strong>Context Overload</strong>: The conversation gets too long, and the AI forgets earlier details.</li>
+</ol>
+<ol>
+<li><strong>Slow Execution</strong>: Tasks happen one by one (linear), even if they could be done at the same time.</li>
+</ol>
+<h2 id="the-solution-the-project-manager">The Solution: The Project Manager</h2>
+<p>
+The <strong>Coordinator Role</strong> changes the AI's job description. Instead of being the <em>solo developer</em>, the AI becomes the <strong>Project Manager</strong>.
+</p>
+<p>
+The Coordinator's job is to:
+</p>
+<ol>
+<li><strong>Plan</strong>: Break a big user goal into smaller tasks.</li>
+</ol>
+<ol>
+<li><strong>Delegate</strong>: Hire "Workers" (sub-agents) to execute those tasks.</li>
+</ol>
+<ol>
+<li><strong>Synthesize</strong>: Read the workers' reports and summarize the results for the user.</li>
+</ol>
+<h3 id="central-use-case-fix-the-bug">Central Use Case: "Fix the Bug"</h3>
+<p>
+Let's say a user reports: <em>"There is a null pointer error in the authentication module."</em>
+</p>
+<p>
+<strong>Without Coordinator:</strong>
+ 
+The AI reads the code, tries to reproduce it, writes a fix, and runs tests—all in one long, messy conversation.
+</p>
+<p>
+<strong>With Coordinator:</strong>
+</p>
+<ol>
+<li><strong>Coordinator</strong>: "I will investigate."</li>
+<ul>
+<li><em>Spawns Worker A</em>: "Search the code for null pointer risks in <code>auth/</code>."</li>
+<li><em>Spawns Worker B</em>: "Run the existing test suite to find failures."</li>
+</ul>
+</ol>
+<ol>
+<li><strong>Workers</strong>: Run in parallel.</li>
+</ol>
+<ol>
+<li><strong>Coordinator</strong>: "Worker A found the bug. Worker B confirmed tests failed. I will now spawn Worker C to apply the fix."</li>
+</ol>
+<h2 id="core-concepts">Core Concepts</h2>
+<h3 id="1-the-orchestrator">1. The Orchestrator</h3>
+<p>
+The Coordinator does not write files or run shell commands directly (unless they are trivial). Its primary "tools" are <strong>management tools</strong>. It thinks in terms of <em>delegation</em>.
+</p>
+<h3 id="2-parallelism">2. Parallelism</h3>
+<p>
+Because the Coordinator delegates work, it can run multiple tasks at once. It can research a bug while simultaneously checking documentation.
+</p>
+<h3 id="3-synthesis">3. Synthesis</h3>
+<p>
+The Coordinator is the only one who talks to the User. Workers report to the Coordinator, and the Coordinator translates that technical data into a helpful summary for the User.
+</p>
+<h2 id="implementation-under-the-hood">Implementation: Under the Hood</h2>
+<p>
+How does the AI know it's a Coordinator? It all starts with the <strong>System Prompt</strong>. When the session begins, we inject specific instructions that define this persona.
+</p>
+<h3 id="high-level-flow">High-Level Flow</h3>
+<p>
+Here is what happens when you ask the Coordinator a question:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant U as User
+    participant C as Coordinator
+    participant W1 as Worker (Research)
+    participant W2 as Worker (Testing)
+
+    U-&gt;&gt;C: "Fix the auth bug."
+    Note over C: Break down task
+    C-&gt;&gt;W1: Spawn: "Find the bug"
+    C-&gt;&gt;W2: Spawn: "Run tests"
+    
+    par Parallel Execution
+        W1--&gt;&gt;C: "Found bug in file X"
+        W2--&gt;&gt;C: "Tests failed"
+    end
+
+    Note over C: Synthesize findings
+    C-&gt;&gt;U: "Found the bug in file X. Tests confirmed. Starting fix..."</div></div>
+<h3 id="the-code-defining-the-persona">The Code: Defining the Persona</h3>
+<p>
+The logic relies on checking if "Coordinator Mode" is active and then supplying the correct "System Prompt" (the AI's core instructions).
+</p>
+<p>
+<em>File: <code>coordinatorMode.ts</code></em>
+</p>
+<pre data-lang="typescript"><code>// Checks if the Coordinator feature flag is on
+export function isCoordinatorMode(): boolean {
+  if (feature('COORDINATOR_MODE')) {
+    // Returns true if the env var is set to '1'
+    return isEnvTruthy(process.env.CLAUDE_CODE_COORDINATOR_MODE)
+  }
+  return false
+}
+</code></pre>
+<p>
+If this returns <code>true</code>, we generate the special System Prompt:
+</p>
+<pre data-lang="typescript"><code>export function getCoordinatorSystemPrompt(): string {
+  // We define the specific role clearly
+  return `You are Claude Code, an AI assistant that orchestrates software engineering tasks...
+
+  ## 1. Your Role
+  You are a **coordinator**. Your job is to:
+  - Direct workers to research, implement and verify code changes
+  - Synthesize results and communicate with the user`
+}
+</code></pre>
+<h3 id="the-tools">The Tools</h3>
+<p>
+To act as a manager, the Coordinator needs specific tools. These are defined in the prompt instructions so the AI knows they exist.
+</p>
+<pre data-lang="typescript"><code>/* 
+   Inside getCoordinatorSystemPrompt(), we list the tools.
+   Notice the Coordinator creates workers via AGENT_TOOL_NAME.
+*/
+
+// ...
+// ## 2. Your Tools
+// - **AgentTool** - Spawn a new worker
+// - **SendMessageTool** - Continue an existing worker
+// - **TaskStopTool** - Stop a running worker
+// ...
+</code></pre>
+<p>
+The Coordinator uses %%INLINE<em>3%% to create a worker. We will cover the lifecycle of these workers in detail in <a href="02</em>worker<em>lifecycle</em>management.md">Worker Lifecycle Management</a>.
+</p>
+<h3 id="handling-context">Handling Context</h3>
+<p>
+One of the biggest advantages of the Coordinator is <strong>Context Hygiene</strong>. The Coordinator doesn't need to see every line of code read by a worker.
+</p>
+<pre data-lang="typescript"><code>// From coordinatorMode.ts
+export function getCoordinatorUserContext(...): { [k: string]: string } {
+  if (!isCoordinatorMode()) {
+    return {}
+  }
+  
+  // We tell the Coordinator what tools its WORKERS have access to.
+  // The Coordinator doesn't use these tools directly, but needs to know
+  // what its employees can do (e.g., "Workers have access to Bash...").
+  return { 
+    workerToolsContext: `Workers spawned via the AgentTool have access to...` 
+  }
+}
+</code></pre>
+<p>
+By separating the "Manager" context from the "Worker" context, we keep the main conversation clean and focused on high-level goals.
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>The Coordinator Role</strong>: An abstraction where the AI acts as a project manager, not a direct executor.</li>
+</ol>
+<ol>
+<li><strong>Motivation</strong>: This solves context overload and allows for parallel work.</li>
+</ol>
+<ol>
+<li><strong>Implementation</strong>: It is achieved by swapping the System Prompt and giving the AI tools to spawn sub-agents (<code>AgentTool</code>).</li>
+</ol>
+<p>
+Now that we understand <em>who</em> the Coordinator is, we need to learn how it hires and manages its team.
+</p>
+<p>
+<a href="02<em>worker</em>lifecycle_management.md">Next Chapter: Worker Lifecycle Management</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="coordinator.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">coordinator/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-overwhelmed-solo-developer">The Problem: The Overwhelmed Solo Developer</a></li>
+<li style="padding-left:0px"><a href="#the-solution-the-project-manager">The Solution: The Project Manager</a></li>
+<li style="padding-left:10px"><a href="#central-use-case-fix-the-bug">Central Use Case: "Fix the Bug"</a></li>
+<li style="padding-left:0px"><a href="#core-concepts">Core Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-orchestrator">1. The Orchestrator</a></li>
+<li style="padding-left:10px"><a href="#2-parallelism">2. Parallelism</a></li>
+<li style="padding-left:10px"><a href="#3-synthesis">3. Synthesis</a></li>
+<li style="padding-left:0px"><a href="#implementation-under-the-hood">Implementation: Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#high-level-flow">High-Level Flow</a></li>
+<li style="padding-left:10px"><a href="#the-code-defining-the-persona">The Code: Defining the Persona</a></li>
+<li style="padding-left:10px"><a href="#the-tools">The Tools</a></li>
+<li style="padding-left:10px"><a href="#handling-context">Handling Context</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 5: Authentication & Security (The "Keycard") — bridge/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">bridge/05_authentication___security__the__keycard__.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🌉 bridge/ · 05_authentication___security__the__keycard__.md</div>
+  <h1 class="chapter-title-h1">Chapter 5: Authentication & Security (The "Keycard")</h1>
+  <div class="chapter-meta"><span>📄 bridge/05_authentication___security__the__keycard__.md</span></div>
+</div>
+<h1 id="chapter-5-authentication-security-the-keycard">Chapter 5: Authentication & Security (The "Keycard")</h1>
+<p>
+In the previous chapter, <a href="04<em>message</em>routing<strong><em>data</em>flow</strong>the<strong>dispatcher</strong>.md">Message Routing & Data Flow (The "Dispatcher")</a>, we built a smart system to sort and route messages. But there is a catch: you can't just walk up to a cloud server and start sending commands. You need permission.
+</p>
+<p>
+Welcome to <strong>Authentication & Security</strong>, or <strong>"The Keycard."</strong>
+</p>
+<h3 id="the-problem-the-exploding-badge">The Problem: The Exploding Badge</h3>
+<p>
+Imagine you work in a high-security building.
+</p>
+<ol>
+<li><strong>The Front Desk:</strong> You show your ID (OAuth Token) to get into the building.</li>
+</ol>
+<ol>
+<li><strong>The Secure Room:</strong> To enter a specific project room, you are given a temporary <strong>Visitor Badge</strong> (Worker JWT).</li>
+</ol>
+<p>
+Here is the twist: <strong>The Visitor Badge self-destructs every hour.</strong>
+</p>
+<p>
+If you are in the middle of a 3-hour meeting (a long coding session) and your badge expires, the security guards (the server) will throw you out. Your connection drops, and your work is lost.
+</p>
+<p>
+<strong>The Goal:</strong> We need a robot assistant that watches your badge. Five minutes before it expires, the robot runs to the front desk, gets a fresh badge, and swaps it on your shirt—without you ever noticing.
+</p>
+<h3 id="key-concepts">Key Concepts</h3>
+<h4 id="1-the-oauth-token-the-master-key">1. The OAuth Token (The Master Key)</h4>
+<p>
+This is your long-term identity. It proves you are <em>you</em> (e.g., "User: Alice"). You get this when you log in.
+</p>
+<h4 id="2-the-worker-jwt-the-room-key">2. The Worker JWT (The Room Key)</h4>
+<p>
+This is a short-lived token (JSON Web Token). It grants access to <em>one specific session</em> for a short time. We use this for the actual connection because it is safer; if stolen, it expires quickly.
+</p>
+<h4 id="3-the-trusted-device-the-biometrics">3. The Trusted Device (The Biometrics)</h4>
+<p>
+For extra security, the system checks if the request is coming from a "known laptop." This acts like Two-Factor Authentication behind the scenes.
+</p>
+<h4 id="4-the-refresh-scheduler-the-robot">4. The Refresh Scheduler (The Robot)</h4>
+<p>
+This is a timer that calculates exactly when the JWT will expire and triggers a renewal sequence beforehand.
+</p>
+<h3 id="use-case-the-forever-session">Use Case: The "Forever" Session</h3>
+<p>
+Let's say a user starts a session that stays open for 24 hours.
+</p>
+<ol>
+<li><strong>Start:</strong> The Keycard gets a JWT valid for 60 minutes.</li>
+</ol>
+<ol>
+<li><strong>Wait:</strong> The Scheduler waits for 55 minutes.</li>
+</ol>
+<ol>
+<li><strong>Action:</strong> The Scheduler wakes up, uses the OAuth token to ask for a <em>new</em> JWT.</li>
+</ol>
+<ol>
+<li><strong>Update:</strong> The new JWT is sent to the <a href="03<em>unified</em>transport<em>layer<strong>the</strong>pipe</em>_.md">Unified Transport Layer (The "Pipe")</a> to keep the connection alive.</li>
+</ol>
+<h3 id="internal-implementation-the-workflow">Internal Implementation: The Workflow</h3>
+<p>
+How does the system know when to wake up?
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant App as Bridge App
+    participant Sched as Refresh Scheduler
+    participant Utils as JWT Utils
+    participant Server as Cloud API
+
+    Note over App, Server: 1. Setup Phase
+    App-&gt;&gt;Server: Request Session Access
+    Server--&gt;&gt;App: Returns JWT (Expires in 1 hour)
+
+    Note over App, Sched: 2. Scheduling
+    App-&gt;&gt;Utils: Decode Expiry (When does it die?)
+    Utils--&gt;&gt;Sched: "It dies at 2:00 PM"
+    Sched-&gt;&gt;Sched: Set Alarm for 1:55 PM
+
+    Note over Sched, Server: 3. Renewal (1:55 PM)
+    Sched-&gt;&gt;Server: "I need a renewal!" (Send OAuth)
+    Server--&gt;&gt;Sched: New JWT (Expires at 3:00 PM)
+    Sched-&gt;&gt;App: "Here is your new key, keep working."</div></div>
+<h3 id="code-deep-dive">Code Deep Dive</h3>
+<p>
+Let's look at the code that manages these keys.
+</p>
+<h4 id="1-knowing-who-you-are-inline-0">1. Knowing Who You Are (<code>bridgeConfig.ts</code>)</h4>
+<p>
+Before we can get any keys, we need to find the user's primary OAuth token.
+</p>
+<pre data-lang="typescript"><code>// bridgeConfig.ts
+import { getClaudeAIOAuthTokens } from '../utils/auth.js'
+
+export function getBridgeAccessToken(): string | undefined {
+  // 1. Check if we are in a special Dev mode override
+  const devToken = getBridgeTokenOverride();
+  
+  // 2. If not, get the real token from the system keychain
+  return devToken ?? getClaudeAIOAuthTokens()?.accessToken;
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong> This function acts as the wallet. It checks if you have a developer override (useful for testing); otherwise, it grabs the real production credentials stored securely on your computer.
+</p>
+<h4 id="2-trusted-device-enrollment-inline-1">2. Trusted Device Enrollment (<code>trustedDevice.ts</code>)</h4>
+<p>
+This ensures your specific computer is authorized.
+</p>
+<pre data-lang="typescript"><code>// trustedDevice.ts
+export async function enrollTrustedDevice(): Promise&lt;void&gt; {
+  // 1. Send computer details to the server
+  const response = await axios.post(`${baseUrl}/api/auth/trusted_devices`, { 
+    display_name: `Claude Code on ${hostname()}` 
+  });
+
+  // 2. Get the specific device token
+  const token = response.data?.device_token;
+
+  // 3. Save it to the secure keychain
+  getSecureStorage().update({ trustedDeviceToken: token });
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong> When you first log in, this runs once. It registers "My Macbook Pro" with the server. Future requests will include this token in the header, proving the request comes from <em>this</em> specific physical machine.
+</p>
+<h4 id="3-reading-the-badge-inline-2">3. Reading the Badge (<code>jwtUtils.ts</code>)</h4>
+<p>
+We need to know when the badge expires. The expiration date is hidden inside the "payload" of the JWT string.
+</p>
+<pre data-lang="typescript"><code>// jwtUtils.ts
+export function decodeJwtExpiry(token: string): number | null {
+  // 1. Decode the middle part of the token (base64)
+  const payload = decodeJwtPayload(token);
+  
+  // 2. Look for the "exp" (expiry) field
+  if (payload &amp;&amp; typeof payload.exp === 'number') {
+    return payload.exp; // Unix timestamp
+  }
+  
+  return null; // Could not read it
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong> JWTs are just strings separated by dots. This function cracks open the string to read the <code>exp</code> number, which tells us the exact second the token becomes invalid.
+</p>
+<h4 id="4-the-refresh-scheduler-inline-4">4. The Refresh Scheduler (<code>jwtUtils.ts</code>)</h4>
+<p>
+This is the logic that prevents the session from dying.
+</p>
+<pre data-lang="typescript"><code>// jwtUtils.ts
+export function createTokenRefreshScheduler({ onRefresh }) {
+  
+  function schedule(sessionId, token) {
+    // 1. Find out when the token dies
+    const expiry = decodeJwtExpiry(token);
+    
+    // 2. Calculate delay: Expiry - Now - Buffer (e.g., 5 mins)
+    const delayMs = expiry * 1000 - Date.now() - 300_000;
+
+    // 3. Set the alarm
+    setTimeout(() =&gt; {
+       // Time's up! Call the refresh function.
+       onRefresh(sessionId); 
+    }, delayMs);
+  }
+
+  return { schedule };
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li>We calculate <code>delayMs</code>. If the token expires in 60 minutes, and our buffer is 5 minutes, we set the timer for 55 minutes.</li>
+<li>When the timer fires, it executes <code>onRefresh</code>. This callback (defined in the Core) fetches a new token and restarts the cycle.</li>
+</ul>
+<h3 id="summary">Summary</h3>
+<p>
+The <strong>Authentication & Security</strong> layer acts as the invisible guardian of the connection.
+</p>
+<ol>
+<li>It uses <strong>OAuth</strong> to prove identity.</li>
+</ol>
+<ol>
+<li>It uses <strong>Trusted Device</strong> tokens to prove hardware security.</li>
+</ol>
+<ol>
+<li>It uses a <strong>Refresh Scheduler</strong> to proactively renew access before it cuts out.</li>
+</ol>
+<p>
+Without this layer, long-running tasks would fail, and users would constantly have to re-login.
+</p>
+<p>
+Now that we have a secure, robust, and intelligent connection, there is only one piece left. How does the user actually <em>see</em> what is happening? It's time to build the interface.
+</p>
+<p>
+<a href="06<em>bridge</em>ui<strong>_feedback</strong>the<strong>dashboard</strong>.md">Next Chapter: Bridge UI & Feedback (The "Dashboard")</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="bridge.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">bridge/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:10px"><a href="#the-problem-the-exploding-badge">The Problem: The Exploding Badge</a></li>
+<li style="padding-left:10px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#use-case-the-forever-session">Use Case: The "Forever" Session</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-the-workflow">Internal Implementation: The Workflow</a></li>
+<li style="padding-left:10px"><a href="#code-deep-dive">Code Deep Dive</a></li>
+<li style="padding-left:10px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

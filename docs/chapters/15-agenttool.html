@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ch.15 AgentTool — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">Ch.15 — AgentTool</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-agents">AGENTS</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">Chapter 15 · <span class="tag tag-agents">AGENTS</span></div>
+  <h1 class="chapter-title-h1">AgentTool</h1>
+  <div class="chapter-meta">
+    <span>📄 15_agenttool.md</span>
+    <span>🏷 Agents</span>
+  </div>
+</div>
+<h1 id="chapter-15-agenttool">Chapter 15: AgentTool</h1>
+<p>
+In the previous <a href="14<em>model</em>context<em>protocol</em><em>mcp</em>.md">Model Context Protocol (MCP)</a> chapter, we learned how to extend <code>claudeCode</code> by connecting it to external tools and data sources. We gave the AI more "hands."
+</p>
+<p>
+But sometimes, having more hands isn't enough. Sometimes, the task is so big (like "Refactor this entire legacy module") that a single AI agent gets overwhelmed, distracted, or runs out of context memory.
+</p>
+<p>
+We don't just need more hands. We need more <strong>Brains</strong>.
+</p>
+<p>
+Enter the <strong>AgentTool</strong>. This allows the main AI to spawn "Sub-Agents"—temporary worker AIs—to handle complex sub-tasks and report back only when finished.
+</p>
+<h2 id="what-is-the-agenttool">What is the AgentTool?</h2>
+<p>
+Think of the main <code>claudeCode</code> session as a <strong>Project Manager</strong>.
+ 
+If you ask the manager to "Research a topic and write a report," they <em>could</em> do it themselves. But it is more efficient to hire a <strong>Contractor</strong> (Sub-Agent).
+</p>
+<ol>
+<li><strong>Manager:</strong> "Contractor, go read these 50 files and summarize them."</li>
+</ol>
+<ol>
+<li><strong>Contractor:</strong> (Works independently for 5 minutes, reading, thinking, taking notes...)</li>
+</ol>
+<ol>
+<li><strong>Contractor:</strong> "Here is the summary."</li>
+</ol>
+<ol>
+<li><strong>Manager:</strong> (Receives the neat summary without seeing the messy 5 minutes of work).</li>
+</ol>
+<p>
+The <strong>AgentTool</strong> is the mechanism that allows this delegation. It encapsulates an entire AI conversation loop inside a single tool call.
+</p>
+<h3 id="the-central-use-case-the-deep-dive">The Central Use Case: "The Deep Dive"</h3>
+<p>
+Imagine you ask: <strong>"Check all 20 documentation files and tell me if we mention 'deprecated_api'."</strong>
+</p>
+<ul>
+<li><strong>Without AgentTool:</strong> The main AI reads file 1, then file 2... The conversation history fills up with "Read file 1... Read file 2..." eventually hitting the memory limit.</li>
+<li><strong>With AgentTool:</strong> The main AI spawns a sub-agent. The sub-agent does the messy reading. It returns a single sentence: <em>"I found mentions in doc3.md and doc9.md."</em> The main history remains clean.</li>
+</ul>
+<h2 id="key-concepts">Key Concepts</h2>
+<h3 id="1-recursion-loops-within-loops">1. Recursion (Loops within Loops)</h3>
+<p>
+We learned about the "Conversation Loop" in <a href="03<em>query</em>engine.md">Query Engine</a>.
+ 
+The AgentTool simply starts <strong>another</strong> Query Engine loop inside the current one.
+</p>
+<ul>
+<li>The Main Agent waits.</li>
+<li>The Sub-Agent runs its own loop (Think -> Act -> Observe).</li>
+<li>When the Sub-Agent is done, the Main Agent resumes.</li>
+</ul>
+<h3 id="2-context-isolation">2. Context Isolation</h3>
+<p>
+The Sub-Agent starts with a fresh "mind." It doesn't necessarily carry all the baggage of the main conversation. This is crucial for performance and accuracy. It focuses <em>only</em> on the specific task assigned.
+</p>
+<h3 id="3-tool-inheritance">3. Tool Inheritance</h3>
+<p>
+Does the Sub-Agent get to use the terminal?
+ 
+Yes. The AgentTool constructs a "Context" for the child that allows it to access the same capabilities (like <a href="06<em>bashtool.md">BashTool</a> or <a href="04</em>fileedittool.md">FileEditTool</a>) that the parent has, but tracked separately.
+</p>
+<h2 id="how-to-use-agenttool">How to Use AgentTool</h2>
+<p>
+This tool is used automatically by the system when it detects a complex task, or specifically by "Teammates" (which we will cover in the next chapter).
+</p>
+<h3 id="the-input-structure">The Input Structure</h3>
+<p>
+The Main AI calls the tool with a prompt and a definition of the worker.
+</p>
+<pre data-lang="json"><code>{
+  "agent_name": "ResearchBot",
+  "task": "Read src/utils.ts and explain what it does.",
+  "tools": ["FileEditTool", "BashTool"]
+}
+</code></pre>
+<h3 id="the-output">The Output</h3>
+<p>
+The tool returns the final text response from the Sub-Agent.
+</p>
+<pre data-lang="text"><code>"I have read src/utils.ts. It contains helper functions for date formatting."
+</code></pre>
+<h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
+<p>
+The implementation of %%INLINE<em>2%% is essentially a recursive function call. It pauses the current agent, creates a new %%INLINE</em>3%%, runs a new <code>query()</code> loop, and waits for it to finish.
+</p>
+<p>
+Here is the flow:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Main as Main Agent
+    participant Tool as AgentTool
+    participant Sub as Sub-Agent Loop
+    participant Bash as BashTool
+
+    Main-&gt;&gt;Tool: Call: "Spawn sub-agent to check logs"
+    
+    Note over Tool: 1. Create isolated context
+    Tool-&gt;&gt;Sub: Start new Query Loop
+    
+    loop Sub-Agent Working
+        Sub-&gt;&gt;Bash: "cat error.log"
+        Bash--&gt;&gt;Sub: "Error at line 50"
+        Sub-&gt;&gt;Sub: Thoughts: "I found it."
+    end
+    
+    Sub--&gt;&gt;Tool: Return: "Found error at line 50"
+    Tool--&gt;&gt;Main: Tool Result: "Found error at line 50"
+    
+    Note over Main: Continues main task...</div></div>
+<h3 id="internal-implementation-code">Internal Implementation Code</h3>
+<p>
+The core logic resides in <code>tools/AgentTool/runAgent.ts</code>. This file coordinates the creation and execution of the worker.
+</p>
+<h4 id="1-setting-up-the-context">1. Setting up the Context</h4>
+<p>
+First, we create a specialized environment for the sub-agent. We determine what tools it is allowed to use.
+</p>
+<pre data-lang="typescript"><code>// tools/AgentTool/runAgent.ts
+
+// We figure out which tools the sub-agent gets
+const resolvedTools = useExactTools
+  ? availableTools 
+  : resolveAgentTools(agentDefinition, availableTools).resolvedTools;
+
+// We create a new "Context" object (memory, permissions, etc.)
+const agentToolUseContext = createSubagentContext(toolUseContext, {
+  agentType: agentDefinition.agentType,
+  messages: initialMessages,
+  // Sync agents share the parent's terminal (AbortController)
+  abortController: isAsync ? new AbortController() : parentController,
+});
+</code></pre>
+<p>
+<em>Explanation: %%INLINE<em>6%% is like setting up a new desk for a new employee. We give them their own tools and their own message history (%%INLINE</em>7%%).</em>
+</p>
+<h4 id="2-initializing-mcp-skills">2. Initializing MCP (Skills)</h4>
+<p>
+If the sub-agent needs special tools (like a specific database connection via <a href="14<em>model</em>context<em>protocol</em><em>mcp</em>.md">Model Context Protocol (MCP)</a>), we initialize them here.
+</p>
+<pre data-lang="typescript"><code>// Connect to agent-specific MCP servers
+const { 
+  clients: mergedMcpClients, 
+  cleanup: mcpCleanup 
+} = await initializeAgentMcpServers(
+  agentDefinition, 
+  parentContext.mcpClients
+);
+</code></pre>
+<p>
+<em>Explanation: The sub-agent inherits the parent's tools, plus it can load its own specific "Skills" (defined as MCP servers).</em>
+</p>
+<h4 id="3-the-recursive-loop">3. The Recursive Loop</h4>
+<p>
+This is the heart of the feature. We import the <code>query</code> function (the same engine that drives the main app) and run it for the sub-agent.
+</p>
+<pre data-lang="typescript"><code>import { query } from '../../query.js';
+
+// Start the loop!
+for await (const message of query({
+  messages: initialMessages,
+  systemPrompt: agentSystemPrompt,
+  toolUseContext: agentToolUseContext, // The new isolated context
+  maxTurns: 20, // Prevent infinite loops
+})) {
+  
+  // If the sub-agent speaks, we might log it or just wait
+  if (isRecordableMessage(message)) {
+    recordSidechainTranscript(message);
+  }
+}
+</code></pre>
+<p>
+<em>Explanation: We run %%INLINE<em>9%% exactly like the main application does. However, we trap the messages inside %%INLINE</em>10%% instead of printing them directly to the main user output. This keeps the main chat clean.</em>
+</p>
+<h4 id="4-cleaning-up">4. Cleaning Up</h4>
+<p>
+When the sub-agent finishes (or crashes), we must clean up resources.
+</p>
+<pre data-lang="typescript"><code>try {
+  // ... Run the loop ...
+} finally {
+  // 1. Disconnect MCP servers specific to this agent
+  await mcpCleanup();
+  
+  // 2. Kill any background processes (like a server the agent started)
+  killShellTasksForAgent(agentId);
+  
+  // 3. Free up memory
+  agentToolUseContext.readFileState.clear();
+}
+</code></pre>
+<p>
+<em>Explanation: Since the sub-agent might have opened database connections or started background scripts, the <code>finally</code> block ensures we don't leave "zombie" processes running.</em>
+</p>
+<h2 id="why-is-this-important-for-later">Why is this important for later?</h2>
+<p>
+The AgentTool is the foundation for advanced AI collaboration:
+</p>
+<ul>
+<li><strong><a href="16<em>teammates.md">Teammates</a>:</strong> In the next chapter, we will see how we use %%INLINE</em>12%% to create persistent personas (like "Architect" or "QA Tester") that you can summon by name.</li>
+<li><strong><a href="19<em>cost</em>tracking.md">Cost Tracking</a>:</strong> Sub-agents can use a lot of tokens. We need to track the cost of a sub-agent separately from the main agent.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have learned that the <strong>AgentTool</strong> allows <code>claudeCode</code> to scale its intelligence. By spawning isolated Sub-Agents, the main AI can delegate complex tasks like research or large-scale refactoring without clogging up its own memory or context window. It uses recursion to run a fresh instance of the Query Engine, complete with its own tools and permissions.
+</p>
+<p>
+Now that we have the ability to spawn generic sub-agents, let's give them names and personalities.
+</p>
+<p>
+<a href="16_teammates.md">Next Chapter: Teammates</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="14-model-context-protocol--mcp-.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">Model Context Protocol (MCP)</div>
+        </a><a class="chapter-nav-card next" href="16-teammates.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">Teammates</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#what-is-the-agenttool">What is the AgentTool?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case-the-deep-dive">The Central Use Case: "The Deep Dive"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-recursion-loops-within-loops">1. Recursion (Loops within Loops)</a></li>
+<li style="padding-left:10px"><a href="#2-context-isolation">2. Context Isolation</a></li>
+<li style="padding-left:10px"><a href="#3-tool-inheritance">3. Tool Inheritance</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-agenttool">How to Use AgentTool</a></li>
+<li style="padding-left:10px"><a href="#the-input-structure">The Input Structure</a></li>
+<li style="padding-left:10px"><a href="#the-output">The Output</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-how-it-works">Under the Hood: How it Works</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-code">Internal Implementation Code</a></li>
+<li style="padding-left:0px"><a href="#why-is-this-important-for-later">Why is this important for later?</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

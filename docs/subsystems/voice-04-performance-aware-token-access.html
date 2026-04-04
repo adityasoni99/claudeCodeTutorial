@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: Performance-Aware Token Access — voice/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">voice/04_performance_aware_token_access.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🎤 voice/ · 04_performance_aware_token_access.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: Performance-Aware Token Access</h1>
+  <div class="chapter-meta"><span>📄 voice/04_performance_aware_token_access.md</span></div>
+</div>
+<h1 id="chapter-4-performance-aware-token-access">Chapter 4: Performance-Aware Token Access</h1>
+<p>
+In the previous chapter, <a href="03<em>provider</em>specific<em>authentication.md">Provider-Specific Authentication</a>, we built a "Bouncer" function called %%INLINE</em>0%%. It checks the user's secure keychain to see if they have the right credentials.
+</p>
+<p>
+However, we have a problem. The Bouncer is thorough, but he is <strong>slow</strong>.
+</p>
+<h2 id="the-problem-the-heavy-vault-door">The Problem: The Heavy Vault Door</h2>
+<p>
+Reading a password from your computer's secure storage (like the macOS Keychain) is not like reading a variable from memory.
+</p>
+<ol>
+<li>The app has to pause.</li>
+</ol>
+<ol>
+<li>It asks the Operating System for permission.</li>
+</ol>
+<ol>
+<li>The OS spawns a separate process (e.g., the <code>security</code> command).</li>
+</ol>
+<ol>
+<li>The OS decrypts the data and hands it back.</li>
+</ol>
+<p>
+This process takes about <strong>20 to 50 milliseconds</strong>.
+</p>
+<h3 id="why-is-50ms-a-problem">Why is 50ms a problem?</h3>
+<p>
+If you are running a command-line script once, 50ms is fine. But a User Interface (UI) redraws itself <strong>60 times per second</strong> (every 16ms).
+</p>
+<p>
+If your UI asks, "Do we have the token?" every time it redraws, and the answer takes 50ms, your application will freeze, stutter, and feel broken.
+</p>
+<h2 id="the-solution-check-once-remember-for-an-hour">The Solution: "Check Once, Remember for an Hour"</h2>
+<p>
+We solve this using a strategy called <strong>Memoization</strong> (or Caching).
+</p>
+<p>
+Think of it like a heavy steel vault.
+</p>
+<ul>
+<li><strong>Without Memoization:</strong> Every time you need to buy a coffee, you spin the dial, heave open the steel door, take out a coin, and close the door. (Slow).</li>
+<li><strong>With Memoization:</strong> You open the vault <strong>once</strong> in the morning, take out enough cash for the day, and put it in your wallet. For the rest of the day, you just check your wallet. (Fast).</li>
+</ul>
+<p>
+In our code, the "Wallet" is a simple variable in memory.
+</p>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+As a developer using our internal tools, you don't need to write the caching logic yourself. You simply call the token getter function.
+</p>
+<p>
+We have designed <code>getClaudeAIOAuthTokens()</code> to handle the "Wallet" logic automatically.
+</p>
+<pre data-lang="typescript"><code>import { getClaudeAIOAuthTokens } from '../utils/auth';
+
+// 1. First call: Opens the "Vault". Takes ~50ms.
+const token1 = getClaudeAIOAuthTokens(); 
+
+// 2. Second call: Checks the "Wallet". Takes ~0ms (Instant).
+const token2 = getClaudeAIOAuthTokens();
+
+// 3. The UI remains smooth!
+</code></pre>
+<p>
+<strong>What happens here:</strong>
+</p>
+<ul>
+<li><strong>Input:</strong> None.</li>
+<li><strong>Output:</strong> The OAuth token object.</li>
+<li><strong>Performance:</strong> The first time your app loads, there might be a tiny noticeable pause. Every check after that is instantaneous.</li>
+</ul>
+<hr>
+<h2 id="how-it-works-under-the-hood">How it Works: Under the Hood</h2>
+<p>
+Let's visualize the difference between the first call (Cold) and subsequent calls (Warm).
+</p>
+<p>
+We use a variable in memory to store the result. We also set a timer (usually 1 hour) because security tokens eventually expire.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant UI as User Interface
+    participant Logic as Auth Function
+    participant Cache as Memory "Wallet"
+    participant OS as System Keychain
+
+    Note over UI, OS: 1. The "Cold" Start (First Call)
+    UI-&gt;&gt;Logic: Do we have a token?
+    Logic-&gt;&gt;Cache: Is it in memory?
+    Cache--&gt;&gt;Logic: No (Empty)
+    Logic-&gt;&gt;OS: Run 'security find-generic-password'
+    OS--&gt;&gt;Logic: Here is the Token (Takes 50ms)
+    Logic-&gt;&gt;Cache: Save Token &amp; Timestamp
+    Logic--&gt;&gt;UI: Return Token
+
+    Note over UI, OS: 2. The "Warm" Call (Next 1000 times)
+    UI-&gt;&gt;Logic: Do we have a token?
+    Logic-&gt;&gt;Cache: Is it in memory?
+    Cache--&gt;&gt;Logic: Yes!
+    Logic--&gt;&gt;UI: Return Token (Instant)</div></div>
+<hr>
+<h2 id="deep-dive-the-code">Deep Dive: The Code</h2>
+<p>
+Let's look at how we implement this pattern in our <code>utils/auth.ts</code> file. We use a simplified version of the <strong>Memoization Pattern</strong>.
+</p>
+<h3 id="1-the-storage-variables">1. The Storage Variables</h3>
+<p>
+We define variables <em>outside</em> of the function. These act as our "Wallet." They stay in memory as long as the app is running.
+</p>
+<pre data-lang="typescript"><code>// These live outside the function scope
+let cachedTokens: AuthTokens | null = null;
+let lastFetchTime = 0;
+
+// The "Wallet" is valid for 1 hour (3600000 ms)
+const CACHE_DURATION = 3600 * 1000; 
+</code></pre>
+<h3 id="2-the-smart-function">2. The Smart Function</h3>
+<p>
+The function logic decides whether to use the cache or the slow keychain.
+</p>
+<pre data-lang="typescript"><code>export function getClaudeAIOAuthTokens() {
+  const now = Date.now();
+
+  // CHECK 1: Do we have data?
+  // CHECK 2: Is the data fresh (less than 1 hour old)?
+  if (cachedTokens &amp;&amp; (now - lastFetchTime &lt; CACHE_DURATION)) {
+    return cachedTokens; // ✅ FAST RETURN
+  }
+
+  // If not, we have to do the hard work...
+  // ... continued below
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li>It checks %%INLINE<em>4%%. If it's %%INLINE</em>5%%, we must fetch.</li>
+<li>It checks <code>now - lastFetchTime</code>. If it has been more than an hour, the data is "stale" (old), so we ignore it and fetch fresh data.</li>
+</ul>
+<h3 id="3-the-heavy-lift-and-update">3. The "Heavy Lift" and Update</h3>
+<p>
+If the cache was empty or old, we perform the slow operation and update the cache.
+</p>
+<pre data-lang="typescript"><code>  // ... continued from above
+  
+  // ⚠️ SLOW OPERATION: Read from OS Keychain
+  const freshTokens = readTokensFromKeychainSystem(); 
+
+  // Update the "Wallet" for next time
+  cachedTokens = freshTokens;
+  lastFetchTime = now;
+
+  return freshTokens;
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li><code>readTokensFromKeychainSystem()</code> represents the slow code that talks to the OS.</li>
+<li>Crucially, we update <code>cachedTokens</code> immediately after reading. This ensures the <em>next</em> time this function is called (milliseconds later), it hits the cache.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have learned about <strong>Performance-Aware Token Access</strong>.
+</p>
+<ul>
+<li><strong>The Problem:</strong> Security is heavy. Accessing keychains slows down the UI.</li>
+<li><strong>The Solution:</strong> Memoization (Caching).</li>
+<li><strong>The Result:</strong> We can call <code>isVoiceModeEnabled()</code> inside our render loops without fear of freezing the application.</li>
+</ul>
+<p>
+We now have a complete, secure, and fast system for checking if Voice Mode should be active. 
+</p>
+<p>
+However, there is one final optimization. If we decide to disable Voice Mode completely for a specific version of the app (e.g., the Free version), we don't just want to hide the code—we want to delete it entirely to save space.
+</p>
+<p>
+<a href="05<em>build</em>time<em>code</em>elimination.md">Next Chapter: Build-Time Code Elimination</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="voice.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">voice/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-heavy-vault-door">The Problem: The Heavy Vault Door</a></li>
+<li style="padding-left:10px"><a href="#why-is-50ms-a-problem">Why is 50ms a problem?</a></li>
+<li style="padding-left:0px"><a href="#the-solution-check-once-remember-for-an-hour">The Solution: "Check Once, Remember for an Hour"</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:0px"><a href="#how-it-works-under-the-hood">How it Works: Under the Hood</a></li>
+<li style="padding-left:0px"><a href="#deep-dive-the-code">Deep Dive: The Code</a></li>
+<li style="padding-left:10px"><a href="#1-the-storage-variables">1. The Storage Variables</a></li>
+<li style="padding-left:10px"><a href="#2-the-smart-function">2. The Smart Function</a></li>
+<li style="padding-left:10px"><a href="#3-the-heavy-lift-and-update">3. The "Heavy Lift" and Update</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

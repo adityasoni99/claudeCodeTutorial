@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: Authentication & Session State — commands/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">commands/03_authentication___session_state.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⌨️ commands/ · 03_authentication___session_state.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: Authentication & Session State</h1>
+  <div class="chapter-meta"><span>📄 commands/03_authentication___session_state.md</span></div>
+</div>
+<h1 id="chapter-3-authentication-session-state">Chapter 3: Authentication & Session State</h1>
+<p>
+In the previous chapter, <a href="02<em>interactive</em>tui<em>_text</em>user<em>interface</em>.md">Interactive TUI (Text User Interface)</a>, we learned how to build beautiful menus and loading screens in the terminal.
+</p>
+<p>
+But a beautiful interface is useless if the application doesn't know <em>who</em> you are. To use powerful AI models (like Claude) or access remote files (like on GitHub), the application needs to verify your identity.
+</p>
+<p>
+This brings us to <strong>Authentication (Auth)</strong> and <strong>Session State</strong>.
+</p>
+<h2 id="the-concept-the-digital-bouncer">The Concept: The Digital Bouncer</h2>
+<p>
+Think of this application as a secure building.
+</p>
+<ol>
+<li><strong>Authentication:</strong> This is the Bouncer at the door checking your ID.</li>
+</ol>
+<ol>
+<li><strong>Session State:</strong> This is the ID Badge they give you so you don't have to show your passport at every single room you enter.</li>
+</ol>
+<ol>
+<li><strong>Secure Storage:</strong> This is the hotel safe where you store your ID Badge when you go to sleep (close the app), so you have it ready for tomorrow.</li>
+</ol>
+<hr>
+<h2 id="use-case-the-login-command">Use Case: The Login Command</h2>
+<p>
+The most fundamental command in this system is <code>/login</code>. It allows the user to authenticate with Anthropic to use the AI services.
+</p>
+<p>
+This command is unique because the terminal cannot see your password. Instead, we use a process called <strong>OAuth</strong> (Open Authorization).
+</p>
+<h3 id="how-oauth-works-the-handshake">How OAuth Works (The Handshake)</h3>
+<p>
+Since we can't type passwords securely in the terminal, we ask the <strong>Browser</strong> to do it for us.
+</p>
+<ol>
+<li>The App gives you a URL.</li>
+</ol>
+<ol>
+<li>You open that URL in Chrome/Safari and log in there.</li>
+</ol>
+<ol>
+<li>The Browser gives you a "Token" (a long string of random characters).</li>
+</ol>
+<ol>
+<li>The App saves that Token.</li>
+</ol>
+<hr>
+<h2 id="the-login-implementation">The Login Implementation</h2>
+<p>
+Let's look at <code>login/login.tsx</code>. It combines the <strong>Command Architecture</strong> (Chapter 1) with the <strong>TUI</strong> (Chapter 2) to handle this handshake.
+</p>
+<h3 id="the-logic-wrapper">The Logic Wrapper</h3>
+<p>
+The %%INLINE<em>2%% function sets up the logic. Notice how it interacts with %%INLINE</em>3%%.
+</p>
+<pre data-lang="tsx"><code>// File: login/login.tsx (Simplified)
+export async function call(onDone, context) {
+  // Render the Login Component
+  return &lt;Login onDone={async (success) =&gt; {
+    
+    if (success) {
+      // 1. Tell the app to refresh data
+      resetUserCache();
+      
+      // 2. Update the global "Version" of auth
+      // This forces other parts of the app to notice we are logged in
+      context.setAppState(prev =&gt; ({
+        ...prev,
+        authVersion: prev.authVersion + 1
+      }));
+    }
+    
+    onDone(success ? 'Login successful' : 'Failed');
+  }} /&gt;;
+}
+</code></pre>
+<p>
+<strong>Key Takeaway:</strong>
+ 
+When login succeeds, we update %%INLINE<em>4%%. This is like announcing over a loudspeaker: "User is now logged in! Update your displays!" We will cover this global memory in <a href="04</em>context<em>_</em>memory_management.md">Context & Memory Management</a>.
+</p>
+<h3 id="the-ui-component">The UI Component</h3>
+<p>
+The %%INLINE<em>5%% component manages the visual flow. It uses a specialized component called %%INLINE</em>6%%.
+</p>
+<pre data-lang="tsx"><code>// File: login/login.tsx (Simplified UI)
+export function Login(props) {
+  const mainLoopModel = useMainLoopModel();
+
+  return (
+    &lt;Dialog title="Login" color="permission"&gt;
+      {/* This component handles the complex polling logic */}
+      &lt;ConsoleOAuthFlow 
+        onDone={() =&gt; props.onDone(true, mainLoopModel)} 
+      /&gt;
+    &lt;/Dialog&gt;
+  );
+}
+</code></pre>
+<hr>
+<h2 id="under-the-hood-the-polling-loop">Under the Hood: The Polling Loop</h2>
+<p>
+How does the terminal know when you clicked "Allow" in your browser? It asks the server repeatedly: "Are they done yet? Are they done yet?"
+</p>
+<p>
+This is handled in helper files like <code>OAuthFlowStep.tsx</code>.
+</p>
+<h3 id="the-sequence">The Sequence</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant Term as Terminal App
+    participant Server as Auth Server
+    participant Browser
+
+    User-&gt;&gt;Term: Run /login
+    Term-&gt;&gt;Server: Request Login URL
+    Server--&gt;&gt;Term: Returns URL + Code
+    Term-&gt;&gt;User: "Please visit this URL"
+    
+    User-&gt;&gt;Browser: Opens URL &amp; Logs In
+    
+    loop Every 1 Second
+        Term-&gt;&gt;Server: "Is the user done?"
+        Server--&gt;&gt;Term: "Not yet..."
+    end
+    
+    Browser-&gt;&gt;Server: User Approves
+    
+    Term-&gt;&gt;Server: "Is the user done?"
+    Server--&gt;&gt;Term: "Yes! Here is the Token."
+    Term-&gt;&gt;Term: Save Token to Secure Storage</div></div>
+<h3 id="the-polling-code">The Polling Code</h3>
+<p>
+Here is a simplified look at how the app waits for the user (<code>install-github-app/OAuthFlowStep.tsx</code>).
+</p>
+<pre data-lang="tsx"><code>// File: install-github-app/OAuthFlowStep.tsx (Simplified)
+useEffect(() =&gt; {
+  // 1. Check if we are in the 'waiting' state
+  if (oauthStatus.state === 'waiting_for_login') {
+    
+    // 2. Poll the server periodically
+    const timer = setInterval(async () =&gt; {
+       const token = await checkServerForToken();
+       
+       if (token) {
+         // 3. We got it! Update state to success
+         setOAuthStatus({ state: 'success', token: token });
+         saveOAuthTokensIfNeeded(token);
+       }
+    }, 1000); // Check every second
+    
+    return () =&gt; clearInterval(timer);
+  }
+}, [oauthStatus]);
+</code></pre>
+<p>
+<strong>Why this matters:</strong>
+ 
+This creates a seamless experience. The user interacts with the browser, and the terminal <em>magically</em> updates itself without the user typing anything back into it.
+</p>
+<hr>
+<h2 id="managing-session-state-logout">Managing Session State (Logout)</h2>
+<p>
+Authentication isn't just about getting in; it's about cleaning up when you leave. If a user types <code>/logout</code>, we must destroy the "ID Badge" (Token) and clear the "Memory" (Cache).
+</p>
+<p>
+If we don't clear the cache, the next user might see the previous user's name!
+</p>
+<pre data-lang="typescript"><code>// File: logout/logout.tsx (Simplified)
+export async function performLogout() {
+  // 1. Remove the physical token from the hard drive
+  await removeApiKey();
+
+  // 2. Wipe the secure storage "Safe"
+  const secureStorage = getSecureStorage();
+  secureStorage.delete();
+
+  // 3. Clear the application memory (Cache)
+  await clearAuthRelatedCaches();
+  resetUserCache();
+}
+</code></pre>
+<p>
+<strong>Security Note:</strong>
+ 
+Notice the order. We remove the key <em>first</em>, then wipe the storage, then clear the memory. This ensures that even if the app crashes halfway through, the most sensitive data is gone.
+</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<p>
+In <strong>Authentication & Session State</strong>, we learned:
+</p>
+<ol>
+<li><strong>OAuth Handshake:</strong> We use the browser to authenticate, while the terminal polls for the result.</li>
+</ol>
+<ol>
+<li><strong>State Updates:</strong> When login finishes, we use <code>context.setAppState</code> to notify the rest of the application.</li>
+</ol>
+<ol>
+<li><strong>Secure Cleanup:</strong> Logging out involves physically deleting tokens and clearing memory caches to prevent data leaks.</li>
+</ol>
+<p>
+Now that our user is authenticated and we have their "ID Badge," we need a place to store this badge alongside other data (like chat history and preferences) while the app is running.
+</p>
+<p>
+<a href="04<em>context</em><em>_memory</em>management.md">Next Chapter: Context & Memory Management</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="commands.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">commands/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-concept-the-digital-bouncer">The Concept: The Digital Bouncer</a></li>
+<li style="padding-left:0px"><a href="#use-case-the-login-command">Use Case: The Login Command</a></li>
+<li style="padding-left:10px"><a href="#how-oauth-works-the-handshake">How OAuth Works (The Handshake)</a></li>
+<li style="padding-left:0px"><a href="#the-login-implementation">The Login Implementation</a></li>
+<li style="padding-left:10px"><a href="#the-logic-wrapper">The Logic Wrapper</a></li>
+<li style="padding-left:10px"><a href="#the-ui-component">The UI Component</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-the-polling-loop">Under the Hood: The Polling Loop</a></li>
+<li style="padding-left:10px"><a href="#the-sequence">The Sequence</a></li>
+<li style="padding-left:10px"><a href="#the-polling-code">The Polling Code</a></li>
+<li style="padding-left:0px"><a href="#managing-session-state-logout">Managing Session State (Logout)</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

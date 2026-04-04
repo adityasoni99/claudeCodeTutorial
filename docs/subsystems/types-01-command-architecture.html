@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 1: Command Architecture — types/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">types/01_command_architecture.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">📝 types/ · 01_command_architecture.md</div>
+  <h1 class="chapter-title-h1">Chapter 1: Command Architecture</h1>
+  <div class="chapter-meta"><span>📄 types/01_command_architecture.md</span></div>
+</div>
+<h1 id="chapter-1-command-architecture">Chapter 1: Command Architecture</h1>
+<p>
+Welcome to the <strong>Command Architecture</strong>! In this project, a "Command" is the fundamental unit of action.
+</p>
+<h2 id="the-motivation-from-chatbot-to-agent">The Motivation: From Chatbot to Agent</h2>
+<p>
+If you are building a standard chatbot, text goes in, and text comes out. But what if you want the system to <em>do</em> something? What if you want it to edit a file, run a git commit, or show an interactive menu?
+</p>
+<p>
+Think of your system as a character in a Role-Playing Game (RPG).
+</p>
+<ul>
+<li><strong>The Model</strong> is the player making decisions.</li>
+<li><strong>The Commands</strong> are the <strong>Skill Tree</strong>.</li>
+</ul>
+<p>
+Each Command (like %%INLINE<em>0%% or %%INLINE</em>1%%) is a specific ability in that skill tree. It has rules:
+</p>
+<ul>
+<li><strong>Availability:</strong> Who can use this skill? (Level requirement).</li>
+<li><strong>Arguments:</strong> What does it need to work? (Mana cost/Inputs).</li>
+<li><strong>Execution:</strong> What actually happens? (The spell effect).</li>
+</ul>
+<p>
+By abstracting these tools into a unified <code>Command</code> structure, we treat built-in tools, user scripts, and plugins exactly the same way.
+</p>
+<hr>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+The architecture defines three "flavors" of commands. They all share a common identity but behave differently.
+</p>
+<h3 id="1-the-metadata-inline-3">1. The Metadata (<code>CommandBase</code>)</h3>
+<p>
+Before a command does anything, it needs an ID card. This is the <code>CommandBase</code>. It tells the system <em>what</em> the command is and <em>who</em> can see it.
+</p>
+<pre data-lang="typescript"><code>export type CommandBase = {
+  name: string          // e.g., "git-commit"
+  description: string   // e.g., "Commits staged changes"
+  isEnabled?: () =&gt; boolean // Is this skill unlocked right now?
+  isHidden?: boolean    // Should we hide it from the help menu?
+}
+</code></pre>
+<ul>
+<li><strong>Beginner Tip:</strong> <code>isEnabled</code> is powerful. It allows a command to exist but remain "greyed out" until specific conditions are met (like being inside a Git repository).</li>
+</ul>
+<h3 id="2-the-three-flavors">2. The Three Flavors</h3>
+<h4 id="a-prompt-command-inline-6">A. Prompt Command (<code>PromptCommand</code>)</h4>
+<p>
+This is the simplest type. It's essentially a "macro" or a pre-written script. It injects instructions into the conversation context to guide the AI.
+</p>
+<ul>
+<li><strong>Analogy:</strong> A "Scroll" the wizard reads to cast a spell.</li>
+<li><strong>Output:</strong> Text instructions sent to the AI model.</li>
+</ul>
+<h4 id="b-local-command-inline-7">B. Local Command (<code>LocalCommand</code>)</h4>
+<p>
+This runs a standard function on your machine. It takes text input and returns a text result.
+</p>
+<ul>
+<li><strong>Analogy:</strong> A "Sword Swing." Immediate, physical action.</li>
+<li><strong>Output:</strong> A string of text (e.g., the output of a CLI tool).</li>
+</ul>
+<h4 id="c-local-jsx-command-inline-8">C. Local JSX Command (<code>LocalJSXCommand</code>)</h4>
+<p>
+This is the most advanced type. Instead of returning text, it returns a <strong>React Component</strong>. This renders interactive UI (buttons, forms, spinners) directly in the terminal using a library like Ink.
+</p>
+<ul>
+<li><strong>Analogy:</strong> Opening a generic "Inventory Menu." It pauses the game and lets the user click things.</li>
+<li><strong>Output:</strong> Visual UI elements.</li>
+</ul>
+<hr>
+<h2 id="use-case-creating-a-greeter-command">Use Case: Creating a "Greeter" Command</h2>
+<p>
+Let's build a simple <strong>Local Command</strong> called <code>greet</code>. It takes a name as an argument and returns a welcome message.
+</p>
+<h3 id="step-1-define-the-structure">Step 1: Define the Structure</h3>
+<p>
+First, we define the command object. We give it a type of <code>'local'</code>.
+</p>
+<pre data-lang="typescript"><code>const greetCommand: Command = {
+  type: 'local',           // It runs a function locally
+  name: 'greet',           // User types /greet
+  description: 'Says hello to the user',
+  supportsNonInteractive: true, // Can run without user input
+  // ... implementation comes next
+}
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong> We've created the "ID Card" for our command. The system now knows <code>/greet</code> exists.</li>
+</ul>
+<h3 id="step-2-lazy-loading-the-logic">Step 2: Lazy Loading the Logic</h3>
+<p>
+To keep the application fast, we don't load the code for every command at startup. We use a <code>load()</code> function.
+</p>
+<pre data-lang="typescript"><code>// Inside the object from Step 1...
+  load: async () =&gt; {
+    // This code only runs when the user actually types /greet
+    return {
+      call: async (args, context) =&gt; {
+        return { type: 'text', value: `Hello, ${args}!` }
+      }
+    }
+  }
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong> %%INLINE<em>13%% returns a module containing a %%INLINE</em>14%% function. This %%INLINE<em>15%% function receives the arguments (e.g., if user types %%INLINE</em>16%%, <code>args</code> is "Alice").</li>
+</ul>
+<h3 id="step-3-handling-the-result">Step 3: Handling the Result</h3>
+<p>
+The %%INLINE<em>18%% function returns a %%INLINE</em>19%%.
+</p>
+<pre data-lang="typescript"><code>// The return value from the code above
+{ 
+  type: 'text', 
+  value: 'Hello, Alice!' 
+}
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong> The system receives this object and knows, "Ah, I should print 'Hello, Alice!' to the transcript."</li>
+</ul>
+<hr>
+<h2 id="under-the-hood-how-execution-works">Under the Hood: How Execution Works</h2>
+<p>
+When a user types a command, several systems work together to make it happen.
+</p>
+<h3 id="visual-flow">Visual Flow</h3>
+<p>
+Here is the lifecycle of a command execution:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant U as User
+    participant R as Command Registry
+    participant CMD as The Command
+    participant UI as Terminal UI
+
+    U-&gt;&gt;R: Types "/greet Alice"
+    R-&gt;&gt;R: Check isEnabled()
+    R-&gt;&gt;CMD: call load()
+    CMD--&gt;&gt;R: Returns Module (with call fn)
+    R-&gt;&gt;CMD: Execute call("Alice")
+    CMD--&gt;&gt;R: Return { type: 'text', value: 'Hello...' }
+    R-&gt;&gt;UI: Render Result</div></div>
+<h3 id="implementation-details">Implementation Details</h3>
+<p>
+The core definition resides in %%INLINE<em>20%%. Let's look at the %%INLINE</em>21%% type definition again to see how it ties together.
+</p>
+<pre data-lang="typescript"><code>type LocalCommand = {
+  type: 'local'
+  // Determines if this can run in scripts without a human watching
+  supportsNonInteractive: boolean
+  // The lazy-loader
+  load: () =&gt; Promise&lt;LocalCommandModule&gt;
+}
+</code></pre>
+<p>
+The <code>LocalCommandModule</code> is simply the container for the executable function:
+</p>
+<pre data-lang="typescript"><code>export type LocalCommandCall = (
+  args: string,
+  context: LocalJSXCommandContext,
+) =&gt; Promise&lt;LocalCommandResult&gt;
+
+export type LocalCommandModule = {
+  call: LocalCommandCall
+}
+</code></pre>
+<h3 id="context-safety">Context & Safety</h3>
+<p>
+You might notice the %%INLINE<em>23%% argument in %%INLINE</em>24%%. This gives the command access to the rest of the application, such as:
+</p>
+<ul>
+<li><strong>Theme:</strong> Light/Dark mode settings.</li>
+<li><strong>API Keys:</strong> To access external services.</li>
+<li><strong>Tools:</strong> Ability to use other tools.</li>
+</ul>
+<p>
+However, just because a command <em>exists</em> doesn't mean it allows unsafe actions. The <a href="03<em>permission</em><em>_safety</em>system.md">Permission & Safety System</a> wraps around this architecture to ensure commands like <code>/delete-all-files</code> prompt the user for confirmation before executing.
+</p>
+<p>
+Furthermore, once the command finishes, we need to remember what happened. The result is stored using the <a href="02<em>session</em><em>_transcript</em>persistence.md">Session & Transcript Persistence</a> layer.
+</p>
+<hr>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+The <strong>Command Architecture</strong> acts as the skeleton of our system. It turns loose scripts and prompts into standardized "Skills" that look and feel the same to the user, whether they are simple text echoes or complex interactive UIs.
+</p>
+<p>
+By using the <code>load()</code> pattern, we ensure the "Skill Tree" can grow infinitely large without slowing down the application startup.
+</p>
+<p>
+In the next chapter, we will learn how the system remembers the history of these commands and the conversations surrounding them.
+</p>
+<p>
+<a href="02<em>session</em><em>_transcript</em>persistence.md">Next Chapter: Session & Transcript Persistence</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="types.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">types/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-from-chatbot-to-agent">The Motivation: From Chatbot to Agent</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-metadata-inline-3">1. The Metadata (%%INLINE_3%%)</a></li>
+<li style="padding-left:10px"><a href="#2-the-three-flavors">2. The Three Flavors</a></li>
+<li style="padding-left:0px"><a href="#use-case-creating-a-greeter-command">Use Case: Creating a "Greeter" Command</a></li>
+<li style="padding-left:10px"><a href="#step-1-define-the-structure">Step 1: Define the Structure</a></li>
+<li style="padding-left:10px"><a href="#step-2-lazy-loading-the-logic">Step 2: Lazy Loading the Logic</a></li>
+<li style="padding-left:10px"><a href="#step-3-handling-the-result">Step 3: Handling the Result</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-how-execution-works">Under the Hood: How Execution Works</a></li>
+<li style="padding-left:10px"><a href="#visual-flow">Visual Flow</a></li>
+<li style="padding-left:10px"><a href="#implementation-details">Implementation Details</a></li>
+<li style="padding-left:10px"><a href="#context-safety">Context & Safety</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

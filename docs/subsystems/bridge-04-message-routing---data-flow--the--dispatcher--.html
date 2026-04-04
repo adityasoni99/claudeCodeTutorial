@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: Message Routing & Data Flow (The "Dispatcher") — bridge/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">bridge/04_message_routing___data_flow__the__dispatcher__.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🌉 bridge/ · 04_message_routing___data_flow__the__dispatcher__.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: Message Routing & Data Flow (The "Dispatcher")</h1>
+  <div class="chapter-meta"><span>📄 bridge/04_message_routing___data_flow__the__dispatcher__.md</span></div>
+</div>
+<h1 id="chapter-4-message-routing-data-flow-the-dispatcher">Chapter 4: Message Routing & Data Flow (The "Dispatcher")</h1>
+<p>
+In the previous chapter, <a href="03<em>unified</em>transport<em>layer<strong>the</strong>pipe</em>_.md">Unified Transport Layer (The "Pipe")</a>, we built a pipeline that moves raw data between the server and our application.
+</p>
+<p>
+However, a raw pipe is dumb. It delivers everything: random server pings, echoes of messages we sent ourselves, and complex commands mixed with chat text. If we just printed everything coming out of the pipe directly to the screen, it would look like gibberish.
+</p>
+<p>
+We need a <strong>Dispatcher</strong>. Think of this as the Mail Room of a large office. It opens every envelope, throws away junk mail, downloads heavy packages, and decides exactly which department should handle the request.
+</p>
+<h3 id="the-problem-raw-data-is-messy">The Problem: Raw Data is Messy</h3>
+<p>
+Imagine the server sends this raw string down the pipe:
+</p>
+<pre data-lang="json"><code>{"type": "user", "uuid": "abc-123", "content": "Hello", "file_attachments": [{"file_uuid": "xyz"}]}
+</code></pre>
+<p>
+We have three problems here:
+</p>
+<ol>
+<li><strong>It's a string:</strong> Our code needs an Object, not text.</li>
+</ol>
+<ol>
+<li><strong>It might be an echo:</strong> If <em>we</em> sent this message 5 seconds ago, the server might send it back to confirm. We don't want to process it twice.</li>
+</ol>
+<ol>
+<li><strong>It has a "ghost" file:</strong> The %%INLINE<em>0%% is just an ID (%%INLINE</em>1%%). The AI cannot read an ID. It needs the actual file content on the hard drive.</li>
+</ol>
+<p>
+<strong>The Goal:</strong> We need a layer that converts raw noise into clean, ready-to-use instructions for the AI.
+</p>
+<h3 id="key-concepts">Key Concepts</h3>
+<h4 id="1-ingress-routing-the-sorter">1. Ingress Routing (The Sorter)</h4>
+<p>
+The Dispatcher looks at the <code>type</code> of the message.
+</p>
+<ul>
+<li><strong>User Message:</strong> A chat from the web interface? Send it to the AI.</li>
+<li><strong>Control Request:</strong> A command to stop generating or change settings? Handle it immediately.</li>
+<li><strong>Echo:</strong> Did we write this? Ignore it.</li>
+</ul>
+<h4 id="2-data-normalization-the-fixer">2. Data Normalization (The Fixer)</h4>
+<p>
+Different clients (iPhone app, Web Dashboard) sometimes format data differently. For example, one might say %%INLINE<em>3%% (camelCase) and another %%INLINE</em>4%% (snake_case). The Dispatcher fixes these typos so the rest of the app doesn't crash.
+</p>
+<h4 id="3-attachment-resolution-the-fetcher">3. Attachment Resolution (The Fetcher)</h4>
+<p>
+When a user uploads a file on the web, the message only contains a "Claim Check" (a UUID). The Dispatcher pauses, runs to the server to download the actual file, saves it to a temp folder, and <em>then</em> hands the message to the AI saying, "Here is the message, and I put the file at <code>/tmp/file.txt</code>."
+</p>
+<h3 id="use-case-handling-a-web-upload">Use Case: Handling a Web Upload</h3>
+<p>
+Let's say a user on the web dashboard uploads a CSV file and asks "Analyze this."
+</p>
+<p>
+<strong>The Dispatcher's Job:</strong>
+</p>
+<ol>
+<li>Receive the raw JSON.</li>
+</ol>
+<ol>
+<li>See the file ID.</li>
+</ol>
+<ol>
+<li>Download the CSV to the local disk.</li>
+</ol>
+<ol>
+<li>Rewrite the message to say: <code>Analyze this @"/local/path/to/data.csv"</code>.</li>
+</ol>
+<ol>
+<li>Send <em>that</em> to the AI.</li>
+</ol>
+<h3 id="internal-implementation-the-workflow">Internal Implementation: The Workflow</h3>
+<p>
+This process happens automatically whenever data arrives from the Transport layer.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Pipe as Transport Layer
+    participant Dispatch as The Dispatcher
+    participant Server as Cloud API
+    participant App as Terminal App
+
+    Note over Pipe, App: Step 1: Ingress
+    Pipe-&gt;&gt;Dispatch: Raw JSON String
+    Dispatch-&gt;&gt;Dispatch: Parse &amp; Check Echo
+    
+    Note over Dispatch, Server: Step 2: Attachments
+    Dispatch-&gt;&gt;Dispatch: Found File ID?
+    Dispatch-&gt;&gt;Server: Download File Content
+    Server--&gt;&gt;Dispatch: File Bytes
+    Dispatch-&gt;&gt;Dispatch: Save to Disk
+    
+    Note over Dispatch, App: Step 3: Handoff
+    Dispatch-&gt;&gt;App: Clean Message + Local File Path</div></div>
+<h3 id="code-deep-dive">Code Deep Dive</h3>
+<p>
+Let's look at the three files that make up the Dispatcher.
+</p>
+<h4 id="1-the-router-inline-7">1. The Router (<code>bridgeMessaging.ts</code>)</h4>
+<p>
+This is the main entry point. It filters noise and routes traffic.
+</p>
+<pre data-lang="typescript"><code>// bridgeMessaging.ts
+export function handleIngressMessage(data, recentPostedUUIDs, onInboundMessage) {
+  // 1. Parse Raw String to JSON
+  const parsed = JSON.parse(data);
+
+  // 2. Echo Detection
+  // If we have seen this UUID in our "Sent" box, ignore it.
+  if (parsed.uuid &amp;&amp; recentPostedUUIDs.has(parsed.uuid)) {
+    return; // Drop it!
+  }
+
+  // 3. Route based on type
+  if (parsed.type === 'user') {
+    // Send to the app (which will handle attachments next)
+    onInboundMessage(parsed);
+  }
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong> This function is the gatekeeper. It ensures that we don't get into an infinite loop of replying to our own messages (<code>recentPostedUUIDs</code>).
+</p>
+<h4 id="2-the-fixer-inline-9">2. The Fixer (<code>inboundMessages.ts</code>)</h4>
+<p>
+Sometimes, image data comes in with slightly wrong formatting. We fix it here.
+</p>
+<pre data-lang="typescript"><code>// inboundMessages.ts
+export function normalizeImageBlocks(blocks) {
+  return blocks.map(block =&gt; {
+    // Check if it's a base64 image
+    if (block.type === 'image' &amp;&amp; block.source.type === 'base64') {
+      
+      // Fix "mediaType" (wrong) to "media_type" (standard)
+      const fixedMediaType = block.source.mediaType || block.source.media_type;
+      
+      return { ...block, source: { ...block.source, media_type: fixedMediaType }};
+    }
+    return block;
+  });
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong> This is a "sanitizer." By fixing the data here, the complex logic inside the AI "Brain" doesn't need to worry about inconsistent data formats.
+</p>
+<h4 id="3-the-fetcher-inline-10">3. The Fetcher (<code>inboundAttachments.ts</code>)</h4>
+<p>
+This is the heavy lifter. It converts "Claim Checks" (IDs) into actual files.
+</p>
+<pre data-lang="typescript"><code>// inboundAttachments.ts
+export async function resolveInboundAttachments(attachments) {
+  // Loop through all file IDs attached to the message
+  const paths = await Promise.all(attachments.map(async (att) =&gt; {
+    
+    // 1. Download from API
+    const data = await downloadFile(att.file_uuid);
+    
+    // 2. Save to local disk
+    const localPath = `/tmp/${att.file_name}`;
+    await writeFile(localPath, data);
+    
+    return localPath;
+  }));
+
+  // Return a string of references: @"/tmp/file1.txt"
+  return paths.map(p =&gt; `@"${p}"`).join(' ');
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong> This function makes the bridge feel magical. You upload a file on a website, and milliseconds later, that file exists on your terminal's hard drive, ready for the AI to read.
+</p>
+<h3 id="handling-control-signals">Handling Control Signals</h3>
+<p>
+Not all messages are chat. Sometimes the server sends a <strong>Control Request</strong>.
+</p>
+<p>
+For example, if you click "Stop" on the web dashboard, the server sends an %%INLINE<em>11%% signal. The Dispatcher handles this separately in %%INLINE</em>12%%.
+</p>
+<pre data-lang="typescript"><code>// bridgeMessaging.ts
+export function handleServerControlRequest(request, handlers) {
+  switch (request.subtype) {
+    case 'interrupt':
+      // Stop the local process
+      handlers.onInterrupt();
+      break;
+      
+    case 'set_model':
+      // Change the AI model
+      handlers.onSetModel(request.model);
+      break;
+  }
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong> The Dispatcher recognizes that this isn't a message for the user—it's a command for the application itself. It routes these directly to the system handlers.
+</p>
+<h3 id="summary">Summary</h3>
+<p>
+The <strong>Dispatcher</strong> is the intelligent layer that sits on top of the dumb pipe.
+</p>
+<ol>
+<li>It <strong>Parses</strong> raw data.</li>
+</ol>
+<ol>
+<li>It <strong>Filters</strong> echoes (things we said).</li>
+</ol>
+<ol>
+<li>It <strong>Normalizes</strong> messy data (typos in image formats).</li>
+</ol>
+<ol>
+<li>It <strong>Downloads</strong> attachments so they are locally available.</li>
+</ol>
+<ol>
+<li>It <strong>Routes</strong> commands (like "Stop") to the right handler.</li>
+</ol>
+<p>
+At this point, we have a fully functional system! We can connect, create sessions, send data, and handle complex messages.
+</p>
+<p>
+But there is one major question left: <strong>Is this safe?</strong> How do we prevent unauthorized people from connecting to our session and running commands on our computer?
+</p>
+<p>
+<a href="05<em>authentication<strong></em>security</strong>the<strong>keycard</strong>.md">Next Chapter: Authentication & Security (The "Keycard")</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="bridge.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">bridge/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:10px"><a href="#the-problem-raw-data-is-messy">The Problem: Raw Data is Messy</a></li>
+<li style="padding-left:10px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#use-case-handling-a-web-upload">Use Case: Handling a Web Upload</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-the-workflow">Internal Implementation: The Workflow</a></li>
+<li style="padding-left:10px"><a href="#code-deep-dive">Code Deep Dive</a></li>
+<li style="padding-left:10px"><a href="#handling-control-signals">Handling Control Signals</a></li>
+<li style="padding-left:10px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

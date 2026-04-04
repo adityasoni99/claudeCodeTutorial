@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: Input Processing Pipeline — ink/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">ink/04_input_processing_pipeline.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🖊 ink/ · 04_input_processing_pipeline.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: Input Processing Pipeline</h1>
+  <div class="chapter-meta"><span>📄 ink/04_input_processing_pipeline.md</span></div>
+</div>
+<h1 id="chapter-4-input-processing-pipeline">Chapter 4: Input Processing Pipeline</h1>
+<p>
+In the previous chapter, <a href="03<em>react</em>reconciler.md">React Reconciler</a>, we learned how Ink updates the DOM when state changes. We can now <em>output</em> text to the terminal.
+</p>
+<p>
+But a CLI tool isn't a movie; it's a conversation. You need to listen to the user.
+</p>
+<p>
+Whether it's navigating a menu with arrow keys, typing a search query, or clicking with a mouse, Ink needs a way to understand what the user is doing. This is handled by the <strong>Input Processing Pipeline</strong>.
+</p>
+<hr>
+<h2 id="the-motivation-speaking-the-language">The Motivation: Speaking the Language</h2>
+<p>
+Terminals are old technology. When you press a key on your keyboard, the terminal doesn't send a nice JavaScript object like <code>{ key: "ArrowUp" }</code>.
+</p>
+<p>
+Instead, it sends a <strong>Stream of Bytes</strong>.
+</p>
+<ol>
+<li>If you type %%INLINE<em>1%%, it sends the byte %%INLINE</em>2%%.</li>
+</ol>
+<ol>
+<li>If you press %%INLINE<em>3%%, it sends a sequence of three bytes: %%INLINE</em>4%%, %%INLINE<em>5%%, %%INLINE</em>6%%. In text, that looks like <code>^[A</code> (Escape, Bracket, A).</li>
+</ol>
+<p>
+<strong>The Challenge:</strong>
+ 
+Ink needs to sit between the raw terminal stream and your React component, acting as a translator. It must convert cryptic byte sequences into friendly events.
+</p>
+<h3 id="the-goal-a-moveable-robot">The Goal: A Moveable Robot</h3>
+<p>
+Let's build a tiny interactive UI. We want to move an "R" (Robot) left and right using the arrow keys.
+</p>
+<pre data-lang="text"><code>[ ] [ ] [R] [ ] [ ]
+</code></pre>
+<hr>
+<h2 id="1-concept-raw-mode-vs-cooked-mode">1. Concept: Raw Mode vs. Cooked Mode</h2>
+<p>
+By default, terminals operate in <strong>Cooked Mode</strong>. This is what happens when you type a command in bash:
+</p>
+<ol>
+<li>You type text. It appears on screen.</li>
+</ol>
+<ol>
+<li>You can use Backspace to fix mistakes.</li>
+</ol>
+<ol>
+<li>Nothing is sent to the program until you hit <strong>Enter</strong>.</li>
+</ol>
+<p>
+Ink needs <strong>Raw Mode</strong>.
+ 
+In Raw Mode:
+</p>
+<ol>
+<li>Keystrokes are not automatically printed.</li>
+</ol>
+<ol>
+<li>Input is sent to the program <strong>immediately</strong> (no waiting for Enter).</li>
+</ol>
+<p>
+Ink handles this switch automatically when your app starts.
+</p>
+<hr>
+<h2 id="2-using-the-abstraction-inline-8">2. Using the Abstraction: <code>useInput</code></h2>
+<p>
+Ink provides a React hook called <code>useInput</code>. This is your main interface for listening to the user.
+</p>
+<p>
+It gives you two arguments:
+</p>
+<ol>
+<li><code>input</code>: The string character (e.g., "a", "1").</li>
+</ol>
+<ol>
+<li>%%INLINE<em>11%%: An object with metadata (e.g., %%INLINE</em>12%%, <code>ctrl: true</code>).</li>
+</ol>
+<h3 id="the-robot-implementation">The Robot Implementation</h3>
+<p>
+Here is how we solve our "Moveable Robot" use case:
+</p>
+<pre data-lang="tsx"><code>import React, { useState } from 'react';
+import { useInput, Text } from 'ink';
+
+const Robot = () =&gt; {
+  const [x, setX] = useState(0);
+
+  useInput((input, key) =&gt; {
+    if (input === 'q') process.exit(0); // Quit on 'q'
+
+    if (key.leftArrow) {
+      setX(prev =&gt; Math.max(0, prev - 1));
+    }
+
+    if (key.rightArrow) {
+      setX(prev =&gt; prev + 1);
+    }
+  });
+
+  return &lt;Text&gt;Position: {x}&lt;/Text&gt;;
+};
+</code></pre>
+<p>
+<strong>What happens here?</strong>
+ 
+Every time you press a key, Ink runs your callback. It abstracts away the complex byte parsing so you can just check <code>key.leftArrow</code>.
+</p>
+<hr>
+<h2 id="under-the-hood-the-pipeline">Under the Hood: The Pipeline</h2>
+<p>
+How does a byte stream turn into that callback execution? Let's trace the journey of a keystroke.
+</p>
+<h3 id="the-flow">The Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant Stdin as process.stdin
+    participant App as App.tsx
+    participant Parser as Parse Keypress
+    participant Hook as useInput Hook
+
+    User-&gt;&gt;Stdin: Presses "Left Arrow" (^[D)
+    Stdin-&gt;&gt;App: Emits "readable" event
+    App-&gt;&gt;Parser: Sends raw string "^[D"
+    Parser-&gt;&gt;Parser: Matches regex patterns
+    Parser--&gt;&gt;App: Returns { name: "left", ctrl: false }
+    App-&gt;&gt;Hook: Fires callback with event data</div></div>
+<ol>
+<li><strong>Detection:</strong> Node.js detects activity on the Standard Input (<code>stdin</code>).</li>
+</ol>
+<ol>
+<li><strong>Reading:</strong> The root <code>App</code> component wakes up and reads the chunk.</li>
+</ol>
+<ol>
+<li><strong>Parsing:</strong> The chunk is fed into a tokenizer state machine.</li>
+</ol>
+<ol>
+<li><strong>Dispatch:</strong> Ink broadcasts the result to all active <code>useInput</code> hooks.</li>
+</ol>
+<hr>
+<h2 id="deep-dive-inline-18-the-listener">Deep Dive: <code>App.tsx</code> (The Listener)</h2>
+<p>
+The %%INLINE<em>19%% component (which we learned about in <a href="03</em>react_reconciler.md">Chapter 3</a> as the root of our tree) is responsible for monitoring the input stream.
+</p>
+<p>
+It sets up a listener on <code>stdin</code> when the app mounts.
+</p>
+<pre data-lang="typescript"><code>// components/App.tsx (Simplified)
+handleReadable = () =&gt; {
+  let chunk;
+  // Read all available data from stdin
+  while ((chunk = this.props.stdin.read()) !== null) {
+    // Send it to the processing function
+    this.processInput(chunk);
+  }
+};
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+ 
+This loop grabs every byte currently in the buffer. If you paste a long string, this loop grabs it all at once.
+</p>
+<hr>
+<h2 id="deep-dive-inline-21-the-brain">Deep Dive: <code>parse-keypress.ts</code> (The Brain)</h2>
+<p>
+This is where the magic happens. This file contains a massive dictionary of "Escape Sequences." It uses Regular Expressions (Regex) to identify what the bytes mean.
+</p>
+<h3 id="simple-character-parsing">Simple Character Parsing</h3>
+<p>
+If the input is just a letter, it's easy:
+</p>
+<pre data-lang="typescript"><code>// parse-keypress.ts (Simplified)
+if (s.length === 1 &amp;&amp; s &gt;= 'a' &amp;&amp; s &lt;= 'z') {
+  return {
+    name: s,
+    original: s
+  };
+}
+</code></pre>
+<h3 id="escape-sequence-parsing">Escape Sequence Parsing</h3>
+<p>
+If the input starts with <code>\x1b</code> (Escape), things get tricky. The parser checks against known patterns.
+</p>
+<pre data-lang="typescript"><code>// parse-keypress.ts (Simplified)
+
+// Regex for "Arrow Keys": ESC [ letter
+const ARROW_KEY_RE = /^\x1b\[([A-D])$/;
+
+function parseKeypress(s) {
+  if (s.match(ARROW_KEY_RE)) {
+    // Map '[A' to 'up', '[B' to 'down', etc.
+    return { 
+      name: 'up', 
+      ctrl: false 
+    };
+  }
+}
+</code></pre>
+<p>
+<strong>Why is this hard?</strong>
+ 
+Because %%INLINE<em>23%% is also a key! If you press the %%INLINE</em>24%% key, the computer sends %%INLINE<em>25%%. If you press %%INLINE</em>26%%, it sends %%INLINE<em>27%% followed by %%INLINE</em>28%%. Ink has to wait a few milliseconds to see if more bytes are coming after the %%INLINE<em>29%% to decide if it's the %%INLINE</em>30%% key or the start of a special command.
+</p>
+<hr>
+<h2 id="deep-dive-mouse-support-complex-inputs">Deep Dive: Mouse Support & Complex Inputs</h2>
+<p>
+Ink's parser handles more than just keyboard keys. It also supports <strong>Mouse Events</strong> (clicks, scrolling) and <strong>Paste Events</strong>.
+</p>
+<h3 id="mouse-protocols-sgr">Mouse Protocols (SGR)</h3>
+<p>
+Modern terminals support mouse tracking via "SGR Protocol". When you click, the terminal sends a sequence like:
+ 
+<code>\x1b[&lt;0;32;15M</code>
+</p>
+<ul>
+<li><code>0</code>: Left Mouse Button</li>
+<li><code>32</code>: Column 32</li>
+<li><code>15</code>: Row 15</li>
+<li>%%INLINE<em>35%%: Press (vs %%INLINE</em>36%% for Release)</li>
+</ul>
+<p>
+<code>parse-keypress.ts</code> decodes this:
+</p>
+<pre data-lang="typescript"><code>// parse-keypress.ts (Simplified)
+const SGR_MOUSE_RE = /^\x1b\[&lt;(\d+);(\d+);(\d+)([Mm])$/;
+
+if (match = SGR_MOUSE_RE.exec(s)) {
+  return {
+    kind: 'mouse',
+    col: parseInt(match[2]),
+    row: parseInt(match[3])
+  };
+}
+</code></pre>
+<p>
+The %%INLINE<em>38%% component then checks if this click happened on top of a component with an %%INLINE</em>39%% handler.
+</p>
+<hr>
+<h2 id="deep-dive-inline-40-the-bridge">Deep Dive: <code>useInput.ts</code> (The Bridge)</h2>
+<p>
+Finally, how does the parsed event reach your component? Through the <code>useInput</code> hook.
+</p>
+<p>
+This hook relies on an internal %%INLINE<em>42%%. When %%INLINE</em>43%% processes a key, it emits an <code>'input'</code> event.
+</p>
+<pre data-lang="typescript"><code>// hooks/use-input.ts (Simplified)
+const useInput = (handler) =&gt; {
+  useEffect(() =&gt; {
+    // Subscribe to the global input emitter
+    internal_eventEmitter.on('input', handler);
+
+    return () =&gt; {
+      // Unsubscribe when component unmounts
+      internal_eventEmitter.removeListener('input', handler);
+    };
+  }, [handler]);
+};
+</code></pre>
+<p>
+<strong>Optimization Note:</strong>
+ 
+Ink runs these updates inside <code>discreteUpdates</code>. This ensures that if you smash the keyboard, React batches the updates together so your CLI doesn't freeze trying to render every single keystroke individually.
+</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, you learned:
+</p>
+<ul>
+<li><strong>Raw Mode:</strong> We must take control of <code>stdin</code> to hear individual keystrokes.</li>
+<li><strong>Parsing:</strong> Terminal inputs are byte streams. <code>parse-keypress.ts</code> decodes ANSI escape sequences into JavaScript objects.</li>
+<li><strong>Consumption:</strong> <code>useInput</code> connects your React components to this decoded stream.</li>
+</ul>
+<p>
+Now we can <strong>Build</strong> a UI (Components), <strong>Layout</strong> it (Yoga), <strong>Reconcile</strong> updates (React), and <strong>Interact</strong> with it (Input).
+</p>
+<p>
+The final piece of the puzzle is actually putting the pixels on the screen.
+</p>
+<p>
+<a href="05<em>frame</em>renderer.md">Next Chapter: Frame Renderer</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="ink.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">ink/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-speaking-the-language">The Motivation: Speaking the Language</a></li>
+<li style="padding-left:10px"><a href="#the-goal-a-moveable-robot">The Goal: A Moveable Robot</a></li>
+<li style="padding-left:0px"><a href="#1-concept-raw-mode-vs-cooked-mode">1. Concept: Raw Mode vs. Cooked Mode</a></li>
+<li style="padding-left:0px"><a href="#2-using-the-abstraction-inline-8">2. Using the Abstraction: %%INLINE_8%%</a></li>
+<li style="padding-left:10px"><a href="#the-robot-implementation">The Robot Implementation</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-the-pipeline">Under the Hood: The Pipeline</a></li>
+<li style="padding-left:10px"><a href="#the-flow">The Flow</a></li>
+<li style="padding-left:0px"><a href="#deep-dive-inline-18-the-listener">Deep Dive: %%INLINE_18%% (The Listener)</a></li>
+<li style="padding-left:0px"><a href="#deep-dive-inline-21-the-brain">Deep Dive: %%INLINE_21%% (The Brain)</a></li>
+<li style="padding-left:10px"><a href="#simple-character-parsing">Simple Character Parsing</a></li>
+<li style="padding-left:10px"><a href="#escape-sequence-parsing">Escape Sequence Parsing</a></li>
+<li style="padding-left:0px"><a href="#deep-dive-mouse-support-complex-inputs">Deep Dive: Mouse Support & Complex Inputs</a></li>
+<li style="padding-left:10px"><a href="#mouse-protocols-sgr">Mouse Protocols (SGR)</a></li>
+<li style="padding-left:0px"><a href="#deep-dive-inline-40-the-bridge">Deep Dive: %%INLINE_40%% (The Bridge)</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

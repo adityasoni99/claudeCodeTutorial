@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 1: Latest Event Anchoring — assistant/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">assistant/01_latest_event_anchoring.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🤖 assistant/ · 01_latest_event_anchoring.md</div>
+  <h1 class="chapter-title-h1">Chapter 1: Latest Event Anchoring</h1>
+  <div class="chapter-meta"><span>📄 assistant/01_latest_event_anchoring.md</span></div>
+</div>
+<h1 id="chapter-1-latest-event-anchoring">Chapter 1: Latest Event Anchoring</h1>
+<p>
+Welcome to the <strong>Assistant</strong> project tutorial! 
+</p>
+<p>
+In this first chapter, we are going to tackle a fundamental requirement of any chat application: <strong>Loading the conversation.</strong>
+</p>
+<h3 id="motivation-the-live-button">Motivation: The "Live" Button</h3>
+<p>
+Imagine you are watching a livestream video, but you paused it to get a snack. When you come back, you are ten minutes behind. You press the <strong>"Live"</strong> button to jump straight to what is happening <em>right now</em>.
+</p>
+<p>
+Chat applications work the same way. When a user opens a chat window, they don't want to see the first message they sent three months ago. They want to see the <strong>most recent</strong> messages immediately.
+</p>
+<p>
+<strong>The Problem:</strong>
+ 
+Typically, databases track data by IDs. To get data, you often need to say "Give me messages starting after ID #123." But when the app first loads, we don't know what the latest ID is!
+</p>
+<p>
+<strong>The Solution:</strong>
+ 
+<strong>Latest Event Anchoring</strong>. This is a strategy where we tell the system: "I don't know the specific message ID, just anchor me to the very end of the conversation stream."
+</p>
+<hr>
+<h3 id="how-to-use-it">How to use it</h3>
+<p>
+We have abstracted this logic into a helper function called <code>fetchLatestEvents</code>. You don't need to worry about calculating IDs or cursors.
+</p>
+<p>
+Here is how you use it in your application code:
+</p>
+<pre data-lang="typescript"><code>// 1. Prepare the authorization context (we will learn this in Ch 4)
+const ctx = await createHistoryAuthCtx('session-123');
+
+// 2. Fetch the most recent 100 events
+const latestHistory = await fetchLatestEvents(ctx, 100);
+
+console.log(latestHistory.events); // The newest messages!
+</code></pre>
+<p>
+<strong>What happens here?</strong>
+</p>
+<ol>
+<li>We set up the connection info (<code>ctx</code>).</li>
+</ol>
+<ol>
+<li>We ask for the latest events.</li>
+</ol>
+<ol>
+<li>The system automatically finds the "now" point and gives us the most recent slice of history.</li>
+</ol>
+<hr>
+<h3 id="under-the-hood-how-it-works">Under the Hood: How it Works</h3>
+<p>
+Let's look at what happens inside the <code>assistant</code> project when you call this function.
+</p>
+<p>
+The magic relies on a specific flag sent to the API called <code>anchor_to_latest</code>. This flag acts like that "Live" button. It tells the server to ignore specific IDs and just look at the bottom of the list.
+</p>
+<h4 id="visualizing-the-flow">Visualizing the Flow</h4>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant UI as User Interface
+    participant SDK as fetchLatestEvents
+    participant API as Backend API
+
+    Note over UI, API: Initial Load of Chat
+    UI-&gt;&gt;SDK: Request current history
+    SDK-&gt;&gt;API: GET /events params: { anchor_to_latest: true }
+    Note right of API: Finds the end of the stream
+    API--&gt;&gt;SDK: Returns newest 100 messages
+    SDK--&gt;&gt;UI: Displays messages</div></div>
+<h4 id="code-implementation">Code Implementation</h4>
+<p>
+The implementation is located in <code>sessionHistory.ts</code>. It is designed to be simple and reusable.
+</p>
+<p>
+<strong>1. The Specialist Function</strong>
+</p>
+<p>
+First, we have the specific function designed for this chapter. Its only job is to turn on the "Live" button flag.
+</p>
+<pre data-lang="typescript"><code>// File: sessionHistory.ts
+
+/**
+ * Newest page: last `limit` events, chronological, via anchor_to_latest.
+ */
+export async function fetchLatestEvents(
+  ctx: HistoryAuthCtx,
+  limit = HISTORY_PAGE_SIZE,
+): Promise&lt;HistoryPage | null&gt; {
+  // We hardcode 'anchor_to_latest: true' here
+  return fetchPage(ctx, { limit, anchor_to_latest: true }, 'fetchLatestEvents')
+}
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong> This function wraps a generic fetcher. Crucially, it hardcodes <code>{ anchor_to_latest: true }</code>. This is the signal that tells our API to perform <strong>Latest Event Anchoring</strong>.</li>
+</ul>
+<p>
+<strong>2. The Generic Fetcher</strong>
+</p>
+<p>
+The specialist function calls %%INLINE<em>6%%, which handles the actual network request. This is part of our <a href="03</em>defensive<em>api</em>wrapper.md">Defensive API Wrapper</a> strategy (which we will cover in Chapter 3), but here is the simplified core logic:
+</p>
+<pre data-lang="typescript"><code>// File: sessionHistory.ts
+
+async function fetchPage(
+  ctx: HistoryAuthCtx,
+  params: Record&lt;string, string | number | boolean&gt;,
+  label: string,
+): Promise&lt;HistoryPage | null&gt; {
+  // Use axios to make the GET request
+  const resp = await axios
+    .get&lt;SessionEventsResponse&gt;(ctx.baseUrl, {
+      headers: ctx.headers, // Auth headers from Chapter 4
+      params,               // This contains our anchor_to_latest flag
+    })
+    .catch(() =&gt; null) // Simple error handling
+
+  // ... validation logic ...
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong> %%INLINE<em>7%% doesn't care <em>what</em> logic we are using (anchoring vs. scrolling). It just takes the %%INLINE</em>8%% we gave it and sends them to the API.</li>
+</ul>
+<p>
+<strong>3. Handling the Response</strong>
+</p>
+<p>
+Once the data comes back, we need to return it in a clean format. This touches on the <a href="05<em>data</em>normalization_layer.md">Data Normalization Layer</a>, but simply put, we ensure the data is an array.
+</p>
+<pre data-lang="typescript"><code>  // ... inside fetchPage ...
+
+  return {
+    // The list of messages
+    events: Array.isArray(resp.data.data) ? resp.data.data : [],
+    // Pointers for pagination (used in Chapter 2)
+    firstId: resp.data.first_id, 
+    hasMore: resp.data.has_more,
+  }
+}
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong> We return the %%INLINE<em>9%% (the messages) and %%INLINE</em>10%%. If <code>hasMore</code> is true, it means there is older history available to scroll up to.</li>
+</ul>
+<hr>
+<h3 id="conclusion">Conclusion</h3>
+<p>
+You have learned the concept of <strong>Latest Event Anchoring</strong>. 
+</p>
+<p>
+By using the <code>anchor_to_latest</code> flag, we avoid the complexity of managing cursors during the initial load. We simply ask the API: "Show me what is happening now," ensuring the user always lands in the most current context of the conversation.
+</p>
+<p>
+<strong>But wait!</strong> What if the user wants to see what they said <em>yesterday</em>? They need to scroll up. How do we fetch older messages seamlessly?
+</p>
+<p>
+Join us in the next chapter to learn about the <strong>Reverse Pagination Strategy</strong>.
+</p>
+<p>
+<a href="02<em>reverse</em>pagination_strategy.md">Next Chapter: Reverse Pagination Strategy</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="assistant.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">assistant/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:10px"><a href="#motivation-the-live-button">Motivation: The "Live" Button</a></li>
+<li style="padding-left:10px"><a href="#how-to-use-it">How to use it</a></li>
+<li style="padding-left:10px"><a href="#under-the-hood-how-it-works">Under the Hood: How it Works</a></li>
+<li style="padding-left:10px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

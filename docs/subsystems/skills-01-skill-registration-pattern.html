@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 1: Skill Registration Pattern — skills/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">skills/01_skill_registration_pattern.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🎓 skills/ · 01_skill_registration_pattern.md</div>
+  <h1 class="chapter-title-h1">Chapter 1: Skill Registration Pattern</h1>
+  <div class="chapter-meta"><span>📄 skills/01_skill_registration_pattern.md</span></div>
+</div>
+<h1 id="chapter-1-skill-registration-pattern">Chapter 1: Skill Registration Pattern</h1>
+<p>
+Welcome to the <strong>Skills</strong> project! If you are looking to understand how to give our AI assistant new capabilities, you are in the right place.
+</p>
+<p>
+We start our journey with the <strong>Skill Registration Pattern</strong>. Before we can teach the AI <em>how</em> to do something (like checking your memory or fixing code), we need a way to tell the system that this new ability simply <em>exists</em>.
+</p>
+<h2 id="motivation-the-toolbox-analogy">Motivation: The Toolbox Analogy</h2>
+<p>
+Imagine you have a massive toolbox. You don't want to dump every single tool onto the floor the moment you start working. Instead, you want a system where:
+</p>
+<ol>
+<li>Each tool is kept in its own separate box (Module).</li>
+</ol>
+<ol>
+<li>You have a master checklist (Index) of what tools are available.</li>
+</ol>
+<ol>
+<li>You can decide to leave some tools in the truck if you don't need them today (Feature Flags).</li>
+</ol>
+<p>
+The <strong>Skill Registration Pattern</strong> is that master checklist. It allows us to keep our code clean by separating every skill into its own file, while having one central place to turn them on.
+</p>
+<h3 id="the-use-case">The Use Case</h3>
+<p>
+Let's say we want to add a capability called <strong>"Remember"</strong> (which helps the AI manage its memory). We need a way to ensure that when the application starts, the "Remember" skill is loaded and ready to accept commands.
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+To make this happen, we use three simple components:
+</p>
+<ol>
+<li><strong>The Skill Module</strong>: The file containing the specific skill logic.</li>
+</ol>
+<ol>
+<li><strong>The Registration Function</strong>: A function exported by the module that says "I'm here, load me!"</li>
+</ol>
+<ol>
+<li><strong>The Central Index</strong>: The main file that calls the registration functions for every skill.</li>
+</ol>
+<h2 id="step-by-step-implementation">Step-by-Step Implementation</h2>
+<p>
+Let's look at how we wire this up, from the specific skill to the central loader.
+</p>
+<h3 id="1-the-skill-modules-entry-point">1. The Skill Module's Entry Point</h3>
+<p>
+In this pattern, every skill file (like <code>bundled/remember.ts</code>) exports a specific function responsible for registering itself. It doesn't run the logic yet; it just prepares the skill.
+</p>
+<pre data-lang="typescript"><code>// File: src/skills/bundled/remember.ts
+import { registerBundledSkill } from '../bundledSkills.js'
+
+// This is the "Entry Point" for this specific skill
+export function registerRememberSkill(): void {
+  // We can add checks here (e.g., is the user allowed to use this?)
+  if (process.env.USER_TYPE !== 'ant') {
+    return
+  }
+
+  // If checks pass, we register the definition
+  registerBundledSkill({
+    name: 'remember',
+    // ... description and logic ...
+  })
+}
+</code></pre>
+<p>
+<em>Explanation:</em> We define a function %%INLINE<em>1%%. It acts as a gatekeeper. It checks if the environment is correct (e.g., checking %%INLINE</em>2%%), and if so, it calls the core system to register the skill.
+</p>
+<h3 id="2-the-central-index">2. The Central Index</h3>
+<p>
+Now that our skill has a registration function, we need the application to actually call it. This happens in <code>bundled/index.ts</code>. Think of this file as the roll call sheet.
+</p>
+<pre data-lang="typescript"><code>// File: src/skills/bundled/index.ts
+import { registerRememberSkill } from './remember.js'
+import { registerSimplifySkill } from './simplify.js'
+// ... other imports
+
+export function initBundledSkills(): void {
+  // Roll call! Initialize the skills we want.
+  registerRememberSkill()
+  registerSimplifySkill()
+  // ... others
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This file imports the registration functions we created in Step 1 and runs them one by one inside <code>initBundledSkills()</code>. When the app launches, it calls this single function, which triggers a chain reaction loading all tools.
+</p>
+<h2 id="internal-implementation-how-it-works">Internal Implementation: How it Works</h2>
+<p>
+Let's visualize the flow of data when the application starts up.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant App as Application Startup
+    participant Index as Central Index
+    participant Skill as Remember Skill
+    participant Core as Skill Registry
+
+    App-&gt;&gt;Index: Call initBundledSkills()
+    Note over Index: Iterates through list
+    Index-&gt;&gt;Skill: Call registerRememberSkill()
+    Skill-&gt;&gt;Skill: Check Environment (if any)
+    Skill-&gt;&gt;Core: registerBundledSkill({...})
+    Core--&gt;&gt;App: Skill is now active!</div></div>
+<h3 id="advanced-registration-feature-flags">Advanced Registration: Feature Flags</h3>
+<p>
+Sometimes, we want to hide a skill behind a "Feature Flag"—meaning it only loads for users who have a specific configuration turned on.
+</p>
+<p>
+The Central Index handles this gracefully using conditional logic.
+</p>
+<pre data-lang="typescript"><code>// File: src/skills/bundled/index.ts
+import { feature } from 'bun:bundle'
+
+export function initBundledSkills(): void {
+  // Standard skills load every time
+  registerVerifySkill()
+
+  // Experimental skills only load if the feature is on
+  if (feature('BUILDING_CLAUDE_APPS')) {
+    // We use 'require' here to avoid loading the file if not needed
+    const { registerClaudeApiSkill } = require('./claudeApi.js')
+    registerClaudeApiSkill()
+  }
+}
+</code></pre>
+<p>
+<em>Explanation:</em>
+</p>
+<ol>
+<li>We check <code>if (feature('...'))</code>.</li>
+</ol>
+<ol>
+<li>If true, we use %%INLINE<em>6%% instead of %%INLINE</em>7%%. This is a performance trick: if the feature is off, the computer never even reads the file for that skill!</li>
+</ol>
+<h3 id="advanced-registration-browser-checks">Advanced Registration: Browser Checks</h3>
+<p>
+We can also check the environment, such as whether Chrome is installed and configured.
+</p>
+<pre data-lang="typescript"><code>// File: src/skills/bundled/index.ts
+import { shouldAutoEnableClaudeInChrome } from 'src/utils/claudeInChrome/setup.js'
+import { registerClaudeInChromeSkill } from './claudeInChrome.js'
+
+export function initBundledSkills(): void {
+  // ... other skills
+
+  // Only register this if the helper says we are ready
+  if (shouldAutoEnableClaudeInChrome()) {
+    registerClaudeInChromeSkill()
+  }
+}
+</code></pre>
+<p>
+<em>Explanation:</em> The <code>index.ts</code> file acts as the brain that decides <em>which</em> skills are appropriate for the current computer context.
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+The <strong>Skill Registration Pattern</strong> is the initialization phase of our project.
+</p>
+<ol>
+<li><strong>Modular:</strong> Each skill lives in its own file (like <code>remember.ts</code>).</li>
+</ol>
+<ol>
+<li><strong>Explicit:</strong> Each skill exports a <code>registerFunction</code>.</li>
+</ol>
+<ol>
+<li><strong>Centralized:</strong> One file (<code>index.ts</code>) coordinates the startup sequence.</li>
+</ol>
+<p>
+By using this pattern, we ensure that adding a new skill is as simple as creating a file and adding one line to the index!
+</p>
+<p>
+Now that we know <em>how</em> to register a skill, we need to understand what goes <em>inside</em> that registration call. What defines a skill's name, description, and behavior?
+</p>
+<p>
+<a href="02<em>bundled</em>skill_definition.md">Next Chapter: Bundled Skill Definition</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="skills.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">skills/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#motivation-the-toolbox-analogy">Motivation: The Toolbox Analogy</a></li>
+<li style="padding-left:10px"><a href="#the-use-case">The Use Case</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:0px"><a href="#step-by-step-implementation">Step-by-Step Implementation</a></li>
+<li style="padding-left:10px"><a href="#1-the-skill-modules-entry-point">1. The Skill Module's Entry Point</a></li>
+<li style="padding-left:10px"><a href="#2-the-central-index">2. The Central Index</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-how-it-works">Internal Implementation: How it Works</a></li>
+<li style="padding-left:10px"><a href="#advanced-registration-feature-flags">Advanced Registration: Feature Flags</a></li>
+<li style="padding-left:10px"><a href="#advanced-registration-browser-checks">Advanced Registration: Browser Checks</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

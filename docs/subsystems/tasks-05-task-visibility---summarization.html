@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 5: Task Visibility & Summarization — tasks/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">tasks/05_task_visibility___summarization.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">📋 tasks/ · 05_task_visibility___summarization.md</div>
+  <h1 class="chapter-title-h1">Chapter 5: Task Visibility & Summarization</h1>
+  <div class="chapter-meta"><span>📄 tasks/05_task_visibility___summarization.md</span></div>
+</div>
+<h1 id="chapter-5-task-visibility-summarization">Chapter 5: Task Visibility & Summarization</h1>
+<p>
+In the <a href="04<em>in</em>process_teammates.md">previous chapter</a>, we learned how to spawn complex <strong>In-Process Teammates</strong> that act as co-pilots.
+</p>
+<p>
+By now, your system might have:
+</p>
+<ol>
+<li>Three shell commands compiling code.</li>
+</ol>
+<ol>
+<li>One background agent writing tests.</li>
+</ol>
+<ol>
+<li>Two teammates discussing a plan.</li>
+</ol>
+<p>
+<strong>The Problem:</strong> If we showed a full window for every single one of these tasks, your screen would be unusable. You would be drowning in information.
+</p>
+<p>
+<strong>The Solution:</strong> We need a <strong>Dashboard</strong>.
+</p>
+<p>
+Just like a car, your system has an "engine" with hundreds of moving parts. But as the driver, you don't look at the pistons firing. You look at a simple dashboard light that says "Cruise Control: ON" or "Check Engine."
+</p>
+<p>
+In this chapter, we will build that dashboard. We call it the <strong>Pill</strong>.
+</p>
+<h2 id="the-concept-aggregation">The Concept: Aggregation</h2>
+<p>
+<strong>Task Visibility & Summarization</strong> is the logic that turns a complex list of objects into a simple, human-readable sentence like:
+</p>
+<blockquote><p><em>"3 shells, 1 team"</em></p></blockquote>
+<p>
+It involves two steps:
+</p>
+<ol>
+<li><strong>Filtering:</strong> Deciding which tasks are actually "in the background."</li>
+</ol>
+<ol>
+<li><strong>Summarizing:</strong> Compressing that list into a short label.</li>
+</ol>
+<h2 id="step-1-the-filter-what-is-a-background-task">Step 1: The Filter (What is a Background Task?)</h2>
+<p>
+Not every task belongs in the footer dashboard.
+</p>
+<ul>
+<li><strong>Stopped tasks?</strong> No. We don't care about history here.</li>
+<li><strong>The Active Tab?</strong> No. If you are looking at it right now, it is "foreground," not "background."</li>
+</ul>
+<p>
+We use a helper function called <code>isBackgroundTask</code> to decide who gets into the club.
+</p>
+<h3 id="the-code">The Code</h3>
+<p>
+We check the %%INLINE<em>1%% and a special flag called %%INLINE</em>2%%.
+</p>
+<pre data-lang="typescript"><code>// From types.ts
+export function isBackgroundTask(task: TaskState): boolean {
+  // 1. Must be active (running or pending)
+  if (task.status !== 'running' &amp;&amp; task.status !== 'pending') {
+    return false;
+  }
+  
+  // 2. Must be explicitly marked as backgrounded
+  // (If you are chatting with it now, isBackgrounded is false)
+  if ('isBackgrounded' in task &amp;&amp; task.isBackgrounded === false) {
+    return false;
+  }
+  
+  return true;
+}
+</code></pre>
+<p>
+<strong>How to use it:</strong>
+ 
+The UI component loops through <em>all</em> tasks and runs this check.
+</p>
+<pre data-lang="typescript"><code>// Example: Filter the list for the UI
+const allTasks = Object.values(appState.tasks);
+const backgroundTasks = allTasks.filter(isBackgroundTask);
+
+// Result: Only the invisible, running tasks remain.
+</code></pre>
+<h2 id="step-2-the-summarizer-the-pill-label">Step 2: The Summarizer (The Pill Label)</h2>
+<p>
+Now that we have a list of, say, 5 background tasks, we need to label them.
+</p>
+<p>
+If we just printed their IDs, it would look like: <code>task-123, task-456, task-789</code>. That is ugly.
+ 
+We want to say: <code>3 shells</code>.
+</p>
+<p>
+We use a function called %%INLINE<em>5%%. It looks at the <strong>Types</strong> of the tasks (remember <a href="01</em>task<em>state</em>polymorphism.md">Chapter 1: Task State Polymorphism</a>?) and groups them.
+</p>
+<h3 id="visual-walkthrough">Visual Walkthrough</h3>
+<p>
+Here is how the system converts raw data into a readable string.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant S as State (Task List)
+    participant F as Filter (isBackgroundTask)
+    participant L as Label Logic (getPillLabel)
+    participant UI as Footer Pill
+
+    S-&gt;&gt;F: Send all 10 tasks
+    F-&gt;&gt;F: Remove finished tasks
+    F-&gt;&gt;F: Remove current foreground task
+    F--&gt;&gt;L: Returns 3 Tasks (All Shells)
+    
+    note over L: Logic: Are they all the same type?
+    L-&gt;&gt;L: Yes, all 'local_bash'
+    L-&gt;&gt;L: Count them (3)
+    L--&gt;&gt;UI: Returns string "3 shells"
+    
+    UI-&gt;&gt;UI: Render Bubble: "3 shells"</div></div>
+<h3 id="deep-dive-inside-inline-6">Deep Dive: Inside <code>pillLabel.ts</code></h3>
+<p>
+Let's look at how <code>getPillLabel</code> handles different scenarios. It switches behavior based on what is running.
+</p>
+<h4 id="scenario-a-a-bunch-of-shells">Scenario A: A Bunch of Shells</h4>
+<p>
+If all tasks are shell commands, we count them. We even distinguish between "Monitors" (watchdogs) and regular Shells.
+</p>
+<pre data-lang="typescript"><code>// From pillLabel.ts
+case 'local_bash': {
+  // Count how many are monitors vs regular shells
+  const monitors = count(tasks, t =&gt; t.kind === 'monitor')
+  const shells = tasks.length - monitors
+  
+  // Build the string, e.g., "2 shells, 1 monitor"
+  const parts: string[] = []
+  if (shells &gt; 0) parts.push(`${shells} shells`)
+  if (monitors &gt; 0) parts.push(`${monitors} monitors`)
+  
+  return parts.join(', ')
+}
+</code></pre>
+<h4 id="scenario-b-remote-agents-the-diamond">Scenario B: Remote Agents (The Diamond)</h4>
+<p>
+For Remote Agents (Cloud AI), we use symbols to indicate status.
+</p>
+<ul>
+<li><code>◇</code> (Open Diamond): Running normally.</li>
+<li><code>◆</code> (Filled Diamond): Waiting for <em>your</em> permission (Plan Ready).</li>
+</ul>
+<pre data-lang="typescript"><code>// From pillLabel.ts
+case 'remote_agent': {
+  const first = tasks[0]
+  
+  // If the plan is ready for review, show filled diamond
+  if (first.ultraplanPhase === 'plan_ready') {
+     return `${DIAMOND_FILLED} ultraplan ready`
+  }
+  
+  // Otherwise, show open diamond (working)
+  return `${DIAMOND_OPEN} 1 cloud session`
+}
+</code></pre>
+<h4 id="scenario-c-mixed-bag">Scenario C: Mixed Bag</h4>
+<p>
+What if you have 1 Shell and 1 Agent running? The logic falls back to a generic count.
+</p>
+<pre data-lang="typescript"><code>// From pillLabel.ts at the very bottom
+// If types are mixed, keep it simple.
+return `${n} background ${n === 1 ? 'task' : 'tasks'}`
+</code></pre>
+<h2 id="the-call-to-action">The "Call to Action"</h2>
+<p>
+Sometimes, the dashboard isn't just for looking. It needs to scream for attention.
+</p>
+<p>
+If an agent has a plan ready (%%INLINE<em>10%%) or needs input (%%INLINE</em>11%%), we want the Pill to pulse or show a "Press ↓ to view" hint.
+</p>
+<p>
+We use <code>pillNeedsCta</code> (Call to Action) for this.
+</p>
+<pre data-lang="typescript"><code>// From pillLabel.ts
+export function pillNeedsCta(tasks: BackgroundTaskState[]): boolean {
+  if (tasks.length !== 1) return false
+  const t = tasks[0]
+  
+  // Only show CTA if it's a Remote Agent in a specific phase
+  return (
+    t.type === 'remote_agent' &amp;&amp; 
+    t.ultraplanPhase !== undefined
+  )
+}
+</code></pre>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>Task Visibility</strong> prevents the user from being overwhelmed by too many open windows.</li>
+</ol>
+<ol>
+<li><strong><code>isBackgroundTask</code></strong> filters out tasks that are stopped or currently visible.</li>
+</ol>
+<ol>
+<li><strong><code>getPillLabel</code></strong> summarizes the remaining tasks into a readable string (e.g., "3 shells").</li>
+</ol>
+<ol>
+<li>We use <strong>Icons</strong> (like <code>◇</code>) and <strong>Conditional Logic</strong> to give the user a quick "dashboard" view of the system's health.</li>
+</ol>
+<p>
+Now that we know how to start tasks (Chapters 2, 3, 4) and how to view them (Chapter 5), there is one final piece of the puzzle. How do we clean up the mess when we are done?
+</p>
+<p>
+<a href="06<em>lifecycle</em>__termination.md">Next Chapter: Lifecycle & Termination</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="tasks.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">tasks/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-concept-aggregation">The Concept: Aggregation</a></li>
+<li style="padding-left:0px"><a href="#step-1-the-filter-what-is-a-background-task">Step 1: The Filter (What is a Background Task?)</a></li>
+<li style="padding-left:10px"><a href="#the-code">The Code</a></li>
+<li style="padding-left:0px"><a href="#step-2-the-summarizer-the-pill-label">Step 2: The Summarizer (The Pill Label)</a></li>
+<li style="padding-left:10px"><a href="#visual-walkthrough">Visual Walkthrough</a></li>
+<li style="padding-left:10px"><a href="#deep-dive-inside-inline-6">Deep Dive: Inside %%INLINE_6%%</a></li>
+<li style="padding-left:0px"><a href="#the-call-to-action">The "Call to Action"</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

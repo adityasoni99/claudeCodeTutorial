@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ch.08 Permission & Security System — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">Ch.08 — Permission & Security System</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-security">SECURITY</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">Chapter 8 · <span class="tag tag-security">SECURITY</span></div>
+  <h1 class="chapter-title-h1">Permission & Security System</h1>
+  <div class="chapter-meta">
+    <span>📄 08_permission___security_system.md</span>
+    <span>🏷 Security</span>
+  </div>
+</div>
+<h1 id="chapter-8-permission-security-system">Chapter 8: Permission & Security System</h1>
+<p>
+In the previous <a href="07<em>shell</em>safety<em>checks.md">Shell Safety Checks</a> chapter, we learned how to detect dangerous commands like %%INLINE</em>0%%. But detecting danger is only the first step.
+</p>
+<p>
+Now we face a bigger challenge: <strong>Enforcement.</strong>
+</p>
+<p>
+If the AI wants to read a file, should we let it? If it wants to run a test, do we need to ask the user? If we ask for every single action, the user will get annoyed. If we never ask, the user might lose data.
+</p>
+<p>
+The <strong>Permission & Security System</strong> is the judge. It balances safety with convenience.
+</p>
+<h2 id="what-is-the-permission-system">What is the Permission System?</h2>
+<p>
+Think of the Permission System as a <strong>Bouncer</strong> at a club. Every time a tool (like the <a href="06<em>bashtool.md">BashTool</a> or <a href="04</em>fileedittool.md">FileEditTool</a>) wants to do something, it must show its ID to the bouncer.
+</p>
+<p>
+The bouncer has three responses:
+</p>
+<ol>
+<li><strong>Allow:</strong> "Go right in." (The command runs immediately).</li>
+</ol>
+<ol>
+<li><strong>Deny:</strong> "You're banned." (The command is blocked).</li>
+</ol>
+<ol>
+<li><strong>Ask:</strong> "I need to check with the manager." (The user sees a popup to confirm).</li>
+</ol>
+<h3 id="the-central-use-case-the-auto-refactor">The Central Use Case: "The Auto-Refactor"</h3>
+<p>
+Imagine you ask %%INLINE<em>1%% to: <strong>"Rename the %%INLINE</em>2%% folder to <code>helpers</code> and update all imports."</strong>
+</p>
+<p>
+This might involve 20 different file edits.
+</p>
+<ul>
+<li><strong>Without a Permission System:</strong> You have to click "Yes" 20 times.</li>
+<li><strong>With a Permission System:</strong> You approve the first "Rename" action, and the system automatically allows the subsequent file updates because they are part of the same trusted task.</li>
+</ul>
+<h2 id="key-concepts">Key Concepts</h2>
+<h3 id="1-the-decision-triad">1. The Decision Triad</h3>
+<p>
+Every permission check returns a <strong>Decision</strong> object. It tells the application what to do next.
+</p>
+<ul>
+<li><strong>%%INLINE<em>4%%</strong>: Can be %%INLINE</em>5%%, %%INLINE<em>6%%, or %%INLINE</em>7%%.</li>
+<li><strong><code>message</code></strong>: If denied or asking, this explains why (e.g., "This command deletes files").</li>
+</ul>
+<h3 id="2-modes-the-threat-level">2. Modes (The "Threat Level")</h3>
+<p>
+The system operates in different modes stored in <a href="01<em>state</em>management.md">State Management</a>:
+</p>
+<ul>
+<li><strong>Strict (Default):</strong> Ask for almost everything.</li>
+<li><strong>Auto:</strong> Use an internal AI classifier to guess if an action is safe. If it looks like a standard "read" or "test" command, allow it. If it looks weird, ask.</li>
+</ul>
+<h3 id="3-persistent-rules">3. Persistent Rules</h3>
+<p>
+If you tell the system "Always allow %%INLINE<em>9%%," it remembers this. These rules are saved so you don't have to repeat yourself. We will learn exactly how these strings work in <a href="09</em>rule_matching.md">Rule Matching</a>.
+</p>
+<h2 id="how-to-use-the-system">How to Use the System</h2>
+<p>
+The <a href="03<em>query</em>engine.md">Query Engine</a> typically handles this process automatically before running a tool. However, understanding the flow is vital.
+</p>
+<h3 id="checking-permissions">Checking Permissions</h3>
+<p>
+Here is how a tool asks for permission before running.
+</p>
+<pre data-lang="typescript"><code>import { hasPermissionsToUseTool } from './utils/permissions';
+
+async function executeTool(toolName, input) {
+  // 1. Ask the system: Can I do this?
+  const decision = await hasPermissionsToUseTool(toolName, input);
+
+  // 2. Handle the decision
+  if (decision.behavior === 'deny') {
+    throw new Error("Permission Denied");
+  }
+
+  if (decision.behavior === 'ask') {
+    // Show UI prompt to user (Block until they click Yes/No)
+    await promptUser(decision.message); 
+  }
+
+  // 3. If we get here, we can run the tool
+  runTool(input);
+}
+</code></pre>
+<p>
+<em>Explanation: We never run the tool immediately. We await the decision. If the behavior is 'ask', the code pauses completely until the human intervenes.</em>
+</p>
+<h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
+<p>
+The permission logic is a waterfall. It checks a series of conditions in order. If any condition is met, it stops and returns the decision.
+</p>
+<ol>
+<li><strong>Deny Rules:</strong> Is this specific command on a blacklist? -> <strong>DENY</strong></li>
+</ol>
+<ol>
+<li><strong>Ask Rules:</strong> Did the user specifically say "Always ask me about this"? -> <strong>ASK</strong></li>
+</ol>
+<ol>
+<li><strong>Safety Checks:</strong> Did <a href="07<em>shell</em>safety_checks.md">Shell Safety Checks</a> flag this as dangerous? -> <strong>ASK</strong></li>
+</ol>
+<ol>
+<li><strong>Auto Mode:</strong> Is Auto Mode on? Does the AI classifier think this is safe? -> <strong>ALLOW</strong></li>
+</ol>
+<ol>
+<li><strong>Default:</strong> If nothing else matches -> <strong>ASK</strong></li>
+</ol>
+<p>
+Here is the flow:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Tool
+    participant Perms as Permission System
+    participant Config as Settings/Rules
+    participant User
+
+    Tool-&gt;&gt;Perms: Can I run "rm -rf /"?
+    
+    Perms-&gt;&gt;Config: Check Deny List
+    Config--&gt;&gt;Perms: No match
+    
+    Perms-&gt;&gt;Config: Check Safety Rules
+    Config--&gt;&gt;Perms: Match! (Dangerous Pattern)
+    
+    Perms-&gt;&gt;User: "Dangerous! Allow?"
+    User-&gt;&gt;Perms: Click "No"
+    
+    Perms--&gt;&gt;Tool: Return { behavior: 'deny' }</div></div>
+<h3 id="internal-implementation-code">Internal Implementation Code</h3>
+<p>
+The core logic lives in <code>utils/permissions/permissions.ts</code>.
+</p>
+<h4 id="1-the-main-check-function">1. The Main Check Function</h4>
+<p>
+This function orchestrates the waterfall logic described above.
+</p>
+<pre data-lang="typescript"><code>// utils/permissions/permissions.ts
+
+export async function hasPermissionsToUseTool(tool, input, context) {
+  // 1. Check strict Deny rules first
+  const denyRule = getDenyRuleForTool(context, tool);
+  if (denyRule) {
+    return { behavior: 'deny', message: 'Denied by rule' };
+  }
+
+  // 2. Check if the tool asks for permission logic
+  // (e.g. BashTool checks if command is "dangerous")
+  const toolResult = await tool.checkPermissions(input, context);
+  
+  // 3. If the tool itself says "Ask", we might override it in Auto Mode
+  if (toolResult.behavior === 'ask') {
+    return handleAutoMode(toolResult, context);
+  }
+
+  return toolResult;
+}
+</code></pre>
+<p>
+<em>Explanation: We check strict rules first. Then we ask the tool itself (e.g., the BashTool checks its regex patterns). Finally, we check if "Auto Mode" can bypass the prompt.</em>
+</p>
+<h4 id="2-auto-mode-logic">2. Auto Mode Logic</h4>
+<p>
+This is where the magic happens. If the user enabled Auto Mode, we try to avoid disturbing them.
+</p>
+<pre data-lang="typescript"><code>// utils/permissions/permissions.ts (Simplified)
+
+async function handleAutoMode(result, context) {
+  const { mode } = context.toolPermissionContext;
+
+  // If we are in 'auto' mode...
+  if (mode === 'auto') {
+    // ...and the action isn't visibly dangerous
+    if (!result.isDestructive) {
+      // Auto-approve it!
+      return { 
+        behavior: 'allow', 
+        decisionReason: 'Auto Mode Enabled' 
+      };
+    }
+  }
+  
+  // Otherwise, stick with the original decision (Ask)
+  return result;
+}
+</code></pre>
+<p>
+<em>Explanation: If the tool returns 'ask', but Auto Mode is on, we upgrade the decision to 'allow', UNLESS it was flagged as destructive.</em>
+</p>
+<h4 id="3-the-user-interface">3. The User Interface</h4>
+<p>
+If the final decision is %%INLINE<em>11%%, we render a React component using the <a href="02</em>ink<em>ui</em>framework.md">Ink UI Framework</a>. This happens in <code>BashPermissionRequest.tsx</code>.
+</p>
+<pre data-lang="tsx"><code>// components/permissions/BashPermissionRequest.tsx
+
+export function BashPermissionRequest({ command, onDone, onReject }) {
+  // Show the command to the user
+  return (
+    &lt;PermissionDialog title="Bash Command"&gt;
+      &lt;Text&gt;{command}&lt;/Text&gt;
+      
+      &lt;Select 
+        options={['Yes', 'Yes (Always allow this)', 'No']} 
+        onSelect={(choice) =&gt; {
+           if (choice === 'No') onReject();
+           else onDone(); // Proceed
+        }} 
+      /&gt;
+    &lt;/PermissionDialog&gt;
+  );
+}
+</code></pre>
+<p>
+<em>Explanation: This dialog halts the application. It waits for the user to select an option. If they choose "Always allow," we save a new rule to the State Store.</em>
+</p>
+<h2 id="why-is-this-important-for-later">Why is this important for later?</h2>
+<p>
+The Permission System is the backbone of trust in <code>claudeCode</code>.
+</p>
+<ul>
+<li><strong><a href="09<em>rule</em>matching.md">Rule Matching</a>:</strong> In the next chapter, we will learn the specific syntax (like <code>npm test:*</code>) used to create persistent permission rules.</li>
+<li><strong><a href="10<em>auto</em>mode_classifier.md">Auto-Mode Classifier</a>:</strong> We mentioned "Auto Mode" uses AI to decide if a command is safe. Chapter 10 explains how that AI classifier works.</li>
+<li><strong><a href="13<em>feature</em>gating.md">Feature Gating</a>:</strong> Some permissions might be locked behind feature flags or enterprise settings.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have learned that the <strong>Permission & Security System</strong> acts as a gatekeeper. It checks every tool request against a set of rules, modes, and safety checks. It ensures that the powerful tools we built in previous chapters (FileEdit, Bash, Git) are used safely and responsibly.
+</p>
+<p>
+But how exactly does the system know that %%INLINE<em>15%% matches the rule %%INLINE</em>16%%?
+</p>
+<p>
+<a href="09<em>rule</em>matching.md">Next Chapter: Rule Matching</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="07-shell-safety-checks.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">Shell Safety Checks</div>
+        </a><a class="chapter-nav-card next" href="09-rule-matching.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">Rule Matching</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#what-is-the-permission-system">What is the Permission System?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case-the-auto-refactor">The Central Use Case: "The Auto-Refactor"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-decision-triad">1. The Decision Triad</a></li>
+<li style="padding-left:10px"><a href="#2-modes-the-threat-level">2. Modes (The "Threat Level")</a></li>
+<li style="padding-left:10px"><a href="#3-persistent-rules">3. Persistent Rules</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-the-system">How to Use the System</a></li>
+<li style="padding-left:10px"><a href="#checking-permissions">Checking Permissions</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-how-it-works">Under the Hood: How it Works</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-code">Internal Implementation Code</a></li>
+<li style="padding-left:0px"><a href="#why-is-this-important-for-later">Why is this important for later?</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

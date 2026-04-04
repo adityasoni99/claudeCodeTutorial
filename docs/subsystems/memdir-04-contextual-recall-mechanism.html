@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: Contextual Recall Mechanism — memdir/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">memdir/04_contextual_recall_mechanism.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🧠 memdir/ · 04_contextual_recall_mechanism.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: Contextual Recall Mechanism</h1>
+  <div class="chapter-meta"><span>📄 memdir/04_contextual_recall_mechanism.md</span></div>
+</div>
+<h1 id="chapter-4-contextual-recall-mechanism">Chapter 4: Contextual Recall Mechanism</h1>
+<p>
+In the previous chapter, <a href="03<em>two</em>tier<em>storage</em>architecture<strong>index<em>vs</strong>detail</em>.md">Two-Tier Storage Architecture (Index vs. Detail)</a>, we learned how to keep the AI's "backpack" light by using a simple index file (<code>MEMORY.md</code>).
+</p>
+<p>
+However, as your project grows, that index might get truncated, or it might not be specific enough. If you have 100 files about "Authentication," a simple index isn't enough to find the <em>exact</em> file about "OAuth Token Expiration on Tuesdays."
+</p>
+<p>
+We need a search engine. But instead of building a complex database, <strong>memdir</strong> uses a <strong>Contextual Recall Mechanism</strong>.
+</p>
+<h2 id="the-motivation-the-librarian-vs-the-keyword-search">The Motivation: The Librarian vs. The Keyword Search</h2>
+<p>
+Imagine you walk into a massive library and yell, "Help with login!"
+</p>
+<ol>
+<li><strong>Keyword Search (Ctrl+F):</strong> Looks for the word "login." It misses books titled "Authentication" or "Sign-in Protocols" because the word "login" isn't in the title.</li>
+</ol>
+<ol>
+<li><strong>Vector Database (The Hard Way):</strong> Requires complex math, heavy infrastructure, and syncing data to a cloud vector store. Overkill for a local project.</li>
+</ol>
+<ol>
+<li><strong>The Reference Librarian (Our Way):</strong> You talk to a smart librarian. You describe your problem. The librarian scans the <em>titles</em> and <em>summaries</em> of the books and says, "Ah, you need this specific manual on OAuth."</li>
+</ol>
+<p>
+<strong>memdir</strong> acts as that librarian. It uses a small, fast AI model to pick the right files <em>before</em> the main conversation starts.
+</p>
+<h2 id="use-case-finding-the-right-fix">Use Case: Finding the Right Fix</h2>
+<p>
+<strong>Scenario:</strong> You have 3 memory files:
+</p>
+<ol>
+<li><code>style_guide.md</code>: "We use blue buttons."</li>
+</ol>
+<ol>
+<li><code>database_schema.md</code>: "Users table has a UUID."</li>
+</ol>
+<ol>
+<li><code>api_errors.md</code>: "Error 500 usually means the database is locked."</li>
+</ol>
+<p>
+<strong>User Query:</strong> "Why is the server returning a 500 code?"
+</p>
+<p>
+<strong>The Process:</strong>
+</p>
+<ol>
+<li>The system scans the <em>descriptions</em> of all 3 files.</li>
+</ol>
+<ol>
+<li>It asks a fast AI: "Which of these files helps answer 'Why is the server returning a 500 code?'"</li>
+</ol>
+<ol>
+<li>The AI picks only <strong>#3 (<code>api_errors.md</code>)</strong>.</li>
+</ol>
+<ol>
+<li>The system loads <em>only</em> file #3 into the main conversation.</li>
+</ol>
+<h2 id="internal-implementation-under-the-hood">Internal Implementation: Under the Hood</h2>
+<p>
+This mechanism relies on a "Side Query." This is a quick, invisible API call to an LLM (specifically Claude 3.5 Sonnet) that happens in the background.
+</p>
+<h3 id="the-flow">The Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant System
+    participant Scanner as File Scanner
+    participant SideAI as Sonnet (Side Query)
+    participant MainAI as Main Model
+
+    User-&gt;&gt;System: "How do I fix the 500 error?"
+    
+    System-&gt;&gt;Scanner: Get list of all memory files
+    Scanner--&gt;&gt;System: Returns list of 50 filenames + descriptions
+    
+    System-&gt;&gt;SideAI: "Here is the user question + 50 file summaries. Pick top 5."
+    SideAI--&gt;&gt;System: Returns ["api_errors.md"]
+    
+    System-&gt;&gt;System: Read full content of "api_errors.md"
+    System-&gt;&gt;MainAI: User Question + Content of "api_errors.md"
+    
+    MainAI-&gt;&gt;User: "The memory says Error 500 is a database lock."</div></div>
+<h3 id="step-1-scanning-the-manifest">Step 1: Scanning the Manifest</h3>
+<p>
+First, we need to know what files exist. We don't read the whole files (that's too slow). We just read the <strong>Frontmatter</strong> (the header) to get the description.
+</p>
+<p>
+We do this in <code>src/memoryScan.ts</code>.
+</p>
+<pre data-lang="typescript"><code>// src/memoryScan.ts (Simplified)
+
+// We verify the file type and read just the top lines
+export async function scanMemoryFiles(dir: string) {
+  const entries = await readdir(dir) // Get all files
+  
+  // Read the headers (frontmatter) of every .md file
+  const headers = await Promise.all(entries.map(file =&gt; readHeader(file)))
+  
+  return headers // Returns [{ filename: '...', description: '...' }, ...]
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This function runs %%INLINE<em>6%% on your memory folder and reads the first 30 lines of each file to extract the %%INLINE</em>7%%.
+</p>
+<h3 id="step-2-creating-the-menu-the-manifest">Step 2: Creating the Menu (The Manifest)</h3>
+<p>
+To ask the AI which files it wants, we format the list into a simple text block. Think of this as a restaurant menu.
+</p>
+<pre data-lang="typescript"><code>// src/memoryScan.ts
+
+export function formatMemoryManifest(memories: MemoryHeader[]): string {
+  return memories
+    .map(m =&gt; `- ${m.filename}: ${m.description}`)
+    .join('\n')
+}
+</code></pre>
+<p>
+<strong>Output Example:</strong>
+</p>
+<pre data-lang="text"><code>- style_guide.md: Guidelines for CSS and buttons.
+- database_schema.md: SQL structure for Users.
+- api_errors.md: Common HTTP error codes and fixes.
+</code></pre>
+<h3 id="step-3-the-side-query">Step 3: The Side Query</h3>
+<p>
+Now comes the magic. We send this "Menu" and the "User Query" to the AI.
+</p>
+<p>
+This logic lives in <code>src/findRelevantMemories.ts</code>.
+</p>
+<pre data-lang="typescript"><code>// src/findRelevantMemories.ts (Simplified)
+
+// The prompt tells the AI to act as a filter
+const SYSTEM_PROMPT = `
+Return a list of filenames that will be useful for the user's query.
+Be selective. If nothing is useful, return an empty list.
+`
+
+export async function findRelevantMemories(query, memoryDir) {
+  const memories = await scanMemoryFiles(memoryDir)
+  const manifest = formatMemoryManifest(memories)
+
+  // The "Side Query" - asking the AI to pick files
+  const result = await sideQuery({
+    system: SYSTEM_PROMPT,
+    messages: [`Query: ${query}\n\nAvailable memories:\n${manifest}`]
+  })
+  
+  return result // Returns ['api_errors.md']
+}
+</code></pre>
+<p>
+<em>Explanation:</em> 
+</p>
+<ol>
+<li>We build the prompt.</li>
+</ol>
+<ol>
+<li>We call <code>sideQuery</code> (a lightweight wrapper around the LLM API).</li>
+</ol>
+<ol>
+<li>The LLM replies with a JSON list of filenames.</li>
+</ol>
+<ol>
+<li>We trust the LLM's judgment because it understands context (it knows "500 code" relates to "HTTP errors").</li>
+</ol>
+<h3 id="step-4-filtering-noise-safety-check">Step 4: Filtering Noise (Safety Check)</h3>
+<p>
+Sometimes, the AI might hallucinate a file that doesn't exist, or try to pick a file you are already looking at.
+</p>
+<p>
+The code filters the results to ensure they match real files.
+</p>
+<pre data-lang="typescript"><code>// src/findRelevantMemories.ts
+
+// We create a Set of valid filenames for O(1) lookup
+const validFilenames = new Set(memories.map(m =&gt; m.filename))
+
+// We only return files that actually exist in our folder
+return parsed.selected_memories.filter(f =&gt; validFilenames.has(f))
+</code></pre>
+<p>
+This prevents the system from crashing if the AI says, "Read <code>imaginary_file.md</code>."
+</p>
+<h2 id="why-not-use-embeddings">Why Not Use Embeddings?</h2>
+<p>
+You might have heard of "Vector Embeddings" (RAG). That is the industry standard for searching millions of documents.
+</p>
+<p>
+<strong>memdir</strong> avoids this because:
+</p>
+<ol>
+<li><strong>Complexity:</strong> Vectors require a database (Pinecone, Weaviate) or a local Python server.</li>
+</ol>
+<ol>
+<li><strong>Staleness:</strong> If you edit a file, you have to re-calculate the vectors.</li>
+</ol>
+<ol>
+<li><strong>Scale:</strong> Most coding projects have < 500 memory files. A fast LLM (Sonnet) can read a list of 500 titles in milliseconds. It is "smart enough" without the engineering overhead.</li>
+</ol>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>The Problem:</strong> Finding the right memory file without reading all of them.</li>
+</ol>
+<ol>
+<li><strong>The Solution:</strong> A <strong>Contextual Recall Mechanism</strong> acting like a reference librarian.</li>
+</ol>
+<ol>
+<li><strong>The Method:</strong></li>
+<ul>
+<li><strong>Scan:</strong> Get headers of all files.</li>
+<li><strong>Format:</strong> Create a text "Menu" of options.</li>
+<li><strong>Side Query:</strong> Ask a fast LLM to pick the relevant ones.</li>
+</ul>
+</ol>
+<ol>
+<li><strong>The Benefit:</strong> We find files based on <em>meaning</em>, not just keywords, without heavy database infrastructure.</li>
+</ol>
+<p>
+Now the AI can find the right memories. But what happens if those memories are <strong>old</strong>? What if the file says "Use React 16" but the project is now on "React 18"?
+</p>
+<p>
+We need a way to verify if a memory is still true.
+</p>
+<p>
+<a href="05<em>temporal</em>freshness<em>_</em>verification.md">Next Chapter: Temporal Freshness & Verification</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="memdir.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">memdir/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-the-librarian-vs-the-keyword-search">The Motivation: The Librarian vs. The Keyword Search</a></li>
+<li style="padding-left:0px"><a href="#use-case-finding-the-right-fix">Use Case: Finding the Right Fix</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-under-the-hood">Internal Implementation: Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#the-flow">The Flow</a></li>
+<li style="padding-left:10px"><a href="#step-1-scanning-the-manifest">Step 1: Scanning the Manifest</a></li>
+<li style="padding-left:10px"><a href="#step-2-creating-the-menu-the-manifest">Step 2: Creating the Menu (The Manifest)</a></li>
+<li style="padding-left:10px"><a href="#step-3-the-side-query">Step 3: The Side Query</a></li>
+<li style="padding-left:10px"><a href="#step-4-filtering-noise-safety-check">Step 4: Filtering Noise (Safety Check)</a></li>
+<li style="padding-left:0px"><a href="#why-not-use-embeddings">Why Not Use Embeddings?</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

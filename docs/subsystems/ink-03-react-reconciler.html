@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: React Reconciler — ink/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">ink/03_react_reconciler.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🖊 ink/ · 03_react_reconciler.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: React Reconciler</h1>
+  <div class="chapter-meta"><span>📄 ink/03_react_reconciler.md</span></div>
+</div>
+<h1 id="chapter-3-react-reconciler">Chapter 3: React Reconciler</h1>
+<p>
+In the previous chapter, <a href="02<em>ink</em>dom<em>_</em>layout_engine.md">Ink DOM & Layout Engine</a>, we discovered that Ink builds an invisible tree of nodes (the Ink DOM) and uses the Yoga engine to calculate layout.
+</p>
+<p>
+But there is a missing link.
+</p>
+<p>
+When you write React code, you are dealing with <strong>State</strong> (%%INLINE<em>0%%) and <strong>Virtual Components</strong>. You aren't manually creating %%INLINE</em>1%% nodes or calculating math.
+</p>
+<p>
+<strong>Who connects your React state to the Ink DOM?</strong>
+ 
+That is the job of the <strong>React Reconciler</strong>.
+</p>
+<hr>
+<h2 id="the-motivation-the-foreman">The Motivation: The Foreman</h2>
+<p>
+Imagine React as an <strong>Architect</strong>.
+</p>
+<ul>
+<li>React draws blueprints (Virtual DOM).</li>
+<li>React decides when the design changes (State updates).</li>
+<li>React doesn't know how to build anything physically.</li>
+</ul>
+<p>
+Ink's DOM is the <strong>Construction Site</strong>.
+</p>
+<ul>
+<li>It has the raw materials (Nodes).</li>
+<li>It follows physics (Layout Engine).</li>
+</ul>
+<p>
+The <strong>Reconciler</strong> is the <strong>Foreman</strong>.
+ 
+The Architect (React) hands a blueprint to the Foreman (Reconciler). The Foreman looks at the construction site and shouts orders: "Build a wall here!", "Paint that text green!", "Tear down that box!"
+</p>
+<h3 id="the-use-case-a-simple-counter">The Use Case: A Simple Counter</h3>
+<p>
+To understand this, let's look at the "Hello World" of interactivity: a Counter.
+</p>
+<pre data-lang="tsx"><code>const Counter = () =&gt; {
+  const [count, setCount] = React.useState(0);
+
+  // Updates count every second
+  useInterval(() =&gt; {
+    setCount(c =&gt; c + 1);
+  }, 1000);
+
+  return &lt;Text color="green"&gt;Count: {count}&lt;/Text&gt;;
+};
+</code></pre>
+<p>
+<strong>The Challenge:</strong>
+</p>
+<ol>
+<li>React changes %%INLINE<em>2%% from %%INLINE</em>3%% to <code>1</code>.</li>
+</ol>
+<ol>
+<li>React creates a new "Virtual" tree: <code>&lt;Text&gt;Count: 1&lt;/Text&gt;</code>.</li>
+</ol>
+<ol>
+<li>The Reconciler must figure out how to update the real Ink DOM to match this new reality without rebuilding the whole world.</li>
+</ol>
+<hr>
+<h2 id="concept-the-host-config">Concept: The Host Config</h2>
+<p>
+React is designed to be universal. It can run on the web (ReactDOM), on phones (ReactNative), and thanks to Ink, in terminals.
+</p>
+<p>
+To make React work in a new environment, you provide a <strong>Host Config</strong>. This is a dictionary of methods that tells React how to translate its commands into specific actions for that environment.
+</p>
+<p>
+Ink implements <code>react-reconciler</code> by providing methods like:
+</p>
+<ul>
+<li><code>createInstance</code>: "Make a new Box."</li>
+<li><code>appendChild</code>: "Put this Text inside that Box."</li>
+<li><code>commitUpdate</code>: "Change the color property."</li>
+</ul>
+<hr>
+<h2 id="the-workflow">The Workflow</h2>
+<p>
+Let's trace what happens when our Counter component starts up.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant React as React Logic
+    participant Rec as Reconciler
+    participant IDOM as Ink DOM Node
+
+    Note over React, IDOM: Initial Render (Count = 0)
+    React-&gt;&gt;Rec: createInstance('ink-text')
+    Rec-&gt;&gt;IDOM: createNode('ink-text')
+    
+    React-&gt;&gt;Rec: createTextInstance("Count: 0")
+    Rec-&gt;&gt;IDOM: createTextNode("Count: 0")
+    
+    React-&gt;&gt;Rec: appendChild(parent, child)
+    Rec-&gt;&gt;IDOM: parent.childNodes.push(child)</div></div>
+<ol>
+<li><strong>React:</strong> "I need a Text element."</li>
+</ol>
+<ol>
+<li><strong>Reconciler:</strong> Calls Ink's <code>createNode</code>.</li>
+</ol>
+<ol>
+<li><strong>React:</strong> "I need the string 'Count: 0'."</li>
+</ol>
+<ol>
+<li><strong>Reconciler:</strong> Calls Ink's <code>createTextNode</code>.</li>
+</ol>
+<ol>
+<li><strong>React:</strong> "Put the string inside the element."</li>
+</ol>
+<ol>
+<li><strong>Reconciler:</strong> Links the two nodes in the Ink DOM.</li>
+</ol>
+<hr>
+<h2 id="under-the-hood-inline-12">Under the Hood: <code>reconciler.ts</code></h2>
+<p>
+Let's look at the actual code Ink uses to implement this "Foreman." This file is the bridge between the two worlds.
+</p>
+<h3 id="1-creating-elements-inline-13">1. Creating Elements (<code>createInstance</code>)</h3>
+<p>
+When React encounters a %%INLINE<em>14%% or %%INLINE</em>15%%, it calls this method.
+</p>
+<pre data-lang="typescript"><code>// reconciler.ts (Simplified)
+createInstance(type, props, root, hostContext) {
+  // 1. Delegate to the DOM layer to make the object
+  const node = createNode(type);
+
+  // 2. Apply initial props (styles, attributes)
+  for (const [key, value] of Object.entries(props)) {
+    applyProp(node, key, value);
+  }
+
+  return node;
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li>It creates the plain JavaScript object we discussed in the previous chapter.</li>
+<li>It immediately applies styles (like <code>color="green"</code>) so the node is born ready.</li>
+</ul>
+<h3 id="2-handling-structure-inline-17">2. Handling Structure (<code>appendChild</code>)</h3>
+<p>
+React builds trees. It needs to connect parents to children.
+</p>
+<pre data-lang="typescript"><code>// reconciler.ts (Simplified)
+appendChild(parentNode, childNode) {
+  // Delegate to DOM layer
+  appendChildNode(parentNode, childNode);
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+ 
+This wrapper calls %%INLINE<em>18%% in %%INLINE</em>19%%, which pushes the child into the parent's array <em>and</em> connects the underlying Yoga layout nodes together.
+</p>
+<h3 id="3-handling-updates-inline-20">3. Handling Updates (<code>commitUpdate</code>)</h3>
+<p>
+This is where the magic of the <strong>Counter</strong> example happens. When <code>count</code> changes, React calls this.
+</p>
+<pre data-lang="typescript"><code>// reconciler.ts (Simplified)
+commitUpdate(node, type, oldProps, newProps) {
+  // 1. Figure out what actually changed
+  const propsDiff = diff(oldProps, newProps);
+
+  // 2. Apply only the changes
+  if (propsDiff) {
+    // If style changed, update it
+    if (propsDiff.style) {
+      setStyle(node, propsDiff.style);
+    }
+    // If other attributes changed, update them
+    setAttribute(node, key, value);
+  }
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li><strong>Efficiency:</strong> Ink doesn't delete the node and recreate it.</li>
+<li><strong>Precision:</strong> It calculates the difference (<code>diff</code>). If only the color changed, it only updates the color property.</li>
+<li><strong>Trigger:</strong> Calling <code>setStyle</code> marks the node as "dirty," which tells the Layout Engine it needs to re-calculate positions soon.</li>
+</ul>
+<h3 id="4-updating-text-inline-24">4. Updating Text (<code>commitTextUpdate</code>)</h3>
+<p>
+For our counter, the text string itself is changing.
+</p>
+<pre data-lang="typescript"><code>// reconciler.ts (Simplified)
+commitTextUpdate(node, oldText, newText) {
+  // Update the raw string value
+  setTextNodeValue(node, newText);
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+ 
+Simple and direct. It updates the <code>.nodeValue</code> property on the Ink text node.
+</p>
+<hr>
+<h2 id="bringing-it-back-to-the-use-case">Bringing it back to the Use Case</h2>
+<p>
+Let's re-run the <strong>Counter</strong> update with our new knowledge.
+</p>
+<ol>
+<li><strong>State Change:</strong> %%INLINE<em>26%% becomes %%INLINE</em>27%%.</li>
+</ol>
+<ol>
+<li><strong>React Render:</strong> React compares the Virtual DOM and sees the text changed from "Count: 0" to "Count: 1".</li>
+</ol>
+<ol>
+<li><strong>Reconciler Call:</strong> React calls <code>commitTextUpdate(textNode, "Count: 0", "Count: 1")</code>.</li>
+</ol>
+<ol>
+<li><strong>DOM Update:</strong> The <code>textNode</code> in memory now holds the string "Count: 1".</li>
+</ol>
+<ol>
+<li><strong>Dirty Flag:</strong> The node is marked <code>dirty = true</code>.</li>
+</ol>
+<p>
+Because the node is dirty, Ink knows the layout might have changed (maybe "10" is wider than "9"?). This triggers the next phase of the pipeline.
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, you learned:
+</p>
+<ul>
+<li><strong>React Reconciler</strong> is the translator between React logic and Ink's internal DOM.</li>
+<li><strong>Host Config</strong> is the dictionary of translation methods (%%INLINE<em>31%%, %%INLINE</em>32%%).</li>
+<li><strong>Updates are Granular:</strong> The reconciler only touches the specific nodes and properties that changed, keeping performance high.</li>
+</ul>
+<p>
+At this point, we have a DOM tree that updates automatically when React state changes. But a terminal application isn't just about output—it's about interaction.
+</p>
+<p>
+How does Ink handle keystrokes like <code>Ctrl+C</code> or moving a selection with Arrow Keys?
+</p>
+<p>
+<a href="04<em>input</em>processing_pipeline.md">Next Chapter: Input Processing Pipeline</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="ink.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">ink/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-the-foreman">The Motivation: The Foreman</a></li>
+<li style="padding-left:10px"><a href="#the-use-case-a-simple-counter">The Use Case: A Simple Counter</a></li>
+<li style="padding-left:0px"><a href="#concept-the-host-config">Concept: The Host Config</a></li>
+<li style="padding-left:0px"><a href="#the-workflow">The Workflow</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-inline-12">Under the Hood: %%INLINE_12%%</a></li>
+<li style="padding-left:10px"><a href="#1-creating-elements-inline-13">1. Creating Elements (%%INLINE_13%%)</a></li>
+<li style="padding-left:10px"><a href="#2-handling-structure-inline-17">2. Handling Structure (%%INLINE_17%%)</a></li>
+<li style="padding-left:10px"><a href="#3-handling-updates-inline-20">3. Handling Updates (%%INLINE_20%%)</a></li>
+<li style="padding-left:10px"><a href="#4-updating-text-inline-24">4. Updating Text (%%INLINE_24%%)</a></li>
+<li style="padding-left:0px"><a href="#bringing-it-back-to-the-use-case">Bringing it back to the Use Case</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 1: Core State Definition (The Store) — state/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">state/01_core_state_definition__the_store_.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🗂 state/ · 01_core_state_definition__the_store_.md</div>
+  <h1 class="chapter-title-h1">Chapter 1: Core State Definition (The Store)</h1>
+  <div class="chapter-meta"><span>📄 state/01_core_state_definition__the_store_.md</span></div>
+</div>
+<h1 id="chapter-1-core-state-definition-the-store">Chapter 1: Core State Definition (The Store)</h1>
+<p>
+Welcome to the <strong>state</strong> project! If you are building a complex application, you face a difficult challenge: keeping everyone on the same page.
+</p>
+<p>
+Imagine an application where the User Interface (UI) thinks the user is logged out, but the background data fetcher thinks the user is logged in. That leads to bugs and confusion.
+</p>
+<p>
+To solve this, we use a concept called the <strong>Single Source of Truth</strong>.
+</p>
+<h3 id="the-motivation-the-central-whiteboard">The Motivation: The Central Whiteboard</h3>
+<p>
+Think of your application as a busy office.
+</p>
+<ul>
+<li><strong>Without a Store:</strong> Everyone creates their own sticky notes. To find out if "Dark Mode" is on, you have to ask three different people, and they might give different answers.</li>
+<li><strong>With a Store:</strong> There is one giant <strong>Whiteboard</strong> in the middle of the room. If you want to know if "Dark Mode" is on, you look at the whiteboard. If you want to change it, you write the new value on the whiteboard.</li>
+</ul>
+<p>
+In our project, this whiteboard is called the <strong>Store</strong>.
+</p>
+<hr>
+<h3 id="key-concept-the-inline-0-object">Key Concept: The <code>AppState</code> Object</h3>
+<p>
+Before we look at the whiteboard mechanism, let's look at <em>what</em> is written on it.
+</p>
+<p>
+The entire state of our application is defined in one massive JSON object called <code>AppState</code>. It holds everything:
+</p>
+<ol>
+<li><strong>User Preferences:</strong> (e.g., %%INLINE<em>2%% mode, %%INLINE</em>3%%)</li>
+</ol>
+<ol>
+<li><strong>UI State:</strong> (e.g., %%INLINE<em>4%%, %%INLINE</em>5%%)</li>
+</ol>
+<ol>
+<li><strong>Data:</strong> (e.g., %%INLINE<em>6%%, %%INLINE</em>7%%, <code>notifications</code>)</li>
+</ol>
+<p>
+Here is a simplified look at what this object looks like in <code>AppStateStore.ts</code>:
+</p>
+<pre data-lang="typescript"><code>// AppStateStore.ts (Simplified)
+export type AppState = {
+  // Is the user looking at the "tasks" view or "teammates"?
+  expandedView: 'none' | 'tasks' | 'teammates'
+
+  // Is the "Brief Mode" toggle enabled?
+  isBriefOnly: boolean
+
+  // A dictionary of all active tasks
+  tasks: { [taskId: string]: TaskState }
+  
+  // ... and many more fields
+}
+</code></pre>
+<p>
+This object is our "snapshot" of the world at any given moment.
+</p>
+<hr>
+<h3 id="key-concept-the-store-mechanism">Key Concept: The Store Mechanism</h3>
+<p>
+Now that we have the data structure, we need a way to manage it. We don't want people scribbling on the whiteboard randomly. We need a system.
+</p>
+<p>
+We use a custom implementation in <code>store.ts</code> that provides three main features:
+</p>
+<ol>
+<li><strong><code>getState()</code></strong>: Read the board.</li>
+</ol>
+<ol>
+<li><strong><code>setState()</code></strong>: Update the board safely.</li>
+</ol>
+<ol>
+<li><strong><code>subscribe()</code></strong>: Get notified when the board changes.</li>
+</ol>
+<h4 id="use-case-toggling-brief-mode">Use Case: Toggling "Brief Mode"</h4>
+<p>
+Let's see how a beginner would use the Store to toggle a simple setting.
+</p>
+<p>
+<strong>1. Reading the State</strong>
+ 
+To see the current value, we access the store instance.
+</p>
+<pre data-lang="typescript"><code>import { store } from './storeInstance' // conceptual import
+
+// Get the huge JSON object
+const currentState = store.getState()
+
+// Read a specific value
+console.log(currentState.isBriefOnly) // Output: false
+</code></pre>
+<p>
+<strong>2. Writing to the State</strong>
+ 
+To change data, we use <code>setState</code>. We provide an "updater" function. This function receives the <em>old</em> state and returns the <em>new</em> state.
+</p>
+<pre data-lang="typescript"><code>// Toggle the value from false to true
+store.setState((prevState) =&gt; {
+  return {
+    ...prevState, // Keep all other 100+ properties exactly the same
+    isBriefOnly: !prevState.isBriefOnly // Flip this one specific switch
+  }
+})
+</code></pre>
+<p>
+<em>Note: We use <code>...prevState</code> (spread syntax) to copy everything else. We only change what we need.</em>
+</p>
+<p>
+<strong>3. Listening for Changes</strong>
+ 
+If we want to update the UI automatically when data changes, we subscribe.
+</p>
+<pre data-lang="typescript"><code>// This runs every time ANY part of the state changes
+const unsubscribe = store.subscribe(() =&gt; {
+  console.log("Something changed on the whiteboard!")
+})
+
+// Later, stop listening
+unsubscribe()
+</code></pre>
+<hr>
+<h3 id="internal-implementation-how-it-works">Internal Implementation: How it Works</h3>
+<p>
+Let's peek under the hood of <code>store.ts</code>. It acts as the guardian of the state.
+</p>
+<p>
+When you call <code>setState</code>, the Store doesn't just change a variable; it acts like a town crier, notifying everyone who is listening.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant U as User Code
+    participant S as Store
+    participant L as Listeners (UI)
+
+    U-&gt;&gt;S: setState( updater )
+    Note over S: 1. Calculate new state&lt;br/&gt;2. Replace old state
+    S-&gt;&gt;L: Fire listeners!
+    L-&gt;&gt;S: getState()
+    S--&gt;&gt;L: Returns new data
+    Note over L: UI re-renders with new data</div></div>
+<h4 id="code-walkthrough-inline-18">Code Walkthrough: <code>store.ts</code></h4>
+<p>
+The implementation is surprisingly minimal. It does not depend on React or any heavy library.
+</p>
+<p>
+<strong>1. Holding the State</strong>
+ 
+We create a variable <code>state</code> inside a function closure. No one can touch it directly.
+</p>
+<pre data-lang="typescript"><code>// store.ts
+export function createStore&lt;T&gt;(initialState: T) {
+  // This variable holds the "Single Source of Truth"
+  let state = initialState
+  
+  // A collection of functions to run when state changes
+  const listeners = new Set&lt;() =&gt; void&gt;()
+  
+  // ...
+}
+</code></pre>
+<p>
+<strong>2. The Updater (<code>setState</code>)</strong>
+ 
+This function ensures we move safely from the old state to the new state.
+</p>
+<pre data-lang="typescript"><code>  // ... inside createStore returns ...
+  setState: (updater: (prev: T) =&gt; T) =&gt; {
+    const prev = state
+    const next = updater(prev)
+    
+    // Optimization: If nothing changed, do nothing
+    if (Object.is(next, prev)) return
+    
+    state = next // Update the local variable
+    for (const listener of listeners) listener() // Notify everyone
+  },
+</code></pre>
+<p>
+<strong>3. The Subscriber</strong>
+ 
+This allows outside code to register a callback function.
+</p>
+<pre data-lang="typescript"><code>  // ... inside createStore returns ...
+  subscribe: (listener: () =&gt; void) =&gt; {
+    listeners.add(listener)
+    
+    // Return a function to "unsubscribe" (clean up)
+    return () =&gt; listeners.delete(listener)
+  },
+</code></pre>
+<h3 id="initializing-the-app-inline-21">Initializing the App (<code>AppStateStore.ts</code>)</h3>
+<p>
+Finally, the whiteboard can't start empty. We need to set up the default values. This happens in <code>AppStateStore.ts</code>.
+</p>
+<p>
+The function <code>getDefaultAppState</code> creates the initial massive JSON object.
+</p>
+<pre data-lang="typescript"><code>// AppStateStore.ts
+export function getDefaultAppState(): AppState {
+  return {
+    // We set safe defaults for everything
+    settings: getInitialSettings(),
+    tasks: {}, 
+    expandedView: 'none',
+    isBriefOnly: false,
+    verbose: false,
+    // ... hundreds of other default values
+  }
+}
+</code></pre>
+<h3 id="conclusion">Conclusion</h3>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>The Store</strong> is the single source of truth (the Whiteboard).</li>
+</ol>
+<ol>
+<li><strong>AppState</strong> is the definition of <em>what</em> can be written on that board.</li>
+</ol>
+<ol>
+<li><strong>store.ts</strong> provides the tools to read, write, and watch that data safely.</li>
+</ol>
+<p>
+This system is powerful because it is <strong>portable</strong>. It works inside React components, but also in background scripts, CLI tools, or tests, because it's just plain TypeScript.
+</p>
+<p>
+However, listening to the <em>entire</em> store every time <em>anything</em> changes can be inefficient. What if we only care about one specific value?
+</p>
+<p>
+<a href="02<em>state</em>selectors<em>_derived</em>data_.md">Next Chapter: State Selectors (Derived Data)</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="state.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">state/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:10px"><a href="#the-motivation-the-central-whiteboard">The Motivation: The Central Whiteboard</a></li>
+<li style="padding-left:10px"><a href="#key-concept-the-inline-0-object">Key Concept: The %%INLINE_0%% Object</a></li>
+<li style="padding-left:10px"><a href="#key-concept-the-store-mechanism">Key Concept: The Store Mechanism</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-how-it-works">Internal Implementation: How it Works</a></li>
+<li style="padding-left:10px"><a href="#initializing-the-app-inline-21">Initializing the App (%%INLINE_21%%)</a></li>
+<li style="padding-left:10px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

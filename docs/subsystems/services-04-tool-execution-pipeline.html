@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: Tool Execution Pipeline — services/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">services/04_tool_execution_pipeline.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⚡ services/ · 04_tool_execution_pipeline.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: Tool Execution Pipeline</h1>
+  <div class="chapter-meta"><span>📄 services/04_tool_execution_pipeline.md</span></div>
+</div>
+<h1 id="chapter-4-tool-execution-pipeline">Chapter 4: Tool Execution Pipeline</h1>
+<p>
+Welcome to the fourth chapter of the <strong>Services</strong> project tutorial!
+</p>
+<p>
+In the previous chapter, <a href="03<em>context</em>compaction.md">Context Compaction</a>, we learned how to keep our conversation history light so the AI doesn't get overwhelmed.
+</p>
+<p>
+At this point, we have a smart conversationalist. It can talk, remember, and summarize. But it is still just a "brain in a jar." It cannot <em>touch</em> anything. It cannot run a terminal command, edit a file, or browse the web.
+</p>
+<p>
+The <strong>Tool Execution Pipeline</strong> acts as the <strong>Mechanical Hands</strong> of the AI. It translates the AI's textual desire ("I want to read file.txt") into actual operating system actions.
+</p>
+<h2 id="1-the-big-picture-brains-into-action">1. The Big Picture: Brains into Action</h2>
+<p>
+Imagine you are a Chef (the AI). You have a recipe and the knowledge, but you are stuck in a control room. You can only shout orders through a microphone.
+</p>
+<p>
+You need a <strong>Sous-Chef</strong> (The Tool Pipeline) in the kitchen.
+</p>
+<ol>
+<li><strong>Orchestration:</strong> If you shout "Cut the carrots" and "Boil the water," the Sous-Chef decides if these can happen at the same time (Parallel) or one after another (Serial).</li>
+</ol>
+<ol>
+<li><strong>Safety:</strong> If you shout "Burn down the kitchen," the Sous-Chef pauses and asks the restaurant owner (the User), "Are you sure about that?"</li>
+</ol>
+<ol>
+<li><strong>Execution:</strong> The Sous-Chef actually performs the action and reports back: "Carrots are chopped."</li>
+</ol>
+<h3 id="central-use-case">Central Use Case</h3>
+<p>
+<strong>Goal:</strong> The AI wants to fix a bug. It decides to:
+</p>
+<ol>
+<li>Read <code>src/index.ts</code> (to see the code).</li>
+</ol>
+<ol>
+<li>Read <code>src/utils.ts</code> (to see helper functions).</li>
+</ol>
+<p>
+<strong>Action:</strong> The Pipeline notices both are "read-only" actions. It runs them <strong>simultaneously</strong> to save time. It gets the file contents and feeds them back to the AI.
+</p>
+<h2 id="2-key-concepts">2. Key Concepts</h2>
+<h3 id="a-the-tool-use-block">A. The "Tool Use" Block</h3>
+<p>
+The AI doesn't run code directly. It outputs a special JSON block called <code>tool_use</code>. It looks like this:
+ 
+<code>{ "tool": "readFile", "path": "src/index.ts" }</code>
+ 
+Our pipeline constantly scans the AI's response for these blocks.
+</p>
+<h3 id="b-serial-vs-parallel-execution">B. Serial vs. Parallel Execution</h3>
+<ul>
+<li><strong>Parallel:</strong> Safe actions like "Read File" or "Search" can happen together. If the AI asks for 5 files, we fetch them all at once.</li>
+<li><strong>Serial:</strong> Dangerous or dependent actions like "Write File" or "Run Command" must happen one by one. You can't edit a file and delete it at the exact same time.</li>
+</ul>
+<h3 id="c-permissions-the-safety-guard">C. Permissions (The Safety Guard)</h3>
+<p>
+Before executing any tool, the pipeline checks if the user allows it.
+</p>
+<ul>
+<li><strong>Auto-Allow:</strong> Reading harmless files might be allowed automatically.</li>
+<li><strong>Ask User:</strong> Running <code>rm -rf /</code> will trigger a popup asking you to click "Approve."</li>
+</ul>
+<hr>
+<h2 id="3-how-it-works-the-workflow">3. How It Works (The Workflow)</h2>
+<p>
+When the AI decides to act, the pipeline takes over.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant AI as AI Model
+    participant Orch as Orchestrator
+    participant Guard as Permission Check
+    participant OS as Operating System
+
+    AI-&gt;&gt;Orch: "I want to run 'ls' and read 'package.json'"
+    
+    rect rgb(240, 240, 255)
+        note right of Orch: Sorting Phase
+        Orch-&gt;&gt;Orch: Group 1: Run 'ls' (Command)
+        Orch-&gt;&gt;Orch: Group 2: Read 'package.json' (File)
+    end
+
+    Orch-&gt;&gt;Guard: "Can I run 'ls'?"
+    Guard--&gt;&gt;Orch: "User says YES"
+    Orch-&gt;&gt;OS: Execute 'ls'
+    OS--&gt;&gt;Orch: Returns file list
+
+    Orch-&gt;&gt;Guard: "Can I read 'package.json'?"
+    Guard--&gt;&gt;Orch: "Auto-Allowed"
+    Orch-&gt;&gt;OS: Read file
+    OS--&gt;&gt;Orch: Returns content
+
+    Orch-&gt;&gt;AI: Here are the results...</div></div>
+<hr>
+<h2 id="4-under-the-hood-the-code">4. Under the Hood: The Code</h2>
+<p>
+Let's break down the actual TypeScript code that manages this flow.
+</p>
+<h3 id="step-1-sorting-the-tasks-inline-5">Step 1: Sorting the Tasks (<code>toolOrchestration.ts</code>)</h3>
+<p>
+The AI might ask for 10 things at once. We need to group them. We check if tools are <code>isConcurrencySafe</code> (read-only).
+</p>
+<pre data-lang="typescript"><code>// services/tools/toolOrchestration.ts (Simplified)
+function partitionToolCalls(toolMessages) {
+  const batches = []
+  
+  // Group consecutive safe tools (like "Read File") together
+  // But isolate unsafe tools (like "Write File") into their own batch
+  for (const tool of toolMessages) {
+    if (isReadBuffer(tool)) {
+      addToCurrentBatch(tool)
+    } else {
+      startNewBatch(tool)
+    }
+  }
+  return batches
+}
+</code></pre>
+<p>
+<em>Explanation: This organizes the "orders." If we have [Read, Read, Write, Read], it becomes Batch 1: [Read, Read] (Parallel), Batch 2: [Write] (Wait for finish), Batch 3: [Read] (Parallel).</em>
+</p>
+<h3 id="step-2-running-the-batch-inline-7">Step 2: Running the Batch (<code>toolOrchestration.ts</code>)</h3>
+<p>
+Now we iterate through our sorted batches.
+</p>
+<pre data-lang="typescript"><code>// services/tools/toolOrchestration.ts (Simplified)
+export async function* runTools(batches) {
+  for (const batch of batches) {
+    if (batch.isSafe) {
+      // Run all read requests at the exact same time
+      yield* runToolsConcurrently(batch.tools) 
+    } else {
+      // Run sensitive requests one by one
+      yield* runToolsSerially(batch.tools)
+    }
+  }
+}
+</code></pre>
+<p>
+<em>Explanation: %%INLINE<em>8%% uses %%INLINE</em>9%% to be fast. %%INLINE<em>10%% uses a simple %%INLINE</em>11%% loop to be safe.</em>
+</p>
+<h3 id="step-3-checking-permissions-inline-12">Step 3: Checking Permissions (<code>toolExecution.ts</code>)</h3>
+<p>
+Before we actually touch the system, we stop at the checkpoint.
+</p>
+<pre data-lang="typescript"><code>// services/tools/toolExecution.ts (Simplified)
+async function checkPermissionsAndCallTool(tool, input) {
+  // 1. Ask the Permission System (Hooks/User Settings)
+  const decision = await resolveHookPermissionDecision(tool, input)
+
+  // 2. If the user said "No", stop immediately
+  if (decision.behavior !== 'allow') {
+    return "Error: User denied this action."
+  }
+
+  // 3. User said "Yes", proceed to execution
+  return await executeTool(tool, input)
+}
+</code></pre>
+<p>
+<em>Explanation: This is where the popup "Allow Command?" happens. If the user rejects it, the function returns an error string to the AI, so the AI knows it wasn't allowed to do that.</em>
+</p>
+<h3 id="step-4-execution-result-inline-13">Step 4: Execution & Result (<code>toolExecution.ts</code>)</h3>
+<p>
+Finally, we run the tool logic and format the output.
+</p>
+<pre data-lang="typescript"><code>// services/tools/toolExecution.ts (Simplified)
+async function executeTool(tool, input) {
+  try {
+    // Run the actual function (e.g., fs.readFile)
+    const result = await tool.call(input)
+
+    // Log success for telemetry
+    logEvent('tool_success', { toolName: tool.name })
+
+    // Return the data
+    return result
+  } catch (error) {
+    // If the file doesn't exist, tell the AI
+    return `Error: ${error.message}`
+  }
+}
+</code></pre>
+<p>
+<em>Explanation: This calls the specific tool class (like <code>FileReadTool</code>). It captures the output (or error) and sends it back up the chain to be given to the AI.</em>
+</p>
+<h2 id="5-summary">5. Summary</h2>
+<p>
+We have given our AI hands!
+</p>
+<ol>
+<li><strong>Orchestration:</strong> We intelligently group tasks to be fast but safe.</li>
+</ol>
+<ol>
+<li><strong>Safety:</strong> We verify permissions so the AI doesn't go rogue.</li>
+</ol>
+<ol>
+<li><strong>Execution:</strong> We interact with the OS and return the results.</li>
+</ol>
+<p>
+Now the AI can connect, remember, manage its context, and execute standard tools. But what if we want to connect to <em>external</em> tools provided by other applications, like a database client or a Slack integration?
+</p>
+<p>
+We need a standard protocol for connecting to outside tools.
+</p>
+<p>
+<a href="05<em>model</em>context<em>protocol</em><em>mcp</em>.md">Next Chapter: Model Context Protocol (MCP)</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="services.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">services/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#1-the-big-picture-brains-into-action">1. The Big Picture: Brains into Action</a></li>
+<li style="padding-left:10px"><a href="#central-use-case">Central Use Case</a></li>
+<li style="padding-left:0px"><a href="#2-key-concepts">2. Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#a-the-tool-use-block">A. The "Tool Use" Block</a></li>
+<li style="padding-left:10px"><a href="#b-serial-vs-parallel-execution">B. Serial vs. Parallel Execution</a></li>
+<li style="padding-left:10px"><a href="#c-permissions-the-safety-guard">C. Permissions (The Safety Guard)</a></li>
+<li style="padding-left:0px"><a href="#3-how-it-works-the-workflow">3. How It Works (The Workflow)</a></li>
+<li style="padding-left:0px"><a href="#4-under-the-hood-the-code">4. Under the Hood: The Code</a></li>
+<li style="padding-left:10px"><a href="#step-1-sorting-the-tasks-inline-5">Step 1: Sorting the Tasks (%%INLINE_5%%)</a></li>
+<li style="padding-left:10px"><a href="#step-2-running-the-batch-inline-7">Step 2: Running the Batch (%%INLINE_7%%)</a></li>
+<li style="padding-left:10px"><a href="#step-3-checking-permissions-inline-12">Step 3: Checking Permissions (%%INLINE_12%%)</a></li>
+<li style="padding-left:10px"><a href="#step-4-execution-result-inline-13">Step 4: Execution & Result (%%INLINE_13%%)</a></li>
+<li style="padding-left:0px"><a href="#5-summary">5. Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

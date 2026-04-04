@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 5: Frame Renderer — ink/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">ink/05_frame_renderer.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🖊 ink/ · 05_frame_renderer.md</div>
+  <h1 class="chapter-title-h1">Chapter 5: Frame Renderer</h1>
+  <div class="chapter-meta"><span>📄 ink/05_frame_renderer.md</span></div>
+</div>
+<h1 id="chapter-5-frame-renderer">Chapter 5: Frame Renderer</h1>
+<p>
+In the previous chapter, <a href="04<em>input</em>processing<em>pipeline.md">Input Processing Pipeline</a>, we gave our application ears—it can listen to user keystrokes. Before that, in <a href="02</em>ink<em>dom</em><em>_layout</em>engine.md">Ink DOM & Layout Engine</a>, we gave it a skeleton using Yoga.
+</p>
+<p>
+But right now, our application is just a ghost. We have a mathematical structure in memory (the Ink DOM) and input events flying around, but we haven't actually <strong>drawn</strong> anything to the terminal yet.
+</p>
+<p>
+Enter the <strong>Frame Renderer</strong>.
+</p>
+<h2 id="the-motivation-the-artist">The Motivation: The Artist</h2>
+<p>
+Imagine you are an artist.
+</p>
+<ol>
+<li><strong>The Subject:</strong> You have a tree of objects (the Ink DOM).</li>
+</ol>
+<ol>
+<li><strong>The Rules:</strong> You have instructions on where they stand (Yoga coordinates).</li>
+</ol>
+<ol>
+<li><strong>The Canvas:</strong> You have a sheet of graph paper (the Terminal).</li>
+</ol>
+<p>
+The Terminal is a strict medium. It is a grid of cells. You cannot draw "half a pixel." You cannot draw a circle. You can only place a specific character (like %%INLINE<em>0%%, %%INLINE</em>1%%, or <code>█</code>) into a specific row and column.
+</p>
+<p>
+ The <strong>Frame Renderer</strong> is responsible for taking the mathematical snapshot of your UI and "painting" it onto that grid.
+</p>
+<hr>
+<h2 id="the-goal-a-pop-up-dialog">The Goal: A Pop-up Dialog</h2>
+<p>
+To understand rendering, let's look at a case where "painting" matters most: <strong>Overlapping Content</strong>.
+</p>
+<p>
+We want to render a background, and then "paint" a dialog box on top of it.
+</p>
+<pre data-lang="text"><code>Background Text...
+Background Text...
+┌──────────────┐
+│  I am on top │
+└──────────────┘
+Background Text...
+</code></pre>
+<p>
+To achieve this, the Renderer must respect the order of elements. It must draw the background first, and then draw the box <em>over</em> it, replacing the characters underneath.
+</p>
+<hr>
+<h2 id="concept-1-the-screen-buffer">Concept 1: The Screen Buffer</h2>
+<p>
+Browsers paint pixels. Ink paints <strong>Cells</strong>.
+</p>
+<p>
+A <strong>Screen Buffer</strong> is essentially a big 2D array representing your terminal window.
+</p>
+<ul>
+<li><code>buffer[0][0]</code> is the top-left corner.</li>
+<li>Each cell contains:</li>
+</ul>
+<p>
+    1.  <strong>Char:</strong> The character (e.g., "A").
+ 
+    2.  <strong>Style:</strong> The color (e.g., Red, Bold).
+</p>
+<p>
+When the Renderer runs, it doesn't print to the screen immediately. It writes to this invisible grid in memory first. This is called <strong>Double Buffering</strong>.
+</p>
+<h3 id="why-double-buffer">Why Double Buffer?</h3>
+<p>
+If we printed characters one by one directly to the terminal, the user would see the UI flickering as it builds up. By building the frame in memory and showing it all at once, the UI looks solid and smooth.
+</p>
+<hr>
+<h2 id="concept-2-the-text-measurement">Concept 2: The Text Measurement</h2>
+<p>
+Before we can paint, we have a "chicken and egg" problem.
+</p>
+<ol>
+<li>To position a Box, Yoga needs to know how big the text inside it is.</li>
+</ol>
+<ol>
+<li>To know how big the text is, we need to measure the string.</li>
+</ol>
+<p>
+This is the very first step of rendering.
+</p>
+<h3 id="inline-4"><code>measure-text.ts</code></h3>
+<p>
+Ink includes a specialized function to measure strings. It isn't as simple as <code>string.length</code>.
+</p>
+<pre data-lang="typescript"><code>// measure-text.ts (Simplified)
+function measureText(text: string, maxWidth: number) {
+  // If text is empty, size is 0
+  if (text.length === 0) return { width: 0, height: 0 };
+
+  // Calculate width of the longest line
+  // Calculate how many lines (height) it takes based on wrapping
+  // ... implementation details ...
+
+  return { width, height };
+}
+</code></pre>
+<p>
+<strong>What happens here?</strong>
+</p>
+<ul>
+<li>It handles <strong>wrapping</strong>: If a line is 20 chars long, but <code>maxWidth</code> is 10, the height becomes 2.</li>
+<li>It handles <strong>newlines</strong>: <code>\n</code> increases height.</li>
+</ul>
+<p>
+This function feeds the raw data into the Yoga engine so it can calculate %%INLINE<em>8%% and %%INLINE</em>9%% coordinates.
+</p>
+<hr>
+<h2 id="concept-3-the-painting-loop">Concept 3: The Painting Loop</h2>
+<p>
+Once Yoga has calculated where everything goes (x, y, width, height), the Renderer iterates through the Ink DOM.
+</p>
+<p>
+It uses the <strong>Painter's Algorithm</strong>:
+</p>
+<ol>
+<li>Draw the root element (background).</li>
+</ol>
+<ol>
+<li>Draw the first child.</li>
+</ol>
+<ol>
+<li>Draw the second child (if it overlaps the first, it overwrites those cells).</li>
+</ol>
+<h3 id="the-implementation-inline-10">The Implementation: <code>renderer.ts</code></h3>
+<p>
+The renderer creates a factory function. It takes the current DOM tree and produces a <strong>Frame</strong>.
+</p>
+<pre data-lang="typescript"><code>// renderer.ts (Simplified)
+export default function createRenderer(node, stylePool) {
+  // Reuse the output buffer for performance
+  let output; 
+
+  return (options) =&gt; {
+    const { terminalWidth, terminalRows } = options;
+
+    // 1. Calculate the final Layout (math)
+    node.yogaNode.calculateLayout(terminalWidth, terminalRows);
+
+    // 2. Create a blank screen buffer (canvas)
+    const screen = createScreen(terminalWidth, height, ...);
+
+    // 3. Paint the nodes onto the screen
+    renderNodeToOutput(node, output, { screen });
+
+    // 4. Return the finished picture
+    return {
+      screen: output.get(), // The filled grid
+      cursor: { x: 0, y: 0 } // Where should the cursor be?
+    };
+  };
+}
+</code></pre>
+<p>
+<strong>Beginner Explanation:</strong>
+</p>
+<ol>
+<li><strong><code>calculateLayout</code></strong>: The layout engine (Yoga) runs the numbers.</li>
+</ol>
+<ol>
+<li><strong><code>createScreen</code></strong>: We get a fresh piece of graph paper.</li>
+</ol>
+<ol>
+<li><strong>%%INLINE<em>13%%</strong>: This is the heavy lifter. It walks through every %%INLINE</em>14%% and <code>&lt;Text&gt;</code>, looks at their calculated X/Y coordinates, and fills in the cells on the graph paper.</li>
+</ol>
+<hr>
+<h2 id="the-workflow-from-tree-to-grid">The Workflow: From Tree to Grid</h2>
+<p>
+Let's visualize the "Pop-up Dialog" example.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant React as React Component
+    participant Yoga as Layout Engine
+    participant Renderer as Frame Renderer
+    participant Screen as Screen Buffer
+
+    Note over React: &lt;Box&gt;&lt;Text&gt;Bg&lt;/Text&gt;&lt;Box&gt;Dialog&lt;/Box&gt;&lt;/Box&gt;
+
+    React-&gt;&gt;Yoga: 1. Measure Text ("Bg", "Dialog")
+    Yoga--&gt;&gt;Renderer: 2. Dimensions Ready
+    
+    Renderer-&gt;&gt;Yoga: 3. Calculate Positions (X, Y)
+    Yoga--&gt;&gt;Renderer: Root: 0,0 | Dialog: 5,5
+    
+    Renderer-&gt;&gt;Screen: 4. Create Blank Grid
+    
+    Renderer-&gt;&gt;Screen: 5. Paint "Bg" at 0,0
+    Note right of Screen: Grid has background text
+    
+    Renderer-&gt;&gt;Screen: 6. Paint "Dialog" at 5,5
+    Note right of Screen: Grid overwrites cells at 5,5
+    
+    Renderer--&gt;&gt;React: 7. Frame Complete</div></div>
+<hr>
+<h2 id="deep-dive-inline-16">Deep Dive: <code>render-to-screen.ts</code></h2>
+<p>
+While %%INLINE<em>17%% handles the main application loop, Ink also has %%INLINE</em>18%%. This is often used for one-off rendering tasks or testing.
+</p>
+<p>
+It highlights an important detail: <strong>Isolation</strong>.
+</p>
+<pre data-lang="typescript"><code>// render-to-screen.ts (Simplified)
+export function renderToScreen(element, width) {
+  // 1. Create a temporary root node
+  const root = createNode('ink-root');
+  
+  // 2. Run React Reconciler explicitly to build the tree
+  reconciler.updateContainerSync(element, container, ...);
+
+  // 3. Trigger Layout
+  root.yogaNode.calculateLayout(width);
+
+  // 4. Paint to a fresh screen
+  const screen = createScreen(width, height, ...);
+  renderNodeToOutput(root, output, { ... });
+
+  return { screen, height };
+}
+</code></pre>
+<p>
+<strong>Why look at this?</strong>
+ 
+It proves that Ink is "headless." It doesn't <em>need</em> a real terminal to work. You can render a React component into a string variable in memory. This is exactly how Ink's testing library (<code>ink-testing-library</code>) works!
+</p>
+<hr>
+<h2 id="handling-clipping">Handling "Clipping"</h2>
+<p>
+What happens if you have a Box of width 5, but the text inside is "Hello World" (11 chars)?
+</p>
+<p>
+The Renderer enforces <strong>Clipping</strong>.
+ 
+When <code>renderNodeToOutput</code> runs, it knows the boundaries of the current Box.
+</p>
+<ol>
+<li>It tries to write "H" at index 0. (Success)</li>
+</ol>
+<ol>
+<li>...</li>
+</ol>
+<ol>
+<li>It tries to write "o" at index 4. (Success)</li>
+</ol>
+<ol>
+<li>It tries to write " " (space) at index 5. <strong>(Stop!)</strong></li>
+</ol>
+<p>
+The Renderer checks: <code>if (currentX &gt; boxRightEdge) return;</code>.
+ 
+This ensures your UI doesn't spill out of its containers, keeping your "Pop-up Dialog" neat and tidy.
+</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ul>
+<li><strong>Text Measurement:</strong> We must measure string size (<code>measure-text.ts</code>) before we can calculate layout.</li>
+<li><strong>The Screen Buffer:</strong> We paint onto an in-memory grid of cells, not directly to the terminal.</li>
+<li><strong>Painter's Algorithm:</strong> We draw from back to front. Later elements (like our Dialog) overwrite earlier elements.</li>
+<li><strong>The Result:</strong> The Renderer produces a <strong>Frame</strong>—a complete snapshot of what the terminal should look like right now.</li>
+</ul>
+<p>
+We have a snapshot. But we generated a <em>new</em> snapshot 100 milliseconds later. If we just clear the terminal and print the new snapshot, the screen will flash and flicker horribly.
+</p>
+<p>
+How do we update the screen smoothly, changing <em>only</em> the pixels that are different?
+</p>
+<p>
+<a href="06<em>output</em>diffing<em>_logupdate</em>.md">Next Chapter: Output Diffing (LogUpdate)</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="ink.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">ink/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-the-artist">The Motivation: The Artist</a></li>
+<li style="padding-left:0px"><a href="#the-goal-a-pop-up-dialog">The Goal: A Pop-up Dialog</a></li>
+<li style="padding-left:0px"><a href="#concept-1-the-screen-buffer">Concept 1: The Screen Buffer</a></li>
+<li style="padding-left:10px"><a href="#why-double-buffer">Why Double Buffer?</a></li>
+<li style="padding-left:0px"><a href="#concept-2-the-text-measurement">Concept 2: The Text Measurement</a></li>
+<li style="padding-left:10px"><a href="#inline-4">%%INLINE_4%%</a></li>
+<li style="padding-left:0px"><a href="#concept-3-the-painting-loop">Concept 3: The Painting Loop</a></li>
+<li style="padding-left:10px"><a href="#the-implementation-inline-10">The Implementation: %%INLINE_10%%</a></li>
+<li style="padding-left:0px"><a href="#the-workflow-from-tree-to-grid">The Workflow: From Tree to Grid</a></li>
+<li style="padding-left:0px"><a href="#deep-dive-inline-16">Deep Dive: %%INLINE_16%%</a></li>
+<li style="padding-left:0px"><a href="#handling-clipping">Handling "Clipping"</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

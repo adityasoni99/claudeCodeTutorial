@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 1: Composite Readiness Logic — voice/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">voice/01_composite_readiness_logic.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🎤 voice/ · 01_composite_readiness_logic.md</div>
+  <h1 class="chapter-title-h1">Chapter 1: Composite Readiness Logic</h1>
+  <div class="chapter-meta"><span>📄 voice/01_composite_readiness_logic.md</span></div>
+</div>
+<h1 id="chapter-1-composite-readiness-logic">Chapter 1: Composite Readiness Logic</h1>
+<p>
+Welcome to the Voice project! 
+</p>
+<p>
+Building a robust application is a bit like being a pilot preparing for takeoff. Before a pilot pushes the throttle, they go through a <strong>Pre-Flight Checklist</strong>. They don't just ask "Is the engine on?"; they also ask "Do we have clearance from the tower?" and "Is the runway clear?"
+</p>
+<p>
+In our application, we have a "Voice Mode" feature. However, we can't just let the user access it immediately. We need to check two distinct things:
+</p>
+<ol>
+<li><strong>Authentication:</strong> Is the user actually logged in? (Do they have the keys?)</li>
+</ol>
+<ol>
+<li><strong>Configuration:</strong> Is the feature actually enabled on our end? (Do they have clearance?)</li>
+</ol>
+<p>
+This chapter introduces the <strong>Composite Readiness Logic</strong>: a single, simple way to ask, "Is everything ready to go?"
+</p>
+<h2 id="the-problem">The Problem</h2>
+<p>
+Imagine you are building the User Interface (UI). You need to decide whether to show the microphone button.
+</p>
+<p>
+You <em>could</em> write code like this inside your button component:
+</p>
+<pre data-lang="typescript"><code>// ❌ Don't do this! It's messy and hard to read.
+if (user.isLoggedIn &amp;&amp; user.hasToken &amp;&amp; remoteConfig.isVoiceOn &amp;&amp; !system.isDown) {
+  showMicrophone();
+}
+</code></pre>
+<p>
+If you repeat this everywhere, your code becomes messy. If the rules change (e.g., we add a maintenance mode), you have to update every file.
+</p>
+<h2 id="the-solution-a-single-gono-go-function">The Solution: A Single "Go/No-Go" Function</h2>
+<p>
+We solve this by creating a <strong>Master Checklist</strong> function called <code>isVoiceModeEnabled()</code>. 
+</p>
+<p>
+This function acts as our pilot. It checks the keys (Auth) and the clearance (Remote Flags) and returns a simple %%INLINE<em>1%% (Go) or %%INLINE</em>2%% (No-Go).
+</p>
+<h3 id="how-to-use-it">How to use it</h3>
+<p>
+As a developer building the UI, you don't need to worry about <em>how</em> the checks works. You just use the master function.
+</p>
+<pre data-lang="typescript"><code>import { isVoiceModeEnabled } from './voiceModeEnabled';
+
+// ✅ Do this! Clean and simple.
+if (isVoiceModeEnabled()) {
+  console.log("Voice mode is ready! Rendering UI...");
+  renderMicrophoneButton();
+} else {
+  console.log("Voice mode is unavailable.");
+}
+</code></pre>
+<p>
+<strong>What happens here:</strong>
+</p>
+<ol>
+<li><strong>Input:</strong> None (it checks the global state).</li>
+</ol>
+<ol>
+<li><strong>Output:</strong> <code>true</code> only if <strong>ALL</strong> checks pass.</li>
+</ol>
+<ol>
+<li><strong>Result:</strong> Your UI renders strictly when it is safe to do so.</li>
+</ol>
+<hr>
+<h2 id="how-it-works-under-the-hood">How it Works: Under the Hood</h2>
+<p>
+Let's peek inside the cockpit to see how <code>isVoiceModeEnabled</code> makes its decision. It performs a <strong>Composite Check</strong>, meaning it combines multiple independent checks.
+</p>
+<h3 id="the-logic-flow">The Logic Flow</h3>
+<p>
+When you ask "Is voice enabled?", the system performs two parallel investigations:
+</p>
+<ol>
+<li><strong>The Auth Check:</strong> It looks into the user's keychain to see if they have valid credentials for the AI provider (Anthropic).</li>
+</ol>
+<ol>
+<li><strong>The Safety Check:</strong> It checks a "Feature Flag" (via a tool called GrowthBook) to see if we, the developers, have remotely killed the feature due to bugs or maintenance.</li>
+</ol>
+<p>
+Here is the sequence of events:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant UI as User Interface
+    participant Master as isVoiceModeEnabled
+    participant Auth as Auth Check
+    participant Flag as Feature Flag
+
+    UI-&gt;&gt;Master: Can I show the Mic?
+    
+    Master-&gt;&gt;Auth: Do we have valid tokens?
+    Auth--&gt;&gt;Master: Yes (Token Found)
+    
+    Master-&gt;&gt;Flag: Is the kill-switch OFF?
+    Flag--&gt;&gt;Master: Yes (Feature Active)
+    
+    Master--&gt;&gt;UI: true (Go!)</div></div>
+<hr>
+<h2 id="deep-dive-the-code">Deep Dive: The Code</h2>
+<p>
+Let's look at the actual implementation in <code>voiceModeEnabled.ts</code>.
+</p>
+<h3 id="1-the-master-function">1. The Master Function</h3>
+<p>
+This is the entry point. Notice how simple it is—it just combines two other functions using <code>&amp;&amp;</code> (AND). Both must be true.
+</p>
+<pre data-lang="typescript"><code>/**
+ * Full runtime check: auth + GrowthBook kill-switch.
+ */
+export function isVoiceModeEnabled(): boolean {
+  // We only return TRUE if we have Auth AND the Feature is enabled.
+  return hasVoiceAuth() &amp;&amp; isVoiceGrowthBookEnabled()
+}
+</code></pre>
+<h3 id="2-the-auth-check-the-keys">2. The Auth Check (The Keys)</h3>
+<p>
+This function checks if the user is legally allowed to speak. Specifically, it looks for an OAuth token. We will cover the details of how we get these tokens in <a href="03<em>provider</em>specific_authentication.md">Provider-Specific Authentication</a>.
+</p>
+<pre data-lang="typescript"><code>export function hasVoiceAuth(): boolean {
+  // First, check if the provider is even set to one that supports voice.
+  if (!isAnthropicAuthEnabled()) {
+    return false
+  }
+  
+  // Then, check if we actually have the access token (the key).
+  const tokens = getClaudeAIOAuthTokens()
+  return Boolean(tokens?.accessToken)
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li>It checks <code>isAnthropicAuthEnabled()</code> to ensure we are using the correct provider.</li>
+<li>It retrieves tokens using <code>getClaudeAIOAuthTokens()</code>.</li>
+<li>It converts the result to a boolean: if the token exists, it returns <code>true</code>.</li>
+</ul>
+<h3 id="3-the-feature-flag-check-the-clearance">3. The Feature Flag Check (The Clearance)</h3>
+<p>
+This check allows us to control the feature remotely without releasing a new version of the app. We use a concept called a "Kill Switch." We will learn how to configure this in <a href="02<em>remote</em>feature<em>gating</em><em>growthbook</em>.md">Remote Feature Gating (GrowthBook)</a>.
+</p>
+<pre data-lang="typescript"><code>export function isVoiceGrowthBookEnabled(): boolean {
+  // 1. Check if the feature acts as a "kill switch".
+  // 'tengu_amber_quartz_disabled' is our emergency stop button.
+  // If the remote value is true (disabled), we return false.
+  return feature('VOICE_MODE')
+    ? !getFeatureValue_CACHED_MAY_BE_STALE('tengu_amber_quartz_disabled', false)
+    : false
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ul>
+<li>It uses %%INLINE<em>10%% to check if the code was even compiled into the app. This is part of <a href="05</em>build<em>time</em>code_elimination.md">Build-Time Code Elimination</a>.</li>
+<li>It checks a remote flag named <code>tengu_amber_quartz_disabled</code>.</li>
+<li><strong>Logic:</strong> If the "disabled" flag is %%INLINE<em>12%%, the feature is <em>off</em>, so this function returns %%INLINE</em>13%%.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have just learned the <strong>Composite Readiness Logic</strong>. Instead of scattering checks all over your application, you now have a single source of truth: <code>isVoiceModeEnabled()</code>.
+</p>
+<p>
+This approach makes your code:
+</p>
+<ol>
+<li><strong>Safer:</strong> You never accidentally enable a feature when the user isn't logged in.</li>
+</ol>
+<ol>
+<li><strong>Cleaner:</strong> Your UI code focuses on UI, not complex logic.</li>
+</ol>
+<ol>
+<li><strong>Controllable:</strong> You can turn off the feature remotely if something breaks.</li>
+</ol>
+<p>
+In the next chapter, we will learn exactly how that remote switch works.
+</p>
+<p>
+<a href="02<em>remote</em>feature<em>gating</em><em>growthbook</em>.md">Next Chapter: Remote Feature Gating (GrowthBook)</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="voice.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">voice/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem">The Problem</a></li>
+<li style="padding-left:0px"><a href="#the-solution-a-single-gono-go-function">The Solution: A Single "Go/No-Go" Function</a></li>
+<li style="padding-left:10px"><a href="#how-to-use-it">How to use it</a></li>
+<li style="padding-left:0px"><a href="#how-it-works-under-the-hood">How it Works: Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#the-logic-flow">The Logic Flow</a></li>
+<li style="padding-left:0px"><a href="#deep-dive-the-code">Deep Dive: The Code</a></li>
+<li style="padding-left:10px"><a href="#1-the-master-function">1. The Master Function</a></li>
+<li style="padding-left:10px"><a href="#2-the-auth-check-the-keys">2. The Auth Check (The Keys)</a></li>
+<li style="padding-left:10px"><a href="#3-the-feature-flag-check-the-clearance">3. The Feature Flag Check (The Clearance)</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

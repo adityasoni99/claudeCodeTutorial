@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: Local Shell Execution — tasks/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">tasks/02_local_shell_execution.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">📋 tasks/ · 02_local_shell_execution.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: Local Shell Execution</h1>
+  <div class="chapter-meta"><span>📄 tasks/02_local_shell_execution.md</span></div>
+</div>
+<h1 id="chapter-2-local-shell-execution">Chapter 2: Local Shell Execution</h1>
+<p>
+In the <a href="01<em>task</em>state<em>polymorphism.md">previous chapter</a>, we learned how the system treats all tasks generically using <strong>Task State Polymorphism</strong>. We learned that the system looks at %%INLINE</em>0%% to decide how to handle a specific task.
+</p>
+<p>
+Now, we are going to look at the most common type of task in our system: <strong>Local Shell Execution</strong> (<code>local_bash</code>).
+</p>
+<h2 id="the-problem-the-silent-typist">The Problem: The Silent Typist</h2>
+<p>
+Running a command like %%INLINE<em>2%% or %%INLINE</em>3%% seems simple. You type it, and it runs. But for an automated system, it's tricky.
+</p>
+<p>
+Imagine you hire an <strong>Invisible Typist</strong> to work in a separate room. You slide a note under the door: <em>"Please run <code>npm install</code>."</em>
+</p>
+<ol>
+<li><strong>Output Visibility:</strong> You can't see their screen. You need them to write everything down on a piece of paper (a log file) so you can read it later.</li>
+</ol>
+<ol>
+<li><strong>The "Stall" Problem:</strong> What if the computer asks: <code>Do you want to continue? (y/n)</code>? The Typist is waiting for an answer. You are in the hallway waiting for them to finish. The process is now stuck forever.</li>
+</ol>
+<p>
+We need a way to manage these invisible commands and know when they are crying out for help.
+</p>
+<h2 id="the-solution-the-watchdog">The Solution: The Watchdog</h2>
+<p>
+Our <code>LocalShellTask</code> isn't just a "fire and forget" command runner. It includes a <strong>Watchdog</strong>.
+</p>
+<p>
+The Watchdog is a timer that periodically checks the Typist's work:
+</p>
+<ol>
+<li><strong>Is the log file growing?</strong> If yes, the Typist is busy working. Good.</li>
+</ol>
+<ol>
+<li><strong>Has the log stopped growing?</strong> If yes, check the last line written.</li>
+</ol>
+<ol>
+<li><strong>Does the last line look like a question?</strong> (e.g., %%INLINE<em>7%%, %%INLINE</em>8%%, <code>Press Enter</code>).</li>
+</ol>
+<p>
+If the log stops growing <em>and</em> looks like a question, the Watchdog rings a bell to notify you.
+</p>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+In our codebase, we don't just run %%INLINE<em>10%%. We spawn a %%INLINE</em>11%%.
+</p>
+<h3 id="spawning-a-command">Spawning a Command</h3>
+<p>
+To start a command, we use <code>spawnShellTask</code>. This sets up the state and starts the process.
+</p>
+<pre data-lang="typescript"><code>// Example: Starting a build process
+const taskHandle = await spawnShellTask({
+  command: 'npm run build',
+  description: 'Building project...',
+  agentId: 'agent-123',
+  shellCommand: myShellInstance // The actual process runner
+}, context);
+</code></pre>
+<p>
+<strong>What happens here:</strong>
+</p>
+<ol>
+<li>A new %%INLINE<em>13%% is created with %%INLINE</em>14%%.</li>
+</ol>
+<ol>
+<li>The task is added to the global application state (so the dashboard sees it).</li>
+</ol>
+<ol>
+<li>The <strong>Stall Watchdog</strong> is immediately started to monitor this specific task.</li>
+</ol>
+<h2 id="internal-implementation">Internal Implementation</h2>
+<p>
+Let's look at the lifecycle of a shell command, specifically focusing on how we detect if it gets stuck.
+</p>
+<h3 id="visual-walkthrough">Visual Walkthrough</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant U as User/Agent
+    participant T as LocalShellTask
+    participant P as OS Process
+    participant W as Watchdog
+
+    U-&gt;&gt;T: spawnShellTask("deploy.sh")
+    T-&gt;&gt;P: Start Process
+    T-&gt;&gt;W: Start Watchdog Timer
+    
+    loop Every 5 Seconds
+        P--&gt;&gt;T: Writes Output to File...
+        W-&gt;&gt;T: Check File Size
+        
+        alt File is growing
+            W-&gt;&gt;W: Reset Timer (All good)
+        else File stopped growing
+            W-&gt;&gt;T: Read last line of file
+            T--&gt;&gt;W: Returns "(y/n)?"
+            W-&gt;&gt;W: Match Regex Patterns
+            W-&gt;&gt;U: RING BELL! (Notification)
+        end
+    end</div></div>
+<h3 id="code-deep-dive">Code Deep Dive</h3>
+<p>
+The logic for this lives in <code>LocalShellTask.tsx</code>.
+</p>
+<h4 id="1-the-regex-patterns">1. The Regex Patterns</h4>
+<p>
+First, we define what a "question" looks like to a computer. These are regular expressions that match common terminal prompts.
+</p>
+<pre data-lang="typescript"><code>// From LocalShellTask.tsx
+const PROMPT_PATTERNS = [
+  /\(y\/n\)/i,      // Matches "(y/n)"
+  /\[y\/n\]/i,      // Matches "[Y/n]"
+  /Press (any key|Enter)/i,
+  /Password:/i
+];
+</code></pre>
+<h4 id="2-the-watchdog-loop">2. The Watchdog Loop</h4>
+<p>
+The <code>startStallWatchdog</code> function sets up an interval. It checks the output file size on disk.
+</p>
+<pre data-lang="typescript"><code>// From LocalShellTask.tsx
+const timer = setInterval(() =&gt; {
+  // Check if the file has grown since last check
+  if (currentSize &gt; lastSize) {
+    lastSize = currentSize;
+    lastGrowth = Date.now();
+    return; // It's working, do nothing.
+  }
+  
+  // ... proceed to check for stall
+}, 5000); // Check every 5 seconds
+</code></pre>
+<h4 id="3-analyzing-the-stall">3. Analyzing the Stall</h4>
+<p>
+If the file size hasn't changed for a while (e.g., 45 seconds), we read the end of the file to see why.
+</p>
+<pre data-lang="typescript"><code>// From LocalShellTask.tsx
+// If we haven't seen growth in 45 seconds...
+if (Date.now() - lastGrowth &gt; STALL_THRESHOLD_MS) {
+  
+  // Read the last few bytes of the file
+  const content = await tailFile(outputPath, 1024);
+
+  // Does it look like a prompt?
+  if (looksLikePrompt(content)) {
+    sendNotification("Task appears to be waiting for input");
+  }
+}
+</code></pre>
+<p>
+This simple logic prevents our automated agents from staring blankly at a screen that is waiting for them to press "Y".
+</p>
+<h3 id="cleanup">Cleanup</h3>
+<p>
+When a command finishes (or is killed), we must ensure the Watchdog stops barking.
+</p>
+<pre data-lang="typescript"><code>// From LocalShellTask.tsx
+void shellCommand.result.then(async result =&gt; {
+  // 1. Stop the timer
+  cancelStallWatchdog();
+  
+  // 2. Update status to 'completed' or 'failed'
+  updateTaskState(taskId, setAppState, task =&gt; ({
+    ...task,
+    status: result.code === 0 ? 'completed' : 'failed'
+  }));
+});
+</code></pre>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>Local Shell Execution</strong> manages raw OS processes.</li>
+</ol>
+<ol>
+<li>It uses a <strong>Watchdog</strong> to solve the "Invisible Typist" problem.</li>
+</ol>
+<ol>
+<li>The Watchdog monitors file growth and uses <strong>Regex</strong> to detect if a command is stalled at a user prompt (like <code>y/n</code>).</li>
+</ol>
+<p>
+Now that we can run simple commands, what happens when we need to run a complex AI that thinks, plans, and spawns <em>other</em> commands?
+</p>
+<p>
+<a href="03<em>background</em>agent_execution.md">Next Chapter: Background Agent Execution</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="tasks.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">tasks/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-silent-typist">The Problem: The Silent Typist</a></li>
+<li style="padding-left:0px"><a href="#the-solution-the-watchdog">The Solution: The Watchdog</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:10px"><a href="#spawning-a-command">Spawning a Command</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#visual-walkthrough">Visual Walkthrough</a></li>
+<li style="padding-left:10px"><a href="#code-deep-dive">Code Deep Dive</a></li>
+<li style="padding-left:10px"><a href="#cleanup">Cleanup</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: In-Process Teammates — tasks/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">tasks/04_in_process_teammates.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">📋 tasks/ · 04_in_process_teammates.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: In-Process Teammates</h1>
+  <div class="chapter-meta"><span>📄 tasks/04_in_process_teammates.md</span></div>
+</div>
+<h1 id="chapter-4-in-process-teammates">Chapter 4: In-Process Teammates</h1>
+<p>
+In the <a href="03<em>background</em>agent_execution.md">previous chapter</a>, we learned how to hire "Contractors" (Background Agents) to go away, do a job, and come back with a receipt.
+</p>
+<p>
+But sometimes, you don't want a contractor. You want a <strong>Co-pilot</strong>. You want someone sitting right next to you, looking at the same instruments, who asks for permission before pushing the big red button.
+</p>
+<p>
+In this chapter, we explore <strong>In-Process Teammates</strong>.
+</p>
+<h2 id="the-problem-the-runaway-agent">The Problem: The "Runaway" Agent</h2>
+<p>
+Imagine you ask an AI to "Clean up the database."
+</p>
+<p>
+If you use a <strong>Background Agent</strong> (from Chapter 3), it might:
+</p>
+<ol>
+<li>Go into a tunnel (background process).</li>
+</ol>
+<ol>
+<li>Delete all your data thinking it's "cleaning."</li>
+</ol>
+<ol>
+<li>Come back 5 minutes later saying "Success! Space saved."</li>
+</ol>
+<p>
+You couldn't stop it because you weren't watching it in real-time. You needed a way to review its plan <em>before</em> it executed the dangerous commands.
+</p>
+<h2 id="the-solution-the-co-pilot">The Solution: The Co-Pilot</h2>
+<p>
+<strong>In-Process Teammates</strong> are specialized tasks that live inside the main application loop (hence "In-Process").
+</p>
+<p>
+Unlike generic tasks, they have:
+</p>
+<ol>
+<li><strong>Persistent Identity:</strong> They have names (e.g., "Coder", "Researcher") and roles.</li>
+</ol>
+<ol>
+<li><strong>Shared Context:</strong> They run alongside you, making interaction instant.</li>
+</ol>
+<ol>
+<li><strong>Plan Mode:</strong> They can pause execution to ask: <em>"I am about to delete table 'users'. Is this okay?"</em></li>
+</ol>
+<h3 id="analogy-the-cockpit">Analogy: The Cockpit</h3>
+<ul>
+<li><strong>Local Shell (Ch 2):</strong> The engines. You pull a lever, they spin.</li>
+<li><strong>Background Agent (Ch 3):</strong> Ground Control. You radio them a request, they radio back eventually.</li>
+<li><strong>Teammate (Ch 4):</strong> The Co-pilot sitting next to you. You can see their hands on the controls. You can say "Stop" instantly.</li>
+</ul>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+Teammates are unique because you can have a back-and-forth conversation with them <em>while</em> they work.
+</p>
+<h3 id="the-plan-mode-workflow">The "Plan Mode" Workflow</h3>
+<p>
+The most powerful feature of a Teammate is <strong>Plan Mode</strong>. Instead of just acting, the Teammate proposes a set of steps.
+</p>
+<ol>
+<li><strong>You:</strong> "Refactor the login page."</li>
+</ol>
+<ol>
+<li><strong>Teammate:</strong> "I plan to: 1. Edit %%INLINE<em>0%%, 2. Delete %%INLINE</em>1%%."</li>
+</ol>
+<ol>
+<li><strong>System:</strong> PAUSES. (Status: <code>awaitingPlanApproval</code>)</li>
+</ol>
+<ol>
+<li><strong>You:</strong> Click "Approve".</li>
+</ol>
+<ol>
+<li><strong>Teammate:</strong> Executes the plan.</li>
+</ol>
+<h2 id="internal-implementation">Internal Implementation</h2>
+<p>
+How does the system handle these interactive, persistent agents?
+</p>
+<h3 id="visual-walkthrough">Visual Walkthrough</h3>
+<p>
+Unlike a fire-and-forget command, a Teammate has a conversational loop.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant U as User
+    participant T as Teammate Task
+    participant Q as Message Queue
+    participant S as State (Memory)
+
+    U-&gt;&gt;T: "Delete the old files"
+    T-&gt;&gt;S: Analyze Request
+    
+    note over T: Plan Mode Triggered
+    T--&gt;&gt;U: "I will delete 5 files. Approve?"
+    
+    U-&gt;&gt;T: Approve
+    
+    loop Execution
+        T-&gt;&gt;S: Delete File 1
+        T-&gt;&gt;S: Delete File 2
+        S--&gt;&gt;T: Success
+    end
+    
+    T--&gt;&gt;U: "All done!"</div></div>
+<h3 id="code-deep-dive">Code Deep Dive</h3>
+<p>
+Let's look at <code>InProcessTeammateTask/types.ts</code> to see how we define this special identity.
+</p>
+<h4 id="1-identity-plan-mode">1. Identity & Plan Mode</h4>
+<p>
+A Teammate isn't just a generic task. It has an <code>identity</code> object. This tells the UI who this agent is (e.g., "The Researcher").
+</p>
+<pre data-lang="typescript"><code>// From types.ts
+export type InProcessTeammateTaskState = TaskStateBase &amp; {
+  type: 'in_process_teammate',
+  
+  // Who is this?
+  identity: {
+    agentName: string,   // e.g. "coder"
+    teamName: string,    // e.g. "engineering"
+    planModeRequired: boolean // Must they ask for permission?
+  },
+
+  // Are we waiting for the user to say "Yes"?
+  awaitingPlanApproval: boolean
+}
+</code></pre>
+<p>
+<strong>Why this matters:</strong> The %%INLINE<em>5%% flag fundamentally changes the agent's behavior. If true, the agent <em>cannot</em> execute tools until %%INLINE</em>6%% is cleared by the user.
+</p>
+<h4 id="2-talking-to-the-teammate">2. Talking to the Teammate</h4>
+<p>
+Since the teammate is running in a loop, we can't just overwrite its prompt. We need to "inject" messages into its consciousness.
+</p>
+<p>
+We use %%INLINE<em>7%% in %%INLINE</em>8%%.
+</p>
+<pre data-lang="typescript"><code>// From InProcessTeammateTask.tsx
+export function injectUserMessageToTeammate(
+  taskId: string, 
+  message: string, 
+  setAppState: SetAppState
+): void {
+  updateTaskState(taskId, setAppState, task =&gt; ({
+    ...task,
+    // 1. Queue message for the Agent to process
+    pendingUserMessages: [...task.pendingUserMessages, message],
+    
+    // 2. Add to UI history immediately so the user sees it
+    messages: appendCappedMessage(task.messages, createUserMessage({
+      content: message
+    }))
+  }));
+}
+</code></pre>
+<p>
+<strong>What happens here:</strong>
+</p>
+<ol>
+<li><strong>Input:</strong> You type "Stop! Use the new API."</li>
+</ol>
+<ol>
+<li><strong>Queueing:</strong> The message goes into <code>pendingUserMessages</code>. The agent checks this queue before taking its next step.</li>
+</ol>
+<ol>
+<li><strong>Display:</strong> We manually add the message to the local history so the chat UI updates instantly.</li>
+</ol>
+<h4 id="3-managing-memory-the-goldfish-optimization">3. Managing Memory (The "Goldfish" Optimization)</h4>
+<p>
+Teammates might run for days. If we kept every single log message in the main AppState, the browser would crash.
+</p>
+<p>
+We use a "Capped Message" strategy. We only keep the last 50 messages in the UI state (<code>TEAMMATE_MESSAGES_UI_CAP</code>), even if the agent remembers more internally.
+</p>
+<pre data-lang="typescript"><code>// From types.ts
+export const TEAMMATE_MESSAGES_UI_CAP = 50
+
+export function appendCappedMessage&lt;T&gt;(prev: T[], item: T): T[] {
+  // If we have too many messages...
+  if (prev.length &gt;= TEAMMATE_MESSAGES_UI_CAP) {
+    // ...slice off the old ones and add the new one
+    const next = prev.slice(-(TEAMMATE_MESSAGES_UI_CAP - 1))
+    next.push(item)
+    return next
+  }
+  return [...prev, item]
+}
+</code></pre>
+<p>
+This ensures that even if you have a 500-turn conversation with your Co-pilot, the UI remains snappy.
+</p>
+<h3 id="finding-your-teammate">Finding Your Teammate</h3>
+<p>
+Since Teammates have names, we often look them up by <code>agentId</code> rather than the random Task ID.
+</p>
+<pre data-lang="typescript"><code>// From InProcessTeammateTask.tsx
+export function findTeammateTaskByAgentId(
+  agentId: string, 
+  tasks: Record&lt;string, TaskStateBase&gt;
+): InProcessTeammateTaskState | undefined {
+  // Look through all tasks...
+  for (const task of Object.values(tasks)) {
+    if (isInProcessTeammateTask(task) &amp;&amp; task.identity.agentId === agentId) {
+      // Return the one that is currently running!
+      if (task.status === 'running') return task;
+    }
+  }
+}
+</code></pre>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>In-Process Teammates</strong> are specialized agents that act as Co-pilots.</li>
+</ol>
+<ol>
+<li>They support <strong>Plan Mode</strong>, allowing users to approve actions before they happen.</li>
+</ol>
+<ol>
+<li>We interact with them by <strong>Injecting Messages</strong> into their active loop.</li>
+</ol>
+<ol>
+<li>We optimize performance by <strong>Capping Messages</strong> in the UI state.</li>
+</ol>
+<p>
+We now have three very different ways to run code:
+</p>
+<ol>
+<li><strong>Shell Tasks:</strong> Raw commands.</li>
+</ol>
+<ol>
+<li><strong>Agent Tasks:</strong> Background contractors.</li>
+</ol>
+<ol>
+<li><strong>Teammates:</strong> Interactive co-pilots.</li>
+</ol>
+<p>
+As our system grows, we will have dozens of these tasks running at once. How do we keep track of them all without getting overwhelmed?
+</p>
+<p>
+<a href="05<em>task</em>visibility<em>_</em>summarization.md">Next Chapter: Task Visibility & Summarization</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="tasks.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">tasks/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-runaway-agent">The Problem: The "Runaway" Agent</a></li>
+<li style="padding-left:0px"><a href="#the-solution-the-co-pilot">The Solution: The Co-Pilot</a></li>
+<li style="padding-left:10px"><a href="#analogy-the-cockpit">Analogy: The Cockpit</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:10px"><a href="#the-plan-mode-workflow">The "Plan Mode" Workflow</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#visual-walkthrough">Visual Walkthrough</a></li>
+<li style="padding-left:10px"><a href="#code-deep-dive">Code Deep Dive</a></li>
+<li style="padding-left:10px"><a href="#finding-your-teammate">Finding Your Teammate</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

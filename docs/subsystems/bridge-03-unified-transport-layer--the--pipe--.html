@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: Unified Transport Layer (The "Pipe") — bridge/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">bridge/03_unified_transport_layer__the__pipe__.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🌉 bridge/ · 03_unified_transport_layer__the__pipe__.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: Unified Transport Layer (The "Pipe")</h1>
+  <div class="chapter-meta"><span>📄 bridge/03_unified_transport_layer__the__pipe__.md</span></div>
+</div>
+<h1 id="chapter-3-unified-transport-layer-the-pipe">Chapter 3: Unified Transport Layer (The "Pipe")</h1>
+<p>
+In the previous chapter, <a href="02<em>session</em>lifecycle<strong>_compatibility</strong>the<strong>container</strong>.md">Session Lifecycle & Compatibility (The "Container")</a>, we learned how to create a session "folder" to hold our work.
+</p>
+<p>
+But a folder is useless if we can't put anything inside it. We need a way to send commands and receive output. We need a connection.
+</p>
+<p>
+However, connecting is complicated. Sometimes we use old protocols (WebSockets), and sometimes we use new ones (Server-Sent Events). We don't want our main application to worry about <em>how</em> the data moves; we just want it to move.
+</p>
+<p>
+This is the job of the <strong>Unified Transport Layer</strong>, or <strong>"The Pipe."</strong>
+</p>
+<h3 id="the-problem-the-universal-power-adapter">The Problem: The "Universal Power Adapter"</h3>
+<p>
+Imagine you travel to different countries. In one country, the wall socket has two round holes. In another, it has three flat pins.
+</p>
+<p>
+You don't want to buy a new phone for every country. You want a <strong>Universal Adapter</strong>. You plug your phone into the adapter, and the adapter handles the messy reality of the wall socket.
+</p>
+<p>
+In the Bridge project:
+</p>
+<ol>
+<li><strong>The Phone</strong> is your application (The Brain).</li>
+</ol>
+<ol>
+<li><strong>The Wall Socket</strong> is the Server (which might use "v1" or "v2" technology).</li>
+</ol>
+<ol>
+<li><strong>The Adapter</strong> is the Unified Transport Layer.</li>
+</ol>
+<h3 id="key-concepts">Key Concepts</h3>
+<h4 id="1-the-interface-the-contract">1. The Interface (The Contract)</h4>
+<p>
+This layer defines a strict set of rules. No matter what technology we use underneath, the Transport <strong>must</strong> provide simple buttons like:
+</p>
+<ul>
+<li><code>connect()</code>: Turn it on.</li>
+<li><code>write(message)</code>: Send data.</li>
+<li><code>setOnData(callback)</code>: Listen for data.</li>
+</ul>
+<h4 id="2-v1-transport-legacy">2. v1 Transport (Legacy)</h4>
+<p>
+This acts like a walkie-talkie. It uses a <strong>WebSocket</strong> to listen for messages and uses standard HTTP <strong>POST</strong> requests to talk back. It's reliable but older technology.
+</p>
+<h4 id="3-v2-transport-modern">3. v2 Transport (Modern)</h4>
+<p>
+This is the modern "streaming" approach. It uses <strong>Server-Sent Events (SSE)</strong>.
+</p>
+<ul>
+<li><strong>Reading:</strong> It opens a continuous stream where the server pushes data (like a ticker tape).</li>
+<li><strong>Writing:</strong> It uses a specialized "Control Plane" (CCR) to send batched commands.</li>
+</ul>
+<p>
+The <strong>Unified Transport Layer</strong> looks at the configuration and automatically picks the right one.
+</p>
+<h3 id="how-to-use-the-pipe">How to Use "The Pipe"</h3>
+<p>
+If you are writing high-level code, you don't need to know about v1 or v2. You just use the generic object.
+</p>
+<h4 id="simplified-usage-example">Simplified Usage Example</h4>
+<pre data-lang="typescript"><code>// 1. Create the transport (The factory does the hard work)
+const pipe = await createV2ReplTransport({ ...config });
+
+// 2. Setup: What do we do when data arrives?
+pipe.setOnData((incomingData) =&gt; {
+  console.log("Server said:", incomingData);
+});
+
+// 3. Connect the wires
+pipe.connect();
+
+// 4. Send a message
+// We don't care if this uses POST, WebSockets, or Carrier Pigeons.
+await pipe.write({ role: "user", content: "Hello World" });
+</code></pre>
+<h3 id="internal-implementation-the-workflow">Internal Implementation: The Workflow</h3>
+<p>
+How does the system decide which pipe to build and how to route the traffic?
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant App as The Brain
+    participant Factory as Transport Factory
+    participant Adapter as The Pipe (Interface)
+    participant v2 as v2 (SSE + POST)
+    participant Server
+
+    Note over App, Factory: Setup Phase
+    App-&gt;&gt;Factory: "I need a connection!"
+    Factory-&gt;&gt;Factory: Check Config (Is it v2?)
+    Factory-&gt;&gt;Adapter: Create v2 Adapter
+    
+    Note over App, Server: Runtime Phase
+    App-&gt;&gt;Adapter: write("Hello")
+    Adapter-&gt;&gt;v2: Hand off to internal logic
+    v2-&gt;&gt;Server: POST /worker/events ("Hello")
+    
+    Server--&gt;&gt;v2: Event Stream (Data)
+    v2--&gt;&gt;Adapter: callback(Data)
+    Adapter--&gt;&gt;App: "You've got mail!"</div></div>
+<h3 id="code-deep-dive">Code Deep Dive</h3>
+<p>
+Let's look at <code>replBridgeTransport.ts</code> to see how this adapter is built.
+</p>
+<h4 id="1-defining-the-universal-plug">1. Defining the "Universal Plug"</h4>
+<p>
+First, we define what a Transport <em>is</em>. This is a TypeScript type definition. It guarantees that any transport we build will look exactly the same to the rest of the app.
+</p>
+<pre data-lang="typescript"><code>// replBridgeTransport.ts
+
+export type ReplBridgeTransport = {
+  // Send a single message
+  write(message: StdoutMessage): Promise&lt;void&gt;
+  
+  // Listen for incoming data strings
+  setOnData(callback: (data: string) =&gt; void): void
+  
+  // Start the connection
+  connect(): void
+  
+  // Clean up and hang up
+  close(): void
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong> This is the contract. If you build a v3 transport in the future, it just needs to follow these four rules, and the rest of the app won't need to change.
+</p>
+<h4 id="2-the-v2-adapter-implementation">2. The v2 Adapter Implementation</h4>
+<p>
+This function creates the modern version of the pipe. It combines <strong>SSE</strong> (for reading) and <strong>CCR</strong> (for writing).
+</p>
+<pre data-lang="typescript"><code>// replBridgeTransport.ts
+export async function createV2ReplTransport(opts): Promise&lt;ReplBridgeTransport&gt; {
+  const { sessionUrl, ingressToken, sessionId } = opts;
+
+  // 1. Setup the Reader (Server-Sent Events)
+  const sse = new SSETransport(sseUrl, headers, sessionId);
+
+  // 2. Setup the Writer (Command Control Region)
+  const ccr = new CCRClient(sse, sessionUrl, { ... });
+
+  // 3. Return the Unified Interface
+  return {
+    write: (msg) =&gt; ccr.writeEvent(msg), // Delegate write to CCR
+    setOnData: (cb) =&gt; sse.setOnData(cb), // Delegate read to SSE
+    connect: () =&gt; {
+      sse.connect(); // Start listening
+      ccr.initialize(); // Start writing
+    },
+    close: () =&gt; { ccr.close(); sse.close(); }
+  };
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ol>
+<li>We create an <code>sse</code> object to handle incoming data.</li>
+</ol>
+<ol>
+<li>We create a <code>ccr</code> object to handle outgoing data.</li>
+</ol>
+<ol>
+<li>We return an object that matches our "Universal Plug" interface, wiring the internal %%INLINE<em>6%% to %%INLINE</em>7%% and %%INLINE<em>8%% to %%INLINE</em>9%%.</li>
+</ol>
+<h4 id="3-handling-heartbeats-state">3. Handling Heartbeats & State</h4>
+<p>
+The "Pipe" isn't just dumb wires; it also tells the server if we are alive.
+</p>
+<pre data-lang="typescript"><code>// inside createV2ReplTransport...
+
+// If the server sends an event, acknowledge we got it
+sse.setOnEvent(event =&gt; {
+  // Tell server: "I received message ID 123"
+  ccr.reportDelivery(event.event_id, 'received');
+  
+  // Tell server: "I processed message ID 123"
+  ccr.reportDelivery(event.event_id, 'processed');
+});
+</code></pre>
+<p>
+<strong>Explanation:</strong> This is invisible to the user. The transport layer automatically whispers to the server, "I got the message," ensuring the server doesn't try to resend it. This prevents duplicate messages and keeps the connection healthy.
+</p>
+<h3 id="summary">Summary</h3>
+<p>
+The <strong>Unified Transport Layer</strong> is the great simplifier.
+</p>
+<ol>
+<li>It defines a <strong>standard interface</strong> (%%INLINE<em>10%%, %%INLINE</em>11%%, <code>onData</code>).</li>
+</ol>
+<ol>
+<li>It wraps complex protocols (like SSE and HTTP POST) inside this interface.</li>
+</ol>
+<ol>
+<li>It handles maintenance tasks like heartbeats and delivery reports automatically.</li>
+</ol>
+<p>
+Now that we have a <strong>Brain</strong> (Core), a <strong>Container</strong> (Session), and a <strong>Pipe</strong> (Transport), raw text is flowing into our application. But raw text isn't enough—we need to know if that text is a chat message, a code execution result, or an error.
+</p>
+<p>
+We need a traffic controller.
+</p>
+<p>
+<a href="04<em>message</em>routing<strong><em>data</em>flow</strong>the<strong>dispatcher</strong>.md">Next Chapter: Message Routing & Data Flow (The "Dispatcher")</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="bridge.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">bridge/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:10px"><a href="#the-problem-the-universal-power-adapter">The Problem: The "Universal Power Adapter"</a></li>
+<li style="padding-left:10px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#how-to-use-the-pipe">How to Use "The Pipe"</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-the-workflow">Internal Implementation: The Workflow</a></li>
+<li style="padding-left:10px"><a href="#code-deep-dive">Code Deep Dive</a></li>
+<li style="padding-left:10px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

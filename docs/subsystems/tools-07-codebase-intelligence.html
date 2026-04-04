@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 7: Codebase Intelligence — tools/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">tools/07_codebase_intelligence.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🔧 tools/ · 07_codebase_intelligence.md</div>
+  <h1 class="chapter-title-h1">Chapter 7: Codebase Intelligence</h1>
+  <div class="chapter-meta"><span>📄 tools/07_codebase_intelligence.md</span></div>
+</div>
+<h1 id="chapter-7-codebase-intelligence">Chapter 7: Codebase Intelligence</h1>
+<p>
+In the previous chapter, <a href="06<em>shell</em><em>_system</em>execution.md">Shell & System Execution</a>, we gave our agent the ability to run commands and test its code.
+</p>
+<p>
+But there is a missing piece. If you drop a developer into a massive codebase with 10,000 files and ask them to "Fix the login bug," they don't start reading file #1, then file #2, then file #3. That would take forever.
+</p>
+<p>
+They use <strong>Intelligence Tools</strong>. They search for filenames, they grep for error messages, and they click "Go to Definition" in their IDE.
+</p>
+<p>
+This chapter introduces <strong>Codebase Intelligence</strong>: the tools that act as the agent's eyes and map, allowing it to navigate massive projects instantly.
+</p>
+<h2 id="why-do-we-need-this">Why do we need this?</h2>
+<p>
+Imagine you are in a library with one million books, but no card catalog and no signs on the shelves. You are looking for a specific quote about "Apples."
+</p>
+<ul>
+<li><strong>Without Intelligence:</strong> You pick up the first book, read it, put it down. You pick up the second... (This is inefficient and costs a lot of tokens).</li>
+<li><strong>With Intelligence:</strong></li>
+</ul>
+<p>
+    1.  <strong>Glob:</strong> You ask, "Show me all books with 'Fruit' in the title." (Filters down to 50 books).
+ 
+    2.  <strong>Grep:</strong> You search those 50 books for the exact word "Apple." (Filters down to 5 pages).
+ 
+    3.  <strong>LSP:</strong> You ask, "Who defined the word 'Apple'?" and get the exact page in the dictionary.
+</p>
+<h3 id="the-central-use-case-the-safe-refactor">The Central Use Case: "The Safe Refactor"</h3>
+<p>
+The user asks: <em>"Rename the %%INLINE<em>0%% function to %%INLINE</em>1%% everywhere."</em>
+</p>
+<ol>
+<li><strong>Glob:</strong> Find all <code>.ts</code> files.</li>
+</ol>
+<ol>
+<li><strong>LSP (Find References):</strong> Find every single place <code>calculateTax</code> is actually <em>called</em>.</li>
+</ol>
+<ol>
+<li><strong>FileEdit:</strong> Update only those specific lines.</li>
+</ol>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+We provide three specific tools that range from "Broad" to "Smart."
+</p>
+<ol>
+<li><strong>Glob (Pattern Matching):</strong> Finds files based on their names (e.g., <code>*.test.ts</code>). It answers: <em>"Where are the files?"</em></li>
+</ol>
+<ol>
+<li><strong>Grep (Text Search):</strong> Finds specific text inside files (e.g., <code>TODO: Fix this</code>). It answers: <em>"Where is this string?"</em></li>
+</ol>
+<ol>
+<li><strong>LSP (Language Server Protocol):</strong> Understands the code structure (e.g., Definitions, References, Symbols). It answers: <em>"How is this code connected?"</em></li>
+</ol>
+<h2 id="how-to-use-it">How to Use It</h2>
+<h3 id="1-finding-files-inline-6">1. Finding Files (<code>Glob</code>)</h3>
+<p>
+The agent wants to see the file structure or find specific file types.
+</p>
+<pre data-lang="javascript"><code>// Input to Glob tool
+{
+  "pattern": "src/**/*.test.ts" 
+}
+</code></pre>
+<p>
+<em>Result:</em> The agent gets a list of file paths: <code>['src/auth.test.ts', 'src/utils.test.ts']</code>.
+</p>
+<h3 id="2-finding-text-inline-8">2. Finding Text (<code>Grep</code>)</h3>
+<p>
+The agent searches for a specific error string or variable name. We use <code>ripgrep</code> (rg) under the hood because it is incredibly fast.
+</p>
+<pre data-lang="javascript"><code>// Input to Grep tool
+{
+  "pattern": "payment_gateway_error",
+  "path": "src/backend"
+}
+</code></pre>
+<p>
+<em>Result:</em>
+</p>
+<pre data-lang="text"><code>src/backend/api.ts:45: const error = "payment_gateway_error";
+src/backend/logs.ts:12: if (msg.includes("payment_gateway_error")) { ... }
+</code></pre>
+<h3 id="3-deep-understanding-inline-10">3. Deep Understanding (<code>LSP</code>)</h3>
+<p>
+This is the most powerful tool. It connects to a Language Server (the same engine powering VS Code) to perform semantic queries.
+</p>
+<p>
+<strong>Example: Go To Definition</strong>
+ 
+The agent sees <code>processData()</code> but doesn't know what it does.
+</p>
+<pre data-lang="javascript"><code>// Input to LSP tool
+{
+  "operation": "goToDefinition",
+  "filePath": "/src/main.ts",
+  "line": 50,       // Where the agent saw the function call
+  "character": 12
+}
+</code></pre>
+<p>
+<em>Result:</em>
+</p>
+<pre data-lang="text"><code>/src/utils/processor.ts:10: export function processData(data: any) { ... }
+</code></pre>
+<p>
+<em>The agent now knows exactly which file to read to understand the logic.</em>
+</p>
+<h2 id="under-the-hood-the-intelligence-flow">Under the Hood: The Intelligence Flow</h2>
+<p>
+How does the agent "click" Go to Definition without a mouse?
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Agent
+    participant Tool as LSP Tool
+    participant Manager as LSP Server Manager
+    participant Server as TypeScript Server
+
+    Agent-&gt;&gt;Tool: Call LSP(goToDefinition, "app.ts", line 10)
+    
+    note right of Tool: 1. Convert line/char to 0-based index
+    
+    Tool-&gt;&gt;Manager: Send Request
+    Manager-&gt;&gt;Server: textDocument/definition
+    
+    note right of Server: 2. Analyzes Abstract Syntax Tree
+    
+    Server--&gt;&gt;Manager: Result: { uri: "utils.ts", range: ... }
+    Manager--&gt;&gt;Tool: Return Result
+    
+    Tool--&gt;&gt;Agent: "Defined in utils.ts at line 5"</div></div>
+<h2 id="internal-implementation">Internal Implementation</h2>
+<p>
+Let's look at how we build these tools to be fast and safe.
+</p>
+<h3 id="1-glob-the-file-finder-inline-12">1. Glob: The File Finder (<code>GlobTool.ts</code>)</h3>
+<p>
+The %%INLINE<em>13%% tool wraps standard filesystem matching but adds a safety limit to prevent the agent from getting overwhelmed by 50,000 matches in a %%INLINE</em>14%% folder.
+</p>
+<pre data-lang="typescript"><code>// Simplified from GlobTool.ts
+async call(input, { globLimits }) {
+  // 1. Set a safety limit (default 100 files)
+  const limit = globLimits?.maxResults ?? 100;
+
+  // 2. Run the glob search
+  const { files, truncated } = await glob(
+    input.pattern,
+    GlobTool.getPath(input),
+    { limit } // Pass the limit down
+  );
+
+  // 3. Convert absolute paths to relative (saves tokens!)
+  const filenames = files.map(toRelativePath);
+
+  return { data: { filenames, truncated } };
+}
+</code></pre>
+<p>
+<em>Explanation:</em>
+</p>
+<ul>
+<li><strong>Token Savings:</strong> We convert %%INLINE<em>15%% to %%INLINE</em>16%%. This saves precious space in the AI's context window.</li>
+<li><strong>Truncation:</strong> If there are too many results, we tell the agent <code>truncated: true</code> so it knows to narrow its search.</li>
+</ul>
+<h3 id="2-grep-the-fast-searcher-inline-18">2. Grep: The Fast Searcher (<code>GrepTool.ts</code>)</h3>
+<p>
+We use <code>ripgrep</code>, a Rust-based tool, because it's significantly faster than standard Node.js searching.
+</p>
+<pre data-lang="typescript"><code>// Simplified from GrepTool.ts
+async call({ pattern, path, head_limit }) {
+  const args = ['--hidden']; // Search hidden files too
+
+  // 1. Add exclusion patterns (don't search .git folder)
+  for (const dir of VCS_DIRECTORIES_TO_EXCLUDE) {
+    args.push('--glob', `!${dir}`);
+  }
+
+  // 2. Execute the ripgrep binary
+  const results = await ripGrep(args, absolutePath);
+
+  // 3. Apply a limit to the output lines ("Head Limit")
+  const { items, appliedLimit } = applyHeadLimit(
+    results, 
+    head_limit
+  );
+
+  return { data: { mode: 'files_with_matches', filenames: items } };
+}
+</code></pre>
+<p>
+<em>Explanation:</em>
+</p>
+<ul>
+<li><strong>Exclusions:</strong> We automatically ignore %%INLINE<em>20%% and %%INLINE</em>21%% to avoid noise.</li>
+<li><strong>Head Limit:</strong> Just like Glob, if Grep finds 5,000 lines, we only show the first 250 (by default) to prevent the agent from crashing. The agent can request more if needed.</li>
+</ul>
+<h3 id="3-lsp-the-brain-inline-22">3. LSP: The Brain (<code>LSPTool.ts</code>)</h3>
+<p>
+This tool interacts with a background process that keeps track of the project's symbols.
+</p>
+<pre data-lang="typescript"><code>// Simplified from LSPTool.ts
+async call(input) {
+  // 1. Get the background server manager
+  const manager = getLspServerManager();
+
+  // 2. Ensure the file is "Open" in the server's virtual memory
+  if (!manager.isFileOpen(input.filePath)) {
+     await manager.openFile(input.filePath, fileContent);
+  }
+
+  // 3. Send the specific request
+  // We map "goToDefinition" to the protocol method "textDocument/definition"
+  const { method, params } = getMethodAndParams(input);
+  const result = await manager.sendRequest(input.filePath, method, params);
+
+  // 4. Format the result for the AI
+  // (Translates complex JSON objects into a readable string)
+  const formatted = formatResult(input.operation, result);
+
+  return { data: { result: formatted } };
+}
+</code></pre>
+<p>
+<em>Explanation:</em>
+</p>
+<ul>
+<li><strong>Virtual Open:</strong> LSP servers expect an editor to "open" a file before querying it. We simulate this by reading the file and sending an <code>openFile</code> notification behind the scenes.</li>
+<li><strong>Protocol Mapping:</strong> The agent speaks in high-level terms ("Find References"), and the code translates that to technical LSP spec (<code>textDocument/references</code>).</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+Congratulations! You have completed the <strong>Recursive Agent Runtime</strong> tutorial.
+</p>
+<p>
+We have built a system where an AI can:
+</p>
+<ol>
+<li><strong>Exist</strong> as a persistent process (<a href="01<em>recursive</em>agent_runtime.md">Chapter 1</a>).</li>
+</ol>
+<ol>
+<li><strong>Collaborate</strong> in teams and track tasks (<a href="02<em>task</em><em>_team</em>coordination.md">Chapter 2</a>).</li>
+</ol>
+<ol>
+<li><strong>Communicate</strong> with users and peers (<a href="03<em>communication</em>channels.md">Chapter 3</a>).</li>
+</ol>
+<ol>
+<li><strong>Plan</strong> before acting (<a href="04<em>planning</em>workflow.md">Chapter 4</a>).</li>
+</ol>
+<ol>
+<li><strong>Manipulate</strong> the file system safely (<a href="05<em>file</em>system_manipulation.md">Chapter 5</a>).</li>
+</ol>
+<ol>
+<li><strong>Execute</strong> system commands (<a href="06<em>shell</em><em>_system</em>execution.md">Chapter 6</a>).</li>
+</ol>
+<ol>
+<li><strong>Navigate</strong> using deep codebase intelligence (<a href="07<em>codebase</em>intelligence.md">Chapter 7</a>).</li>
+</ol>
+<p>
+You now have all the building blocks for a truly autonomous software engineering agent. Go build something amazing!
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="tools.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">tools/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#why-do-we-need-this">Why do we need this?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case-the-safe-refactor">The Central Use Case: "The Safe Refactor"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:10px"><a href="#1-finding-files-inline-6">1. Finding Files (%%INLINE_6%%)</a></li>
+<li style="padding-left:10px"><a href="#2-finding-text-inline-8">2. Finding Text (%%INLINE_8%%)</a></li>
+<li style="padding-left:10px"><a href="#3-deep-understanding-inline-10">3. Deep Understanding (%%INLINE_10%%)</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-the-intelligence-flow">Under the Hood: The Intelligence Flow</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#1-glob-the-file-finder-inline-12">1. Glob: The File Finder (%%INLINE_12%%)</a></li>
+<li style="padding-left:10px"><a href="#2-grep-the-fast-searcher-inline-18">2. Grep: The Fast Searcher (%%INLINE_18%%)</a></li>
+<li style="padding-left:10px"><a href="#3-lsp-the-brain-inline-22">3. LSP: The Brain (%%INLINE_22%%)</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

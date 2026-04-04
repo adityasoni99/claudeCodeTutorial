@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 5: File System Manipulation — tools/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">tools/05_file_system_manipulation.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🔧 tools/ · 05_file_system_manipulation.md</div>
+  <h1 class="chapter-title-h1">Chapter 5: File System Manipulation</h1>
+  <div class="chapter-meta"><span>📄 tools/05_file_system_manipulation.md</span></div>
+</div>
+<h1 id="chapter-5-file-system-manipulation">Chapter 5: File System Manipulation</h1>
+<p>
+In the previous chapter, <a href="04<em>planning</em>workflow.md">Planning Workflow</a>, we learned how to make our AI pause, think, and create a blueprint before acting.
+</p>
+<p>
+Now that the plan is approved, the agent needs to get to work. It needs to read code, create new scripts, and fix bugs.
+</p>
+<p>
+This chapter introduces <strong>File System Manipulation</strong>: the set of tools that serve as the agent's "hands." Just like a developer uses a text editor (like VS Code), the agent uses these tools to interact with files on your hard drive.
+</p>
+<h2 id="why-do-we-need-this">Why do we need this?</h2>
+<p>
+Imagine a "Brain in a Jar." It is incredibly smart and knows how to fix your code, but it has no hands. It can scream the solution, but it can't type it.
+</p>
+<p>
+That is an AI without file system tools.
+</p>
+<p>
+To be useful, an agent must be able to:
+</p>
+<ol>
+<li><strong>See:</strong> Read files to understand the context.</li>
+</ol>
+<ol>
+<li><strong>Create:</strong> Write new files from scratch.</li>
+</ol>
+<ol>
+<li><strong>Surgery:</strong> Edit specific parts of existing files without rewriting the whole thing.</li>
+</ol>
+<h3 id="the-central-use-case-the-typo-fixer">The Central Use Case: "The Typo Fixer"</h3>
+<p>
+Imagine you have a 5,000-line file named <code>server.ts</code>. There is a typo on line 4,020.
+</p>
+<ul>
+<li><strong>Bad Approach:</strong> The AI rewrites the entire 5,000-line file just to fix one word. This is slow, expensive, and risky.</li>
+<li><strong>Good Approach:</strong> The AI uses a "Search and Replace" tool to surgically swap the bad word for the good word.</li>
+</ul>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+We categorize file interactions into three main actions:
+</p>
+<ol>
+<li><strong>Read:</strong> Getting the content of a file (Text, PDF, Images, or Notebooks).</li>
+</ol>
+<ol>
+<li><strong>Write:</strong> Creating a new file or completely overwriting a small one.</li>
+</ol>
+<ol>
+<li><strong>Edit:</strong> Performing a "patch" (replacing text) on an existing file.</li>
+</ol>
+<h3 id="the-safety-rule-read-before-write">The Safety Rule: "Read-Before-Write"</h3>
+<p>
+This is the most important concept in this chapter.
+</p>
+<p>
+<strong>The Rule:</strong> An agent is <em>not allowed</em> to edit a file unless it has read it recently.
+</p>
+<p>
+<strong>Why?</strong>
+ 
+Imagine the agent reads a file at 9:00 AM. You (the user) manually change the file at 9:01 AM. If the agent tries to edit the file at 9:02 AM based on its 9:00 AM memory, it might accidentally undo your work.
+</p>
+<p>
+The system tracks timestamps. If the file changed on disk <em>after</em> the agent last read it, the edit is rejected.
+</p>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+The runtime provides three primary tools for these concepts.
+</p>
+<h3 id="1-reading-files-inline-1">1. Reading Files (<code>FileRead</code>)</h3>
+<p>
+This tool reads the content of a file. It handles text, but also converts PDFs and Images into a format the AI can understand.
+</p>
+<pre data-lang="javascript"><code>// Input to FileRead tool
+{
+  "file_path": "/src/components/Button.tsx"
+}
+</code></pre>
+<p>
+<em>Result:</em> The agent receives the file content, line numbers, and metadata.
+</p>
+<h3 id="2-creating-files-inline-2">2. Creating Files (<code>FileWrite</code>)</h3>
+<p>
+This is used to create <em>new</em> files.
+</p>
+<pre data-lang="javascript"><code>// Input to FileWrite tool
+{
+  "file_path": "/src/utils/helpers.ts",
+  "content": "export const add = (a, b) =&gt; a + b;"
+}
+</code></pre>
+<p>
+<em>Result:</em> A new file is created on the disk.
+</p>
+<h3 id="3-surgically-editing-inline-3">3. Surgically Editing (<code>FileEdit</code>)</h3>
+<p>
+This is the most common tool for coding. Instead of line numbers (which change easily), it uses unique string matching.
+</p>
+<pre data-lang="javascript"><code>// Input to FileEdit tool
+{
+  "file_path": "/src/utils/helpers.ts",
+  "old_string": "export const add = (a, b) =&gt; a + b;",
+  "new_string": "export const add = (a, b) =&gt; a + b + 1; // fixed off-by-one",
+  "replace_all": false
+}
+</code></pre>
+<p>
+<em>Result:</em> The system looks for %%INLINE<em>4%%. If it finds it exactly, it swaps it with %%INLINE</em>5%%.
+</p>
+<h2 id="under-the-hood-the-safety-dance">Under the Hood: The Safety Dance</h2>
+<p>
+How does the system ensure the agent doesn't break things? It maintains a "State Map" of what the agent has seen.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Agent
+    participant Runtime
+    participant FS as File System
+
+    Agent-&gt;&gt;Runtime: Tool: FileRead("app.ts")
+    Runtime-&gt;&gt;FS: Read file stats &amp; content
+    FS--&gt;&gt;Runtime: Content + Timestamp (10:00 AM)
+    
+    note right of Runtime: Saves state:&lt;br/&gt;app.ts was read at 10:00 AM
+    
+    Runtime--&gt;&gt;Agent: Returns Content
+
+    note right of Agent: Agent thinks...
+
+    Agent-&gt;&gt;Runtime: Tool: FileEdit("app.ts")
+    
+    Runtime-&gt;&gt;FS: Check current file Timestamp
+    FS--&gt;&gt;Runtime: Timestamp is 10:00 AM
+    
+    note right of Runtime: Timestamps match.&lt;br/&gt;Proceed with edit.
+    
+    Runtime-&gt;&gt;FS: Write changes</div></div>
+<h2 id="internal-implementation">Internal Implementation</h2>
+<p>
+Let's look at the code that powers these tools.
+</p>
+<h3 id="1-reading-and-tracking-inline-6">1. Reading and Tracking (<code>FileReadTool.ts</code>)</h3>
+<p>
+When a file is read, we don't just return the text. We verify it's safe and record <em>when</em> we read it.
+</p>
+<pre data-lang="typescript"><code>// Simplified from FileReadTool.ts
+async function callInner(filePath, context) {
+  // 1. Read the file from disk
+  const { content, mtimeMs } = await readFileInRange(filePath);
+
+  // 2. Save the "Read State"
+  // This is the proof that the agent knows what the file looks like right now.
+  context.readFileState.set(filePath, {
+    content: content,
+    timestamp: mtimeMs, // The 'Last Modified' time
+  });
+
+  // 3. Return content to the AI
+  return { data: { type: 'text', content } };
+}
+</code></pre>
+<p>
+<em>Explanation:</em> The <code>context.readFileState</code> is the memory bank. It links a file path to a timestamp.
+</p>
+<h3 id="2-verifying-the-edit-inline-8">2. Verifying the Edit (<code>FileEditTool.ts</code>)</h3>
+<p>
+Before allowing an edit, we check that memory bank.
+</p>
+<pre data-lang="typescript"><code>// Simplified from FileEditTool.ts
+async function validateInput(input, context) {
+  const filePath = input.file_path;
+  
+  // 1. Retrieve the last time the agent read this file
+  const lastRead = context.readFileState.get(filePath);
+
+  // 2. Check: Has the agent NEVER read this file?
+  if (!lastRead) {
+    return { result: false, message: "Read the file first!" };
+  }
+
+  // 3. Check: Has the file changed on disk since the read?
+  const currentDiskTime = getFileModificationTime(filePath);
+  if (currentDiskTime &gt; lastRead.timestamp) {
+    return { result: false, message: "File changed externally. Read again." };
+  }
+
+  return { result: true };
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This logic prevents race conditions. If you edit the file while the AI is thinking, %%INLINE<em>9%% will be higher than %%INLINE</em>10%%, and the tool will fail safely.
+</p>
+<h3 id="3-performing-the-patch-inline-11">3. Performing the Patch (<code>FileEditTool.ts</code>)</h3>
+<p>
+If validation passes, we perform the text replacement.
+</p>
+<pre data-lang="typescript"><code>// Simplified from FileEditTool.ts
+async function call(input) {
+  // 1. Read current content
+  const content = fs.readFileSync(input.file_path);
+
+  // 2. Use string replacement
+  // We look for 'old_string' and replace with 'new_string'
+  const newContent = content.replace(input.old_string, input.new_string);
+
+  // 3. Write back to disk
+  fs.writeFileSync(input.file_path, newContent);
+
+  return { message: "File updated successfully." };
+}
+</code></pre>
+<p>
+<em>Explanation:</em> We use strict string replacement. This ensures the AI knows <em>exactly</em> what context it is modifying. If <code>old_string</code> isn't found (maybe because the file changed slightly), the tool reports an error instead of guessing.
+</p>
+<h3 id="special-case-notebooks-inline-13">Special Case: Notebooks (<code>NotebookEditTool.ts</code>)</h3>
+<p>
+Jupyter Notebooks (<code>.ipynb</code>) are complex JSON files. Editing them as raw text is very hard for AI. We provide a specialized tool.
+</p>
+<pre data-lang="typescript"><code>// Simplified from NotebookEditTool.ts
+async function call({ cell_id, new_source, edit_mode }) {
+  // 1. Parse the Notebook JSON
+  const notebook = JSON.parse(readFileSync(path));
+
+  // 2. Find the specific cell
+  const cell = notebook.cells.find(c =&gt; c.id === cell_id);
+
+  // 3. Update just that cell's code
+  if (edit_mode === 'replace') {
+    cell.source = new_source;
+  }
+
+  // 4. Save the JSON back to disk
+  writeFileSync(path, JSON.stringify(notebook));
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This treats the notebook as a structured object, not just a string of text. This prevents the AI from accidentally breaking the JSON syntax of the notebook.
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+The <strong>File System Manipulation</strong> layer gives the agent physical agency.
+</p>
+<ol>
+<li><strong>FileRead:</strong> Gets data and sets a "safety timestamp."</li>
+</ol>
+<ol>
+<li><strong>FileWrite:</strong> Creates new artifacts.</li>
+</ol>
+<ol>
+<li><strong>FileEdit:</strong> Safely patches existing code using strict string matching and timestamp verification.</li>
+</ol>
+<ol>
+<li><strong>NotebookEdit:</strong> specialized handling for data science workflows.</li>
+</ol>
+<p>
+Now the agent can read and write code. But simply writing a file doesn't make it run. The agent needs to execute commands to install packages, run tests, or start servers.
+</p>
+<p>
+<a href="06<em>shell</em><em>_system</em>execution.md">Next Chapter: Shell & System Execution</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="tools.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">tools/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#why-do-we-need-this">Why do we need this?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case-the-typo-fixer">The Central Use Case: "The Typo Fixer"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#the-safety-rule-read-before-write">The Safety Rule: "Read-Before-Write"</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:10px"><a href="#1-reading-files-inline-1">1. Reading Files (%%INLINE_1%%)</a></li>
+<li style="padding-left:10px"><a href="#2-creating-files-inline-2">2. Creating Files (%%INLINE_2%%)</a></li>
+<li style="padding-left:10px"><a href="#3-surgically-editing-inline-3">3. Surgically Editing (%%INLINE_3%%)</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-the-safety-dance">Under the Hood: The Safety Dance</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#1-reading-and-tracking-inline-6">1. Reading and Tracking (%%INLINE_6%%)</a></li>
+<li style="padding-left:10px"><a href="#2-verifying-the-edit-inline-8">2. Verifying the Edit (%%INLINE_8%%)</a></li>
+<li style="padding-left:10px"><a href="#3-performing-the-patch-inline-11">3. Performing the Patch (%%INLINE_11%%)</a></li>
+<li style="padding-left:10px"><a href="#special-case-notebooks-inline-13">Special Case: Notebooks (%%INLINE_13%%)</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 1: Vim State Machine — vim/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">vim/01_vim_state_machine.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⌨️ vim/ · 01_vim_state_machine.md</div>
+  <h1 class="chapter-title-h1">Chapter 1: Vim State Machine</h1>
+  <div class="chapter-meta"><span>📄 vim/01_vim_state_machine.md</span></div>
+</div>
+<h1 id="chapter-1-vim-state-machine">Chapter 1: Vim State Machine</h1>
+<p>
+Welcome to the heart of the editor! If you have ever wondered why Vim feels so different from editors like Notepad or VS Code, the answer lies in its <strong>State Machine</strong>.
+</p>
+<h2 id="the-problem-what-does-d-mean">The Problem: What does "d" mean?</h2>
+<p>
+In a standard text editor, if you press the <code>d</code> key, the letter "d" appears on the screen. Simple, right?
+</p>
+<p>
+In Vim, pressing <code>d</code> might:
+</p>
+<ol>
+<li><strong>Type "d"</strong> (if you are in Insert mode).</li>
+</ol>
+<ol>
+<li><strong>Start a delete operation</strong> (if you are in Normal mode).</li>
+</ol>
+<ol>
+<li><strong>Finish a delete line operation</strong> (if you just pressed <code>d</code> previously).</li>
+</ol>
+<p>
+To manage this complexity, Vim uses a "State Machine." It doesn't just listen to <em>what</em> you type; it interprets it based on <em>where</em> you are in the machine's logic.
+</p>
+<h2 id="the-analogy-a-manual-transmission-car">The Analogy: A Manual Transmission Car</h2>
+<p>
+Think of Vim like a car with a manual gearbox:
+</p>
+<ul>
+<li><strong>Insert Mode</strong> is like "Drive." You press keys, and the car moves forward (text appears).</li>
+<li><strong>Normal Mode (Idle)</strong> is like "Neutral." You can look around, but pressing the gas (typing keys) triggers commands instead of moving text.</li>
+<li><strong>Operator State</strong> is like "Shifting Gears." You can't go from Neutral directly to 5th gear. You must shift. Similarly, you can't delete a word without entering the "Operator" state first.</li>
+</ul>
+<p>
+<strong>The Use Case: Deleting a Line (<code>dd</code>)</strong>
+ 
+Let's look at the classic Vim command <code>dd</code> (delete line). To the computer, this isn't one command. It is a journey through states:
+</p>
+<ol>
+<li><strong>Idle</strong>: Waiting for input.</li>
+</ol>
+<ol>
+<li><strong>Operator</strong>: You pressed <code>d</code>. Vim creates a "pending" state. It knows you want to delete <em>something</em>, but it doesn't know <em>what</em> yet.</li>
+</ol>
+<ol>
+<li><strong>Execute</strong>: You pressed <code>d</code> again. Now Vim knows you mean "current line." It deletes the line and returns to Idle.</li>
+</ol>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+Let's look at how we define this in code. We use TypeScript types to strictly define exactly which "gear" the editor is in.
+</p>
+<h3 id="1-the-mode">1. The Mode</h3>
+<p>
+At the highest level, Vim is either inserting text or processing commands.
+</p>
+<pre data-lang="typescript"><code>// From types.ts
+export type VimState =
+  // Type text directly
+  | { mode: 'INSERT'; insertedText: string }
+  // Interpret keys as commands
+  | { mode: 'NORMAL'; command: CommandState }
+</code></pre>
+<p>
+When you are in %%INLINE<em>7%% mode, the %%INLINE</em>8%% property holds the specific state of the state machine.
+</p>
+<h3 id="2-the-command-states">2. The Command States</h3>
+<p>
+This is the gearbox. These are the valid states the editor can be in while in Normal mode.
+</p>
+<pre data-lang="typescript"><code>// From types.ts - Simplified
+export type CommandState =
+  | { type: 'idle' }              // Waiting for input
+  | { type: 'count' }             // "10..." (waiting for motion)
+  | { type: 'operator' }          // "d..." (waiting for motion)
+  | { type: 'replace' }           // "r..." (waiting for char)
+  // ... and others
+</code></pre>
+<p>
+If the state is %%INLINE<em>9%%, typing %%INLINE</em>10%% moves us to %%INLINE<em>11%%. If the state is %%INLINE</em>12%%, typing <code>d</code> executes the deletion.
+</p>
+<h2 id="internal-implementation">Internal Implementation</h2>
+<p>
+How does the "brain" actually work? We use a central function called <code>transition</code>. It takes the <strong>Current State</strong> and the <strong>User Input</strong>, and returns the <strong>Next State</strong> (or an action to perform).
+</p>
+<h3 id="visualizing-the-flow-inline-15">Visualizing the Flow (<code>dd</code>)</h3>
+<p>
+Here is what happens inside the engine when you type <code>dd</code>.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant SM as State Machine
+    participant Op as Operations
+
+    Note over SM: State: Idle
+
+    User-&gt;&gt;SM: Press "d"
+    SM-&gt;&gt;SM: Check 'fromIdle' logic
+    SM--&gt;&gt;SM: Transition to State: Operator (delete)
+
+    User-&gt;&gt;SM: Press "d"
+    SM-&gt;&gt;SM: Check 'fromOperator' logic
+    SM-&gt;&gt;Op: Execute Line Delete
+    Op--&gt;&gt;SM: Action Complete
+    SM--&gt;&gt;SM: Reset to State: Idle</div></div>
+<h3 id="the-transition-logic">The Transition Logic</h3>
+<p>
+The core logic lives in <code>transitions.ts</code>. It acts like a traffic controller. It looks at the current state type and routes the input to the correct handler.
+</p>
+<pre data-lang="typescript"><code>// From transitions.ts
+export function transition(
+  state: CommandState,
+  input: string,
+  ctx: TransitionContext,
+): TransitionResult {
+  switch (state.type) {
+    case 'idle':
+      return fromIdle(input, ctx) // Handle input while idling
+    case 'operator':
+      return fromOperator(state, input, ctx) // Handle input while waiting for motion
+    // ... cases for other states
+  }
+}
+</code></pre>
+<h3 id="1-starting-from-idle">1. Starting from Idle</h3>
+<p>
+When you first press %%INLINE<em>18%%, we call %%INLINE</em>19%%. It recognizes <code>d</code> is an "operator" key.
+</p>
+<pre data-lang="typescript"><code>// From transitions.ts
+function fromIdle(input: string, ctx: TransitionContext): TransitionResult {
+  // If user types 'd', 'c', or 'y'
+  if (isOperatorKey(input)) {
+    // Switch state to 'operator'
+    // We remember WHICH operator (e.g., 'delete')
+    return { next: { type: 'operator', op: OPERATORS[input], count: 1 } }
+  }
+  // ... handle other keys like motions (h, j, k, l)
+  return {}
+}
+</code></pre>
+<h3 id="2-handling-the-operator">2. Handling the Operator</h3>
+<p>
+Now the state is %%INLINE<em>21%%. The user presses %%INLINE</em>22%% again. We call <code>fromOperator</code>.
+</p>
+<pre data-lang="typescript"><code>// From transitions.ts
+function fromOperator(
+  state: { type: 'operator'; op: Operator; count: number },
+  input: string,
+  ctx: TransitionContext,
+): TransitionResult {
+  // If the input matches the operator (e.g., 'd' matches 'd')
+  // This means a linewise operation (dd, cc, yy)
+  if (input === state.op[0]) {
+    // Execute the action!
+    return { execute: () =&gt; executeLineOp(state.op, state.count, ctx) }
+  }
+  
+  // Otherwise, look for a motion (like 'w' for delete word)
+  // ... logic continues
+  return { next: { type: 'idle' } }
+}
+</code></pre>
+<h2 id="summary">Summary</h2>
+<p>
+The Vim State Machine is the foundation of the editor's power. By breaking actions into small states (%%INLINE<em>24%%, %%INLINE</em>25%%, %%INLINE<em>26%%), Vim allows you to compose complex commands like "delete 3 words" (%%INLINE</em>27%%) using simple, reusable building blocks.
+</p>
+<p>
+We have barely scratched the surface of how the machine decides <em>which</em> state to go to next.
+</p>
+<p>
+In the next chapter, we will look at the specific rules for moving between these states.
+</p>
+<p>
+<a href="02<em>input</em>transition_logic.md">Input Transition Logic</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="vim.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">vim/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-what-does-d-mean">The Problem: What does "d" mean?</a></li>
+<li style="padding-left:0px"><a href="#the-analogy-a-manual-transmission-car">The Analogy: A Manual Transmission Car</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-mode">1. The Mode</a></li>
+<li style="padding-left:10px"><a href="#2-the-command-states">2. The Command States</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#visualizing-the-flow-inline-15">Visualizing the Flow (%%INLINE_15%%)</a></li>
+<li style="padding-left:10px"><a href="#the-transition-logic">The Transition Logic</a></li>
+<li style="padding-left:10px"><a href="#1-starting-from-idle">1. Starting from Idle</a></li>
+<li style="padding-left:10px"><a href="#2-handling-the-operator">2. Handling the Operator</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

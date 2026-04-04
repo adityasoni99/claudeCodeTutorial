@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 5: Conditional Execution Logic — schemas/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">schemas/05_conditional_execution_logic.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">📐 schemas/ · 05_conditional_execution_logic.md</div>
+  <h1 class="chapter-title-h1">Chapter 5: Conditional Execution Logic</h1>
+  <div class="chapter-meta"><span>📄 schemas/05_conditional_execution_logic.md</span></div>
+</div>
+<h1 id="chapter-5-conditional-execution-logic">Chapter 5: Conditional Execution Logic</h1>
+<p>
+Welcome to the final chapter of this tutorial series!
+</p>
+<p>
+In the previous chapter, <a href="04<em>ai</em>verification<em>_</em>interaction.md">AI Verification & Interaction</a>, we gave our system a "brain" by allowing it to ask an AI for help. We can now run commands and consult LLMs.
+</p>
+<p>
+However, we still have a problem with <strong>precision</strong>.
+</p>
+<h2 id="the-problem-the-sledgehammer-approach">The Problem: "The Sledgehammer Approach"</h2>
+<p>
+Let's say you configured a hook to run a "Linter" every time a file is written.
+</p>
+<ul>
+<li><strong>Configuration:</strong> Matcher = <code>WriteFile</code>.</li>
+<li><strong>Action:</strong> Run <code>npm run lint</code>.</li>
+</ul>
+<p>
+This works great when you save a JavaScript file. But what happens when you save a Markdown (%%INLINE<em>2%%) file? Or a plain text (%%INLINE</em>3%%) file? The system still tries to run the linter. It fails, throws errors, and wastes resources.
+</p>
+<p>
+The <code>matcher</code> we learned in Chapter 1 is like a sledgehammer—it hits everything. We need a scalpel. We need to say:
+</p>
+<blockquote><p>"Only run this hook <strong>IF</strong> the file ends in <code>.ts</code>."</p></blockquote>
+<h2 id="the-solution-the-inline-6-field">The Solution: The <code>if</code> Field</h2>
+<p>
+To solve this, we introduce the <strong>Conditional Execution Logic</strong>.
+</p>
+<p>
+This is a special field called <code>if</code> that lives inside your hook definition. It acts like a second security guard. Even if the Event matches, this guard checks your ID card to make sure you belong there.
+</p>
+<h3 id="analogy-the-club-entrance">Analogy: The Club Entrance</h3>
+<ol>
+<li><strong>Event (Chapter 1):</strong> The club is open (<code>tool_finish</code>).</li>
+</ol>
+<ol>
+<li><strong>Matcher (Chapter 1):</strong> The bouncer lets in anyone named "WriteFile".</li>
+</ol>
+<ol>
+<li><strong>Condition (Chapter 5):</strong> The VIP guard checks: "Are you wearing a Tie (<code>*.ts</code>)?"</li>
+<ul>
+<li>If <strong>Yes</strong>: You get to the Hook.</li>
+<li>If <strong>No</strong>: You are turned away quietly.</li>
+</ul>
+</ol>
+<h2 id="solving-the-use-case">Solving the Use Case</h2>
+<p>
+Let's configure a rule that <strong>only</strong> runs a test command when a TypeScript file is saved.
+</p>
+<h3 id="the-configuration">The Configuration</h3>
+<pre data-lang="json"><code>{
+  "matcher": "WriteFile",
+  "hooks": [
+    {
+      "type": "command",
+      "command": "npm test",
+      
+      // The Logic Gate
+      "if": "WriteFile(*.ts)"
+    }
+  ]
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+</p>
+<ol>
+<li><strong>%%INLINE<em>10%%: "WriteFile"</strong>: The system wakes up whenever the %%INLINE</em>11%% tool is used.</li>
+</ol>
+<ol>
+<li><strong>%%INLINE<em>12%%: "WriteFile(*.ts)"</strong>: Before running %%INLINE</em>13%%, the system looks at the arguments passed to <code>WriteFile</code>.</li>
+<ul>
+<li>If the input is %%INLINE<em>15%%, the pattern matches %%INLINE</em>16%%. <strong>RUN.</strong></li>
+<li>If the input is <code>README.md</code>, the pattern fails. <strong>SKIP.</strong></li>
+</ul>
+</ol>
+<h3 id="syntax-permission-rules">Syntax: Permission Rules</h3>
+<p>
+The text inside the <code>if</code> field uses a specific syntax known as <strong>Permission Rules</strong>.
+</p>
+<p>
+Format: <code>ToolName(Pattern)</code>
+</p>
+<table><thead><tr>
+<th>Rule Example</th>
+<th>Meaning</th>
+</tr></thead><tbody>
+<tr>
+<td><code>WriteFile(*.json)</code></td>
+<td>Only runs when writing JSON files.</td>
+</tr>
+<tr>
+<td><code>Bash(git commit *)</code></td>
+<td>Only runs when the command starts with <code>git commit</code>.</td>
+</tr>
+<tr>
+<td><code>Bash(npm *)</code></td>
+<td>Only runs for NPM commands.</td>
+</tr>
+</tbody></table>
+<h2 id="internal-implementation-under-the-hood">Internal Implementation: Under the Hood</h2>
+<p>
+How does the system decide whether to block or proceed?
+</p>
+<h3 id="the-logic-flow">The Logic Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant App as Application
+    participant Match as Matcher (Gate 1)
+    participant Cond as Condition (Gate 2)
+    participant Hook as Action
+
+    App-&gt;&gt;Match: Event: WriteFile("notes.txt")
+    
+    Match-&gt;&gt;Match: Matches "WriteFile"? YES.
+    Match-&gt;&gt;Cond: Check "if" field
+    
+    Cond-&gt;&gt;Cond: Rule: "WriteFile(*.ts)"
+    Cond-&gt;&gt;Cond: Input: "notes.txt"
+    Cond--xHook: Match Failed! (Stops here)
+    
+    Note over App, Hook: Later...
+    
+    App-&gt;&gt;Match: Event: WriteFile("api.ts")
+    Match-&gt;&gt;Cond: Check "if" field
+    Cond-&gt;&gt;Cond: Rule: "WriteFile(*.ts)"
+    Cond-&gt;&gt;Cond: Input: "api.ts"
+    Cond-&gt;&gt;Hook: Match Passed! Execute Action.</div></div>
+<ol>
+<li>The system first filters by the broad <strong>Event Matcher</strong>.</li>
+</ol>
+<ol>
+<li>It then looks for the <code>if</code> string in the hook definition.</li>
+</ol>
+<ol>
+<li>It compares the actual runtime arguments (like the filename or command string) against the pattern.</li>
+</ol>
+<ol>
+<li>If it matches, the hook executes. If not, it is silently ignored.</li>
+</ol>
+<h3 id="code-deep-dive">Code Deep Dive</h3>
+<p>
+Let's look at how this is defined in <code>hooks.ts</code>.
+</p>
+<h4 id="defining-the-schema">Defining the Schema</h4>
+<p>
+First, we define what the <code>if</code> field looks like. It is just a string, but the description helps documentation generators understand its purpose.
+</p>
+<pre data-lang="typescript"><code>// hooks.ts
+const IfConditionSchema = lazySchema(() =&gt;
+  z.string()
+    .optional()
+    .describe(
+      'Permission rule syntax (e.g., "Bash(git *)"). ' +
+      'Only runs if the tool call matches the pattern.'
+    ),
+)
+</code></pre>
+<h4 id="attaching-it-to-hooks">Attaching it to Hooks</h4>
+<p>
+We add this schema to every type of hook (Command, Prompt, Agent, HTTP). This means <em>any</em> action can be conditional.
+</p>
+<pre data-lang="typescript"><code>// hooks.ts (inside BashCommandHookSchema)
+const BashCommandHookSchema = z.object({
+  type: z.literal('command'),
+  command: z.string(),
+  
+  // Here is our logic gate
+  if: IfConditionSchema(),
+  
+  shell: z.enum(SHELL_TYPES).optional(),
+});
+</code></pre>
+<p>
+<strong>Why this matters:</strong>
+ 
+By adding %%INLINE<em>27%% to the object, Zod allows the user to add the %%INLINE</em>28%% key in their JSON settings. If the user omits it (it is <code>.optional()</code>), the system assumes the condition is "Always True."
+</p>
+<h2 id="complex-example-safe-git-automation">Complex Example: Safe Git Automation</h2>
+<p>
+Let's combine everything we've learned in this tutorial.
+</p>
+<p>
+<strong>Goal:</strong> When I run a git commit, I want an AI to verify the commit message is professional, but I don't want this to happen for %%INLINE<em>30%% or %%INLINE</em>31%%.
+</p>
+<pre data-lang="json"><code>{
+  "matcher": "Bash", 
+  "hooks": [
+    {
+      "type": "prompt",
+      "prompt": "Is this commit message professional? $ARGUMENTS",
+      
+      // Only runs for commits!
+      "if": "Bash(git commit *)" 
+    }
+  ]
+}
+</code></pre>
+<ol>
+<li><strong><a href="01<em>event</em>based<em>configuration</em>registry.md">Chapter 1</a></strong>: We listen for <code>Bash</code> tools.</li>
+</ol>
+<ol>
+<li><strong><a href="05<em>conditional</em>execution<em>logic.md">Chapter 5</a></strong>: We filter for only %%INLINE</em>33%% commands using <code>if</code>.</li>
+</ol>
+<ol>
+<li><strong><a href="04<em>ai</em>verification<em>_</em>interaction.md">Chapter 4</a></strong>: We use a <code>prompt</code> hook to ask the AI for advice.</li>
+</ol>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+Congratulations! You have completed the <strong>Schemas</strong> project tutorial.
+</p>
+<p>
+We have built a powerful, reactive system from scratch:
+</p>
+<ol>
+<li><strong>Event Registry:</strong> We created a central place to listen for application lifecycle events.</li>
+</ol>
+<ol>
+<li><strong>Polymorphism:</strong> We designed a system that can handle Commands, HTTP requests, and AI Prompts using a single list.</li>
+</ol>
+<ol>
+<li><strong>Shell Integration:</strong> We learned how to execute commands safely with timeouts and background modes.</li>
+</ol>
+<ol>
+<li><strong>AI Interaction:</strong> We injected intelligence into the loop to verify and generate content.</li>
+</ol>
+<ol>
+<li><strong>Conditional Logic:</strong> We added the final layer of precision to ensure hooks only run exactly when needed.</li>
+</ol>
+<p>
+You now possess the knowledge to define complex, intelligent, and safe automation workflows using Zod schemas!
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="schemas.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">schemas/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-sledgehammer-approach">The Problem: "The Sledgehammer Approach"</a></li>
+<li style="padding-left:0px"><a href="#the-solution-the-inline-6-field">The Solution: The %%INLINE_6%% Field</a></li>
+<li style="padding-left:10px"><a href="#analogy-the-club-entrance">Analogy: The Club Entrance</a></li>
+<li style="padding-left:0px"><a href="#solving-the-use-case">Solving the Use Case</a></li>
+<li style="padding-left:10px"><a href="#the-configuration">The Configuration</a></li>
+<li style="padding-left:10px"><a href="#syntax-permission-rules">Syntax: Permission Rules</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-under-the-hood">Internal Implementation: Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#the-logic-flow">The Logic Flow</a></li>
+<li style="padding-left:10px"><a href="#code-deep-dive">Code Deep Dive</a></li>
+<li style="padding-left:0px"><a href="#complex-example-safe-git-automation">Complex Example: Safe Git Automation</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

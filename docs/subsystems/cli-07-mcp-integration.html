@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 7: MCP Integration — cli/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">cli/07_mcp_integration.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">💻 cli/ · 07_mcp_integration.md</div>
+  <h1 class="chapter-title-h1">Chapter 7: MCP Integration</h1>
+  <div class="chapter-meta"><span>📄 cli/07_mcp_integration.md</span></div>
+</div>
+<h1 id="chapter-7-mcp-integration">Chapter 7: MCP Integration</h1>
+<p>
+In the previous chapter, <a href="06<em>plugin</em>management.md">Plugin Management</a>, we learned how to install "apps" (plugins) to extend the CLI's functionality.
+</p>
+<p>
+However, installing a plugin is only half the battle. Many plugins act as gateways to external systems—like a local database, a file server, or a browser automation tool. These systems speak the <strong>Model Context Protocol (MCP)</strong>.
+</p>
+<p>
+This chapter explains how the CLI integrates with these MCP servers, acting as a "Universal Adapter" that plugs external tools into the AI's brain.
+</p>
+<h2 id="motivation-the-universal-usb-hub">Motivation: The Universal USB Hub</h2>
+<p>
+Imagine you have a laptop (the AI) and you want to connect a printer, a mouse, and a hard drive. You don't want to wire each one directly into the motherboard. You use a standard USB port.
+</p>
+<p>
+<strong>MCP</strong> is that USB standard for AI.
+</p>
+<ol>
+<li><strong>The Tool (MCP Server):</strong> "I am a database tool. I can run SQL queries."</li>
+</ol>
+<ol>
+<li><strong>The AI (Remote Brain):</strong> "I need to query a database."</li>
+</ol>
+<ol>
+<li><strong>The CLI (Integration):</strong> Acts as the <strong>USB Hub</strong>. It manages the cables, ensures the connection is live, and routes the data between the AI and the Tool.</li>
+</ol>
+<p>
+Without this integration layer, the AI is smart but isolated—it can think, but it cannot touch your data.
+</p>
+<h2 id="key-concept-the-configuration-map">Key Concept: The Configuration Map</h2>
+<p>
+The CLI doesn't inherently know which tools you have on your computer. It needs a "phonebook" or configuration map to know where the MCP servers are located.
+</p>
+<p>
+This configuration is managed by <code>handlers/mcp.tsx</code>.
+</p>
+<h3 id="adding-a-server">Adding a Server</h3>
+<p>
+When you run a command to add an MCP server, the handler receives the configuration (usually JSON) and saves it.
+</p>
+<pre data-lang="typescript"><code>// handlers/mcp.tsx (Simplified)
+
+export async function mcpAddJsonHandler(name: string, json: string, options: any) {
+  // 1. Parse the incoming JSON configuration
+  const parsedJson = safeParseJSON(json);
+
+  // 2. Save it to the configuration file (User or Project scope)
+  await addMcpConfig(name, parsedJson, options.scope);
+
+  // 3. Tell the user it worked
+  cliOk(`Added MCP server ${name} to config`);
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This function takes a name (e.g., "my-database") and a JSON string defining how to connect to it. It saves this safely to disk so the CLI remembers it next time.
+</p>
+<h2 id="key-concept-health-checks">Key Concept: Health Checks</h2>
+<p>
+Just because a server is in the phonebook doesn't mean it's answering the phone. Before the AI tries to use a tool, the CLI must verify the connection.
+</p>
+<p>
+This is the <strong>Health Check</strong>.
+</p>
+<pre data-lang="typescript"><code>// handlers/mcp.tsx (Simplified)
+
+async function checkMcpServerHealth(name: string, server: Config): Promise&lt;string&gt; {
+  try {
+    // Attempt to dial the server
+    const result = await connectToServer(name, server);
+    
+    // Return a simple status symbol
+    if (result.type === 'connected') {
+      return '✓ Connected';
+    }
+    return '✗ Failed to connect';
+  } catch (error) {
+    return '✗ Connection error';
+  }
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This helper function tries to establish a real connection. It translates complex network states into a simple "Checkmark" or "X" for the user.
+</p>
+<h2 id="internal-implementation-the-inline-1-command">Internal Implementation: The <code>list</code> Command</h2>
+<p>
+To understand how the pieces fit together, let's look at what happens when you run <code>claude mcp list</code>. This command effectively performs a "system diagnostic."
+</p>
+<h3 id="the-workflow">The Workflow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant Handler as MCP Handler
+    participant Config as Config Service
+    participant Client as MCP Client
+    
+    User-&gt;&gt;Handler: Run "mcp list"
+    Handler-&gt;&gt;Config: Get all known servers
+    Config--&gt;&gt;Handler: Returns list (Server A, Server B)
+    
+    par Parallel Check
+        Handler-&gt;&gt;Client: Connect to Server A?
+        Handler-&gt;&gt;Client: Connect to Server B?
+    end
+    
+    Client--&gt;&gt;Handler: Server A is Alive
+    Client--&gt;&gt;Handler: Server B is Dead
+    
+    Handler-&gt;&gt;User: Prints Status Table</div></div>
+<h3 id="the-code-implementation">The Code Implementation</h3>
+<p>
+The %%INLINE<em>3%% uses parallel processing (%%INLINE</em>4%%) to check all servers at once, making the command fast even if you have 20 tools.
+</p>
+<pre data-lang="typescript"><code>// handlers/mcp.tsx (Simplified)
+
+export async function mcpListHandler(): Promise&lt;void&gt; {
+  // 1. Get the list of servers from config
+  const { servers: configs } = await getAllMcpConfigs();
+
+  // 2. Check health of all servers in parallel
+  const results = await pMap(
+    Object.entries(configs),
+    async ([name, server]) =&gt; ({
+      name,
+      status: await checkMcpServerHealth(name, server) // Run the check
+    }),
+    { concurrency: 5 } // Check 5 at a time
+  );
+
+  // 3. Print the results
+  for (const { name, status } of results) {
+    console.log(`${name}: ${status}`);
+  }
+}
+</code></pre>
+<p>
+<em>Explanation:</em>
+</p>
+<ol>
+<li><strong>Load:</strong> It reads the configuration file.</li>
+</ol>
+<ol>
+<li><strong>Check:</strong> It loops through every server and runs <code>checkMcpServerHealth</code>.</li>
+</ol>
+<ol>
+<li><strong>Report:</strong> It prints the status to your terminal.</li>
+</ol>
+<h2 id="key-concept-scoping-and-removal">Key Concept: Scoping and Removal</h2>
+<p>
+Just like we saw in <a href="06<em>plugin</em>management.md">Plugin Management</a>, MCP servers can be scoped.
+</p>
+<ul>
+<li><strong>Project Scope:</strong> A database tool only relevant to the current project folder.</li>
+<li><strong>User Scope:</strong> A calculator tool relevant everywhere.</li>
+</ul>
+<p>
+When removing a server, we must be careful to remove it from the correct scope.
+</p>
+<pre data-lang="typescript"><code>// handlers/mcp.tsx (Simplified)
+
+export async function mcpRemoveHandler(name: string, options: any) {
+  // 1. Identify which scope (Project vs User) to look in
+  const scope = ensureConfigScope(options.scope);
+
+  // 2. Remove the configuration entry
+  await removeMcpConfig(name, scope);
+
+  // 3. Clean up any saved security tokens (like passwords)
+  cleanupSecureStorage(name);
+
+  process.stdout.write(`Removed MCP server ${name}\n`);
+}
+</code></pre>
+<p>
+<em>Explanation:</em> The handler ensures that when you delete a tool connection, it also wipes any saved passwords (<code>cleanupSecureStorage</code>) related to that tool for security.
+</p>
+<h2 id="visualizing-the-architecture">Visualizing the Architecture</h2>
+<p>
+This is how the MCP Integration fits into the overall CLI architecture we have built so far.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">flowchart LR
+    AI[Remote AI]
+    CLI[CLI Application]
+    
+    subgraph "MCP Integration Layer"
+        Config[Config Map]
+        Health[Health Check]
+    end
+    
+    Tool1[Local Database]
+    Tool2[File Server]
+    
+    AI &lt;--&gt;|"Structured Protocol (Ch 3)"| CLI
+    CLI &lt;--&gt;|"Lifecycle Mgmt"| Config
+    CLI -- "Verifies" --&gt; Health
+    
+    CLI &lt;--&gt;|"MCP Protocol"| Tool1
+    CLI &lt;--&gt;|"MCP Protocol"| Tool2</div></div>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+The <strong>MCP Integration</strong> layer is the "Switchboard Operator" of the application.
+</p>
+<ol>
+<li>It <strong>Configures</strong> connections (Add/Remove).</li>
+</ol>
+<ol>
+<li>It <strong>Verifies</strong> connectivity (Health Checks).</li>
+</ol>
+<ol>
+<li>It <strong>Exposes</strong> these connections to the remote AI, allowing the brain in the cloud to control tools on your machine.</li>
+</ol>
+<p>
+We have now covered the entire operational stack: Connection, Auth, Protocol, Transport, State, Plugins, and Tools.
+</p>
+<p>
+The final piece of the puzzle is managing the application itself. How does it start up cleanly? How does it shut down without leaving zombie processes?
+</p>
+<p>
+<a href="08<em>application</em>lifecycle.md">Next Chapter: Application Lifecycle</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="cli.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">cli/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#motivation-the-universal-usb-hub">Motivation: The Universal USB Hub</a></li>
+<li style="padding-left:0px"><a href="#key-concept-the-configuration-map">Key Concept: The Configuration Map</a></li>
+<li style="padding-left:10px"><a href="#adding-a-server">Adding a Server</a></li>
+<li style="padding-left:0px"><a href="#key-concept-health-checks">Key Concept: Health Checks</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-the-inline-1-command">Internal Implementation: The %%INLINE_1%% Command</a></li>
+<li style="padding-left:10px"><a href="#the-workflow">The Workflow</a></li>
+<li style="padding-left:10px"><a href="#the-code-implementation">The Code Implementation</a></li>
+<li style="padding-left:0px"><a href="#key-concept-scoping-and-removal">Key Concept: Scoping and Removal</a></li>
+<li style="padding-left:0px"><a href="#visualizing-the-architecture">Visualizing the Architecture</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

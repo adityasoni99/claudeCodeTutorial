@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: Direct Connect Manager — server/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">server/03_direct_connect_manager.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🖧 server/ · 03_direct_connect_manager.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: Direct Connect Manager</h1>
+  <div class="chapter-meta"><span>📄 server/03_direct_connect_manager.md</span></div>
+</div>
+<h1 id="chapter-3-direct-connect-manager">Chapter 3: Direct Connect Manager</h1>
+<p>
+Welcome to Chapter 3!
+</p>
+<p>
+In <a href="02<em>session</em>initialization.md">Chapter 2: Session Initialization</a>, we successfully "checked in" to the hotel. The server gave us a <strong>Direct Connect Config</strong> (our "Key Card").
+</p>
+<p>
+But holding a key card doesn't mean you are inside the room yet. You still have to walk to the door, tap the card, and open it.
+</p>
+<p>
+In this chapter, we will build the <strong>Direct Connect Manager</strong>. This is the specialized code that takes your Key Card, opens the connection, and stays on the line to manage the conversation.
+</p>
+<h2 id="the-problem-raw-noise-vs-meaningful-conversation">The Problem: Raw Noise vs. Meaningful Conversation</h2>
+<p>
+WebSockets (the technology we use for real-time talk) are like a raw telephone line. The server just shouts text down the wire.
+</p>
+<p>
+If you listened to the raw line, you might hear:
+ 
+<code>{"type": "keep_alive"}</code>
+ 
+<code>{"type": "stdout", "content": "Hello"}</code>
+ 
+<code>{"type": "control_request", "subtype": "can_use_tool"}</code>
+</p>
+<p>
+If your application had to decipher this manually every time, your code would be a mess. You need a middleman.
+</p>
+<p>
+<strong>The Solution:</strong>
+ 
+The <strong>Direct Connect Manager</strong> acts like a dedicated <strong>Telephone Operator</strong>.
+</p>
+<ol>
+<li>It dials the number (connects).</li>
+</ol>
+<ol>
+<li>It listens to the raw noise.</li>
+</ol>
+<ol>
+<li>It ignores the boring stuff (like "keep_alive" heartbeats).</li>
+</ol>
+<ol>
+<li>It identifies important events ("The agent wants to write a file") and taps you on the shoulder.</li>
+</ol>
+<hr>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+To use the manager, we need two things:
+</p>
+<ol>
+<li>The <strong>Config</strong> (from Chapter 2).</li>
+</ol>
+<ol>
+<li><strong>Callbacks</strong> (What you want to do when the phone rings).</li>
+</ol>
+<h3 id="step-1-defining-the-reactions-callbacks">Step 1: Defining the Reactions (Callbacks)</h3>
+<p>
+Before we connect, we need to decide what to do when messages arrive. We define a set of functions called <code>DirectConnectCallbacks</code>.
+</p>
+<pre data-lang="typescript"><code>// Define what happens when the server speaks
+const myCallbacks = {
+  // When the agent sends text or data
+  onMessage: (msg) =&gt; console.log("Agent said:", msg),
+  
+  // When the agent asks for permission (covered in Ch 4)
+  onPermissionRequest: (req, id) =&gt; console.log("Agent wants permission:", id),
+  
+  // When the connection dies
+  onDisconnected: () =&gt; console.log("Call ended."),
+}
+</code></pre>
+<h3 id="step-2-starting-the-manager">Step 2: Starting the Manager</h3>
+<p>
+Now we take the config we got in <a href="02<em>session</em>initialization.md">Session Initialization</a> and plug it into our manager class.
+</p>
+<pre data-lang="typescript"><code>import { DirectConnectSessionManager } from './directConnectManager'
+
+// 1. Create the manager with config (from Ch 2) and callbacks
+const manager = new DirectConnectSessionManager(
+  config,      // Contains wsUrl and authToken
+  myCallbacks  // The functions we wrote above
+)
+
+// 2. Dial the number
+manager.connect()
+</code></pre>
+<p>
+That's it! The manager is now running in the background, handling the complex WebSocket traffic and only notifying you when something interesting happens.
+</p>
+<hr>
+<h2 id="visualizing-the-flow">Visualizing the Flow</h2>
+<p>
+Let's see how the Manager sits between the Raw Network and your Application.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant S as Server
+    participant W as WebSocket (Raw)
+    participant M as Direct Connect Manager
+    participant A as Your App
+
+    Note over M: Manager starts listening
+    S-&gt;&gt;W: Raw JSON: {"type": "keep_alive"}
+    W-&gt;&gt;M: Forward Raw Data
+    M-&gt;&gt;M: Ignore (Not important)
+    
+    S-&gt;&gt;W: Raw JSON: {"type": "stdout", "msg": "Hi"}
+    W-&gt;&gt;M: Forward Raw Data
+    M-&gt;&gt;A: call onMessage("Hi")
+    
+    S-&gt;&gt;W: Raw JSON: {"type": "control_request"}
+    W-&gt;&gt;M: Forward Raw Data
+    M-&gt;&gt;A: call onPermissionRequest(...)</div></div>
+<p>
+The Manager filters out the noise so your App acts only on what matters.
+</p>
+<hr>
+<h2 id="internal-implementation-details">Internal Implementation Details</h2>
+<p>
+Let's look under the hood of <code>directConnectManager.ts</code> to see how this Operator works.
+</p>
+<h3 id="1-dialing-the-number-inline-5">1. Dialing the Number (<code>connect</code>)</h3>
+<p>
+When you call %%INLINE<em>6%%, the manager creates the actual WebSocket connection. It also attaches the security badge (Authentication Token) we learned about in <a href="01</em>session<em>data</em>models.md">Session Data Models</a>.
+</p>
+<pre data-lang="typescript"><code>// Inside directConnectManager.ts
+connect(): void {
+  const headers: Record&lt;string, string&gt; = {}
+  
+  // Attach the "Key Card" (Token) if it exists
+  if (this.config.authToken) {
+    headers['authorization'] = `Bearer ${this.config.authToken}`
+  }
+
+  // Create the actual connection
+  this.ws = new WebSocket(this.config.wsUrl, { headers })
+  
+  // Start listening for events...
+}
+</code></pre>
+<h3 id="2-the-sorting-hat-processing-messages">2. The Sorting Hat (Processing Messages)</h3>
+<p>
+This is the most critical part of the Manager. When a message arrives, the Manager has to decide what it is.
+</p>
+<p>
+The code listens for the %%INLINE<em>7%% event, parses the text into JSON, and then uses a series of %%INLINE</em>8%% statements to route the traffic.
+</p>
+<pre data-lang="typescript"><code>// Inside the 'message' event listener
+this.ws.addEventListener('message', event =&gt; {
+  const raw = jsonParse(event.data)
+
+  // Case A: The Agent wants permission (e.g., to run a command)
+  if (raw.type === 'control_request') {
+    this.callbacks.onPermissionRequest(raw.request, raw.request_id)
+    return
+  }
+
+  // Case B: Regular chatter (Agent talking to us)
+  // We filter out boring system messages first
+  if (raw.type !== 'keep_alive' /* ... and others ... */) {
+    this.callbacks.onMessage(raw)
+  }
+})
+</code></pre>
+<p>
+<strong>Why is this helpful?</strong>
+ 
+Without this logic, your main application would have to handle %%INLINE<em>9%% errors, filter out %%INLINE</em>10%% pings, and distinguish between different message types. The Manager hides this complexity.
+</p>
+<h3 id="3-talking-back-inline-11">3. Talking Back (<code>sendMessage</code>)</h3>
+<p>
+Conversation is a two-way street. When your user types something, the Manager wraps it up in the specific format the Server expects (as defined in our schemas).
+</p>
+<pre data-lang="typescript"><code>sendMessage(content: string): boolean {
+  // 1. Check if the line is open
+  if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return false
+
+  // 2. Wrap the message in the "User Message" envelope
+  const payload = jsonStringify({
+    type: 'user',
+    message: { role: 'user', content: content },
+    session_id: '', // Implementation detail
+  })
+
+  // 3. Send it
+  this.ws.send(payload)
+  return true
+}
+</code></pre>
+<h3 id="4-handling-permissions">4. Handling Permissions</h3>
+<p>
+One specific message type is so important it gets its own logic: <code>control_request</code>.
+</p>
+<p>
+This happens when the Agent says: <em>"I want to run <code>npm install</code>. Is that okay?"</em>
+</p>
+<p>
+The Manager detects this and triggers <code>onPermissionRequest</code>. The app must then reply with "Yes" or "No". The Manager provides a helper for this reply:
+</p>
+<pre data-lang="typescript"><code>respondToPermissionRequest(requestId: string, result: Response): void {
+  const response = jsonStringify({
+    type: 'control_response',
+    response: {
+      subtype: 'success',
+      request_id: requestId,
+      // Pass the user's decision (Allow/Deny)
+      response: { behavior: result.behavior },
+    },
+  })
+  this.ws.send(response)
+}
+</code></pre>
+<p>
+We will dive deep into how to make these decisions in the next chapter.
+</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we built the <strong>Central Nervous System</strong> of our live session.
+</p>
+<ol>
+<li>We initialized the <strong>Manager</strong> using the config from Chapter 2.</li>
+</ol>
+<ol>
+<li>We learned how the Manager <strong>filters</strong> raw WebSocket noise.</li>
+</ol>
+<ol>
+<li>We saw how it <strong>routes</strong> important events (like permission requests) to our callbacks.</li>
+</ol>
+<ol>
+<li>We looked at how it <strong>wraps</strong> outgoing messages in the correct JSON envelopes.</li>
+</ol>
+<p>
+Now that our connection is live and we can hear the agent, we need to handle the most critical part of an autonomous coding agent: <strong>Security</strong>.
+</p>
+<p>
+What happens when the agent wants to delete a file? How do we say "No"?
+</p>
+<p>
+<a href="04<em>control</em><em>_permission</em>handling.md">Next Chapter: Control & Permission Handling</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="server.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">server/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-raw-noise-vs-meaningful-conversation">The Problem: Raw Noise vs. Meaningful Conversation</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:10px"><a href="#step-1-defining-the-reactions-callbacks">Step 1: Defining the Reactions (Callbacks)</a></li>
+<li style="padding-left:10px"><a href="#step-2-starting-the-manager">Step 2: Starting the Manager</a></li>
+<li style="padding-left:0px"><a href="#visualizing-the-flow">Visualizing the Flow</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-details">Internal Implementation Details</a></li>
+<li style="padding-left:10px"><a href="#1-dialing-the-number-inline-5">1. Dialing the Number (%%INLINE_5%%)</a></li>
+<li style="padding-left:10px"><a href="#2-the-sorting-hat-processing-messages">2. The Sorting Hat (Processing Messages)</a></li>
+<li style="padding-left:10px"><a href="#3-talking-back-inline-11">3. Talking Back (%%INLINE_11%%)</a></li>
+<li style="padding-left:10px"><a href="#4-handling-permissions">4. Handling Permissions</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

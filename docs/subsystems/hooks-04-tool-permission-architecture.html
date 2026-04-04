@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: Tool Permission Architecture — hooks/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">hooks/04_tool_permission_architecture.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🪝 hooks/ · 04_tool_permission_architecture.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: Tool Permission Architecture</h1>
+  <div class="chapter-meta"><span>📄 hooks/04_tool_permission_architecture.md</span></div>
+</div>
+<h1 id="chapter-4-tool-permission-architecture">Chapter 4: Tool Permission Architecture</h1>
+<p>
+Welcome back! In <a href="03<em>external</em>context<em>_</em>connectivity.md">Chapter 3: External Context & Connectivity</a>, we gave our AI "superpowers"—the ability to read files, connect via SSH, and see your IDE.
+</p>
+<p>
+But with great power comes great risk. If the AI hallucinates and tries to run <code>rm -rf /</code> (delete everything), we need a way to stop it. We cannot let the AI execute powerful tools blindly.
+</p>
+<p>
+This chapter introduces the <strong>Tool Permission Architecture</strong>, the "Border Control" agent that stands between the AI and your computer.
+</p>
+<hr>
+<h2 id="1-the-concept-the-security-checkpoint">1. The Concept: The Security Checkpoint</h2>
+<p>
+Imagine you are trying to enter a secure building. You don't just walk in.
+</p>
+<ol>
+<li>You stop at the front desk.</li>
+</ol>
+<ol>
+<li>You hand over your ID (<strong>The Context</strong>).</li>
+</ol>
+<ol>
+<li>The guard checks if you are on the list (<strong>Logic</strong>).</li>
+</ol>
+<ol>
+<li>If not, they call the boss to ask for approval (<strong>User Prompt</strong>).</li>
+</ol>
+<p>
+In our application, when the AI wants to use a tool (like %%INLINE<em>1%% or %%INLINE</em>2%%), we pause execution and create a <strong>Permission Context</strong>.
+</p>
+<h3 id="the-flow">The Flow</h3>
+<ol>
+<li><strong>AI Request:</strong> "I want to write code to <code>server.ts</code>."</li>
+</ol>
+<ol>
+<li><strong>Interception:</strong> The app pauses. It does <em>not</em> write the file yet.</li>
+</ol>
+<ol>
+<li><strong>Context Creation:</strong> We package the tool name, the arguments, and the message history into an object called <code>PermissionContext</code>.</li>
+</ol>
+<ol>
+<li><strong>User Decision:</strong> You see a prompt: "Allow writing to server.ts?"</li>
+</ol>
+<ol>
+<li><strong>Execution:</strong> If you click "Allow", the tool runs. If "Deny", the AI receives an error message.</li>
+</ol>
+<hr>
+<h2 id="2-the-permission-object-inline-5">2. The Permission Object: <code>createPermissionContext</code></h2>
+<p>
+The core of this system is a function called <code>createPermissionContext</code>. It bundles everything we need to know to make a decision.
+</p>
+<p>
+It acts as the "Passport" for the request.
+</p>
+<h3 id="step-1-bundling-the-data">Step 1: Bundling the Data</h3>
+<p>
+When a request comes in, we wrap it up.
+</p>
+<pre data-lang="typescript"><code>// Inside PermissionContext.ts (Simplified)
+function createPermissionContext(
+  tool: ToolType,                // The tool (e.g., Bash)
+  input: Record&lt;string, unknown&gt;, // Arguments (e.g., cmd: "ls -la")
+  toolUseID: string,             // Unique ID for this specific request
+  // ... other infrastructure args
+) {
+  // We return a read-only object representing this specific request
+  return {
+    tool,
+    input,
+    toolUseID,
+    // Methods to approve/deny follow below...
+  };
+}
+</code></pre>
+<p>
+<strong>Why is this needed?</strong>
+ 
+We need to freeze the state of the request. If the AI changes its mind while the user is thinking, this object remains the source of truth for <em>what specifically</em> is being approved.
+</p>
+<hr>
+<h2 id="3-handling-decisions-allow-or-deny">3. Handling Decisions: Allow or Deny</h2>
+<p>
+The <code>PermissionContext</code> object provides methods to handle the user's choice. These methods resolve the "Promise" that is holding up the AI.
+</p>
+<h3 id="scenario-a-the-user-says-yes">Scenario A: The User Says "Yes"</h3>
+<p>
+When the user clicks "Approve", we call <code>handleUserAllow</code>.
+</p>
+<pre data-lang="typescript"><code>// Inside the PermissionContext object
+async handleUserAllow(updatedInput, permissionUpdates) {
+  
+  // 1. Log that the user said yes (for analytics)
+  this.logDecision({ decision: 'accept', source: { type: 'user' } });
+
+  // 2. Return the "Allow" signal to the system
+  return {
+    behavior: 'allow',
+    updatedInput: updatedInput // User might have edited the command!
+  };
+}
+</code></pre>
+<p>
+<strong>Note:</strong> Users can edit commands before running them! That's why we pass %%INLINE<em>9%%. If the AI wanted to run %%INLINE</em>10%% and you changed it to %%INLINE<em>11%%, the %%INLINE</em>12%% is what actually runs.
+</p>
+<h3 id="scenario-b-the-user-says-no">Scenario B: The User Says "No"</h3>
+<p>
+If the user clicks "Reject", we abort the process.
+</p>
+<pre data-lang="typescript"><code>// Inside the PermissionContext object
+cancelAndAbort(feedback?: string) {
+  // 1. Construct a rejection message for the AI
+  const message = feedback 
+    ? `User rejected with reason: ${feedback}`
+    : "User denied permission";
+
+  // 2. Return the "Deny" signal
+  return { behavior: 'deny', message };
+}
+</code></pre>
+<p>
+<strong>What happens next?</strong>
+ 
+The AI receives this "Deny" message just like a tool output. It essentially "hears": <em>I tried to run the command, but the user stopped me.</em> The AI can then apologize or try a different approach.
+</p>
+<hr>
+<h2 id="4-the-waiting-room-the-queue">4. The Waiting Room: The Queue</h2>
+<p>
+Since the AI might generate multiple tool calls at once (e.g., "Write file A" AND "Write file B"), we need a place to hold these requests while the user reviews them.
+</p>
+<p>
+We use a <strong>Queue System</strong>.
+</p>
+<h3 id="the-code">The Code</h3>
+<p>
+We create a bridge between the logic and React state using <code>queueOps</code>.
+</p>
+<pre data-lang="typescript"><code>// Inside PermissionContext.ts
+function createPermissionQueueOps(setQueue) {
+  return {
+    // Add a new request to the line
+    push(item) {
+      setQueue(prev =&gt; [...prev, item]);
+    },
+    
+    // Remove a request (after approval/denial)
+    remove(id) {
+      setQueue(prev =&gt; prev.filter(item =&gt; item.toolUseID !== id));
+    }
+  };
+}
+</code></pre>
+<p>
+<strong>Analogy:</strong>
+ 
+This is the "Take a Number" system at the deli.
+</p>
+<ol>
+<li><strong><code>push</code></strong>: A new customer (tool request) takes a number.</li>
+</ol>
+<ol>
+<li><strong><code>remove</code></strong>: The customer is served (approved/denied) and leaves the line.</li>
+</ol>
+<hr>
+<h2 id="under-the-hood-the-request-lifecycle">Under the Hood: The Request Lifecycle</h2>
+<p>
+Let's visualize the journey of a dangerous command, like writing a file.
+</p>
+<ol>
+<li><strong>AI</strong> generates a tool call.</li>
+</ol>
+<ol>
+<li><strong>System</strong> catches it and builds the <code>PermissionContext</code>.</li>
+</ol>
+<ol>
+<li><strong>System</strong> pushes it to the UI Queue.</li>
+</ol>
+<ol>
+<li><strong>User</strong> sees a modal.</li>
+</ol>
+<ol>
+<li><strong>User</strong> clicks "Allow".</li>
+</ol>
+<ol>
+<li><strong>System</strong> runs the tool.</li>
+</ol>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant AI as AI Model
+    participant Sys as Permission System
+    participant UI as User Interface
+    participant User
+    
+    AI-&gt;&gt;Sys: Call Tool: "Write File"
+    Note right of Sys: PAUSE EXECUTION
+    
+    Sys-&gt;&gt;Sys: Create PermissionContext
+    Sys-&gt;&gt;UI: Add to Queue
+    
+    UI-&gt;&gt;User: Show Confirmation Modal
+    User-&gt;&gt;UI: Clicks "Allow"
+    
+    UI-&gt;&gt;Sys: handleUserAllow()
+    Sys-&gt;&gt;AI: Resume (Tool Output)</div></div>
+<h3 id="deep-dive-preventing-race-conditions">Deep Dive: preventing "Race Conditions"</h3>
+<p>
+What happens if you click "Allow" and "Deny" at the exact same time (maybe via a keyboard shortcut and a mouse click)? We don't want to run the tool twice or crash the app.
+</p>
+<p>
+We use a helper called <code>createResolveOnce</code>.
+</p>
+<pre data-lang="typescript"><code>// Inside PermissionContext.ts
+function createResolveOnce&lt;T&gt;(resolve: (value: T) =&gt; void) {
+  let claimed = false; // Has this been answered yet?
+
+  return {
+    claim() {
+      // If already answered, return false
+      if (claimed) return false;
+      
+      // Otherwise, mark as claimed and return true
+      claimed = true;
+      return true;
+    },
+    resolve(value) {
+      resolve(value); // Actually unlock the promise
+    }
+  };
+}
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+ 
+This is a "First Come, First Served" lock. The first click wins. Any subsequent clicks are ignored because %%INLINE<em>18%% is already %%INLINE</em>19%%.
+</p>
+<hr>
+<h2 id="5-persistence-remember-my-choice">5. Persistence: "Remember My Choice"</h2>
+<p>
+If you are editing a website, you don't want to click "Allow" for every single file save. You want to say "Allow all edits to this folder."
+</p>
+<p>
+The %%INLINE<em>20%% handles this via %%INLINE</em>21%%.
+</p>
+<pre data-lang="typescript"><code>async persistPermissions(updates: PermissionUpdate[]) {
+  // 1. Check if there are rules to save
+  if (updates.length === 0) return false;
+
+  // 2. Save to disk (e.g., a .permissions file)
+  persistPermissionUpdates(updates);
+
+  // 3. Update the live app state so it knows immediately
+  setToolPermissionContext(prev =&gt; 
+    applyPermissionUpdates(prev, updates)
+  );
+  
+  return true;
+}
+</code></pre>
+<p>
+<strong>How it helps:</strong>
+ 
+The next time the AI tries to write to that folder, the <strong>System</strong> checks the saved permissions <em>before</em> creating a new <code>PermissionContext</code>. If a rule exists ("Always allow /src/"), the entire queuing process is skipped, and the tool runs immediately.
+</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we built the security layer of our application:
+</p>
+<ol>
+<li><strong><code>createPermissionContext</code></strong>: Creates a frozen snapshot of a request (the Passport).</li>
+</ol>
+<ol>
+<li><strong>Queuing</strong>: Holds multiple requests in a "Waiting Room" so the user isn't overwhelmed.</li>
+</ol>
+<ol>
+<li><strong>%%INLINE<em>24%% / %%INLINE</em>25%%</strong>: The methods that resolve the pause and let the AI continue (or fail).</li>
+</ol>
+<ol>
+<li><strong><code>createResolveOnce</code></strong>: Ensures we don't accidentally approve the same thing twice.</li>
+</ol>
+<p>
+Now that we have permissions sorted out, and the user has clicked "Allow", we need to actually <em>run</em> the command. If the user pasted a massive block of commands, how do we handle them in order without freezing the UI?
+</p>
+<p>
+<a href="05<em>command</em>execution_queue.md">Next Chapter: Command Execution Queue</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="hooks.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">hooks/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#1-the-concept-the-security-checkpoint">1. The Concept: The Security Checkpoint</a></li>
+<li style="padding-left:10px"><a href="#the-flow">The Flow</a></li>
+<li style="padding-left:0px"><a href="#2-the-permission-object-inline-5">2. The Permission Object: %%INLINE_5%%</a></li>
+<li style="padding-left:10px"><a href="#step-1-bundling-the-data">Step 1: Bundling the Data</a></li>
+<li style="padding-left:0px"><a href="#3-handling-decisions-allow-or-deny">3. Handling Decisions: Allow or Deny</a></li>
+<li style="padding-left:10px"><a href="#scenario-a-the-user-says-yes">Scenario A: The User Says "Yes"</a></li>
+<li style="padding-left:10px"><a href="#scenario-b-the-user-says-no">Scenario B: The User Says "No"</a></li>
+<li style="padding-left:0px"><a href="#4-the-waiting-room-the-queue">4. The Waiting Room: The Queue</a></li>
+<li style="padding-left:10px"><a href="#the-code">The Code</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-the-request-lifecycle">Under the Hood: The Request Lifecycle</a></li>
+<li style="padding-left:10px"><a href="#deep-dive-preventing-race-conditions">Deep Dive: preventing "Race Conditions"</a></li>
+<li style="padding-left:0px"><a href="#5-persistence-remember-my-choice">5. Persistence: "Remember My Choice"</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

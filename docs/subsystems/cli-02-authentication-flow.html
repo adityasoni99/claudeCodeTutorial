@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: Authentication Flow — cli/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">cli/02_authentication_flow.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">💻 cli/ · 02_authentication_flow.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: Authentication Flow</h1>
+  <div class="chapter-meta"><span>📄 cli/02_authentication_flow.md</span></div>
+</div>
+<h1 id="chapter-2-authentication-flow">Chapter 2: Authentication Flow</h1>
+<p>
+In the previous chapter, <a href="01<em>remote</em>i<em>o</em>bridge.md">Remote I/O Bridge</a>, we built the communication line (the "Walkie-Talkie") that connects your local terminal to the remote AI brain.
+</p>
+<p>
+However, having a connection isn't enough. The remote server won't talk to just anyone. It needs to know <strong>who</strong> is calling and <strong>if</strong> they have permission to use the system.
+</p>
+<h2 id="motivation-the-digital-id-card">Motivation: The Digital ID Card</h2>
+<p>
+Imagine you work in a high-security office building. You can't just walk in; you need a security badge.
+</p>
+<ol>
+<li><strong>Authentication:</strong> You show your ID to the guard (proving who you are).</li>
+</ol>
+<ol>
+<li><strong>Authorization:</strong> The guard checks if your ID allows you to enter this specific floor.</li>
+</ol>
+<ol>
+<li><strong>Session:</strong> The guard gives you a visitor badge so you don't have to show your ID at every single door you walk through.</li>
+</ol>
+<p>
+The <strong>Authentication Flow</strong> in this CLI handles this exact process. It manages logging you in, getting a secure "badge" (token), and saving it safely on your computer so you don't have to log in every time you type a command.
+</p>
+<h2 id="key-concept-the-oauth-dance">Key Concept: The OAuth Dance</h2>
+<p>
+The most common way this CLI authenticates is via a <strong>Browser OAuth Flow</strong>. This is a secure dance between your terminal, your web browser, and the authentication server.
+</p>
+<h3 id="how-it-looks-to-the-user">How it looks to the User</h3>
+<p>
+To the user, the process is simple magic:
+</p>
+<ol>
+<li>User types <code>claude auth login</code>.</li>
+</ol>
+<ol>
+<li>A browser window pops up asking for permission.</li>
+</ol>
+<ol>
+<li>User clicks "Allow".</li>
+</ol>
+<ol>
+<li>The terminal says "Login successful."</li>
+</ol>
+<h3 id="what-happens-in-the-background">What happens in the background</h3>
+<p>
+The CLI acts like a temporary web server waiting for a secret code from the browser.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant CLI
+    participant Browser
+    participant AuthServer as Auth Server
+
+    User-&gt;&gt;CLI: Run "auth login"
+    CLI-&gt;&gt;Browser: Opens Login Page
+    User-&gt;&gt;Browser: Enters Credentials &amp; Clicks Allow
+    Browser-&gt;&gt;AuthServer: Validates User
+    AuthServer-&gt;&gt;CLI: Sends "Access Token" (The Badge)
+    CLI-&gt;&gt;User: Saves Token &amp; Prints "Success"</div></div>
+<h2 id="internal-implementation">Internal Implementation</h2>
+<p>
+The core logic resides in <code>handlers/auth.ts</code>. Let's break down the code into the steps the CLI takes to get that badge.
+</p>
+<h3 id="1-choosing-the-login-method">1. Choosing the Login Method</h3>
+<p>
+When the <code>authLogin</code> function starts, it checks: "Did the user give me a refresh token via an environment variable, or should I open a browser?"
+</p>
+<p>
+For automation (like robots running scripts), we use environment variables. For humans, we use the browser.
+</p>
+<pre data-lang="typescript"><code>// handlers/auth.ts (Simplified)
+
+// Check if a token is already provided in the environment
+const envRefreshToken = process.env.CLAUDE_CODE_OAUTH_REFRESH_TOKEN;
+
+if (envRefreshToken) {
+   // Skip browser, use the provided token directly
+   const tokens = await refreshOAuthToken(envRefreshToken, { scopes });
+   await installOAuthTokens(tokens);
+   process.exit(0); 
+}
+// If no env token, we proceed to browser login...
+</code></pre>
+<p>
+<em>Explanation:</em> If you already have a ticket (env var), you skip the line. If not, you go to the ticket counter (browser).
+</p>
+<h3 id="2-starting-the-browser-flow">2. Starting the Browser Flow</h3>
+<p>
+If we need to open the browser, we use the <code>OAuthService</code>. This service handles the complex work of generating a unique URL and listening for the callback.
+</p>
+<pre data-lang="typescript"><code>// handlers/auth.ts (Simplified)
+
+const oauthService = new OAuthService();
+
+// Start the flow
+const result = await oauthService.startOAuthFlow(
+  async (url) =&gt; {
+    process.stdout.write('Opening browser to sign in…\n');
+    process.stdout.write(`If it fails, visit: ${url}\n`);
+  },
+  { loginWithClaudeAi: true } // Config options
+);
+</code></pre>
+<p>
+<em>Explanation:</em> We ask the <code>OAuthService</code> to start the process. We provide a small callback function that tells the user "Hey, I'm opening your browser now."
+</p>
+<h3 id="3-installing-the-tokens">3. Installing the Tokens</h3>
+<p>
+Once the browser says "Yes, this is a valid user," the <code>startOAuthFlow</code> returns a set of <strong>Tokens</strong>. These are your digital keys. We must save them securely immediately.
+</p>
+<pre data-lang="typescript"><code>// handlers/auth.ts (Simplified)
+
+// We got the tokens! Now let's save them and set up the user.
+await installOAuthTokens(result);
+
+process.stdout.write('Login successful.\n');
+process.exit(0);
+</code></pre>
+<p>
+<em>Explanation:</em> We pass the fresh tokens to a helper called <code>installOAuthTokens</code>. This function is the "Save Game" feature of authentication.
+</p>
+<h3 id="4-the-setup-phase-inline-7">4. The Setup Phase (<code>installOAuthTokens</code>)</h3>
+<p>
+Getting the token is only step one. We also need to know <em>who</em> the user is (their profile) and what <em>organization</em> they belong to.
+</p>
+<pre data-lang="typescript"><code>// handlers/auth.ts (Simplified)
+
+export async function installOAuthTokens(tokens: OAuthTokens): Promise&lt;void&gt; {
+  // 1. Clear old data to avoid conflicts
+  await performLogout({ clearOnboarding: false });
+
+  // 2. Fetch user profile (Who is this?)
+  const profile = await getOauthProfileFromOauthToken(tokens.accessToken);
+  
+  // 3. Save account info locally
+  storeOAuthAccountInfo({
+    emailAddress: profile.account.email,
+    organizationUuid: profile.organization.uuid,
+    // ... other details
+  });
+
+  // 4. Save the actual secret tokens to disk
+  saveOAuthTokensIfNeeded(tokens);
+}
+</code></pre>
+<p>
+<em>Explanation:</em>
+</p>
+<ol>
+<li><strong>Logout first:</strong> Clean the slate.</li>
+</ol>
+<ol>
+<li><strong>Get Profile:</strong> Ask the server for the user's name and email.</li>
+</ol>
+<ol>
+<li><strong>Store Info:</strong> Save the non-secret info (email, org ID) for display.</li>
+</ol>
+<ol>
+<li><strong>Save Tokens:</strong> Save the secret keys securely so we can use them later.</li>
+</ol>
+<h2 id="checking-status">Checking Status</h2>
+<p>
+How do we know if we are currently logged in? The CLI provides an <code>auth status</code> command. It simply checks if those saved files exist on your computer.
+</p>
+<pre data-lang="typescript"><code>// handlers/auth.ts (Simplified)
+
+const { hasToken } = getAuthTokenSource();
+const apiKey = process.env.ANTHROPIC_API_KEY;
+
+// You are logged in if you have a Token OR an API Key
+const loggedIn = hasToken || !!apiKey;
+
+if (loggedIn) {
+  process.stdout.write(`Logged in as: ${email}\n`);
+} else {
+  process.stdout.write('Not logged in.\n');
+}
+</code></pre>
+<h2 id="summary">Summary</h2>
+<p>
+The <strong>Authentication Flow</strong> is the gatekeeper.
+</p>
+<ol>
+<li>It uses <strong>OAuth</strong> to securely identify you via the browser.</li>
+</ol>
+<ol>
+<li>It acquires <strong>Tokens</strong> (your digital ID badge).</li>
+</ol>
+<ol>
+<li>It <strong>Stores</strong> these tokens and your user profile locally.</li>
+</ol>
+<p>
+Now that we have established a connection (Chapter 1) and proved who we are (Chapter 2), we need a standardized language to communicate complex instructions to the AI.
+</p>
+<p>
+<a href="03<em>structured</em>message_protocol.md">Next Chapter: Structured Message Protocol</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="cli.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">cli/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#motivation-the-digital-id-card">Motivation: The Digital ID Card</a></li>
+<li style="padding-left:0px"><a href="#key-concept-the-oauth-dance">Key Concept: The OAuth Dance</a></li>
+<li style="padding-left:10px"><a href="#how-it-looks-to-the-user">How it looks to the User</a></li>
+<li style="padding-left:10px"><a href="#what-happens-in-the-background">What happens in the background</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#1-choosing-the-login-method">1. Choosing the Login Method</a></li>
+<li style="padding-left:10px"><a href="#2-starting-the-browser-flow">2. Starting the Browser Flow</a></li>
+<li style="padding-left:10px"><a href="#3-installing-the-tokens">3. Installing the Tokens</a></li>
+<li style="padding-left:10px"><a href="#4-the-setup-phase-inline-7">4. The Setup Phase (%%INLINE_7%%)</a></li>
+<li style="padding-left:0px"><a href="#checking-status">Checking Status</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

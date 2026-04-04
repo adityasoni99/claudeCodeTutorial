@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: Context Compaction — services/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">services/03_context_compaction.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⚡ services/ · 03_context_compaction.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: Context Compaction</h1>
+  <div class="chapter-meta"><span>📄 services/03_context_compaction.md</span></div>
+</div>
+<h1 id="chapter-3-context-compaction">Chapter 3: Context Compaction</h1>
+<p>
+Welcome to the third chapter of the <strong>Services</strong> project tutorial!
+</p>
+<p>
+In the previous chapter, <a href="02<em>memory</em><em>_knowledge</em>extraction.md">Memory & Knowledge Extraction</a>, we built a "Silent Secretary" to record permanent facts into files.
+</p>
+<p>
+However, we face a more immediate physical limitation: <strong>The Context Window</strong>.
+ 
+Just as a human has a limit to how much they can hold in their "working memory" at one time (e.g., trying to remember a 50-digit number), AI models have a hard limit on how much text they can process in a single request.
+</p>
+<p>
+If we talk to the AI for hours, or paste massive error logs, we will hit this wall. If we do nothing, the system crashes.
+</p>
+<h2 id="1-the-big-picture-the-spring-cleaning-analogy">1. The Big Picture: The "Spring Cleaning" Analogy</h2>
+<p>
+Imagine your conversation history is a <strong>backpack</strong>.
+ 
+Every time you send a message or the AI replies, you put a rock in the backpack.
+</p>
+<ol>
+<li><strong>Small rocks:</strong> "Hello."</li>
+</ol>
+<ol>
+<li><strong>Huge boulders:</strong> A 500-line error log.</li>
+</ol>
+<p>
+Eventually, the backpack gets too heavy to lift (the Context Limit). You cannot continue the journey unless you make space.
+</p>
+<p>
+<strong>Context Compaction</strong> is the process of:
+</p>
+<ol>
+<li>Stopping the hike.</li>
+</ol>
+<ol>
+<li>Taking all the old rocks (old messages) out.</li>
+</ol>
+<ol>
+<li>Crushing them into a handful of sand (a summary).</li>
+</ol>
+<ol>
+<li>Putting the sand and only the <em>newest</em> rocks back in.</li>
+</ol>
+<ol>
+<li>Resuming the hike.</li>
+</ol>
+<h3 id="central-use-case">Central Use Case</h3>
+<p>
+<strong>Goal:</strong> You are debugging a massive codebase. You have been talking for 2 hours. The conversation history is 190,000 tokens long. The limit is 200,000.
+ 
+<strong>Action:</strong> The system automatically triggers "Auto-Compaction."
+ 
+<strong>Result:</strong> The history is compressed down to 20,000 tokens. The AI still remembers what you are debugging, but the exact phrasing of your first message is replaced by a summary.
+</p>
+<h2 id="2-key-concepts">2. Key Concepts</h2>
+<h3 id="a-tokens-the-currency-of-size">A. Tokens (The Currency of Size)</h3>
+<p>
+AI models don't count words; they count <strong>Tokens</strong>. A token is roughly 4 characters or 0.75 words.
+</p>
+<ul>
+<li>"apple" ≈ 1 token</li>
+<li>"ing" ≈ 1 token</li>
+<li>A 100-line code file ≈ 1,000 tokens.</li>
+</ul>
+<p>
+We constantly estimate this count to know when the backpack is getting full.
+</p>
+<h3 id="b-the-threshold-the-traffic-light">B. The Threshold (The Traffic Light)</h3>
+<p>
+We don't wait until the backpack bursts. We set a "Safety Buffer" (e.g., 13,000 tokens remaining). Once we cross this line, the traffic light turns Red, and we must compact before sending the next message.
+</p>
+<h3 id="c-recursive-summarization">C. Recursive Summarization</h3>
+<p>
+How do we summarize the conversation? We use the AI itself!
+ 
+We create a <strong>Forked Agent</strong> (just like in Chapter 2) and give it the instruction: <em>"Please summarize the following conversation, keeping key technical details."</em>
+ 
+We take the output of that agent and replace the user's history with it.
+</p>
+<hr>
+<h2 id="3-how-it-works-the-workflow">3. How It Works (The Workflow)</h2>
+<p>
+The compaction system usually runs automatically.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant App as Main Loop
+    participant Counter as Token Estimator
+    participant Compact as Compaction Agent
+    participant AI as AI Model
+
+    User-&gt;&gt;App: Sends new message
+    App-&gt;&gt;Counter: "How full is the context?"
+    Counter--&gt;&gt;App: "CRITICAL: 95% Full!"
+    
+    rect rgb(255, 240, 240)
+        note right of App: Compaction Triggered
+        App-&gt;&gt;Compact: "Summarize messages 1-100"
+        Compact-&gt;&gt;AI: (Sends old messages)
+        AI--&gt;&gt;Compact: Returns Summary Text
+    end
+    
+    App-&gt;&gt;App: Replace msgs 1-100 with Summary
+    App-&gt;&gt;App: Restore recent files/tools
+    
+    App-&gt;&gt;AI: Sends Summary + Recent Messages + New User Msg
+    AI--&gt;&gt;User: Replies normally</div></div>
+<h3 id="critical-detail-file-restoration">Critical Detail: File Restoration</h3>
+<p>
+If we summarize away a message where the AI read <code>utils.ts</code>, the AI might forget what was in that file.
+ 
+Our compactor is smart: after summarizing, it checks which files were recently accessed and <strong>re-injects</strong> them into the context so the AI doesn't lose its "working materials."
+</p>
+<hr>
+<h2 id="4-under-the-hood-the-code">4. Under the Hood: The Code</h2>
+<p>
+Let's look at the implementation of this safety system.
+</p>
+<h3 id="step-1-counting-the-rocks-inline-1">Step 1: Counting the Rocks (<code>tokenEstimation.ts</code>)</h3>
+<p>
+We need to know how many tokens we are using. We prioritize asking the API for an exact count, but fall back to math if needed.
+</p>
+<pre data-lang="typescript"><code>// services/tokenEstimation.ts
+export async function countTokensWithAPI(content: string): Promise&lt;number | null&gt; {
+  // 1. If content is empty, cost is 0
+  if (!content) return 0
+
+  // 2. Ask the Anthropic API to count the tokens for us
+  const anthropic = await getAnthropicClient({ source: 'count_tokens' })
+  const response = await anthropic.beta.messages.countTokens({
+    model: 'claude-3-5-sonnet',
+    messages: [{ role: 'user', content }]
+  })
+
+  // 3. Return the exact number
+  return response.input_tokens
+}
+</code></pre>
+<p>
+<em>Explanation: This function acts as our scale. It asks the API, "How heavy is this text?"</em>
+</p>
+<h3 id="step-2-the-decision-to-compact-inline-2">Step 2: The Decision to Compact (<code>autoCompact.ts</code>)</h3>
+<p>
+Before every turn, we check if we are in the danger zone.
+</p>
+<pre data-lang="typescript"><code>// services/compact/autoCompact.ts
+export async function shouldAutoCompact(messages, model) {
+  // 1. Get current usage
+  const tokenCount = tokenCountWithEstimation(messages)
+  
+  // 2. Calculate the limit (Max Capacity - Safety Buffer)
+  // BUFFER is usually around 13,000 tokens
+  const threshold = getEffectiveContextWindowSize(model) - AUTOCOMPACT_BUFFER_TOKENS
+
+  // 3. Return true if we are overflowing
+  return tokenCount &gt;= threshold
+}
+</code></pre>
+<p>
+<em>Explanation: If the current %%INLINE<em>3%% is higher than our safety %%INLINE</em>4%%, we return <code>true</code> to trigger the cleaning crew.</em>
+</p>
+<h3 id="step-3-performing-the-compaction-inline-6">Step 3: Performing the Compaction (<code>compact.ts</code>)</h3>
+<p>
+This is the core logic. It replaces the long history with a summary.
+</p>
+<pre data-lang="typescript"><code>// services/compact/compact.ts
+export async function compactConversation(messages, context) {
+  // 1. Run a forked agent to generate the summary text
+  const summaryResponse = await runForkedAgent({
+    promptMessages: [{ role: 'user', content: 'Summarize this conversation...' }],
+    querySource: 'compact'
+  })
+  
+  const summaryText = summaryResponse.content[0].text
+
+  // 2. Create a new "User" message containing this summary
+  const summaryMessage = createUserMessage({
+    content: `Here is a summary of our conversation so far: ${summaryText}`,
+    isCompactSummary: true
+  })
+
+  // 3. Keep the very last few messages (so the flow feels natural)
+  const recentMessages = messages.slice(-5) 
+
+  // 4. Return the new, clean history
+  return {
+    summaryMessages: [summaryMessage],
+    messagesToKeep: recentMessages
+  }
+}
+</code></pre>
+<p>
+<em>Explanation: We outsource the heavy lifting to <code>runForkedAgent</code>. It reads the old history and returns a paragraph of text. We then stitch that paragraph onto the front of the 5 most recent messages.</em>
+</p>
+<h3 id="step-4-restoring-lost-files-inline-8">Step 4: Restoring Lost Files (<code>compact.ts</code>)</h3>
+<p>
+As mentioned, we don't want the AI to lose file contents it just read.
+</p>
+<pre data-lang="typescript"><code>// services/compact/compact.ts
+export async function createPostCompactFileAttachments(readFileState) {
+  // 1. Look at the cache of files we read recently
+  const recentFiles = Object.values(readFileState)
+    .sort((a, b) =&gt; b.timestamp - a.timestamp) // Newest first
+    .slice(0, 5) // Take top 5
+
+  // 2. Re-read these files from disk
+  const attachments = await Promise.all(recentFiles.map(file =&gt; 
+    generateFileAttachment(file.filename)
+  ))
+
+  // 3. These will be appended to the new history
+  return attachments
+}
+</code></pre>
+<p>
+<em>Explanation: This ensures that even though the conversation history is gone, the "working documents" are immediately placed back on the AI's desk.</em>
+</p>
+<h2 id="5-summary">5. Summary</h2>
+<p>
+We have built a waste management system for our AI.
+</p>
+<ol>
+<li><strong>Estimation:</strong> We constantly weigh our backpack.</li>
+</ol>
+<ol>
+<li><strong>Threshold:</strong> We know when to stop before breaking.</li>
+</ol>
+<ol>
+<li><strong>Compaction:</strong> We trade granular history for a concise summary.</li>
+</ol>
+<ol>
+<li><strong>Restoration:</strong> We ensure vital files persist through the cleanup.</li>
+</ol>
+<p>
+Now we have an AI that can connect (Chapter 1), remember facts forever (Chapter 2), and talk indefinitely without crashing (Chapter 3).
+</p>
+<p>
+Next, we need to give the AI the ability to actually <em>do</em> things—like running commands and editing files.
+</p>
+<p>
+<a href="04<em>tool</em>execution_pipeline.md">Next Chapter: Tool Execution Pipeline</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="services.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">services/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#1-the-big-picture-the-spring-cleaning-analogy">1. The Big Picture: The "Spring Cleaning" Analogy</a></li>
+<li style="padding-left:10px"><a href="#central-use-case">Central Use Case</a></li>
+<li style="padding-left:0px"><a href="#2-key-concepts">2. Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#a-tokens-the-currency-of-size">A. Tokens (The Currency of Size)</a></li>
+<li style="padding-left:10px"><a href="#b-the-threshold-the-traffic-light">B. The Threshold (The Traffic Light)</a></li>
+<li style="padding-left:10px"><a href="#c-recursive-summarization">C. Recursive Summarization</a></li>
+<li style="padding-left:0px"><a href="#3-how-it-works-the-workflow">3. How It Works (The Workflow)</a></li>
+<li style="padding-left:10px"><a href="#critical-detail-file-restoration">Critical Detail: File Restoration</a></li>
+<li style="padding-left:0px"><a href="#4-under-the-hood-the-code">4. Under the Hood: The Code</a></li>
+<li style="padding-left:10px"><a href="#step-1-counting-the-rocks-inline-1">Step 1: Counting the Rocks (%%INLINE_1%%)</a></li>
+<li style="padding-left:10px"><a href="#step-2-the-decision-to-compact-inline-2">Step 2: The Decision to Compact (%%INLINE_2%%)</a></li>
+<li style="padding-left:10px"><a href="#step-3-performing-the-compaction-inline-6">Step 3: Performing the Compaction (%%INLINE_6%%)</a></li>
+<li style="padding-left:10px"><a href="#step-4-restoring-lost-files-inline-8">Step 4: Restoring Lost Files (%%INLINE_8%%)</a></li>
+<li style="padding-left:0px"><a href="#5-summary">5. Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

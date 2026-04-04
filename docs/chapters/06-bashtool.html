@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ch.06 BashTool — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">Ch.06 — BashTool</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-tools">TOOLS</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">Chapter 6 · <span class="tag tag-tools">TOOLS</span></div>
+  <h1 class="chapter-title-h1">BashTool</h1>
+  <div class="chapter-meta">
+    <span>📄 06_bashtool.md</span>
+    <span>🏷 Tools</span>
+  </div>
+</div>
+<h1 id="chapter-6-bashtool">Chapter 6: BashTool</h1>
+<p>
+In the previous <a href="05<em>git</em>integration.md">Git Integration</a> chapter, we gave <code>claudeCode</code> the ability to understand the history of your project. It can look around and see what files have changed.
+</p>
+<p>
+But seeing isn't enough. To be a true coding assistant, the AI needs to <strong>act</strong>. It needs to run tests, install packages, start servers, and move files.
+</p>
+<p>
+Enter the <strong>BashTool</strong>.
+</p>
+<h2 id="what-is-the-bashtool">What is the BashTool?</h2>
+<p>
+The <code>BashTool</code> is the application's ability to type into your terminal.
+</p>
+<p>
+If the <strong><a href="04_fileedittool.md">FileEditTool</a></strong> is the "Text Editor," the <strong>BashTool</strong> is the "Command Line." It allows the AI to execute shell commands just like a human developer would.
+</p>
+<h3 id="the-central-use-case-running-the-tests">The Central Use Case: "Running the Tests"</h3>
+<p>
+Imagine you ask: <strong>"Run the tests and fix any errors."</strong>
+</p>
+<ol>
+<li>The AI writes code using the FileEditTool.</li>
+</ol>
+<ol>
+<li>Now it needs to verify the fix.</li>
+</ol>
+<ol>
+<li>The AI calls <strong>BashTool</strong> with the command <code>npm test</code>.</li>
+</ol>
+<ol>
+<li>The tool runs the command on your computer.</li>
+</ol>
+<ol>
+<li>The tool captures the output (e.g., "Tests Failed") and sends it back to the AI.</li>
+</ol>
+<ol>
+<li>The AI reads the error and tries again.</li>
+</ol>
+<p>
+Without <code>BashTool</code>, the AI is just a text generator. With it, the AI becomes an operator.
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<h3 id="1-the-shell-session">1. The Shell Session</h3>
+<p>
+When you open a terminal, you are in a "Session." If you type %%INLINE<em>4%%, you stay in the %%INLINE</em>5%% folder for the next command.
+ 
+<code>BashTool</code> tries to maintain this continuity so the AI doesn't get lost.
+</p>
+<h3 id="2-standard-output-stdout-vs-standard-error-stderr">2. Standard Output (stdout) vs. Standard Error (stderr)</h3>
+<p>
+Computers speak in two streams:
+</p>
+<ul>
+<li><strong>stdout:</strong> "Here is the normal result." (e.g., File list).</li>
+<li><strong>stderr:</strong> "Something went wrong." (e.g., File not found).</li>
+</ul>
+<p>
+The <code>BashTool</code> captures both so the AI knows exactly what happened.
+</p>
+<h3 id="3-exit-codes">3. Exit Codes</h3>
+<p>
+Every command finishes with a number.
+</p>
+<ul>
+<li><strong>0:</strong> Success!</li>
+<li><strong>Non-Zero (1, 127, etc.):</strong> Failure.</li>
+</ul>
+<p>
+The AI uses this number to quickly decide if its plan worked or failed.
+</p>
+<h2 id="how-to-use-bashtool">How to Use BashTool</h2>
+<p>
+Like the other tools, this is designed for the AI to use. However, understanding the input helps you understand the AI's behavior.
+</p>
+<h3 id="the-input-structure">The Input Structure</h3>
+<p>
+The AI sends a simple object containing the command string.
+</p>
+<pre data-lang="json"><code>{
+  "command": "npm install lodash"
+}
+</code></pre>
+<h3 id="example-chained-commands">Example: Chained Commands</h3>
+<p>
+The AI can run multiple things at once using standard shell syntax.
+</p>
+<pre data-lang="json"><code>{
+  "command": "cd src &amp;&amp; ls -la"
+}
+</code></pre>
+<p>
+<em>Explanation: This moves into the <code>src</code> folder AND lists the files immediately. This is efficient because it saves a "turn" in the conversation.</em>
+</p>
+<h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
+<p>
+When the AI requests a command, we don't just blindly run it. We have to spawn a "Sub-process."
+</p>
+<ol>
+<li><strong>Request:</strong> AI sends <code>npm test</code>.</li>
+</ol>
+<ol>
+<li><strong>Permission:</strong> (Crucial!) The app asks the user: "Allow this?" (More on this in <a href="07<em>shell</em>safety_checks.md">Shell Safety Checks</a>).</li>
+</ol>
+<ol>
+<li><strong>Spawn:</strong> Node.js creates a new process on your OS.</li>
+</ol>
+<ol>
+<li><strong>Stream:</strong> As the test runs, text flows from the process to our application.</li>
+</ol>
+<ol>
+<li><strong>Result:</strong> When the process stops, we package the text and exit code back to the AI.</li>
+</ol>
+<p>
+Here is the flow:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant AI
+    participant Tool as BashTool
+    participant User
+    participant OS as Operating System
+
+    AI-&gt;&gt;Tool: Request: "npm test"
+    
+    Note over Tool: Pauses for safety
+    Tool-&gt;&gt;User: "Allow 'npm test'?"
+    User-&gt;&gt;Tool: Click "Yes"
+    
+    Tool-&gt;&gt;OS: Spawn Process ('npm', ['test'])
+    
+    loop While Running
+        OS--&gt;&gt;Tool: Stream text ("Test 1 passed...")
+        Tool--&gt;&gt;User: Display in Ink UI
+    end
+    
+    OS--&gt;&gt;Tool: Exit Code: 0 (Success)
+    Tool-&gt;&gt;AI: Return: "Tests passed."</div></div>
+<h3 id="internal-implementation-code">Internal Implementation Code</h3>
+<p>
+The implementation involves two parts: the <strong>Execution Logic</strong> (running the code) and the <strong>Permission UI</strong> (asking the user).
+</p>
+<h4 id="1-the-permission-request-ui">1. The Permission Request (UI)</h4>
+<p>
+Before running anything, we mount a React component to ask the user. This uses the <strong><a href="02<em>ink</em>ui_framework.md">Ink UI Framework</a></strong>.
+</p>
+<pre data-lang="tsx"><code>// components/permissions/BashPermissionRequest.tsx (Simplified)
+
+export function BashPermissionRequest({ command, onDone }) {
+  // Show the user what command is about to run
+  return (
+    &lt;PermissionDialog title="Bash command"&gt;
+      &lt;Text color="yellow"&gt;{command}&lt;/Text&gt;
+      &lt;Text&gt;Do you want to proceed?&lt;/Text&gt;
+      {/* Handled by user input keys (y/n) */}
+      &lt;Select 
+        options={['yes', 'no']} 
+        onSelect={(val) =&gt; val === 'yes' ? onDone() : exit()} 
+      /&gt;
+    &lt;/PermissionDialog&gt;
+  );
+}
+</code></pre>
+<p>
+<em>Explanation: This component intercepts the flow. The tool cannot proceed until <code>onDone()</code> is called, which only happens if the user selects 'yes'.</em>
+</p>
+<h4 id="2-executing-the-command">2. Executing the Command</h4>
+<p>
+Once approved, we use Node.js utilities to run the command.
+</p>
+<pre data-lang="typescript"><code>// tools/BashTool/runCommand.ts (Simplified)
+import { spawn } from 'child_process';
+
+function runShellCommand(commandString) {
+  // Spawn the command in a shell
+  const child = spawn(commandString, { shell: true });
+
+  let output = '';
+
+  // Listen for data chunks
+  child.stdout.on('data', (data) =&gt; {
+    output += data; // Collect the text
+  });
+
+  // Return a promise that resolves when the command finishes
+  return new Promise((resolve) =&gt; {
+    child.on('close', (code) =&gt; {
+      resolve({ output, exitCode: code });
+    });
+  });
+}
+</code></pre>
+<p>
+<em>Explanation: We use %%INLINE<em>11%% with %%INLINE</em>12%%. We accumulate all the text into %%INLINE<em>13%%. When the process emits %%INLINE</em>14%%, we finish the job.</em>
+</p>
+<h3 id="handling-long-running-commands">Handling Long-Running Commands</h3>
+<p>
+What if the user runs a server that never stops?
+ 
+The %%INLINE<em>15%% includes a <strong>timeout mechanism</strong>. If a command runs too long without output, or if the user presses %%INLINE</em>16%%, the tool sends a "kill signal" to the process to stop it cleanly.
+</p>
+<h2 id="why-is-this-important-for-later">Why is this important for later?</h2>
+<p>
+The BashTool is powerful, but power brings danger.
+</p>
+<ul>
+<li><strong><a href="07<em>shell</em>safety<em>checks.md">Shell Safety Checks</a>:</strong> We can't let the AI run %%INLINE</em>17%% by accident. The next chapter explains how we analyze commands <em>before</em> running them.</li>
+<li><strong><a href="10<em>auto</em>mode<em>classifier.md">Auto-Mode Classifier</a>:</strong> The classifier looks at the %%INLINE</em>18%% from the BashTool to decide if the AI completed its task successfully.</li>
+<li><strong><a href="18<em>computer</em>use.md">Computer Use</a>:</strong> Later, we will see how this concept expands beyond the terminal to controlling the mouse and keyboard.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have learned that the <strong>BashTool</strong> is the "hands" of <code>claudeCode</code> in the terminal. It spawns processes, captures output, and reports back to the AI. It transforms the AI from a passive advisor into an active participant in your development workflow.
+</p>
+<p>
+However, giving an AI access to your terminal requires strict supervision. How do we ensure it acts safely?
+</p>
+<p>
+<a href="07<em>shell</em>safety_checks.md">Next Chapter: Shell Safety Checks</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="05-git-integration.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">Git Integration</div>
+        </a><a class="chapter-nav-card next" href="07-shell-safety-checks.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">Shell Safety Checks</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#what-is-the-bashtool">What is the BashTool?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case-running-the-tests">The Central Use Case: "Running the Tests"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-shell-session">1. The Shell Session</a></li>
+<li style="padding-left:10px"><a href="#2-standard-output-stdout-vs-standard-error-stderr">2. Standard Output (stdout) vs. Standard Error (stderr)</a></li>
+<li style="padding-left:10px"><a href="#3-exit-codes">3. Exit Codes</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-bashtool">How to Use BashTool</a></li>
+<li style="padding-left:10px"><a href="#the-input-structure">The Input Structure</a></li>
+<li style="padding-left:10px"><a href="#example-chained-commands">Example: Chained Commands</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-how-it-works">Under the Hood: How it Works</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-code">Internal Implementation Code</a></li>
+<li style="padding-left:10px"><a href="#handling-long-running-commands">Handling Long-Running Commands</a></li>
+<li style="padding-left:0px"><a href="#why-is-this-important-for-later">Why is this important for later?</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

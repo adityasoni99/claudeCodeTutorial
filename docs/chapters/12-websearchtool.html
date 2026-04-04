@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ch.12 WebSearchTool — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">Ch.12 — WebSearchTool</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-tools">TOOLS</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">Chapter 12 · <span class="tag tag-tools">TOOLS</span></div>
+  <h1 class="chapter-title-h1">WebSearchTool</h1>
+  <div class="chapter-meta">
+    <span>📄 12_websearchtool.md</span>
+    <span>🏷 Tools</span>
+  </div>
+</div>
+<h1 id="chapter-12-websearchtool">Chapter 12: WebSearchTool</h1>
+<p>
+In the previous <a href="11<em>notebookedittool.md">NotebookEditTool</a> chapter, we learned how to manipulate local data science files. We gave %%INLINE</em>0%% the ability to be a careful editor.
+</p>
+<p>
+However, a good developer doesn't just look at their own code. They look at documentation, StackOverflow, and GitHub issues.
+</p>
+<p>
+By default, an AI model is like an encyclopedia printed last year. It knows everything <em>up to that date</em>, but it doesn't know about the JavaScript library released yesterday.
+</p>
+<p>
+Enter the <strong>WebSearchTool</strong>. This tool gives the agent a live connection to the internet, allowing it to fetch up-to-date information.
+</p>
+<h2 id="what-is-the-websearchtool">What is the WebSearchTool?</h2>
+<p>
+The <strong>WebSearchTool</strong> acts as a research assistant. When <code>claudeCode</code> realizes it doesn't know the answer (or needs to check the latest version of a package), it uses this tool to "Google it."
+</p>
+<h3 id="the-central-use-case-the-deprecated-function">The Central Use Case: "The Deprecated Function"</h3>
+<p>
+Imagine you ask: <strong>"Why is my code failing with <code>Error: useHistory is not exported from react-router-dom</code>?"</strong>
+</p>
+<p>
+The AI might remember an old version of React Router. But with the WebSearchTool, it can:
+</p>
+<ol>
+<li><strong>Search:</strong> "react-router-dom useHistory replacement"</li>
+</ol>
+<ol>
+<li><strong>Read:</strong> Find the migration guide v5 to v6.</li>
+</ol>
+<ol>
+<li><strong>Learn:</strong> "Ah, %%INLINE<em>3%% was replaced by %%INLINE</em>4%%."</li>
+</ol>
+<ol>
+<li><strong>Answer:</strong> Tell you exactly how to fix your code based on today's standards.</li>
+</ol>
+<h2 id="key-concepts">Key Concepts</h2>
+<h3 id="1-the-query">1. The Query</h3>
+<p>
+Just like you type keywords into a search bar, the AI generates a <strong>Query String</strong>. It tries to be specific to get the best technical results.
+</p>
+<h3 id="2-domain-control">2. Domain Control</h3>
+<p>
+Searching the <em>entire</em> web can be noisy. This tool supports:
+</p>
+<ul>
+<li><strong>Allowed Domains:</strong> "Only search <code>developer.mozilla.org</code>."</li>
+<li><strong>Blocked Domains:</strong> "Don't search <code>reddit.com</code>."</li>
+</ul>
+<p>
+This keeps the information high-quality and relevant.
+</p>
+<h3 id="3-structured-results">3. Structured Results</h3>
+<p>
+The tool doesn't just return a screenshot. It returns structured data:
+</p>
+<ul>
+<li><strong>Titles</strong> of pages.</li>
+<li><strong>URLs</strong> (Links).</li>
+<li><strong>Snippets</strong> (Summaries of the content).</li>
+</ul>
+<h2 id="how-to-use-websearchtool">How to Use WebSearchTool</h2>
+<p>
+The AI uses this tool automatically when it lacks information. However, you can see how it requests a search by looking at its input structure.
+</p>
+<h3 id="the-input-structure">The Input Structure</h3>
+<p>
+The AI sends a JSON object requesting a search.
+</p>
+<pre data-lang="json"><code>{
+  "query": "python 3.12 release notes new features",
+  "allowed_domains": ["python.org", "docs.python.org"]
+}
+</code></pre>
+<h3 id="the-output-structure">The Output Structure</h3>
+<p>
+The tool replies with a summary found on the web.
+</p>
+<pre data-lang="json"><code>{
+  "query": "python 3.12 release notes new features",
+  "results": [
+    {
+      "title": "What's New In Python 3.12",
+      "url": "https://docs.python.org/3/whatsnew/3.12.html"
+    }
+  ],
+  "durationSeconds": 0.8
+}
+</code></pre>
+<p>
+<em>Explanation: The AI reads this <code>results</code> array to formulate its final answer to you.</em>
+</p>
+<h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
+<p>
+Unlike the <a href="04_fileedittool.md">FileEditTool</a> which touches your hard drive, this tool reaches out to an external API.
+</p>
+<p>
+Interestingly, <code>claudeCode</code> often delegates this task. It asks a specialized version of the Claude model (or a specific API endpoint) to perform the search and summarize the findings.
+</p>
+<p>
+Here is the flow:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant MainAI as Claude (Main)
+    participant Tool as WebSearchTool
+    participant SearchAPI as External Search Provider
+
+    MainAI-&gt;&gt;Tool: Call: { query: "latest nodejs version" }
+    
+    Note over Tool: Validates query isn't empty
+    
+    Tool-&gt;&gt;SearchAPI: Request Search Results
+    SearchAPI--&gt;&gt;Tool: Returns Links &amp; Text Snippets
+    
+    Note over Tool: Formats data into text block
+    
+    Tool--&gt;&gt;MainAI: "Here are the results: Node v20..."</div></div>
+<h3 id="internal-implementation-code">Internal Implementation Code</h3>
+<p>
+The implementation is located in <code>tools/WebSearchTool/WebSearchTool.ts</code>. Let's break down the key parts.
+</p>
+<h4 id="1-defining-the-tool">1. Defining the Tool</h4>
+<p>
+We define the tool using <code>buildTool</code>, setting its name and description so the AI knows when to use it.
+</p>
+<pre data-lang="typescript"><code>// tools/WebSearchTool/WebSearchTool.ts
+export const WebSearchTool = buildTool({
+  name: 'web_search',
+  
+  // Helps the AI understand the tool's purpose
+  description: (input) =&gt; `Claude wants to search for: ${input.query}`,
+  
+  // The shape of data the AI must provide
+  inputSchema: inputSchema(), 
+  
+  // Is it safe to run alongside other tools? Yes.
+  isConcurrencySafe: () =&gt; true,
+  
+  // ... implementation details
+});
+</code></pre>
+<h4 id="2-validation">2. Validation</h4>
+<p>
+Before searching, we check if the request makes sense.
+</p>
+<pre data-lang="typescript"><code>async validateInput(input) {
+  const { query, allowed_domains, blocked_domains } = input;
+
+  // 1. We need a query to search!
+  if (!query.length) {
+    return { result: false, message: 'Error: Missing query' };
+  }
+
+  // 2. You can't both Allow AND Block domains (logic conflict)
+  if (allowed_domains?.length &amp;&amp; blocked_domains?.length) {
+    return { 
+      result: false, 
+      message: 'Cannot specify both allowed and blocked domains' 
+    };
+  }
+  return { result: true };
+}
+</code></pre>
+<p>
+<em>Explanation: This ensures we don't send empty or contradictory requests to the search API.</em>
+</p>
+<h4 id="3-execution-the-call">3. Execution (The Call)</h4>
+<p>
+The <code>call</code> function is where the magic happens. We actually stream the request to a model capable of browsing.
+</p>
+<pre data-lang="typescript"><code>// Inside async call(...)
+const userMessage = createUserMessage({
+  content: 'Perform a web search for: ' + query,
+});
+
+// We create a stream to the API
+const queryStream = queryModelWithStreaming({
+  messages: [userMessage],
+  tools: [], // We might pass specific browser tools here
+  // ... options
+});
+
+// We wait for the stream to finish and collect results
+for await (const event of queryStream) {
+  // Logic to capture search hits as they arrive...
+}
+</code></pre>
+<p>
+<em>Explanation: We use %%INLINE<em>12%% (discussed in <a href="03</em>query_engine.md">Query Engine</a>) to delegate the heavy lifting of searching and summarizing to the backend API.</em>
+</p>
+<h4 id="4-formatting-the-output">4. Formatting the Output</h4>
+<p>
+Once we have the data, we need to turn it into a string the AI can read.
+</p>
+<pre data-lang="typescript"><code>mapToolResultToToolResultBlockParam(output, toolUseID) {
+  const { query, results } = output;
+  
+  let formatted = `Web search results for: "${query}"\n\n`;
+
+  // Loop through results and add links
+  results.forEach(result =&gt; {
+    if (result.content) {
+      formatted += `Links: ${jsonStringify(result.content)}\n\n`;
+    }
+  });
+
+  return {
+    type: 'tool_result',
+    content: formatted.trim(),
+  };
+}
+</code></pre>
+<p>
+<em>Explanation: This converts the raw JSON into a readable text block. The AI reads this text to learn the information.</em>
+</p>
+<h2 id="safety-and-permissions">Safety and Permissions</h2>
+<p>
+Because this tool sends data (your query) to the outside world, it interacts with the <a href="08<em>permission</em><em>_security</em>system.md">Permission & Security System</a>.
+</p>
+<p>
+Usually, %%INLINE<em>13%% is flagged as "ReadOnly" (it doesn't change your files), but some users might want to block it to prevent data leaks. The %%INLINE</em>14%% function handles this.
+</p>
+<pre data-lang="typescript"><code>async checkPermissions(_input) {
+  return {
+    behavior: 'passthrough', // Usually safe
+    message: 'WebSearchTool requires permission.',
+    // Suggest adding a rule to allow it permanently
+    suggestions: [{ type: 'addRules', rules: [{ toolName: 'web_search' }] }]
+  };
+}
+</code></pre>
+<h2 id="why-is-this-important-for-later">Why is this important for later?</h2>
+<p>
+The WebSearchTool is a bridge to the outside world.
+</p>
+<ul>
+<li><strong><a href="16_teammates.md">Teammates</a>:</strong> Later, we will see that different AI agents have different skills. One "Teammate" might be a dedicated Researcher who uses this tool constantly.</li>
+<li><strong><a href="14<em>model</em>context<em>protocol</em><em>mcp</em>.md">Model Context Protocol (MCP)</a>:</strong> This tool is a built-in example of fetching external context. In Chapter 14, we will learn how to build <em>custom</em> tools that fetch data from <em>your</em> private databases.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have learned that the <strong>WebSearchTool</strong> is <code>claudeCode</code>'s window to the present. By validating queries and connecting to a search API, it allows the AI to answer questions about topics that didn't exist when the model was trained.
+</p>
+<p>
+Now that we have a powerful set of tools (File Editing, Notebooks, Web Search), we need a way to turn them on or off depending on who is using the application.
+</p>
+<p>
+<a href="13<em>feature</em>gating.md">Next Chapter: Feature Gating</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="11-notebookedittool.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">NotebookEditTool</div>
+        </a><a class="chapter-nav-card next" href="13-feature-gating.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">Feature Gating</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#what-is-the-websearchtool">What is the WebSearchTool?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case-the-deprecated-function">The Central Use Case: "The Deprecated Function"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-query">1. The Query</a></li>
+<li style="padding-left:10px"><a href="#2-domain-control">2. Domain Control</a></li>
+<li style="padding-left:10px"><a href="#3-structured-results">3. Structured Results</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-websearchtool">How to Use WebSearchTool</a></li>
+<li style="padding-left:10px"><a href="#the-input-structure">The Input Structure</a></li>
+<li style="padding-left:10px"><a href="#the-output-structure">The Output Structure</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-how-it-works">Under the Hood: How it Works</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-code">Internal Implementation Code</a></li>
+<li style="padding-left:0px"><a href="#safety-and-permissions">Safety and Permissions</a></li>
+<li style="padding-left:0px"><a href="#why-is-this-important-for-later">Why is this important for later?</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

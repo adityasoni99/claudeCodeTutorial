@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: Two-Tier Storage Architecture (Index vs. Detail) — memdir/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">memdir/03_two_tier_storage_architecture__index_vs__detail_.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🧠 memdir/ · 03_two_tier_storage_architecture__index_vs__detail_.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: Two-Tier Storage Architecture (Index vs. Detail)</h1>
+  <div class="chapter-meta"><span>📄 memdir/03_two_tier_storage_architecture__index_vs__detail_.md</span></div>
+</div>
+<h1 id="chapter-3-two-tier-storage-architecture-index-vs-detail">Chapter 3: Two-Tier Storage Architecture (Index vs. Detail)</h1>
+<p>
+In the previous chapter, <a href="02<em>scoped</em>persistence<strong>private<em>vs</strong>team</em>.md">Scoped Persistence (Private vs. Team)</a>, we solved the problem of <em>who</em> sees a memory by splitting files into Private and Team folders.
+</p>
+<p>
+Now we face a <strong>scale</strong> problem. Imagine your team has created 500 memory files. If the AI reads all 500 files every time you say "Hello," two bad things happen:
+</p>
+<ol>
+<li><strong>Cost:</strong> It costs money (tokens) to process that text.</li>
+</ol>
+<ol>
+<li><strong>Confusion:</strong> The AI gets overwhelmed by irrelevant details ("User likes blue buttons") when you are asking about database schema.</li>
+</ol>
+<p>
+To solve this, <strong>memdir</strong> uses a <strong>Two-Tier Storage Architecture</strong>.
+</p>
+<h2 id="the-motivation-the-library-card-catalog">The Motivation: The Library Card Catalog</h2>
+<p>
+Think of the AI's "Context Window" (what it can keep in its head at one time) like a <strong>backpack</strong>. It has limited space.
+</p>
+<p>
+If you own 500 books (memories), you cannot fit them all in the backpack. Instead, you put a single sheet of paper in the backpack: a <strong>List of Books</strong>.
+</p>
+<ul>
+<li><strong>Tier 1 (The List):</strong> A lightweight index that fits easily in the backpack.</li>
+<li><strong>Tier 2 (The Books):</strong> The heavy, detailed content stored on the shelf (disk), retrieved only when needed.</li>
+</ul>
+<h2 id="the-solution-inline-0-and-topic-files">The Solution: <code>MEMORY.md</code> and Topic Files</h2>
+<p>
+We organize memory into these two specific layers:
+</p>
+<h3 id="1-the-index-inline-1">1. The Index (<code>MEMORY.md</code>)</h3>
+<p>
+This is the "cheat sheet" loaded into every single conversation. It <strong>must</strong> be small. It does not contain details; it only contains pointers.
+</p>
+<p>
+<strong>Example Content of <code>MEMORY.md</code>:</strong>
+</p>
+<pre data-lang="markdown"><code>- [User Prefs](user_preferences.md) — User prefers TypeScript, hates jQuery.
+- [Project Goals](project_goals.md) — Launch by Friday, MVP only.
+- [Auth System](auth_architecture.md) — We use OAuth2 with Clerk.
+</code></pre>
+<h3 id="2-the-detail-inline-3">2. The Detail (<code>*.md</code>)</h3>
+<p>
+These are the actual memory files we discussed in Chapter 1. They contain the full context, reasoning, and examples.
+</p>
+<p>
+<strong>Example Content of <code>auth_architecture.md</code>:</strong>
+</p>
+<pre data-lang="markdown"><code>---
+type: project
+---
+We use Clerk for authentication.
+Why: It handles 2FA and session management out of the box.
+Configuration: keys are in .env.local...
+</code></pre>
+<h2 id="use-case-finding-the-answer">Use Case: Finding the Answer</h2>
+<p>
+Let's look at how the AI uses this system to answer a question without carrying all the weight.
+</p>
+<p>
+<strong>Scenario:</strong> You ask, <em>"Why are we using Clerk?"</em>
+</p>
+<ol>
+<li><strong>System:</strong> Loads <strong>only</strong> <code>MEMORY.md</code> into the AI's context.</li>
+</ol>
+<ol>
+<li><strong>AI:</strong> Reads the list. It ignores %%INLINE<em>6%% (irrelevant). It spots %%INLINE</em>7%%.</li>
+</ol>
+<ol>
+<li><strong>AI:</strong> Says, "Ah, I see a file about Auth. I will read that specific file."</li>
+</ol>
+<ol>
+<li><strong>System:</strong> Loads the heavy <code>auth_architecture.md</code>.</li>
+</ol>
+<ol>
+<li><strong>AI:</strong> Answers your question using the details.</li>
+</ol>
+<h2 id="internal-implementation-under-the-hood">Internal Implementation: Under the Hood</h2>
+<p>
+How do we build this? We need to ensure the Index (<code>MEMORY.md</code>) never becomes too heavy itself. If the user writes a novel in the index, it defeats the purpose.
+</p>
+<h3 id="conceptual-flow">Conceptual Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant System
+    participant AI
+    participant Disk
+
+    User-&gt;&gt;System: "Why Clerk?"
+    System-&gt;&gt;Disk: Read MEMORY.md (The Index)
+    Disk--&gt;&gt;System: Return list of 30 topics
+    System-&gt;&gt;AI: Inject Index into Prompt
+    AI-&gt;&gt;AI: Scan list... found "auth_architecture.md"
+    AI-&gt;&gt;System: Tool Call: Read "auth_architecture.md"
+    System-&gt;&gt;Disk: Read full content of auth file
+    Disk--&gt;&gt;AI: Return detailed content
+    AI-&gt;&gt;User: "We use Clerk because..."</div></div>
+<h3 id="the-code-enforcing-the-limit">The Code: Enforcing the Limit</h3>
+<p>
+In <code>src/memdir.ts</code>, we define strict limits for the Index file. We want it to stay under ~200 lines.
+</p>
+<pre data-lang="typescript"><code>// src/memdir.ts
+
+export const ENTRYPOINT_NAME = 'MEMORY.md'
+
+// We cap the index at 200 lines to save context space
+export const MAX_ENTRYPOINT_LINES = 200
+
+// We also cap it by bytes (~25KB) to prevent ultra-long lines
+export const MAX_ENTRYPOINT_BYTES = 25_000
+</code></pre>
+<h3 id="truncating-the-index">Truncating the Index</h3>
+<p>
+If the index grows too large (e.g., 500 memories), we simply cut off the bottom. This forces the AI (and the user) to keep the index clean.
+</p>
+<p>
+Here is the logic that chops the file:
+</p>
+<pre data-lang="typescript"><code>// src/memdir.ts (Simplified)
+
+export function truncateEntrypointContent(raw: string) {
+  const lines = raw.trim().split('\n')
+  
+  // Check if we exceeded the line limit
+  if (lines.length &gt; MAX_ENTRYPOINT_LINES) {
+    // Keep only the top 200 lines
+    return {
+      content: lines.slice(0, MAX_ENTRYPOINT_LINES).join('\n') + 
+               '\n&gt; WARNING: Index truncated. Keep it concise!',
+      wasTruncated: true
+    }
+  }
+  
+  return { content: raw, wasTruncated: false }
+}
+</code></pre>
+<p>
+<em>Explanation:</em> 
+</p>
+<ol>
+<li>We split the file into lines.</li>
+</ol>
+<ol>
+<li>If it's longer than 200 lines, we keep the top 200.</li>
+</ol>
+<ol>
+<li>We append a <strong>WARNING</strong> so the AI knows it doesn't have the full map.</li>
+</ol>
+<h3 id="teaching-the-ai-the-prompt">Teaching the AI (The Prompt)</h3>
+<p>
+Finally, we have to tell the AI how to behave. We don't just hope it updates the index; we order it to.
+</p>
+<p>
+In <code>buildMemoryLines</code>, we give specific instructions:
+</p>
+<pre data-lang="typescript"><code>// src/memdir.ts (Simplified Prompt Construction)
+
+const instructions = [
+  // Step 1: Write the detail file
+  'Step 1 — write the memory to its own file (e.g., `user_role.md`).',
+  
+  // Step 2: Update the index
+  `Step 2 — add a pointer to that file in \`${ENTRYPOINT_NAME}\`.`,
+  
+  // The Constraint
+  `\`${ENTRYPOINT_NAME}\` is an index. Each entry should be one line.`,
+  'Never write memory content directly into the index.'
+]
+</code></pre>
+<p>
+This prompt ensures that whenever the AI learns something new, it creates a <strong>Detail File</strong> first, and then adds a <strong>One-Line Link</strong> to the <strong>Index File</strong>.
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>The Problem:</strong> Loading every memory file crashes the context window.</li>
+</ol>
+<ol>
+<li><strong>The Solution:</strong> A Two-Tier system.</li>
+</ol>
+<ol>
+<li><strong>Tier 1:</strong> <code>MEMORY.md</code> is a lightweight card catalog (Index).</li>
+</ol>
+<ol>
+<li><strong>Tier 2:</strong> <code>*.md</code> files are the actual books (Detail).</li>
+</ol>
+<ol>
+<li><strong>The Mechanism:</strong> The system auto-truncates the index if it gets too big, forcing efficiency.</li>
+</ol>
+<p>
+Now we have a system that stores data efficiently. But what happens if the user asks a question that <em>isn't</em> in the index? Or what if the index is truncated and the AI can't see the file it needs?
+</p>
+<p>
+We need a smarter way to search.
+</p>
+<p>
+<a href="04<em>contextual</em>recall_mechanism.md">Next Chapter: Contextual Recall Mechanism</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="memdir.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">memdir/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-the-library-card-catalog">The Motivation: The Library Card Catalog</a></li>
+<li style="padding-left:0px"><a href="#the-solution-inline-0-and-topic-files">The Solution: %%INLINE_0%% and Topic Files</a></li>
+<li style="padding-left:10px"><a href="#1-the-index-inline-1">1. The Index (%%INLINE_1%%)</a></li>
+<li style="padding-left:10px"><a href="#2-the-detail-inline-3">2. The Detail (%%INLINE_3%%)</a></li>
+<li style="padding-left:0px"><a href="#use-case-finding-the-answer">Use Case: Finding the Answer</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-under-the-hood">Internal Implementation: Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#conceptual-flow">Conceptual Flow</a></li>
+<li style="padding-left:10px"><a href="#the-code-enforcing-the-limit">The Code: Enforcing the Limit</a></li>
+<li style="padding-left:10px"><a href="#truncating-the-index">Truncating the Index</a></li>
+<li style="padding-left:10px"><a href="#teaching-the-ai-the-prompt">Teaching the AI (The Prompt)</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

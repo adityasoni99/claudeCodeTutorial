@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: Permission & Safety System — types/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">types/03_permission___safety_system.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">📝 types/ · 03_permission___safety_system.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: Permission & Safety System</h1>
+  <div class="chapter-meta"><span>📄 types/03_permission___safety_system.md</span></div>
+</div>
+<h1 id="chapter-3-permission-safety-system">Chapter 3: Permission & Safety System</h1>
+<p>
+In the previous chapter, <a href="02<em>session</em><em>_transcript</em>persistence.md">Session & Transcript Persistence</a>, we gave our agent a long-term memory. It remembers where it is and what it has done.
+</p>
+<p>
+But a powerful memory combined with powerful tools (like file editing or shell execution) creates a risk. What if the agent hallucinates and tries to delete your entire project? What if it tries to upload your <code>.env</code> file to a public server?
+</p>
+<p>
+This chapter introduces the <strong>Permission & Safety System</strong>.
+</p>
+<h2 id="the-motivation-the-club-bouncer">The Motivation: The Club Bouncer</h2>
+<p>
+Imagine your computer is an exclusive nightclub. The <strong>Agent</strong> is a guest who wants to enter various rooms (folders) and interact with people (files/APIs).
+</p>
+<p>
+The <strong>Permission System</strong> is the <strong>Bouncer</strong> at the door.
+</p>
+<p>
+Every time the agent tries to use a tool—whether it's writing a file (%%INLINE<em>1%%) or running a terminal command (%%INLINE</em>2%%)—it must present its "ID" to the Bouncer. The Bouncer checks three things:
+</p>
+<ol>
+<li><strong>The Mode:</strong> Is it "Open House" night or "VIP Only"?</li>
+</ol>
+<ol>
+<li><strong>The Rules:</strong> Is this specific guest on the blacklist?</li>
+</ol>
+<ol>
+<li><strong>The Intuition (Classifiers):</strong> Does this guest <em>look</em> suspicious?</li>
+</ol>
+<p>
+Based on this, the Bouncer makes one of three decisions: <strong>Allow</strong>, <strong>Deny</strong>, or <strong>Ask the Manager</strong> (You).
+</p>
+<hr>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+The system is built around three core definitions found in <code>permissions.ts</code>.
+</p>
+<h3 id="1-permission-modes">1. Permission Modes</h3>
+<p>
+The "Mode" sets the overall strictness level for the session.
+</p>
+<pre data-lang="typescript"><code>// From permissions.ts
+export const EXTERNAL_PERMISSION_MODES = [
+  'acceptEdits',      // Trusted. Allows most file edits automatically.
+  'default',          // Balanced. Asks for potentially risky actions.
+  'dontAsk',          // Strict. If it's risky, just block it.
+  'plan',             // Read-only. The agent can look but cannot touch.
+] as const
+</code></pre>
+<ul>
+<li><strong>Beginner Tip:</strong> When you start the application, you choose a mode. %%INLINE<em>4%% is best for daily use. %%INLINE</em>5%% is great when you want the agent to refactor a lot of code without nagging you.</li>
+</ul>
+<h3 id="2-permission-rules">2. Permission Rules</h3>
+<p>
+Specific overrides can be set for specific tools. A rule answers: "Who said this is allowed?"
+</p>
+<pre data-lang="typescript"><code>export type PermissionRule = {
+  source: 'userSettings' | 'projectSettings' | 'session',
+  ruleBehavior: 'allow' | 'deny' | 'ask',
+  ruleValue: {
+    toolName: string // e.g., "run_command"
+  }
+}
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong> You might have a %%INLINE<em>6%% that says: <em>"Always <strong>deny</strong> the %%INLINE</em>7%% command in this repo."</em></li>
+</ul>
+<h3 id="3-permission-decisions">3. Permission Decisions</h3>
+<p>
+This is the final verdict returned by the system before a tool runs.
+</p>
+<pre data-lang="typescript"><code>export type PermissionDecision = 
+  | { behavior: 'allow', updatedInput?: ... }
+  | { behavior: 'deny', message: string }
+  | { behavior: 'ask', message: string }
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong> The rest of the codebase waits for this object. If it receives <code>'ask'</code>, it pauses execution and renders a dialog box to the user.</li>
+</ul>
+<hr>
+<h2 id="use-case-the-delete-command-safety-check">Use Case: The "Delete Command" Safety Check</h2>
+<p>
+Let's walk through a scenario: <strong>The Agent tries to run <code>rm -rf /</code></strong>.
+</p>
+<h3 id="step-1-the-request">Step 1: The Request</h3>
+<p>
+The agent constructs a command object. It wants to use the tool %%INLINE<em>10%% with the argument %%INLINE</em>11%%.
+</p>
+<h3 id="step-2-the-logic-check">Step 2: The Logic Check</h3>
+<p>
+The Permission System analyzes the request. It notices this is a high-stakes command. Even if you are in <code>acceptEdits</code> mode, the system might have a "safety clamp" for destructive shell commands.
+</p>
+<h3 id="step-3-the-result-inline-13">Step 3: The Result (<code>PermissionAskDecision</code>)</h3>
+<p>
+The system returns an "Ask" decision.
+</p>
+<pre data-lang="typescript"><code>const decision: PermissionAskDecision = {
+  behavior: 'ask',
+  message: 'The agent wants to run a destructive command: rm -rf /',
+  decisionReason: {
+    type: 'safetyCheck',
+    reason: 'High risk shell command detected'
+  }
+}
+</code></pre>
+<h3 id="step-4-the-user-interface">Step 4: The User Interface</h3>
+<p>
+Because %%INLINE<em>14%% is %%INLINE</em>15%%, the tool execution pauses. The user sees a prompt:
+</p>
+<blockquote><p>⚠️ <strong>Warning:</strong> The agent wants to delete files. Allow? [Y/n]</p></blockquote>
+<p>
+Only if the user types "Y" does the system convert this into an <code>'allow'</code> decision and proceed.
+</p>
+<hr>
+<h2 id="under-the-hood-internal-implementation">Under the Hood: Internal Implementation</h2>
+<p>
+How does the system decide? It's not just a simple <code>if/else</code>. It uses a pipeline of checks, including "Classifiers" (mini-AI models) that evaluate risk.
+</p>
+<h3 id="visual-flow-the-permission-pipeline">Visual Flow: The Permission Pipeline</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant A as Agent
+    participant S as Safety System
+    participant C as Classifier (AI)
+    participant U as User
+
+    A-&gt;&gt;S: Request: "Update file.ts"
+    
+    rect rgb(20, 20, 20)
+        Note right of S: Pipeline Start
+        S-&gt;&gt;S: Check Explicit Rules (Blacklist)
+        S-&gt;&gt;C: Check "Is this malicious?"
+        C--&gt;&gt;S: "Looks safe (Low Risk)"
+        S-&gt;&gt;S: Check Current Mode
+    end
+    
+    alt Mode is 'default' (Strict)
+        S--&gt;&gt;U: Prompt: "Allow file write?"
+        U-&gt;&gt;S: Click "Yes"
+        S--&gt;&gt;A: Permission Granted
+    else Mode is 'acceptEdits' (Trusted)
+        S--&gt;&gt;A: Permission Granted (Auto)
+    end</div></div>
+<h3 id="implementation-details">Implementation Details</h3>
+<p>
+Let's look at how the code structures these complex decisions.
+</p>
+<h4 id="1-the-decision-reason">1. The Decision Reason</h4>
+<p>
+When a decision is made, we must know <em>why</em>. Was it a rule? Was it the AI classifier? Was it just the default mode?
+</p>
+<pre data-lang="typescript"><code>// From permissions.ts
+export type PermissionDecisionReason =
+  | { type: 'rule', rule: PermissionRule } // "Because config.json said so"
+  | { type: 'mode', mode: PermissionMode } // "Because you are in Plan mode"
+  | { type: 'classifier', reason: string } // "Because the AI thinks it's safe"
+  | { type: 'safetyCheck', reason: string } // "Because it matches a danger pattern"
+</code></pre>
+<ul>
+<li><strong>Beginner Tip:</strong> This "traceability" is crucial for debugging. If the agent is blocked, you can look at the logs and see <code>type: 'rule'</code> to know you need to update your settings.</li>
+</ul>
+<h4 id="2-the-smart-classifier">2. The Smart Classifier</h4>
+<p>
+Sometimes, regex isn't enough. We use a <code>ClassifierResult</code> to handle fuzzy logic.
+</p>
+<pre data-lang="typescript"><code>export type ClassifierResult = {
+  matches: boolean         // Did the AI flag this?
+  confidence: 'high' | 'medium' | 'low'
+  reason: string           // e.g., "Command attempts to exfiltrate data"
+}
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong> We send the command to a small, fast, local LLM. We ask: <em>"Is this command dangerous?"</em> If the confidence is high, the Permission System overrides the default settings to protect the user.</li>
+</ul>
+<h4 id="3-attribution-and-risk">3. Attribution and Risk</h4>
+<p>
+For advanced reporting, we calculate a <code>RiskLevel</code>.
+</p>
+<pre data-lang="typescript"><code>export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH'
+
+export type PermissionExplanation = {
+  riskLevel: RiskLevel
+  explanation: string // Human readable summary
+  reasoning: string   // Technical details
+}
+</code></pre>
+<ul>
+<li><strong>Explanation:</strong> This data is often displayed in the UI next to the "Allow/Deny" buttons, helping the user make an informed choice.</li>
+</ul>
+<hr>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+The <strong>Permission & Safety System</strong> is the gatekeeper of the application. It ensures that while the <a href="01<em>command</em>architecture.md">Command Architecture</a> provides the <em>ability</em> to act, and <a href="02<em>session</em><em>_transcript</em>persistence.md">Session Persistence</a> provides the <em>context</em> to act intelligently, the Agent never acts <em>recklessly</em>.
+</p>
+<p>
+By separating "Capability" (Tools) from "Policy" (Permissions), we can build powerful agents that are safe enough to run on your local machine.
+</p>
+<p>
+Now that the agent is safe to accept input, we need to handle the complex state of that input—what if the user is typing, pasting an image, or interrupting the agent?
+</p>
+<p>
+<a href="04<em>input</em>state_management.md">Next Chapter: Input State Management</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="types.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">types/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-the-club-bouncer">The Motivation: The Club Bouncer</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-permission-modes">1. Permission Modes</a></li>
+<li style="padding-left:10px"><a href="#2-permission-rules">2. Permission Rules</a></li>
+<li style="padding-left:10px"><a href="#3-permission-decisions">3. Permission Decisions</a></li>
+<li style="padding-left:0px"><a href="#use-case-the-delete-command-safety-check">Use Case: The "Delete Command" Safety Check</a></li>
+<li style="padding-left:10px"><a href="#step-1-the-request">Step 1: The Request</a></li>
+<li style="padding-left:10px"><a href="#step-2-the-logic-check">Step 2: The Logic Check</a></li>
+<li style="padding-left:10px"><a href="#step-3-the-result-inline-13">Step 3: The Result (%%INLINE_13%%)</a></li>
+<li style="padding-left:10px"><a href="#step-4-the-user-interface">Step 4: The User Interface</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-internal-implementation">Under the Hood: Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#visual-flow-the-permission-pipeline">Visual Flow: The Permission Pipeline</a></li>
+<li style="padding-left:10px"><a href="#implementation-details">Implementation Details</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

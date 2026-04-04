@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 3: Runtime Plugin State — plugins/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">plugins/03_runtime_plugin_state.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🔌 plugins/ · 03_runtime_plugin_state.md</div>
+  <h1 class="chapter-title-h1">Chapter 3: Runtime Plugin State</h1>
+  <div class="chapter-meta"><span>📄 plugins/03_runtime_plugin_state.md</span></div>
+</div>
+<h1 id="chapter-3-runtime-plugin-state">Chapter 3: Runtime Plugin State</h1>
+<p>
+Welcome to the third chapter of the <strong>Plugins</strong> project!
+</p>
+<p>
+In the previous chapter, <a href="02<em>plugin</em>namespacing.md">Plugin Namespacing</a>, we learned how to give every plugin a unique ID (like <code>git-helper@builtin</code>) so we never confuse official features with community ones.
+</p>
+<p>
+Now we face a new question: <strong>Is the plugin actually running?</strong>
+</p>
+<h2 id="motivation-the-smart-switch-problem">Motivation: The "Smart Switch" Problem</h2>
+<p>
+Imagine you have a lamp.
+</p>
+<ol>
+<li><strong>The Bulb (The Plugin):</strong> It exists. It <em>can</em> produce light.</li>
+</ol>
+<ol>
+<li><strong>The Switch (The Setting):</strong> You can flip it ON or OFF.</li>
+</ol>
+<p>
+Just because you bought a bulb (registered a plugin) doesn't mean the room is lit. You need to know the state of the switch.
+</p>
+<ul>
+<li><strong>The Problem:</strong> Our code has a list of plugins. It also has a settings file where the user saves their preferences. These are two separate things.</li>
+<li><strong>The Solution:</strong> We need a logic layer that combines "What exists" with "What the user wants" to create a final <strong>Runtime State</strong>.</li>
+</ul>
+<p>
+This chapter explains how we convert a static definition into a <code>LoadedPlugin</code>—an object that tells the system if a feature is ready to use.
+</p>
+<h3 id="core-use-case">Core Use Case</h3>
+<p>
+We ship a <code>git-helper</code> plugin.
+</p>
+<ul>
+<li><strong>Default:</strong> It should be <strong>ON</strong> for most people.</li>
+<li><strong>User Preference:</strong> One specific user hates Git and turns it <strong>OFF</strong> in their settings.</li>
+<li><strong>Goal:</strong> When that specific user starts the app, the system must respect their choice and hide the Git tools.</li>
+</ul>
+<h2 id="key-concepts">Key Concepts</h2>
+<p>
+To calculate this state, we look at three inputs:
+</p>
+<ol>
+<li><strong>Hard Availability (%%INLINE<em>3%%):</strong> Does the computer actually support this? (e.g., You can't use the %%INLINE</em>4%% plugin if your computer has no Bluetooth chip).</li>
+</ol>
+<ol>
+<li><strong>User Settings:</strong> Has the user explicitly said %%INLINE<em>5%% or %%INLINE</em>6%% in their config file?</li>
+</ol>
+<ol>
+<li><strong>Factory Defaults:</strong> If the user hasn't said anything, what should we do?</li>
+</ol>
+<h2 id="the-inline-7-object">The <code>LoadedPlugin</code> Object</h2>
+<p>
+The result of this calculation is an interface called <code>LoadedPlugin</code>. This is the "live" version of the plugin used by the app.
+</p>
+<p>
+Unlike the static definition (which just describes the code), the <code>LoadedPlugin</code> contains the <strong>state</strong>.
+</p>
+<pre data-lang="typescript"><code>// A simplified look at the result
+interface LoadedPlugin {
+  name: string
+  source: string     // e.g., 'git-helper@builtin'
+  enabled: boolean   // &lt;--- The most important part!
+  // ... other details
+}
+</code></pre>
+<h2 id="internal-implementation">Internal Implementation</h2>
+<p>
+How does the system calculate that <code>enabled</code> boolean? It acts like a logic gate.
+</p>
+<h3 id="the-logic-flow">The Logic Flow</h3>
+<p>
+When the application asks "What plugins do I have?", the system runs a specific sequence:
+</p>
+<ol>
+<li><strong>Check Hardware:</strong> If the plugin requires specific OS features and they are missing, stop. It's disabled.</li>
+</ol>
+<ol>
+<li><strong>Check Settings:</strong> Look for the specific ID (e.g., <code>git-helper@builtin</code>) in the user's settings file.</li>
+</ol>
+<ol>
+<li><strong>Resolve:</strong></li>
+<ul>
+<li>If the user has a setting, <strong>User wins</strong>.</li>
+<li>If no setting exists, <strong>Default wins</strong>.</li>
+</ul>
+</ol>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant App
+    participant Logic as State Logic
+    participant Def as Static Definition
+    participant Set as User Settings
+
+    App-&gt;&gt;Logic: getBuiltinPlugins()
+    Logic-&gt;&gt;Def: Get Default (e.g., True)
+    Logic-&gt;&gt;Set: Get User Preference (e.g., False)
+    
+    Note over Logic: User (False) overrides Default (True)
+    
+    Logic--&gt;&gt;App: Returns Plugin Object (enabled: false)</div></div>
+<h3 id="deep-dive-code-breakdown">Deep Dive: Code Breakdown</h3>
+<p>
+Let's look at the real logic inside %%INLINE<em>12%%. We will break the %%INLINE</em>13%% function into small pieces.
+</p>
+<h4 id="1-checking-hardware-availability">1. Checking Hardware Availability</h4>
+<p>
+First, we check if the plugin is even allowed to run on this computer.
+</p>
+<pre data-lang="typescript"><code>// inside getBuiltinPlugins()...
+for (const [name, definition] of BUILTIN_PLUGINS) {
+  
+  // If the plugin has a hardware check and fails it...
+  if (definition.isAvailable &amp;&amp; !definition.isAvailable()) {
+    continue // Skip it entirely!
+  }
+  
+  // ... proceed to settings check
+}
+</code></pre>
+<p>
+<em>Explanation:</em> Some plugins might define an %%INLINE<em>14%% function. If this returns %%INLINE</em>15%% (e.g., "This is a Windows plugin but you are on Mac"), we skip the plugin immediately.
+</p>
+<h4 id="2-fetching-user-settings">2. Fetching User Settings</h4>
+<p>
+We need to see what the user wants. We use a helper to get the persistent settings.
+</p>
+<pre data-lang="typescript"><code>import { getSettings_DEPRECATED } from '../utils/settings/settings.js'
+
+// ... inside the loop
+const settings = getSettings_DEPRECATED()
+
+// Recall from Chapter 2: We use the unique ID!
+const pluginId = `${name}@builtin` 
+
+const userSetting = settings?.enabledPlugins?.[pluginId]
+</code></pre>
+<p>
+<em>Explanation:</em> We retrieve the value stored under the unique ID. %%INLINE<em>16%% will be %%INLINE</em>17%%, %%INLINE<em>18%%, or %%INLINE</em>19%% (if the user has never touched the switch).
+</p>
+<h4 id="3-the-decision-matrix-the-smart-switch">3. The Decision Matrix (The "Smart Switch")</h4>
+<p>
+This is the core logic that resolves conflicts.
+</p>
+<pre data-lang="typescript"><code>// Logic: User preference &gt; Plugin default &gt; true
+const isEnabled =
+  userSetting !== undefined
+    ? userSetting === true 
+    : (definition.defaultEnabled ?? true)
+</code></pre>
+<p>
+<em>Explanation:</em>
+</p>
+<ol>
+<li><strong>Ternary Operator:</strong> We ask, "Is <code>userSetting</code> defined?"</li>
+</ol>
+<ol>
+<li><strong>If Yes:</strong> Use the user's setting exactly as is.</li>
+</ol>
+<ol>
+<li><strong>If No:</strong> Fall back to the plugin's <code>defaultEnabled</code>.</li>
+</ol>
+<ol>
+<li><strong>Final Fallback:</strong> If the plugin didn't specify a default, assume <code>true</code> (Enabled).</li>
+</ol>
+<h4 id="4-creating-the-object">4. Creating the Object</h4>
+<p>
+Finally, we bundle this decision into the <code>LoadedPlugin</code> object.
+</p>
+<pre data-lang="typescript"><code>const plugin: LoadedPlugin = {
+  name,
+  source: pluginId,
+  enabled: isEnabled, // The result of our logic
+  isBuiltin: true,
+  // ... passing through hooks and skills
+}
+</code></pre>
+<h4 id="5-categorizing">5. Categorizing</h4>
+<p>
+The function returns two arrays so the UI knows how to display them.
+</p>
+<pre data-lang="typescript"><code>if (isEnabled) {
+  enabled.push(plugin)
+} else {
+  disabled.push(plugin)
+}
+
+return { enabled, disabled }
+</code></pre>
+<p>
+<em>Explanation:</em> The UI receives <code>{ enabled: [...], disabled: [...] }</code>. It can now show active tools in green and inactive ones in gray.
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>Runtime State</strong> is different from static code; it combines definitions with user preferences.</li>
+</ol>
+<ol>
+<li><strong>The <code>LoadedPlugin</code></strong> abstraction represents this final state.</li>
+</ol>
+<ol>
+<li>The logic hierarchy is: <strong>Hardware Check > User Setting > Factory Default</strong>.</li>
+</ol>
+<p>
+At this point, we have a list of enabled plugins. These plugins contain "skills" (functions code can run). But the CLI doesn't speak "Skill"—it speaks "Command."
+</p>
+<p>
+In the next chapter, we will see how we translate these raw skills into commands the CLI can execute.
+</p>
+<p>
+<a href="04<em>skill</em>to<em>command</em>adaptation.md">Next Chapter: Skill-to-Command Adaptation</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="plugins.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">plugins/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#motivation-the-smart-switch-problem">Motivation: The "Smart Switch" Problem</a></li>
+<li style="padding-left:10px"><a href="#core-use-case">Core Use Case</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:0px"><a href="#the-inline-7-object">The %%INLINE_7%% Object</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation">Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#the-logic-flow">The Logic Flow</a></li>
+<li style="padding-left:10px"><a href="#deep-dive-code-breakdown">Deep Dive: Code Breakdown</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 6: Language Server Integration (LSP) — services/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">services/06_language_server_integration__lsp_.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⚡ services/ · 06_language_server_integration__lsp_.md</div>
+  <h1 class="chapter-title-h1">Chapter 6: Language Server Integration (LSP)</h1>
+  <div class="chapter-meta"><span>📄 services/06_language_server_integration__lsp_.md</span></div>
+</div>
+<h1 id="chapter-6-language-server-integration-lsp">Chapter 6: Language Server Integration (LSP)</h1>
+<p>
+Welcome to the sixth chapter of the <strong>Services</strong> project tutorial!
+</p>
+<p>
+In the previous chapter, <a href="05<em>model</em>context<em>protocol</em><em>mcp</em>.md">Model Context Protocol (MCP)</a>, we gave our AI the ability to plug into external tools like databases and Slack.
+</p>
+<p>
+However, our AI is primarily a <strong>Coder</strong>. While reading text files is helpful, true coding intelligence requires more. It requires knowing where a function is defined, seeing syntax errors before running the code, and knowing available methods on a class.
+</p>
+<p>
+We don't want to re-invent this logic. Instead, we connect our AI to the exact same "brains" that power editors like VS Code.
+</p>
+<h2 id="1-the-big-picture-the-smart-glasses-analogy">1. The Big Picture: The "Smart Glasses" Analogy</h2>
+<p>
+Imagine reading a book in a foreign language. You can read the letters, but you don't understand the grammar or the deep meaning.
+ 
+Now, imagine putting on <strong>Smart Glasses</strong> that instantly highlight grammar mistakes, translate words, and draw lines connecting pronouns to the people they refer to.
+</p>
+<p>
+<strong>Language Server Integration (LSP)</strong> gives our AI these smart glasses.
+</p>
+<p>
+Without LSP, the AI just sees text:
+ 
+<code>function add(a, b) { return a + b }</code>
+</p>
+<p>
+With LSP, the AI sees structure:
+</p>
+<ul>
+<li>"This is a function named <code>add</code>."</li>
+<li>"It accepts two parameters."</li>
+<li>"It returns a number."</li>
+<li>"It is referenced in 5 other files."</li>
+</ul>
+<h3 id="central-use-case">Central Use Case</h3>
+<p>
+<strong>Goal:</strong> The AI is editing a TypeScript file. It wants to call a function <code>calculateTax()</code>, but it doesn't know what arguments that function needs.
+ 
+<strong>Action:</strong> The AI asks the LSP system: <em>"Show me the signature for <code>calculateTax</code>."</em>
+ 
+<strong>Result:</strong> The LSP responds: <em>"It takes %%INLINE<em>4%% and %%INLINE</em>5%%."</em> The AI then writes the correct code without guessing.
+</p>
+<h2 id="2-key-concepts">2. Key Concepts</h2>
+<h3 id="a-the-language-server-the-expert">A. The Language Server (The Expert)</h3>
+<p>
+A Language Server is a background process dedicated to a specific language.
+</p>
+<ul>
+<li><code>tsserver</code> for TypeScript/JavaScript.</li>
+<li><code>gopls</code> for Go.</li>
+<li><code>pyright</code> for Python.</li>
+</ul>
+<p>
+It doesn't care about the UI (colors, buttons); it only cares about the code logic.
+</p>
+<h3 id="b-the-protocol-json-rpc">B. The Protocol (JSON-RPC)</h3>
+<p>
+LSP stands for <strong>Language Server Protocol</strong>. It's the universal language these servers speak.
+ 
+Instead of sending raw text, we send JSON messages like:
+ 
+<code>{ "method": "textDocument/definition", "params": { ... } }</code>
+</p>
+<h3 id="c-the-manager-the-router">C. The Manager (The Router)</h3>
+<p>
+Since a project might have Python, TypeScript, and HTML files mixed together, we need a <strong>Manager</strong>. This manager looks at the file extension (e.g., <code>.ts</code>) and routes the question to the correct server.
+</p>
+<hr>
+<h2 id="3-how-it-works-the-implementation">3. How It Works (The Implementation)</h2>
+<p>
+To the rest of our app, the LSP system looks like a simple query engine. You give it a file path and a question, and it gives you an answer.
+</p>
+<h3 id="the-workflow">The Workflow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant AI
+    participant Manager as LSP Manager
+    participant TS as TypeScript Server
+    participant PY as Python Server
+
+    AI-&gt;&gt;Manager: "Where is 'User' defined in 'app.ts'?"
+    
+    Manager-&gt;&gt;Manager: Check Extension (.ts)
+    Manager-&gt;&gt;TS: Forward Request (textDocument/definition)
+    TS--&gt;&gt;Manager: "Line 10, Column 5"
+    
+    Manager--&gt;&gt;AI: Returns Location
+    
+    AI-&gt;&gt;Manager: "Check errors in 'script.py'"
+    Manager-&gt;&gt;PY: Forward Request
+    PY--&gt;&gt;Manager: "Syntax Error: Line 5"</div></div>
+<hr>
+<h2 id="4-under-the-hood-the-code">4. Under the Hood: The Code</h2>
+<p>
+Let's explore how we build this integration using %%INLINE<em>11%% and %%INLINE</em>12%%.
+</p>
+<h3 id="part-1-the-client-inline-13">Part 1: The Client (<code>LSPClient.ts</code>)</h3>
+<p>
+We need a way to launch the server process (like <code>node tsserver.js</code>) and talk to it. This is the <strong>LSP Client</strong>.
+</p>
+<h4 id="starting-the-process">Starting the Process</h4>
+<p>
+We use Node.js <code>spawn</code> to start the server. We communicate via "Standard Input/Output" (stdin/stdout)—like passing notes through a slot in a door.
+</p>
+<pre data-lang="typescript"><code>// services/lsp/LSPClient.ts (Simplified)
+export function createLSPClient(serverName) {
+  return {
+    async start(command, args) {
+      // 1. Launch the server process (e.g., "node tsserver")
+      process = spawn(command, args, { stdio: ['pipe', 'pipe', 'pipe'] })
+      
+      // 2. Connect readers/writers to the process
+      const reader = new StreamMessageReader(process.stdout)
+      const writer = new StreamMessageWriter(process.stdin)
+      
+      // 3. Create the JSON-RPC connection object
+      connection = createMessageConnection(reader, writer)
+      connection.listen() // Start listening for messages
+    }
+  }
+}
+</code></pre>
+<p>
+<em>Explanation: This function turns a simple command line program into a structured server we can talk to.</em>
+</p>
+<h4 id="sending-a-request">Sending a Request</h4>
+<p>
+Once connected, we can send requests.
+</p>
+<pre data-lang="typescript"><code>// services/lsp/LSPClient.ts (Simplified)
+async sendRequest(method, params) {
+  if (!isInitialized) throw new Error('Server not ready')
+
+  // Send JSON-RPC message and await the response
+  return await connection.sendRequest(method, params)
+}
+</code></pre>
+<p>
+<em>Explanation: We wrap the complex JSON formatting. We just say <code>sendRequest('definition')</code> and the library handles the ID tracking and response matching.</em>
+</p>
+<h3 id="part-2-the-manager-inline-17">Part 2: The Manager (<code>LSPServerManager.ts</code>)</h3>
+<p>
+The Manager is the boss. It manages multiple Clients.
+</p>
+<h4 id="initialization-routing">Initialization & Routing</h4>
+<p>
+When the app starts, the manager reads a config to see which servers to launch.
+</p>
+<pre data-lang="typescript"><code>// services/lsp/LSPServerManager.ts (Simplified)
+async function initialize() {
+  const config = await getAllLspServers()
+  
+  // Create a client for every server in config
+  for (const [name, cfg] of Object.entries(config)) {
+    const instance = createLSPServerInstance(name, cfg)
+    servers.set(name, instance)
+    
+    // Map file extensions (e.g., .ts -&gt; tsserver)
+    mapExtensionsToServer(cfg.extensionToLanguage, name)
+  }
+}
+</code></pre>
+<p>
+<em>Explanation: This builds a lookup map. If we see a %%INLINE<em>18%% file later, we know to look up the server named %%INLINE</em>19%%.</em>
+</p>
+<h4 id="keeping-the-server-in-sync">keeping the Server in Sync</h4>
+<p>
+LSP servers don't read files from your hard drive constantly. They keep a virtual version in memory. We must tell them when we open or change a file.
+</p>
+<pre data-lang="typescript"><code>// services/lsp/LSPServerManager.ts
+async function openFile(filePath, content) {
+  // 1. Find the right server
+  const server = await ensureServerStarted(filePath)
+  
+  // 2. Send the "didOpen" notification
+  await server.sendNotification('textDocument/didOpen', {
+    textDocument: {
+      uri: filePathToUri(filePath),
+      text: content, // We send the full file content
+      version: 1
+    }
+  })
+}
+</code></pre>
+<p>
+<em>Explanation: Before asking "Where is the definition?", we MUST call <code>openFile</code>. Otherwise, the server will say "I don't know what file you are talking about."</em>
+</p>
+<h4 id="ensuring-the-server-is-running">Ensuring the Server is Running</h4>
+<p>
+We don't want to run heavy servers if we aren't using them. We start them lazily (on demand).
+</p>
+<pre data-lang="typescript"><code>// services/lsp/LSPServerManager.ts (Simplified)
+async function ensureServerStarted(filePath) {
+  const server = getServerForFile(filePath)
+  if (!server) return undefined
+
+  // Only start if it's currently stopped
+  if (server.state === 'stopped') {
+    await server.start()
+  }
+
+  return server
+}
+</code></pre>
+<p>
+<em>Explanation: This is efficient. If you never open a Python file, the Python server never starts, saving memory.</em>
+</p>
+<h3 id="part-3-using-the-system">Part 3: Using the System</h3>
+<p>
+The AI uses the manager to perform advanced analysis.
+</p>
+<pre data-lang="typescript"><code>// usage example (Simplified)
+const manager = createLSPServerManager()
+
+// 1. Open the file so the server knows about it
+await manager.openFile('/src/app.ts', fileContent)
+
+// 2. Ask for a definition location
+const result = await manager.sendRequest(
+  '/src/app.ts', 
+  'textDocument/definition', 
+  { position: { line: 10, character: 5 } }
+)
+
+console.log(`Definition found at: ${result.uri}`)
+</code></pre>
+<h2 id="5-summary">5. Summary</h2>
+<p>
+We have upgraded our AI from a "text reader" to a "code analyzer."
+</p>
+<ol>
+<li><strong>LSP Client:</strong> Connects to standard tools like <code>tsserver</code>.</li>
+</ol>
+<ol>
+<li><strong>LSP Manager:</strong> Routes requests based on file extensions.</li>
+</ol>
+<ol>
+<li><strong>Synchronization:</strong> Keeps the server's view of the code in sync with the AI's view.</li>
+</ol>
+<p>
+With this system, the AI can perform refactoring, find bugs, and navigate complex codebases with the same precision as a human using a professional IDE.
+</p>
+<p>
+Now that we have a fully functional AI system—capable of connecting, remembering, using tools, and analyzing code—we need to know what it is doing. How do we track errors? How do we know if it's being successful?
+</p>
+<p>
+<a href="07<em>telemetry</em>__observability.md">Next Chapter: Telemetry & Observability</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="services.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">services/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#1-the-big-picture-the-smart-glasses-analogy">1. The Big Picture: The "Smart Glasses" Analogy</a></li>
+<li style="padding-left:10px"><a href="#central-use-case">Central Use Case</a></li>
+<li style="padding-left:0px"><a href="#2-key-concepts">2. Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#a-the-language-server-the-expert">A. The Language Server (The Expert)</a></li>
+<li style="padding-left:10px"><a href="#b-the-protocol-json-rpc">B. The Protocol (JSON-RPC)</a></li>
+<li style="padding-left:10px"><a href="#c-the-manager-the-router">C. The Manager (The Router)</a></li>
+<li style="padding-left:0px"><a href="#3-how-it-works-the-implementation">3. How It Works (The Implementation)</a></li>
+<li style="padding-left:10px"><a href="#the-workflow">The Workflow</a></li>
+<li style="padding-left:0px"><a href="#4-under-the-hood-the-code">4. Under the Hood: The Code</a></li>
+<li style="padding-left:10px"><a href="#part-1-the-client-inline-13">Part 1: The Client (%%INLINE_13%%)</a></li>
+<li style="padding-left:10px"><a href="#part-2-the-manager-inline-17">Part 2: The Manager (%%INLINE_17%%)</a></li>
+<li style="padding-left:10px"><a href="#part-3-using-the-system">Part 3: Using the System</a></li>
+<li style="padding-left:0px"><a href="#5-summary">5. Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

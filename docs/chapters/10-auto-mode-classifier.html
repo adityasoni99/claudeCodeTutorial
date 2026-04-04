@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ch.10 Auto-Mode Classifier — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">Ch.10 — Auto-Mode Classifier</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-security">SECURITY</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">Chapter 10 · <span class="tag tag-security">SECURITY</span></div>
+  <h1 class="chapter-title-h1">Auto-Mode Classifier</h1>
+  <div class="chapter-meta">
+    <span>📄 10_auto_mode_classifier.md</span>
+    <span>🏷 Security</span>
+  </div>
+</div>
+<h1 id="chapter-10-auto-mode-classifier">Chapter 10: Auto-Mode Classifier</h1>
+<p>
+In the previous <a href="09<em>rule</em>matching.md">Rule Matching</a> chapter, we learned how to create strict permission rules like "Always allow <code>npm test</code>."
+</p>
+<p>
+But software development is messy. Sometimes, you want to allow a command <em>only if</em> it is part of a specific context. For example: "Allow file edits, but only if they are just fixing typos in documentation."
+</p>
+<p>
+Strict rules cannot handle "context." Strict rules don't understand "typos."
+</p>
+<p>
+Enter the <strong>Auto-Mode Classifier</strong>. This is a smaller, faster AI model that acts as a judge. It looks at the tool the main AI wants to use and decides: <em>"Is this safe enough to auto-approve, or should I ask the human?"</em>
+</p>
+<h2 id="what-is-the-auto-mode-classifier">What is the Auto-Mode Classifier?</h2>
+<p>
+The <strong>Auto-Mode Classifier</strong> is a safety guard that runs inside the <a href="08<em>permission</em><em>_security</em>system.md">Permission & Security System</a>.
+</p>
+<p>
+When you run <code>claudeCode</code> in "Auto Mode" (allowing it to work without constant supervision), we still need to prevent disasters. We can't just turn off all security. Instead, we use a secondary AI model to classify every action into two buckets:
+</p>
+<ol>
+<li><strong>Safe / Routine:</strong> Go ahead. (e.g., Reading a file, running a read-only script).</li>
+</ol>
+<ol>
+<li><strong>Risky / Ambiguous:</strong> Stop and ask the user. (e.g., Deleting a database, pushing to the <code>main</code> branch).</li>
+</ol>
+<h3 id="the-central-use-case-the-documentation-fix">The Central Use Case: "The Documentation Fix"</h3>
+<p>
+Imagine you ask: <strong>"Fix the spelling errors in all <code>.md</code> files."</strong>
+</p>
+<p>
+The main AI (Claude) decides to edit 50 files.
+</p>
+<ul>
+<li><strong>Without Classifier:</strong> You have to click "Approve" 50 times.</li>
+<li><strong>With Classifier:</strong> The classifier looks at the edits. It sees they are just text changes in markdown files. It classifies this as "Safe" based on your settings. It auto-approves all 50 edits. You sit back and relax.</li>
+</ul>
+<h2 id="key-concepts">Key Concepts</h2>
+<h3 id="1-the-yolo-model">1. The "YOLO" Model</h3>
+<p>
+Internally, we sometimes call this the "YOLO" (You Only Look Once) classifier. It is designed to be fast. It doesn't write code; it just looks at a proposed action and gives a Thumbs Up or Thumbs Down.
+</p>
+<h3 id="2-the-three-rule-categories">2. The Three Rule Categories</h3>
+<p>
+To help the classifier make decisions, we give it instructions in three categories:
+</p>
+<ul>
+<li><strong>Allow:</strong> Things that are definitely okay (e.g., "Editing tests").</li>
+<li><strong>Soft Deny:</strong> Things that require a human check (e.g., "Editing configuration files").</li>
+<li><strong>Environment:</strong> Facts about your project (e.g., "This is a sandbox environment, so deleting files is fine").</li>
+</ul>
+<h3 id="3-the-critique-system">3. The Critique System</h3>
+<p>
+Writing rules for an AI is hard. How do you know if your rule is clear?
+ 
+<code>claudeCode</code> includes a <strong>Critique Handler</strong>. You can write draft rules, and the system will analyze them and tell you if they are ambiguous or dangerous.
+</p>
+<h2 id="how-to-use-the-classifier">How to Use the Classifier</h2>
+<p>
+As a user, you interact with the classifier by configuring its rules in your settings file. <code>claudeCode</code> provides CLI tools to help you manage this.
+</p>
+<h3 id="viewing-default-rules">Viewing Default Rules</h3>
+<p>
+You can see what rules the AI already follows by running a command.
+</p>
+<pre data-lang="typescript"><code>// cli/handlers/autoMode.ts
+import { getDefaultExternalAutoModeRules } from '../../utils/permissions/yoloClassifier.js';
+
+function showDefaults() {
+  // Get the hardcoded default safety rules
+  const defaults = getDefaultExternalAutoModeRules();
+  
+  // Print them to the screen
+  console.log(defaults);
+}
+</code></pre>
+<p>
+<em>Explanation: This outputs the baseline logic, such as "Always allow reading files" or "Ask before using the BrowserTool."</em>
+</p>
+<h3 id="critiquing-your-rules">Critiquing Your Rules</h3>
+<p>
+This is the most powerful feature. If you add a custom rule like <em>"Allow edits to non-critical files,"</em> the Critique system might warn you: <em>"What defines a 'critical' file? Be more specific."</em>
+</p>
+<pre data-lang="bash"><code># In your terminal
+claude auto-mode critique
+</code></pre>
+<p>
+This triggers a check where a separate AI model reads your rules and "grades" them.
+</p>
+<h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
+<p>
+When the <a href="03<em>query</em>engine.md">Query Engine</a> proposes a tool call, the request is sent to the Classifier.
+</p>
+<ol>
+<li><strong>Context Assembly:</strong> We gather the tool name, arguments, and your custom rules.</li>
+</ol>
+<ol>
+<li><strong>Prompting:</strong> We send this to the Classifier Model.</li>
+</ol>
+<ol>
+<li><strong>Decision:</strong> The model returns a classification.</li>
+</ol>
+<ol>
+<li><strong>Enforcement:</strong> If "Safe," the tool runs. If "Risky," the <a href="02<em>ink</em>ui_framework.md">Ink UI Framework</a> prompts you for permission.</li>
+</ol>
+<p>
+Here is the flow:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant MainAI as Claude (Main)
+    participant Perms as Permission System
+    participant Class as Classifier Model
+    participant Tool as Tool Execution
+
+    MainAI-&gt;&gt;Perms: "I want to run: npm install"
+    
+    Note over Perms: Check strict rules first...
+    Perms-&gt;&gt;Class: "Is 'npm install' safe given these rules?"
+    
+    Class--&gt;&gt;Perms: Decision: ALLOW (Matches 'Allow' list)
+    
+    Perms-&gt;&gt;Tool: Execute Command
+    Tool--&gt;&gt;MainAI: Result: "Packages installed"</div></div>
+<h3 id="internal-implementation-code">Internal Implementation Code</h3>
+<p>
+The code in <code>cli/handlers/autoMode.ts</code> manages the configuration and the "Critique" feature.
+</p>
+<h4 id="1-merging-configuration">1. Merging Configuration</h4>
+<p>
+We respect your custom rules over the defaults.
+</p>
+<pre data-lang="typescript"><code>// cli/handlers/autoMode.ts (Simplified)
+
+export function autoModeConfigHandler() {
+  const userConfig = getAutoModeConfig();
+  const defaults = getDefaultExternalAutoModeRules();
+
+  // If user defined specific sections, use them. 
+  // Otherwise use defaults.
+  const effectiveRules = {
+    allow: userConfig.allow || defaults.allow,
+    soft_deny: userConfig.soft_deny || defaults.soft_deny,
+    environment: userConfig.environment || defaults.environment,
+  };
+  
+  writeRules(effectiveRules);
+}
+</code></pre>
+<p>
+<em>Explanation: This logic ensures that if you write custom "Allow" rules, they completely replace the default "Allow" rules, giving you full control.</em>
+</p>
+<h4 id="2-the-critique-logic">2. The Critique Logic</h4>
+<p>
+We use the <a href="03<em>query</em>engine.md">Query Engine</a>'s ability to call models (<code>sideQuery</code>) to review your rules.
+</p>
+<pre data-lang="typescript"><code>// cli/handlers/autoMode.ts (Simplified)
+
+const CRITIQUE_PROMPT = 
+  "You are an expert reviewer. Critique these rules for clarity...";
+
+export async function autoModeCritiqueHandler() {
+  // 1. Get the rules the user wrote
+  const userRules = getAutoModeConfig();
+
+  // 2. Ask the AI to judge them
+  const response = await sideQuery({
+    system: CRITIQUE_PROMPT,
+    messages: [{ 
+      role: 'user', 
+      content: JSON.stringify(userRules) 
+    }]
+  });
+
+  // 3. Print the AI's advice
+  console.log(response.text);
+}
+</code></pre>
+<p>
+<em>Explanation: We are using AI to debug AI configuration! <code>sideQuery</code> is a helper that sends a one-off message to an LLM without messing up the main conversation history.</em>
+</p>
+<h2 id="why-is-this-important-for-later">Why is this important for later?</h2>
+<p>
+The Auto-Mode Classifier allows <code>claudeCode</code> to scale from a simple chatbot to an autonomous agent.
+</p>
+<ul>
+<li><strong><a href="11_notebookedittool.md">NotebookEditTool</a>:</strong> In the next chapter, we look at editing Jupyter Notebooks. The classifier helps determine if running a notebook cell is safe.</li>
+<li><strong><a href="15_agenttool.md">AgentTool</a>:</strong> When we start using "Agents" (sub-workers), the classifier monitors their behavior to ensure they don't go rogue.</li>
+<li><strong><a href="19<em>cost</em>tracking.md">Cost Tracking</a>:</strong> Every time the classifier runs, it uses tokens. We need to track the cost of these "safety checks."</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have learned that the <strong>Auto-Mode Classifier</strong> is the "Super-Ego" of the application. It provides intelligent, context-aware permission checks that strict rules cannot handle. It allows the user to define high-level policies (like "Trust me in the <code>dev</code> folder") while staying safe.
+</p>
+<p>
+Now that we understand how the AI decides <em>if</em> it can edit files, let's look at a very specific type of file that requires special handling: Data Science Notebooks.
+</p>
+<p>
+<a href="11_notebookedittool.md">Next Chapter: NotebookEditTool</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="09-rule-matching.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">Rule Matching</div>
+        </a><a class="chapter-nav-card next" href="11-notebookedittool.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">NotebookEditTool</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#what-is-the-auto-mode-classifier">What is the Auto-Mode Classifier?</a></li>
+<li style="padding-left:10px"><a href="#the-central-use-case-the-documentation-fix">The Central Use Case: "The Documentation Fix"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:10px"><a href="#1-the-yolo-model">1. The "YOLO" Model</a></li>
+<li style="padding-left:10px"><a href="#2-the-three-rule-categories">2. The Three Rule Categories</a></li>
+<li style="padding-left:10px"><a href="#3-the-critique-system">3. The Critique System</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-the-classifier">How to Use the Classifier</a></li>
+<li style="padding-left:10px"><a href="#viewing-default-rules">Viewing Default Rules</a></li>
+<li style="padding-left:10px"><a href="#critiquing-your-rules">Critiquing Your Rules</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-how-it-works">Under the Hood: How it Works</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-code">Internal Implementation Code</a></li>
+<li style="padding-left:0px"><a href="#why-is-this-important-for-later">Why is this important for later?</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: Scoped Persistence (Private vs. Team) — memdir/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">memdir/02_scoped_persistence__private_vs__team_.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🧠 memdir/ · 02_scoped_persistence__private_vs__team_.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: Scoped Persistence (Private vs. Team)</h1>
+  <div class="chapter-meta"><span>📄 memdir/02_scoped_persistence__private_vs__team_.md</span></div>
+</div>
+<h1 id="chapter-2-scoped-persistence-private-vs-team">Chapter 2: Scoped Persistence (Private vs. Team)</h1>
+<p>
+In the previous chapter, <a href="01<em>structured</em>memory_taxonomy.md">Structured Memory Taxonomy</a>, we learned <strong>what</strong> the AI is allowed to remember (User, Feedback, Project, Reference).
+</p>
+<p>
+Now we face a social problem. Imagine you are an expert developer who hates long explanations, but your teammate is a junior developer who needs them. If the AI learns "The user likes concise answers" from you, should it apply that rule to your teammate? <strong>No.</strong>
+</p>
+<p>
+However, if you tell the AI "We always use Tabs, never Spaces," should that apply to your teammate? <strong>Yes.</strong>
+</p>
+<p>
+This brings us to <strong>Scoped Persistence</strong>.
+</p>
+<h2 id="the-motivation-notebooks-vs-whiteboards">The Motivation: Notebooks vs. Whiteboards</h2>
+<p>
+To solve the conflict between personal preferences and project facts, <strong>memdir</strong> splits memory into two physical locations. Think of them like this:
+</p>
+<h3 id="1-private-memory-the-personal-notebook">1. Private Memory (The Personal Notebook)</h3>
+<ul>
+<li><strong>Analogy:</strong> A diary kept in your desk drawer.</li>
+<li><strong>Who sees it:</strong> Only <strong>you</strong>.</li>
+<li><strong>Content:</strong> "I prefer concise code," "Don't explain React hooks to me."</li>
+<li><strong>Location:</strong> Stored locally on your machine, specific to your user profile.</li>
+</ul>
+<h3 id="2-team-memory-the-shared-whiteboard">2. Team Memory (The Shared Whiteboard)</h3>
+<ul>
+<li><strong>Analogy:</strong> A whiteboard in the conference room.</li>
+<li><strong>Who sees it:</strong> Everyone working on the project.</li>
+<li><strong>Content:</strong> "We use the %%INLINE<em>0%% library for logging," "The deployment script is %%INLINE</em>1%%."</li>
+<li><strong>Location:</strong> Stored in a folder that gets synced (usually via Git) so everyone has the same files.</li>
+</ul>
+<h2 id="use-case-the-tabs-vs-spaces-dilemma">Use Case: The "Tabs vs. Spaces" Dilemma</h2>
+<p>
+Let's see how the AI handles two different pieces of information during a conversation.
+</p>
+<ol>
+<li><strong>User says:</strong> "I hate it when you explain basic syntax."</li>
+<ul>
+<li><strong>Scope:</strong> <strong>Private</strong>.</li>
+<li><strong>Result:</strong> The AI writes a file to your local folder. Your teammates still get explanations.</li>
+</ul>
+</ol>
+<ol>
+<li><strong>User says:</strong> "For this project, always use 4 spaces for indentation."</li>
+<ul>
+<li><strong>Scope:</strong> <strong>Team</strong>.</li>
+<li><strong>Result:</strong> The AI writes a file to the shared <code>team/</code> folder. When your teammate opens the project, the AI reads this file and enforces the 4-space rule for them too.</li>
+</ul>
+</ol>
+<h2 id="internal-implementation-how-it-works">Internal Implementation: How It Works</h2>
+<p>
+How does the AI know where to put things? We don't rely on magic. We give the AI a "map" of where the folders are and strict rules on which drawer to open.
+</p>
+<h3 id="the-flow">The Flow</h3>
+<p>
+When the system boots up, it constructs a prompt that defines these two scopes.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant System
+    participant AI
+    participant Disk
+
+    User-&gt;&gt;System: "Save that we use 4 spaces"
+    System-&gt;&gt;AI: Inject Prompt: "Private is at /A, Team is at /B"
+    AI-&gt;&gt;AI: Decide Scope (Team vs Private)
+    Note over AI: "This is a project rule, so it is Team."
+    AI-&gt;&gt;Disk: Write to /.../memory/team/indentation.md</div></div>
+<h3 id="1-determining-the-paths">1. Determining the Paths</h3>
+<p>
+First, the code needs to figure out where these directories live on the hard drive. We distinguish between the %%INLINE<em>3%% (Private) path and the %%INLINE</em>4%% path.
+</p>
+<p>
+The Team path is actually just a sub-folder of the main memory directory.
+</p>
+<pre data-lang="typescript"><code>// src/teamMemPaths.ts
+
+export function getTeamMemPath(): string {
+  // It's just a 'team' folder inside the main memory directory
+  return (join(getAutoMemPath(), 'team') + sep).normalize('NFC')
+}
+</code></pre>
+<ul>
+<li><code>getAutoMemPath()</code>: Finds your local "Personal Notebook" folder.</li>
+<li><code>join(..., 'team')</code>: Creates the "Shared Whiteboard" room inside it.</li>
+</ul>
+<h3 id="2-teaching-the-ai-the-prompt">2. Teaching the AI (The Prompt)</h3>
+<p>
+The most important part is telling the AI <em>how</em> to use these folders. We do this in <code>teamMemPrompts.ts</code>. We build a specific set of instructions that explicitly defines the difference.
+</p>
+<pre data-lang="typescript"><code>// src/teamMemPrompts.ts (Simplified)
+
+export function buildCombinedMemoryPrompt(): string {
+  const autoDir = getAutoMemPath()
+  const teamDir = getTeamMemPath()
+
+  return `
+    You have a persistent memory system with two directories:
+    1. Private: ${autoDir} (Only for the current user)
+    2. Team: ${teamDir} (Shared with all users)
+    
+    If the user gives personal preferences -&gt; Save to Private.
+    If the user gives project guidelines -&gt; Save to Team.
+  `
+}
+</code></pre>
+<p>
+By injecting the actual file paths (<code>${teamDir}</code>) into the prompt, the AI knows exactly where to write the files on the disk.
+</p>
+<h3 id="3-security-preventing-jailbreaks">3. Security: Preventing "Jailbreaks"</h3>
+<p>
+Since we are allowing the AI (and potentially shared team configuration) to write files to your disk, we must ensure it doesn't write outside the allowed box.
+</p>
+<p>
+Imagine a malicious team memory that tries to write to <code>../../../../etc/passwd</code>. We prevent this with strict path validation.
+</p>
+<pre data-lang="typescript"><code>// src/teamMemPaths.ts (Simplified)
+
+export function validateTeamMemWritePath(filePath: string) {
+  const teamDir = getTeamMemPath()
+  
+  // 1. Check if the path starts with the allowed directory
+  if (!filePath.startsWith(teamDir)) {
+    throw new Error("Security Alert: Path escapes team directory!")
+  }
+
+  // 2. (Not shown) We also check for symlinks that point outside!
+  return filePath
+}
+</code></pre>
+<p>
+This ensures that "Team Memory" stays strictly inside the <code>memory/team</code> folder and cannot touch your system files or your private memory.
+</p>
+<h2 id="code-example-how-the-ai-sees-it">Code Example: How the AI Sees It</h2>
+<p>
+When the system runs, the AI receives a prompt that combines the Taxonomy (Chapter 1) with the Scopes (Chapter 2). It looks roughly like this:
+</p>
+<p>
+<strong>Input (System Prompt):</strong>
+</p>
+<blockquote><p>"You have a <strong>Private</strong> directory at %%INLINE<em>11%% and a <strong>Team</strong> directory at %%INLINE</em>12%%.</p></blockquote>
+<blockquote><p></p></blockquote>
+<blockquote><p><strong>Taxonomy Rules:</strong></p></blockquote>
+<blockquote><p>- <code>User</code> type -> usually Private.</p></blockquote>
+<blockquote><p>- <code>Project</code> type -> usually Team.</p></blockquote>
+<blockquote><p>- <code>Feedback</code> type -> depends (Is it 'I hate this' or 'This logic is wrong'?)"</p></blockquote>
+<p>
+<strong>Output (AI Action):</strong>
+ 
+The AI decides on the action based on the content.
+</p>
+<pre data-lang="markdown"><code>---
+name: strict_linting_rules
+type: feedback
+scope: team 
+---
+User stated that the linter must run before every commit.
+</code></pre>
+<p>
+The system then routes this file creation to the path: <code>/Users/me/mem/team/strict_linting_rules.md</code>.
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>The Conflict:</strong> Personal preferences vs. Team rules.</li>
+</ol>
+<ol>
+<li><strong>The Solution:</strong> Two distinct directories (%%INLINE<em>17%% and %%INLINE</em>18%%).</li>
+</ol>
+<ol>
+<li><strong>The Implementation:</strong> We inject the specific file paths into the AI's prompt and ask it to categorize memories accordingly.</li>
+</ol>
+<ol>
+<li><strong>The Safety:</strong> We validate paths to ensure team memories don't overwrite system files.</li>
+</ol>
+<p>
+We now have structured files (Chapter 1) stored in the right places (Chapter 2). But as the project grows, we might have <strong>hundreds</strong> of these files. Asking the AI to read 500 files every time you say "Hello" is too slow and expensive.
+</p>
+<p>
+How do we solve the scaling problem?
+</p>
+<p>
+<a href="03<em>two</em>tier<em>storage</em>architecture<strong>index<em>vs</strong>detail</em>.md">Next Chapter: Two-Tier Storage Architecture (Index vs. Detail)</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="memdir.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">memdir/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-notebooks-vs-whiteboards">The Motivation: Notebooks vs. Whiteboards</a></li>
+<li style="padding-left:10px"><a href="#1-private-memory-the-personal-notebook">1. Private Memory (The Personal Notebook)</a></li>
+<li style="padding-left:10px"><a href="#2-team-memory-the-shared-whiteboard">2. Team Memory (The Shared Whiteboard)</a></li>
+<li style="padding-left:0px"><a href="#use-case-the-tabs-vs-spaces-dilemma">Use Case: The "Tabs vs. Spaces" Dilemma</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-how-it-works">Internal Implementation: How It Works</a></li>
+<li style="padding-left:10px"><a href="#the-flow">The Flow</a></li>
+<li style="padding-left:10px"><a href="#1-determining-the-paths">1. Determining the Paths</a></li>
+<li style="padding-left:10px"><a href="#2-teaching-the-ai-the-prompt">2. Teaching the AI (The Prompt)</a></li>
+<li style="padding-left:10px"><a href="#3-security-preventing-jailbreaks">3. Security: Preventing "Jailbreaks"</a></li>
+<li style="padding-left:0px"><a href="#code-example-how-the-ai-sees-it">Code Example: How the AI Sees It</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

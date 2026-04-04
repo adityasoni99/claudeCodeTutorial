@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 1: Structured Memory Taxonomy — memdir/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">memdir/01_structured_memory_taxonomy.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🧠 memdir/ · 01_structured_memory_taxonomy.md</div>
+  <h1 class="chapter-title-h1">Chapter 1: Structured Memory Taxonomy</h1>
+  <div class="chapter-meta"><span>📄 memdir/01_structured_memory_taxonomy.md</span></div>
+</div>
+<h1 id="chapter-1-structured-memory-taxonomy">Chapter 1: Structured Memory Taxonomy</h1>
+<p>
+Welcome to the <strong>memdir</strong> project! If you are new here, you might be wondering: "How do we stop an AI from remembering useless junk?"
+</p>
+<p>
+When an AI works on a project for days or weeks, it generates a lot of information. Without rules, it might try to "remember" code snippets (which change constantly), git commit hashes (which become outdated), or temporary variable names. This creates "noise" that confuses the AI later.
+</p>
+<p>
+To solve this, <strong>memdir</strong> introduces the <strong>Structured Memory Taxonomy</strong>.
+</p>
+<h2 id="the-problem-the-sticky-note-chaos">The Problem: The Sticky Note Chaos</h2>
+<p>
+Imagine a developer's desk covered in thousands of sticky notes. Some say "Don't use jQuery," but others say "i = 0" or "fix typo in line 43." Finding the important rule about jQuery is impossible amidst the noise.
+</p>
+<h2 id="the-solution-the-four-specific-drawers">The Solution: The Four Specific Drawers</h2>
+<p>
+Instead of a messy desk, <strong>memdir</strong> forces the AI to use a virtual filing cabinet with exactly four labeled drawers. If a thought doesn't fit into one of these drawers, it <strong>cannot be saved</strong>.
+</p>
+<p>
+This is called the <strong>Structured Memory Taxonomy</strong>.
+</p>
+<h3 id="1-the-inline-0-drawer">1. The <code>User</code> Drawer</h3>
+<ul>
+<li><strong>What goes here:</strong> Information about <em>you</em>.</li>
+<li><strong>Example:</strong> "The user is a Senior Go Engineer," or "The user prefers concise answers."</li>
+<li><strong>Why:</strong> So the AI adapts its personality and difficulty level to you.</li>
+</ul>
+<h3 id="2-the-inline-1-drawer">2. The <code>Feedback</code> Drawer</h3>
+<ul>
+<li><strong>What goes here:</strong> Corrections and affirmations.</li>
+<li><strong>Example:</strong> "Do not use %%INLINE<em>2%%, always use %%INLINE</em>3%%," or "Stop summarizing diffs."</li>
+<li><strong>Why:</strong> So the AI doesn't make the same mistake twice.</li>
+</ul>
+<h3 id="3-the-inline-4-drawer">3. The <code>Project</code> Drawer</h3>
+<ul>
+<li><strong>What goes here:</strong> High-level context <em>not</em> found in the code.</li>
+<li><strong>Example:</strong> "The deadline is Friday," or "This feature is for the marketing launch."</li>
+<li><strong>Why:</strong> Code tells you <em>how</em> something works, but not <em>why</em> or <em>by when</em>.</li>
+</ul>
+<h3 id="4-the-inline-5-drawer">4. The <code>Reference</code> Drawer</h3>
+<ul>
+<li><strong>What goes here:</strong> Pointers to the outside world.</li>
+<li><strong>Example:</strong> "Tickets are tracked in Linear project ID-123," or "Designs are in Figma."</li>
+<li><strong>Why:</strong> To link the code to external tools.</li>
+</ul>
+<h2 id="the-no-go-zone-derivable-information">The "No-Go" Zone: Derivable Information</h2>
+<p>
+The most important rule of this taxonomy is what <strong>NOT</strong> to save.
+</p>
+<p>
+<strong>Rule:</strong> If you can find the information by running %%INLINE<em>6%%, %%INLINE</em>7%%, or reading a file, <strong>do not save it</strong>.
+</p>
+<ul>
+<li><strong>Bad Memory:</strong> "The function %%INLINE<em>8%% is in %%INLINE</em>9%%." (Bad because the AI can just look at the file system).</li>
+<li><strong>Good Memory:</strong> "The <code>login()</code> function was written this way because Legal required it." (Good because the <em>reason</em> isn't in the code).</li>
+</ul>
+<h2 id="how-it-works-the-frontmatter">How It Works: The Frontmatter</h2>
+<p>
+When the AI decides to save a memory, it must write a Markdown file with a specific header (called <strong>frontmatter</strong>) that declares the type.
+</p>
+<p>
+Here is an example of what a valid memory file looks like:
+</p>
+<pre data-lang="markdown"><code>---
+name: prefer_bun_over_npm
+description: User prefers bun for package management
+type: feedback
+---
+
+User explicitly stated to use `bun install` instead of `npm`.
+Why: It is faster and consistent with the team workflow.
+</code></pre>
+<p>
+Notice the %%INLINE<em>11%% line? If that was %%INLINE</em>12%%, the system would reject it.
+</p>
+<h2 id="internal-implementation-under-the-hood">Internal Implementation: Under the Hood</h2>
+<p>
+How does the AI know about these rules? We don't just hope it guesses. We inject strict XML definitions into its "brain" (the System Prompt) before it starts working.
+</p>
+<h3 id="conceptual-flow">Conceptual Flow</h3>
+<p>
+Here is what happens when the system starts:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant S as System Bootstrap
+    participant P as Prompt Builder
+    participant T as Taxonomy Defs
+    participant AI as AI Model
+
+    S-&gt;&gt;P: Request Memory Prompt
+    P-&gt;&gt;T: Get Memory Types (User, Feedback, etc.)
+    T--&gt;&gt;P: Return XML Definitions
+    P-&gt;&gt;AI: Inject "System Prompt" with Rules
+    Note over AI: AI now knows it can ONLY&lt;br/&gt;save these 4 types.</div></div>
+<h3 id="the-code">The Code</h3>
+<p>
+The taxonomy is defined in <code>src/memoryTypes.ts</code>. It is a simple array of allowed strings.
+</p>
+<pre data-lang="typescript"><code>// src/memoryTypes.ts
+
+export const MEMORY_TYPES = [
+  'user',
+  'feedback',
+  'project',
+  'reference',
+] as const
+
+export type MemoryType = (typeof MEMORY_TYPES)[number]
+</code></pre>
+<p>
+This Typescript array is the "Source of Truth." If we wanted to add a <code>tasks</code> drawer, we would add it here.
+</p>
+<h3 id="teaching-the-ai-prompt-generation">Teaching the AI (Prompt Generation)</h3>
+<p>
+To make the AI understand these types, we convert them into text instructions. The system uses XML-like tags to define the "scope" and "description" for each type.
+</p>
+<p>
+Here is a simplified look at how the <code>feedback</code> type is described to the AI:
+</p>
+<pre data-lang="typescript"><code>// src/memoryTypes.ts (Simplified)
+
+export const TYPES_SECTION_INDIVIDUAL = [
+  '&lt;type&gt;',
+  '    &lt;name&gt;feedback&lt;/name&gt;',
+  '    &lt;description&gt;Guidance the user has given you...&lt;/description&gt;',
+  '    &lt;when_to_save&gt;Any time the user corrects your approach...&lt;/when_to_save&gt;',
+  '    &lt;examples&gt;User: "stop doing X" -&gt; Save feedback&lt;/examples&gt;',
+  '&lt;/type&gt;',
+  // ... other types
+]
+</code></pre>
+<p>
+This text is injected into the prompt. By providing <code>&lt;examples&gt;</code>, we show the AI exactly how to categorize thoughts.
+</p>
+<h3 id="enforcing-the-rules">Enforcing the Rules</h3>
+<p>
+We also explicitly tell the AI what to ignore. This is defined in the <code>WHAT_NOT_TO_SAVE_SECTION</code> constant.
+</p>
+<pre data-lang="typescript"><code>// src/memoryTypes.ts
+
+export const WHAT_NOT_TO_SAVE_SECTION = [
+  '## What NOT to save in memory',
+  '',
+  '- Code patterns, architecture, file paths...',
+  '- Git history, recent changes...',
+  '- Ephemeral task details...',
+]
+</code></pre>
+<p>
+This block serves as a "filter" to prevent the AI from clogging up the filing cabinet with useless data.
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>The Problem:</strong> Unstructured memory leads to noise.</li>
+</ol>
+<ol>
+<li><strong>The Taxonomy:</strong> We limit memory to <strong>User</strong>, <strong>Feedback</strong>, <strong>Project</strong>, and <strong>Reference</strong>.</li>
+</ol>
+<ol>
+<li><strong>The Golden Rule:</strong> Never save what you can derive from the current state (like code or git history).</li>
+</ol>
+<ol>
+<li><strong>The Mechanism:</strong> We use TypeScript arrays to generate XML prompts that teach the AI these rules.</li>
+</ol>
+<p>
+Now that we have a structure for <em>what</em> to save, we need to decide <em>who</em> gets to see it. Is a memory private to you, or shared with your whole team?
+</p>
+<p>
+<a href="02<em>scoped</em>persistence<strong>private<em>vs</strong>team</em>.md">Next Chapter: Scoped Persistence (Private vs. Team)</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="memdir.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">memdir/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-problem-the-sticky-note-chaos">The Problem: The Sticky Note Chaos</a></li>
+<li style="padding-left:0px"><a href="#the-solution-the-four-specific-drawers">The Solution: The Four Specific Drawers</a></li>
+<li style="padding-left:10px"><a href="#1-the-inline-0-drawer">1. The %%INLINE_0%% Drawer</a></li>
+<li style="padding-left:10px"><a href="#2-the-inline-1-drawer">2. The %%INLINE_1%% Drawer</a></li>
+<li style="padding-left:10px"><a href="#3-the-inline-4-drawer">3. The %%INLINE_4%% Drawer</a></li>
+<li style="padding-left:10px"><a href="#4-the-inline-5-drawer">4. The %%INLINE_5%% Drawer</a></li>
+<li style="padding-left:0px"><a href="#the-no-go-zone-derivable-information">The "No-Go" Zone: Derivable Information</a></li>
+<li style="padding-left:0px"><a href="#how-it-works-the-frontmatter">How It Works: The Frontmatter</a></li>
+<li style="padding-left:0px"><a href="#internal-implementation-under-the-hood">Internal Implementation: Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#conceptual-flow">Conceptual Flow</a></li>
+<li style="padding-left:10px"><a href="#the-code">The Code</a></li>
+<li style="padding-left:10px"><a href="#teaching-the-ai-prompt-generation">Teaching the AI (Prompt Generation)</a></li>
+<li style="padding-left:10px"><a href="#enforcing-the-rules">Enforcing the Rules</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

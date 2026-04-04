@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: State Selectors (Derived Data) — state/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">state/02_state_selectors__derived_data_.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">🗂 state/ · 02_state_selectors__derived_data_.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: State Selectors (Derived Data)</h1>
+  <div class="chapter-meta"><span>📄 state/02_state_selectors__derived_data_.md</span></div>
+</div>
+<h1 id="chapter-2-state-selectors-derived-data">Chapter 2: State Selectors (Derived Data)</h1>
+<p>
+In the previous chapter, <a href="01<em>core</em>state<em>definition</em><em>the</em>store<em>.md">Core State Definition (The Store)</a>, we learned how to create a "Single Source of Truth" (our Whiteboard) using %%INLINE</em>0%%. We learned how to write data to it and how to read the raw data back.
+</p>
+<p>
+However, reading raw data is often messy. The raw database might be complex, but your UI usually wants a simple answer to a simple question.
+</p>
+<p>
+This is where <strong>State Selectors</strong> come in.
+</p>
+<h3 id="the-motivation-the-librarian">The Motivation: The Librarian</h3>
+<p>
+Imagine your <code>AppState</code> store is a massive library containing thousands of books (data).
+</p>
+<ul>
+<li><strong>Without Selectors:</strong> Every time you want to know "How many books are about cooking?", you have to walk through every shelf, count them yourself, and do the math.</li>
+<li><strong>With Selectors:</strong> You ask the <strong>Librarian</strong>. You say, "Get me the count of cooking books." The Librarian (the Selector) runs off, does the logic, and returns just the number.</li>
+</ul>
+<p>
+In technical terms, Selectors are <strong>pure functions</strong> that take the raw state as input and return <strong>derived data</strong>.
+</p>
+<hr>
+<h3 id="central-use-case-who-am-i-talking-to">Central Use Case: "Who am I talking to?"</h3>
+<p>
+Let's look at a real problem in our application.
+</p>
+<p>
+We have a chat input box. When the user types a message and hits Enter, where should that message go?
+</p>
+<ol>
+<li>Is it for the main AI Leader?</li>
+</ol>
+<ol>
+<li>Is it for a specific Teammate the user is currently looking at?</li>
+</ol>
+<p>
+<strong>The "Bad" Way (Doing it manually everywhere):</strong>
+ 
+Every time we render the Input box, we would have to write complex logic like this:
+</p>
+<pre data-lang="typescript"><code>// messy_component_logic.ts
+const state = store.getState();
+
+// Check if we are viewing a specific agent
+if (state.viewingAgentTaskId) {
+  const task = state.tasks[state.viewingAgentTaskId];
+  // Check if that task actually exists and is the right type
+  if (task &amp;&amp; task.type === 'in_process_teammate') {
+     console.log("Send to Teammate");
+  }
+} else {
+  console.log("Send to Leader");
+}
+</code></pre>
+<p>
+This is fragile. If we change how tasks are stored, we have to fix this code in 10 different places.
+</p>
+<p>
+<strong>The "Selector" Way:</strong>
+ 
+We move that logic into a helper function (a Selector).
+</p>
+<pre data-lang="typescript"><code>// component.ts
+import { getActiveAgentForInput } from './selectors';
+
+// Just ask the question!
+const destination = getActiveAgentForInput(store.getState());
+</code></pre>
+<hr>
+<h3 id="key-concept-derived-data">Key Concept: Derived Data</h3>
+<p>
+<strong>Derived Data</strong> is information that doesn't need to be saved in the database because it can be calculated from existing data.
+</p>
+<ul>
+<li><strong>Raw State:</strong> <code>birthYear: 1990</code></li>
+<li><strong>Derived Data:</strong> %%INLINE<em>3%% (Calculated as %%INLINE</em>4%%)</li>
+</ul>
+<p>
+We do not store %%INLINE<em>5%% in %%INLINE</em>6%%. We calculate it using a Selector. This ensures the data never gets out of sync.
+</p>
+<hr>
+<h3 id="internal-implementation-how-it-works">Internal Implementation: How it Works</h3>
+<p>
+A Selector is not a special framework feature. It is just a standard TypeScript function.
+</p>
+<ol>
+<li>It accepts <code>AppState</code> as an argument.</li>
+</ol>
+<ol>
+<li>It reads the parts it needs.</li>
+</ol>
+<ol>
+<li>It returns a clean result.</li>
+</ol>
+<p>
+Here is the flow of data when a component uses a selector:
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant UI as UI Component
+    participant SEL as Selector Function
+    participant APP as AppState Store
+
+    UI-&gt;&gt;SEL: getActiveAgentForInput(state)
+    Note right of UI: "Who should I message?"
+    
+    SEL-&gt;&gt;APP: Read viewingAgentTaskId
+    SEL-&gt;&gt;APP: Read tasks object
+    
+    Note over SEL: Logic: Check if ID exists&lt;br/&gt;and what type it is.
+    
+    SEL--&gt;&gt;UI: Returns { type: 'leader' }
+    Note right of UI: "Okay, I'll message the Leader."</div></div>
+<hr>
+<h3 id="code-walkthrough-inline-8">Code Walkthrough: <code>selectors.ts</code></h3>
+<p>
+Let's build the solution for our "Who am I talking to?" use case. We will break it down into two small selectors.
+</p>
+<h4 id="1-the-helper-selector">1. The Helper Selector</h4>
+<p>
+First, we make a small selector just to find the "Viewed Teammate".
+</p>
+<pre data-lang="typescript"><code>// selectors.ts (Part 1)
+export function getViewedTeammateTask(appState: AppState) {
+  const { viewingAgentTaskId, tasks } = appState
+
+  // 1. Are we even looking at an agent?
+  if (!viewingAgentTaskId) return undefined
+
+  // 2. Does the task exist in our list?
+  const task = tasks[viewingAgentTaskId]
+  if (!task) return undefined
+
+  // 3. Is it the right type (a teammate)?
+  // (We use a helper check function here)
+  if (!isInProcessTeammateTask(task)) return undefined
+
+  return task
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This function safely digs through the data. If anything is missing, it returns <code>undefined</code>. The UI doesn't need to know <em>how</em> to find the task, it just gets the result.
+</p>
+<h4 id="2-the-main-selector">2. The Main Selector</h4>
+<p>
+Now we solve the main problem: Where does the input go? We use the result of the helper above.
+</p>
+<pre data-lang="typescript"><code>// selectors.ts (Part 2)
+export function getActiveAgentForInput(appState: AppState) {
+  // Reuse logic from the helper above!
+  const viewedTask = getViewedTeammateTask(appState)
+
+  // Case A: We are looking at a teammate
+  if (viewedTask) {
+    return { type: 'viewed', task: viewedTask }
+  }
+
+  // Case B: Default to the Leader
+  return { type: 'leader' }
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This function returns a simple object (a "Discriminated Union") that tells the UI exactly what to do.
+</p>
+<hr>
+<h3 id="why-use-selectors">Why use Selectors?</h3>
+<ol>
+<li><strong>Refactoring is Easy:</strong> If we rename %%INLINE<em>10%% to %%INLINE</em>11%% in the future, we only have to update code in <em>one file</em> (<code>selectors.ts</code>). The rest of the app doesn't care.</li>
+</ol>
+<ol>
+<li><strong>Less Bugs:</strong> We don't risk forgetting to check <code>if (task)</code> in our components. The selector handles the safety checks.</li>
+</ol>
+<ol>
+<li><strong>Readability:</strong> %%INLINE<em>14%% is much easier to read than a 5-line %%INLINE</em>15%% statement.</li>
+</ol>
+<h3 id="conclusion">Conclusion</h3>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>Selectors</strong> are helper functions that interpret raw state.</li>
+</ol>
+<ol>
+<li>They help us calculate <strong>Derived Data</strong> (like converting a raw ID into a full User object).</li>
+</ol>
+<ol>
+<li>They keep our logic centralized, so our UI components stay "dumb" and simple.</li>
+</ol>
+<p>
+Now that we know how to <em>read</em> complex data, let's learn how to <em>change</em> it in a structured way. Instead of random updates, we will use <strong>Domain Actions</strong>.
+</p>
+<p>
+<a href="03<em>teammate</em>view<em>logic</em><em>domain</em>actions_.md">Next Chapter: Teammate View Logic (Domain Actions)</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="state.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">state/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:10px"><a href="#the-motivation-the-librarian">The Motivation: The Librarian</a></li>
+<li style="padding-left:10px"><a href="#central-use-case-who-am-i-talking-to">Central Use Case: "Who am I talking to?"</a></li>
+<li style="padding-left:10px"><a href="#key-concept-derived-data">Key Concept: Derived Data</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-how-it-works">Internal Implementation: How it Works</a></li>
+<li style="padding-left:10px"><a href="#code-walkthrough-inline-8">Code Walkthrough: %%INLINE_8%%</a></li>
+<li style="padding-left:10px"><a href="#why-use-selectors">Why use Selectors?</a></li>
+<li style="padding-left:10px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 2: Interactive TUI (Text User Interface) — commands/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">commands/02_interactive_tui__text_user_interface_.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⌨️ commands/ · 02_interactive_tui__text_user_interface_.md</div>
+  <h1 class="chapter-title-h1">Chapter 2: Interactive TUI (Text User Interface)</h1>
+  <div class="chapter-meta"><span>📄 commands/02_interactive_tui__text_user_interface_.md</span></div>
+</div>
+<h1 id="chapter-2-interactive-tui-text-user-interface">Chapter 2: Interactive TUI (Text User Interface)</h1>
+<p>
+In the previous chapter, <a href="01<em>command</em>architecture.md">Command Architecture</a>, we learned how to create commands that output simple text.
+</p>
+<p>
+But what if you need to ask the user a question? Or show a loading spinner while downloading a file? Or display a menu where the user can select an option using their arrow keys?
+</p>
+<p>
+Simple text output (<code>console.log</code>) isn't enough. We need an <strong>Interactive TUI (Text User Interface)</strong>.
+</p>
+<h2 id="the-big-idea-react-in-the-terminal">The Big Idea: React in the Terminal</h2>
+<p>
+If you have built websites before, you likely know <strong>React</strong>. It’s a tool for building user interfaces using "Components."
+ 
+Usually, React renders to a web browser (HTML).
+</p>
+<p>
+In this project, we use React to render <strong>text</strong> directly to your terminal window.
+</p>
+<h3 id="why-do-we-do-this">Why do we do this?</h3>
+<ol>
+<li><strong>State Management:</strong> We can easily handle complex states (like %%INLINE<em>1%% -> %%INLINE</em>2%% -> <code>Error</code>).</li>
+</ol>
+<ol>
+<li><strong>Interactivity:</strong> We can capture keystrokes (arrows, enter) to create menus.</li>
+</ol>
+<ol>
+<li><strong>Cleanliness:</strong> instead of printing thousands of lines of logs, we update the screen in place.</li>
+</ol>
+<hr>
+<h2 id="core-components">Core Components</h2>
+<p>
+Instead of HTML tags like %%INLINE<em>4%% or %%INLINE</em>5%%, we use special components designed for the terminal:
+</p>
+<ul>
+<li><strong>%%INLINE<em>6%%</strong>: Think of this as a %%INLINE</em>7%%. It's a container for layout (rows and columns).</li>
+<li><strong>%%INLINE<em>8%%</strong>: Think of this as a %%INLINE</em>9%% or <code>&lt;p&gt;</code>. It holds the actual text to display.</li>
+<li><strong><code>&lt;Dialog&gt;</code></strong>: A pre-made window for asking questions.</li>
+</ul>
+<hr>
+<h2 id="use-case-1-the-theme-picker">Use Case 1: The Theme Picker</h2>
+<p>
+Let's look at the %%INLINE<em>12%% command. When a user types %%INLINE</em>13%%, we don't want to just list colors; we want a menu where they can pick one.
+</p>
+<p>
+Here is how the command file (<code>theme.tsx</code>) uses a UI component.
+</p>
+<h3 id="the-command-wrapper">The Command Wrapper</h3>
+<pre data-lang="tsx"><code>// File: theme/theme.tsx
+import * as React from 'react';
+import { ThemePicker } from '../../components/ThemePicker.js';
+
+// The command returns a Component, not just text!
+export const call = async (onDone, context) =&gt; {
+  return &lt;ThemePickerCommand onDone={onDone} /&gt;;
+};
+</code></pre>
+<p>
+<strong>Explanation:</strong>
+ 
+The %%INLINE<em>15%% function here is special. Instead of doing the work immediately, it returns a <strong>React Component</strong> (%%INLINE</em>16%%). The application detects this and "mounts" the component in the terminal.
+</p>
+<h3 id="the-interactive-component">The Interactive Component</h3>
+<p>
+Now let's look at the component itself (simplified):
+</p>
+<pre data-lang="tsx"><code>function ThemePickerCommand({ onDone }) {
+  // We use a pre-built picker component
+  return (
+    &lt;Pane color="permission"&gt;
+      &lt;ThemePicker 
+        onThemeSelect={(setting) =&gt; {
+           // When user presses Enter on a theme:
+           onDone(`Theme set to ${setting}`); 
+        }}
+      /&gt;
+    &lt;/Pane&gt;
+  );
+}
+</code></pre>
+<p>
+<strong>What happens here?</strong>
+</p>
+<ol>
+<li><strong><code>&lt;Pane&gt;</code></strong>: Creates a colored box around our content.</li>
+</ol>
+<ol>
+<li><strong><code>&lt;ThemePicker&gt;</code></strong>: This component listens for arrow keys to highlight options.</li>
+</ol>
+<ol>
+<li><strong>%%INLINE<em>19%%</strong>: When the user selects a theme, we call %%INLINE</em>20%%. This tells the main app, "We are finished, you can close this UI now."</li>
+</ol>
+<hr>
+<h2 id="use-case-2-the-install-command-state-management">Use Case 2: The Install Command (State Management)</h2>
+<p>
+The <code>/install</code> command is more complex. It needs to show progress: "Checking...", then "Installing...", then "Success!".
+</p>
+<p>
+We use React <strong>Hooks</strong> (%%INLINE<em>22%%, %%INLINE</em>23%%) to manage this.
+</p>
+<h3 id="step-1-define-the-state">Step 1: Define the State</h3>
+<p>
+We define the different "modes" our UI can be in.
+</p>
+<pre data-lang="tsx"><code>// File: install.tsx (Simplified)
+function Install({ onDone }) {
+  // Start in the 'checking' state
+  const [state, setState] = useState({ type: 'checking' });
+
+  // ... logic continues ...
+</code></pre>
+<h3 id="step-2-visual-rendering">Step 2: visual Rendering</h3>
+<p>
+We decide what to show based on the current state.
+</p>
+<pre data-lang="tsx"><code>  return (
+    &lt;Box flexDirection="column"&gt;
+      {/* If checking, show this text */}
+      {state.type === 'checking' &amp;&amp; (
+        &lt;Text color="blue"&gt;Checking installation status...&lt;/Text&gt;
+      )}
+
+      {/* If installing, show this text with the version */}
+      {state.type === 'installing' &amp;&amp; (
+        &lt;Text color="yellow"&gt;Installing version {state.version}...&lt;/Text&gt;
+      )}
+
+      {/* If success, show the green icon */}
+      {state.type === 'success' &amp;&amp; (
+        &lt;Text color="green"&gt;Installation Complete!&lt;/Text&gt;
+      )}
+    &lt;/Box&gt;
+  );
+}
+</code></pre>
+<h3 id="step-3-performing-the-action">Step 3: Performing the Action</h3>
+<p>
+We use <code>useEffect</code> to trigger the actual installation logic when the component loads.
+</p>
+<pre data-lang="tsx"><code>  useEffect(() =&gt; {
+    async function run() {
+      // 1. Switch state to installing
+      setState({ type: 'installing', version: '1.0.0' });
+      
+      // 2. Do the heavy lifting (downloading files)
+      await downloadFiles();
+
+      // 3. Switch state to success
+      setState({ type: 'success' });
+      
+      // 4. Tell the app we are done after a short delay
+      setTimeout(() =&gt; onDone('Success'), 2000);
+    }
+    run();
+  }, []);
+</code></pre>
+<hr>
+<h2 id="how-it-works-under-the-hood">How It Works Under the Hood</h2>
+<p>
+When you return a React element from a command, the system hands it over to a renderer (specifically, a library called <code>ink</code>).
+</p>
+<h3 id="the-render-loop">The Render Loop</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant App as Main App
+    participant Cmd as Install Command
+    participant React as React/Ink
+    participant Term as User Terminal
+
+    App-&gt;&gt;Cmd: Execute call()
+    Cmd-&gt;&gt;React: Returns &lt;Install /&gt; Component
+    
+    rect rgb(20, 20, 20)
+        Note over React, Term: The Render Loop
+        React-&gt;&gt;Term: Renders "Checking..."
+        Note over React: State changes to 'installing'
+        React--&gt;&gt;Term: Clears previous text
+        React-&gt;&gt;Term: Renders "Installing..."
+        Note over React: State changes to 'success'
+        React--&gt;&gt;Term: Clears previous text
+        React-&gt;&gt;Term: Renders "Success!"
+    end
+
+    React-&gt;&gt;App: onDone() called
+    App-&gt;&gt;Term: UI Unmounts (Returns to normal prompt)</div></div>
+<ol>
+<li><strong>Mounting:</strong> The app reserves space at the bottom of the terminal.</li>
+</ol>
+<ol>
+<li><strong>Diffing:</strong> When state changes, React calculates the difference between the old text and the new text.</li>
+</ol>
+<ol>
+<li><strong>Painting:</strong> It sends special ANSI codes to the terminal to erase specific lines and write new ones, creating the illusion of animation.</li>
+</ol>
+<hr>
+<h2 id="advanced-accessing-global-data">Advanced: Accessing Global Data</h2>
+<p>
+Sometimes your UI needs to know global information, like "Is the user logged in?" or "What is their API Key?".
+</p>
+<p>
+In the <code>login.tsx</code> command, we see this passed in via <strong>Context</strong>.
+</p>
+<pre data-lang="tsx"><code>// File: login/login.tsx
+export async function call(onDone, context) {
+  return &lt;Login onDone={async (success) =&gt; {
+      if (success) {
+         // We can update global app state here
+         context.setAppState(prev =&gt; ({ ...prev, authVersion: 2 }));
+      }
+      onDone('Logged in');
+  }} /&gt;;
+}
+</code></pre>
+<p>
+Components are powerful, but they are temporary. When the component unmounts, its internal state is lost. To store data permanently (like a session token), we must save it to the <strong>App State</strong>.
+</p>
+<p>
+We will explore how this global memory works in the next chapter.
+</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<ol>
+<li><strong>React in Terminal:</strong> We use React components to build rich interfaces (%%INLINE<em>27%%, %%INLINE</em>28%%).</li>
+</ol>
+<ol>
+<li><strong><code>call</code> returns JSX:</strong> Interactive commands return a component instead of a string.</li>
+</ol>
+<ol>
+<li><strong>State Machines:</strong> We use <code>useState</code> to switch between Loading, Success, and Error views.</li>
+</ol>
+<ol>
+<li><strong><code>onDone</code>:</strong> The component must manually tell the app when interaction is finished.</li>
+</ol>
+<p>
+Now that we can build interfaces, we need to handle the most critical part of a user-facing application: knowing who the user is.
+</p>
+<p>
+<a href="03<em>authentication</em><em>_session</em>state.md">Next Chapter: Authentication & Session State</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="commands.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">commands/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-big-idea-react-in-the-terminal">The Big Idea: React in the Terminal</a></li>
+<li style="padding-left:10px"><a href="#why-do-we-do-this">Why do we do this?</a></li>
+<li style="padding-left:0px"><a href="#core-components">Core Components</a></li>
+<li style="padding-left:0px"><a href="#use-case-1-the-theme-picker">Use Case 1: The Theme Picker</a></li>
+<li style="padding-left:10px"><a href="#the-command-wrapper">The Command Wrapper</a></li>
+<li style="padding-left:10px"><a href="#the-interactive-component">The Interactive Component</a></li>
+<li style="padding-left:0px"><a href="#use-case-2-the-install-command-state-management">Use Case 2: The Install Command (State Management)</a></li>
+<li style="padding-left:10px"><a href="#step-1-define-the-state">Step 1: Define the State</a></li>
+<li style="padding-left:10px"><a href="#step-2-visual-rendering">Step 2: visual Rendering</a></li>
+<li style="padding-left:10px"><a href="#step-3-performing-the-action">Step 3: Performing the Action</a></li>
+<li style="padding-left:0px"><a href="#how-it-works-under-the-hood">How It Works Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#the-render-loop">The Render Loop</a></li>
+<li style="padding-left:0px"><a href="#advanced-accessing-global-data">Advanced: Accessing Global Data</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

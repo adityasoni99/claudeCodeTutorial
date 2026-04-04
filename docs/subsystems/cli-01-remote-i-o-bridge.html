@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 1: Remote I/O Bridge — cli/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">cli/01_remote_i_o_bridge.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">💻 cli/ · 01_remote_i_o_bridge.md</div>
+  <h1 class="chapter-title-h1">Chapter 1: Remote I/O Bridge</h1>
+  <div class="chapter-meta"><span>📄 cli/01_remote_i_o_bridge.md</span></div>
+</div>
+<h1 id="chapter-1-remote-io-bridge">Chapter 1: Remote I/O Bridge</h1>
+<p>
+Welcome to the <strong>CLI</strong> project tutorial! This is where your journey begins.
+</p>
+<p>
+Before we dive into authentication or complex protocols, we need to understand the physical foundation of this application. This CLI tool is unique: it acts like a "dumb terminal" locally, while the actual brain (the AI processing) lives on a remote server.
+</p>
+<h2 id="motivation-the-relay-station">Motivation: The Relay Station</h2>
+<p>
+Imagine you are using a walkie-talkie. You press a button to speak, your voice travels through the air, and a friend miles away hears you and responds.
+</p>
+<p>
+In this project, the <strong>Remote I/O Bridge</strong> is that walkie-talkie system.
+</p>
+<ol>
+<li><strong>Local User:</strong> You type a command in your terminal.</li>
+</ol>
+<ol>
+<li><strong>The Bridge:</strong> Captures your input, packages it, and shoots it over the internet.</li>
+</ol>
+<ol>
+<li><strong>Remote Brain:</strong> Processes the thought.</li>
+</ol>
+<ol>
+<li><strong>The Bridge:</strong> Catches the response and displays it on your screen.</li>
+</ol>
+<p>
+Without this bridge, the local application is silent and disconnected. It solves the problem of <strong>connecting a local user interface to a distant backend brain.</strong>
+</p>
+<h2 id="key-concept-the-inline-0-class">Key Concept: The <code>RemoteIO</code> Class</h2>
+<p>
+The core of this logic lives in <code>remoteIO.ts</code>. It extends the concept of standard Input/Output (I/O) but adds a network layer in the middle.
+</p>
+<p>
+Think of it as having three main jobs:
+</p>
+<ol>
+<li><strong>Listen:</strong> It creates a local stream to listen to the server.</li>
+</ol>
+<ol>
+<li><strong>Connect:</strong> It establishes a "Transport" (the actual internet connection).</li>
+</ol>
+<ol>
+<li><strong>Relay:</strong> It moves data back and forth.</li>
+</ol>
+<h3 id="how-to-use-it-high-level">How to Use It (High Level)</h3>
+<p>
+To start the bridge, you simply tell it <em>where</em> the remote brain is located (the URL).
+</p>
+<pre data-lang="typescript"><code>// A simplified example of usage
+import { RemoteIO } from './remoteIO';
+
+// 1. Create the bridge to the remote server
+const bridge = new RemoteIO('https://api.claude.ai/session');
+
+// 2. The bridge is now ready to send and receive messages!
+</code></pre>
+<p>
+Once initialized, the bridge handles the complexity of keeping the connection alive and formatting messages securely.
+</p>
+<h2 id="under-the-hood-the-internal-implementation">Under the Hood: The Internal Implementation</h2>
+<p>
+Let's visualize what happens when you start the application. The <code>RemoteIO</code> system acts as the coordinator between your terminal and the transport layer.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User as Local Terminal
+    participant RIO as RemoteIO Bridge
+    participant Trans as Transport Layer
+    participant Server as Remote Backend
+
+    User-&gt;&gt;RIO: Starts Application
+    RIO-&gt;&gt;Trans: Initialize Connection (Connect)
+    
+    loop Conversation Flow
+        User-&gt;&gt;RIO: Types "Hello"
+        RIO-&gt;&gt;Trans: Writes Message
+        Trans-&gt;&gt;Server: Sends over Network
+        
+        Server-&gt;&gt;Trans: Replies "Hi there!"
+        Trans-&gt;&gt;RIO: Triggers onData()
+        RIO-&gt;&gt;User: Prints "Hi there!" to Screen
+    end</div></div>
+<p>
+Now, let's look at the actual code in <code>remoteIO.ts</code> broken down into small, digestible pieces.
+</p>
+<h3 id="1-setting-up-the-stream">1. Setting up the Stream</h3>
+<p>
+When %%INLINE<em>4%% starts, it first creates a local "pipe" (%%INLINE</em>5%%) to handle incoming data. This is where data from the server will eventually flow.
+</p>
+<pre data-lang="typescript"><code>import { PassThrough } from 'stream';
+import { StructuredIO } from './structuredIO';
+
+export class RemoteIO extends StructuredIO {
+  constructor(streamUrl: string) {
+    // Create a simple stream to hold incoming data
+    const inputStream = new PassThrough({ encoding: 'utf8' });
+    
+    // Initialize the parent class with this stream
+    super(inputStream);
+    // ...
+  }
+}
+</code></pre>
+<p>
+<em>Explanation:</em> We create a <code>PassThrough</code> stream. Think of this as an empty pipe waiting for water (data) to be poured into it later.
+</p>
+<h3 id="2-preparing-authentication">2. preparing Authentication</h3>
+<p>
+Before we can connect, we need permission. The bridge grabs a session token. We will cover the details of how this token is generated in <a href="02<em>authentication</em>flow.md">Authentication Flow</a>.
+</p>
+<pre data-lang="typescript"><code>// Inside constructor...
+const headers: Record&lt;string, string&gt; = {};
+
+// Get the security token (auth)
+const sessionToken = getSessionIngressAuthToken();
+
+if (sessionToken) {
+  // Attach the token to the headers
+  headers['Authorization'] = `Bearer ${sessionToken}`;
+}
+</code></pre>
+<p>
+<em>Explanation:</em> Just like showing an ID card before entering a building, we attach an <code>Authorization</code> header to our request so the remote server accepts us.
+</p>
+<h3 id="3-selecting-the-transport">3. Selecting the Transport</h3>
+<p>
+The bridge doesn't know <em>how</em> to send data (WebSocket? SSE? HTTP?), it just knows <em>what</em> to send. It delegates the "how" to a <strong>Transport</strong>. We will explore this in <a href="04<em>transport</em>strategies.md">Transport Strategies</a>.
+</p>
+<pre data-lang="typescript"><code>// Inside constructor...
+import { getTransportForUrl } from './transports/transportUtils';
+
+// Ask a utility function to give us the right vehicle (Transport)
+this.transport = getTransportForUrl(
+  this.url,
+  headers,
+  getSessionId(),
+  refreshHeaders, // Callback to get fresh tokens
+);
+</code></pre>
+<p>
+<em>Explanation:</em> %%INLINE<em>8%% asks for a driver (%%INLINE</em>9%%). It hands over the destination (%%INLINE<em>10%%) and the ID card (%%INLINE</em>11%%).
+</p>
+<h3 id="4-wiring-the-connection-the-relay">4. Wiring the Connection (The Relay)</h3>
+<p>
+This is the most critical part. When the remote server sends data, the Transport catches it. We need to tell the Transport to pass that data into our local stream.
+</p>
+<pre data-lang="typescript"><code>// Inside constructor...
+
+// When the internet connection receives data...
+this.transport.setOnData((data: string) =&gt; {
+  // ... write it immediately to our local input stream.
+  this.inputStream.write(data);
+  
+  // (Optional) Echo to stdout if debugging
+});
+</code></pre>
+<p>
+<em>Explanation:</em> This connects the "Walkie-Talkie" speaker. When a signal comes in (%%INLINE<em>12%%), we pipe it directly to the application (%%INLINE</em>13%%), allowing the rest of the CLI to read it.
+</p>
+<h3 id="5-sending-data-out">5. Sending Data Out</h3>
+<p>
+When the user types something, we need to send it away. The <code>write</code> method handles this.
+</p>
+<pre data-lang="typescript"><code>async write(message: StdoutMessage): Promise&lt;void&gt; {
+  // If we are using the advanced Client (CCR), use that
+  if (this.ccrClient) {
+    await this.ccrClient.writeEvent(message);
+  } else {
+    // Otherwise, just write directly to the transport
+    await this.transport.write(message);
+  }
+}
+</code></pre>
+<p>
+<em>Explanation:</em> This is the microphone button. It takes a message object and pushes it down the wire. It also checks if we are using "CCR" (Command Control Response), a topic for <a href="05<em>ccr</em>state_synchronization.md">CCR State Synchronization</a>.
+</p>
+<h3 id="6-keeping-it-alive">6. Keeping it Alive</h3>
+<p>
+Internet connections often close if they are silent for too long. The bridge ensures the line stays open by sending a heartbeat.
+</p>
+<pre data-lang="typescript"><code>// Inside constructor...
+const keepAliveIntervalMs = getPollIntervalConfig().session_keepalive_interval_v2_ms;
+
+if (this.isBridge &amp;&amp; keepAliveIntervalMs &gt; 0) {
+  this.keepAliveTimer = setInterval(() =&gt; {
+    // Send a silent 'keep_alive' message periodically
+    void this.write({ type: 'keep_alive' }); 
+  }, keepAliveIntervalMs);
+}
+</code></pre>
+<p>
+<em>Explanation:</em> Every few minutes, the bridge whispers "I'm still here" (<code>keep_alive</code>) to the server so the server doesn't hang up the phone.
+</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+The <strong>Remote I/O Bridge</strong> is the lifeline of this application. It creates a seamless experience where a local terminal feels intelligent, even though the intelligence resides in the cloud. It manages the connection, secures the headers, and routes the data.
+</p>
+<p>
+Now that we have a connection established, how do we ensure that the person connecting is actually allowed to be there?
+</p>
+<p>
+<a href="02<em>authentication</em>flow.md">Next Chapter: Authentication Flow</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="cli.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">cli/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#motivation-the-relay-station">Motivation: The Relay Station</a></li>
+<li style="padding-left:0px"><a href="#key-concept-the-inline-0-class">Key Concept: The %%INLINE_0%% Class</a></li>
+<li style="padding-left:10px"><a href="#how-to-use-it-high-level">How to Use It (High Level)</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-the-internal-implementation">Under the Hood: The Internal Implementation</a></li>
+<li style="padding-left:10px"><a href="#1-setting-up-the-stream">1. Setting up the Stream</a></li>
+<li style="padding-left:10px"><a href="#2-preparing-authentication">2. preparing Authentication</a></li>
+<li style="padding-left:10px"><a href="#3-selecting-the-transport">3. Selecting the Transport</a></li>
+<li style="padding-left:10px"><a href="#4-wiring-the-connection-the-relay">4. Wiring the Connection (The Relay)</a></li>
+<li style="padding-left:10px"><a href="#5-sending-data-out">5. Sending Data Out</a></li>
+<li style="padding-left:10px"><a href="#6-keeping-it-alive">6. Keeping it Alive</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

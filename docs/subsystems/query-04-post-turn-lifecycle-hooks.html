@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 4: Post-Turn Lifecycle Hooks — query/ — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">query/04_post_turn_lifecycle_hooks.md</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">⚙️ query/ · 04_post_turn_lifecycle_hooks.md</div>
+  <h1 class="chapter-title-h1">Chapter 4: Post-Turn Lifecycle Hooks</h1>
+  <div class="chapter-meta"><span>📄 query/04_post_turn_lifecycle_hooks.md</span></div>
+</div>
+<h1 id="chapter-4-post-turn-lifecycle-hooks">Chapter 4: Post-Turn Lifecycle Hooks</h1>
+<p>
+Welcome to the final chapter of this tutorial series!
+</p>
+<p>
+In <a href="03<em>dependency</em>injection_interface.md">Chapter 3: Dependency Injection Interface</a>, we gave our agent a "Tool Belt" so it could interact with the world (calling APIs, generating IDs).
+</p>
+<p>
+Now we have a functioning agent. It has a config, a budget, and tools. But what happens when the agent says, "I'm finished"? Do we just turn off the lights?
+</p>
+<h2 id="the-motivation-the-pilots-checklist">The Motivation: The Pilot's Checklist</h2>
+<p>
+Imagine an airline pilot landing a plane. The wheels touch the ground, and the plane parks at the gate. The flight is technically "over." However, the pilot doesn't just jump out of the cockpit and go home.
+</p>
+<p>
+They run a <strong>Post-Flight Checklist</strong>:
+</p>
+<ol>
+<li><strong>Safety Check:</strong> Are all switches off? (If not, the battery dies).</li>
+</ol>
+<ol>
+<li><strong>Logbook:</strong> Write down flight duration and fuel usage.</li>
+</ol>
+<ol>
+<li><strong>Maintenance:</strong> Did anything break? If so, report it immediately so it can be fixed before the next flight.</li>
+</ol>
+<p>
+If a critical error is found during this checklist (e.g., "Brakes overheating"), the plane is grounded. It cannot officially "complete" its status until that is resolved.
+</p>
+<p>
+<strong>The Solution:</strong> We implement <strong>Post-Turn Lifecycle Hooks</strong>.
+ 
+This is a middleware layer that runs immediately after the agent generates a response. It ensures the system is healthy, saves memories, and can even <strong>reject</strong> the agent's attempt to stop if it left a mess behind.
+</p>
+<h3 id="central-use-case-dont-leave-broken-code">Central Use Case: "Don't Leave Broken Code"</h3>
+<p>
+Imagine the user asks: <em>"Refactor this file."</em>
+ 
+The agent rewrites the code and says: <em>"I am done."</em>
+</p>
+<p>
+<strong>Without Hooks:</strong> The system exits. The user tries to run the code, and it crashes because of a syntax error.
+ 
+<strong>With Hooks:</strong> The system runs a "Linting Hook." It sees the syntax error. It intercepts the "I am done" message and sends a new message to the agent: <em>"Error: You introduced a syntax error on line 50. Fix it."</em> The agent effectively gets "un-finished" and must do one more turn.
+</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<ol>
+<li><strong>Lifecycle:</strong> The stages of an interaction. The specific stage we care about here is <strong>Post-Turn</strong> (after the AI speaks).</li>
+</ol>
+<ol>
+<li><strong>Hook:</strong> A specific function that runs automatically at this stage.</li>
+</ol>
+<ol>
+<li><strong>Blocking vs. Non-Blocking:</strong></li>
+<ul>
+<li><strong>Non-Blocking (Fire-and-Forget):</strong> Background tasks like saving logs or extracting memories. They don't stop the agent.</li>
+<li><strong>Blocking:</strong> Critical checks. If these fail, the turn is <em>not</em> considered complete, and the agent is forced to try again.</li>
+</ul>
+</ol>
+<h2 id="how-to-use-it">How to Use It</h2>
+<p>
+The core of this system is a generator function called <code>handleStopHooks</code>. It acts as the "Checklist Manager." It calls various services and decides if the turn can end.
+</p>
+<h3 id="step-1-preparing-the-context">Step 1: Preparing the Context</h3>
+<p>
+Before running hooks, we need to bundle up everything that happened during the turn (messages, tools used, system prompts) into a snapshot.
+</p>
+<pre data-lang="typescript"><code>// stopHooks.ts - Context Setup
+const stopHookContext = {
+  messages: [...messagesForQuery, ...assistantMessages],
+  systemPrompt,
+  userContext,
+  systemContext,
+  toolUseContext, // Contains abort signals and permission modes
+}
+</code></pre>
+<p>
+<em>Explanation:</em> Just like <a href="01<em>immutable</em>query_configuration.md">Chapter 1: Immutable Query Configuration</a>, we create a snapshot. The hooks need to see exactly what the agent saw.
+</p>
+<h3 id="step-2-background-tasks-non-blocking">Step 2: Background Tasks (Non-Blocking)</h3>
+<p>
+First, the manager triggers background tasks. These run silently.
+</p>
+<pre data-lang="typescript"><code>// stopHooks.ts - Background Tasks
+if (!isBareMode()) {
+  // 1. Suggest new prompts based on what happened
+  void executePromptSuggestion(stopHookContext)
+  
+  // 2. Extract useful memories for long-term storage
+  void extractMemoriesModule!.executeExtractMemories(
+      stopHookContext, 
+      toolUseContext.appendSystemMessage
+  )
+}
+</code></pre>
+<p>
+<em>Explanation:</em> Note the <code>void</code> keyword. This tells the system: "Start this work, but don't wait for it to finish." We don't want the user to wait 5 seconds just for us to save a log file.
+</p>
+<h3 id="step-3-executing-blocking-hooks">Step 3: Executing Blocking Hooks</h3>
+<p>
+Now we run the critical checks. This calls <code>executeStopHooks</code>, which iterates through rules defined elsewhere (like linting or test checks).
+</p>
+<pre data-lang="typescript"><code>// stopHooks.ts - The Critical Path
+const generator = executeStopHooks(
+  permissionMode,
+  toolUseContext.abortController.signal,
+  // ... other args
+  toolUseContext.agentType,
+)
+</code></pre>
+<p>
+<em>Explanation:</em> This function returns a <strong>Generator</strong>. It will trickle out events (progress updates, errors) one by one.
+</p>
+<h3 id="step-4-processing-results">Step 4: Processing Results</h3>
+<p>
+We loop through the generator to see if anything went wrong.
+</p>
+<pre data-lang="typescript"><code>// stopHooks.ts - Processing the Checklist
+for await (const result of generator) {
+  // If a hook says "STOP!", we flag it
+  if (result.blockingError) {
+    blockingErrors.push(createUserMessage({
+      content: getStopHookMessage(result.blockingError),
+      isMeta: true,
+    }))
+  }
+  
+  // Pass progress messages back to the UI
+  if (result.message) yield result.message
+}
+</code></pre>
+<p>
+<em>Explanation:</em> As the checklist runs, we might get messages like "Running Linter...". We yield these so the user sees a spinner. If a blocking error occurs, we add it to our list.
+</p>
+<h2 id="under-the-hood">Under the Hood</h2>
+<p>
+What happens step-by-step when the agent tries to finish?
+</p>
+<h3 id="visual-flow">Visual Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant Agent
+    participant Manager as StopHook Manager
+    participant Background as Auto-Dream / Memory
+    participant Linter as Blocking Hook (Linter)
+
+    Agent-&gt;&gt;Manager: "I am done."
+    
+    rect rgb(240, 240, 240)
+    Note over Manager, Background: Phase 1: Fire-and-Forget
+    Manager-&gt;&gt;Background: Start extraction (Don't wait)
+    end
+
+    rect rgb(255, 230, 230)
+    Note over Manager, Linter: Phase 2: Blocking Checks
+    Manager-&gt;&gt;Linter: Check code quality
+    Linter--&gt;&gt;Manager: Error: Syntax on Line 10
+    end
+
+    Manager-&gt;&gt;Agent: REJECT STOP. Message: "Fix Syntax on Line 10"
+    Note right of Agent: Agent reads error and starts new turn.</div></div>
+<h3 id="internal-implementation-details">Internal Implementation Details</h3>
+<p>
+Let's look deeper into how <code>handleStopHooks</code> makes the final decision.
+</p>
+<h4 id="part-1-auto-dreaming">Part 1: Auto-Dreaming</h4>
+<p>
+One of the most interesting "Non-Blocking" hooks is <strong>Auto-Dreaming</strong>. This is where the agent, while idle, thinks about what it learned to improve future performance.
+</p>
+<pre data-lang="typescript"><code>// stopHooks.ts
+    if (!toolUseContext.agentId) {
+      // If this is the main agent (not a sub-worker), dream!
+      void executeAutoDream(
+          stopHookContext, 
+          toolUseContext.appendSystemMessage
+      )
+    }
+</code></pre>
+<p>
+<em>Explanation:</em> We check <code>!toolUseContext.agentId</code> to ensure only the main "Lead" agent dreams. We don't want temporary worker agents using up resources.
+</p>
+<h4 id="part-2-handling-interruptions">Part 2: Handling Interruptions</h4>
+<p>
+The user might hit <code>Ctrl+C</code> <em>while</em> the hooks are running. We need to handle this gracefully.
+</p>
+<pre data-lang="typescript"><code>// stopHooks.ts - Cancellation
+      // Check if user pressed Ctrl+C
+      if (toolUseContext.abortController.signal.aborted) {
+        logEvent('tengu_pre_stop_hooks_cancelled', { /*...*/ })
+        
+        yield createUserInterruptionMessage({ toolUse: false })
+        
+        // Stop everything immediately
+        return { blockingErrors: [], preventContinuation: true }
+      }
+</code></pre>
+<p>
+<em>Explanation:</em> We check the %%INLINE<em>6%% inside the loop. If aborted, we return %%INLINE</em>7%%.
+</p>
+<h4 id="part-3-the-final-verdict">Part 3: The Final Verdict</h4>
+<p>
+After all hooks run, the function returns a <code>StopHookResult</code> object.
+</p>
+<pre data-lang="typescript"><code>// stopHooks.ts - Return Type
+type StopHookResult = {
+  blockingErrors: Message[]   // List of things the agent must fix
+  preventContinuation: boolean // Should we hard-stop?
+}
+</code></pre>
+<p>
+If <code>blockingErrors</code> is not empty, the main query loop (outside this file) will see them, feed them back to the LLM, and force another generation cycle.
+</p>
+<h2 id="summary">Summary</h2>
+<p>
+In this chapter, we learned:
+</p>
+<ol>
+<li><strong>Safety Net:</strong> We don't trust the agent to just "finish." We verify its work.</li>
+</ol>
+<ol>
+<li><strong>Middleware Pattern:</strong> We use hooks to sanitize behavior without cluttering the main agent logic.</li>
+</ol>
+<ol>
+<li><strong>Blocking Errors:</strong> The system can reject a "Stop" command if the state is invalid, creating a self-healing loop.</li>
+</ol>
+<h3 id="conclusion">Conclusion</h3>
+<p>
+Congratulations! You have completed the <strong>Query</strong> project tutorial.
+</p>
+<p>
+You now understand the four pillars of a robust AI agent system:
+</p>
+<ol>
+<li><strong>Immutable Configuration:</strong> Locking in rules at the start.</li>
+</ol>
+<ol>
+<li><strong>Token Budget:</strong> Preventing infinite loops and wasted money.</li>
+</ol>
+<ol>
+<li><strong>Dependency Injection:</strong> Making the system testable.</li>
+</ol>
+<ol>
+<li><strong>Lifecycle Hooks:</strong> Ensuring quality and consistency between turns.</li>
+</ol>
+<p>
+With these patterns, you can build AI agents that are reliable, testable, and safe for production use. Happy coding!
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="query.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">query/ index</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#the-motivation-the-pilots-checklist">The Motivation: The Pilot's Checklist</a></li>
+<li style="padding-left:10px"><a href="#central-use-case-dont-leave-broken-code">Central Use Case: "Don't Leave Broken Code"</a></li>
+<li style="padding-left:0px"><a href="#key-concepts">Key Concepts</a></li>
+<li style="padding-left:0px"><a href="#how-to-use-it">How to Use It</a></li>
+<li style="padding-left:10px"><a href="#step-1-preparing-the-context">Step 1: Preparing the Context</a></li>
+<li style="padding-left:10px"><a href="#step-2-background-tasks-non-blocking">Step 2: Background Tasks (Non-Blocking)</a></li>
+<li style="padding-left:10px"><a href="#step-3-executing-blocking-hooks">Step 3: Executing Blocking Hooks</a></li>
+<li style="padding-left:10px"><a href="#step-4-processing-results">Step 4: Processing Results</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood">Under the Hood</a></li>
+<li style="padding-left:10px"><a href="#visual-flow">Visual Flow</a></li>
+<li style="padding-left:10px"><a href="#internal-implementation-details">Internal Implementation Details</a></li>
+<li style="padding-left:0px"><a href="#summary">Summary</a></li>
+<li style="padding-left:10px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>

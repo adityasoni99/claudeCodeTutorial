@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ch.17 Unique Features — claudeCode Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../assets/style.css"/>
+
+</head>
+<body>
+<div class="reading-bar" id="rb"></div>
+<nav class="site-nav">
+  <a class="nav-home" href="../index.html">
+    <span class="dot"></span>
+    <span>claudeCode</span>
+  </a>
+  <span class="nav-sep">/</span><span class="nav-breadcrumb">Ch.17 — Unique Features</span>
+  <div class="nav-right">
+    <ul class="nav-links-sm">
+      <li><a href="../index.html#chapters">Chapters</a></li>
+      <li><a href="../index.html#subsystems">Subsystems</a></li>
+      <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
+    </ul>
+    <span class="nav-tag tag-advanced">ADVANCED</span>
+  </div>
+</nav>
+<div class="page-with-toc"><div class="prose">
+<div class="chapter-header">
+  <div class="chapter-eyebrow">Chapter 17 · <span class="tag tag-advanced">ADVANCED</span></div>
+  <h1 class="chapter-title-h1">Unique Features</h1>
+  <div class="chapter-meta">
+    <span>📄 17_unique_features.md</span>
+    <span>🏷 Advanced</span>
+  </div>
+</div>
+<h1 id="chapter-17-unique-features">Chapter 17: Unique Features</h1>
+<p>
+In the previous <a href="16_teammates.md">Teammates</a> chapter, we learned how to spawn background agents to help us multitask.
+</p>
+<p>
+We have built a powerful system: it has a brain (<a href="03<em>query</em>engine.md">Query Engine</a>), hands (<a href="06<em>bashtool.md">BashTool</a>), and helpers (<a href="16</em>teammates.md">Teammates</a>).
+</p>
+<p>
+But <code>claudeCode</code> isn't just a standard chatbot. It includes several "Secret Weapons"—specialized modes and behaviors designed to handle complex, real-world coding scenarios.
+</p>
+<p>
+In this chapter, we will tour five unique features that make the application feel "smart": <strong>The Buddy System</strong>, <strong>Kairos</strong>, <strong>Ultraplan</strong>, <strong>Auto-Dream</strong>, and <strong>Remote Bridge</strong>.
+</p>
+<h2 id="feature-1-the-buddy-system">Feature 1: The Buddy System</h2>
+<h3 id="the-concept-pair-programming">The Concept: "Pair Programming"</h3>
+<p>
+Programming alone can be error-prone. You might write a bug and not notice it until hours later.
+</p>
+<p>
+The <strong>Buddy System</strong> is a specific configuration of a <a href="16_teammates.md">Teammate</a> that acts as a silent observer. It watches every file change you make and runs a quick "sanity check" in the background.
+</p>
+<h3 id="how-it-works">How it works</h3>
+<p>
+If you enable the Buddy System:
+</p>
+<ol>
+<li>You edit a file using <a href="04_fileedittool.md">FileEditTool</a>.</li>
+</ol>
+<ol>
+<li>The Buddy System detects the <code>save</code> event.</li>
+</ol>
+<ol>
+<li>It spins up a lightweight reviewer agent.</li>
+</ol>
+<ol>
+<li>The agent checks for obvious bugs or style issues.</li>
+</ol>
+<ol>
+<li>If it finds something, it gently nudges you: <em>"Hey, you missed a semicolon in line 40."</em></li>
+</ol>
+<h2 id="feature-2-kairos-time-awareness">Feature 2: Kairos (Time Awareness)</h2>
+<h3 id="the-concept-the-clock">The Concept: "The Clock"</h3>
+<p>
+Most AI models exist in a timeless void. They don't know if a command takes 1 second or 1 hour.
+</p>
+<p>
+<strong>Kairos</strong> (Greek for "opportune moment") is the system's internal clock. It allows the AI to understand <strong>duration</strong> and <strong>deadlines</strong>.
+</p>
+<h3 id="the-use-case-dont-get-stuck">The Use Case: "Don't Get Stuck"</h3>
+<p>
+If you ask the AI to "Run the test suite," and the suite hangs for 30 minutes, a standard AI would wait forever.
+ 
+<strong>Kairos</strong> watches the clock. If a task takes unusually long, it interrupts: <em>"This is taking too long. Should I kill the process?"</em>
+</p>
+<h3 id="code-snippet-the-timeout-logic">Code Snippet: The Timeout Logic</h3>
+<p>
+Here is how Kairos might check constraints inside the <a href="03<em>query</em>engine.md">Query Engine</a> loop.
+</p>
+<pre data-lang="typescript"><code>// features/kairos/timer.ts
+
+function checkTimeBudget(startTime, budgetMinutes) {
+  const now = Date.now();
+  const elapsed = (now - startTime) / 1000 / 60; // in minutes
+
+  if (elapsed &gt; budgetMinutes) {
+    // Stop the AI from thinking further
+    throw new Error("Kairos Alert: Time budget exceeded.");
+  }
+}
+</code></pre>
+<p>
+<em>Explanation: This simple check prevents the AI from burning through your API credits on a stuck task.</em>
+</p>
+<h2 id="feature-3-ultraplan">Feature 3: Ultraplan</h2>
+<h3 id="the-concept-think-before-you-act">The Concept: "Think Before You Act"</h3>
+<p>
+For simple tasks, the AI just acts. But for huge tasks (e.g., "Rewrite the entire database layer"), acting immediately is dangerous.
+</p>
+<p>
+<strong>Ultraplan</strong> is a mode where the AI creates a structured Markdown checklist <em>before</em> it runs a single command. It forces the AI to be an Architect before it becomes a Builder.
+</p>
+<h3 id="the-flow">The Flow</h3>
+<ol>
+<li><strong>Draft:</strong> The AI writes a plan file (e.g., <code>plan.md</code>).</li>
+</ol>
+<ol>
+<li><strong>Review:</strong> It shows you the plan.</li>
+</ol>
+<ol>
+<li><strong>Approve:</strong> You click "Yes."</li>
+</ol>
+<ol>
+<li><strong>Execute:</strong> The AI follows its own checklist step-by-step.</li>
+</ol>
+<h3 id="visual-flow">Visual Flow</h3>
+<div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
+    participant User
+    participant Planner as Ultraplan Mode
+    participant Exec as Execution Mode
+
+    User-&gt;&gt;Planner: "Migrate the database"
+    
+    Note over Planner: Stops execution.
+    Note over Planner: Generates `plan.md`
+    
+    Planner--&gt;&gt;User: "Here is the plan. Approve?"
+    User-&gt;&gt;Planner: "Yes, looks good."
+    
+    Planner-&gt;&gt;Exec: Execute Step 1
+    Exec--&gt;&gt;Planner: Step 1 Done
+    Planner-&gt;&gt;Exec: Execute Step 2</div></div>
+<h2 id="feature-4-auto-dream">Feature 4: Auto-Dream</h2>
+<h3 id="the-concept-subconscious-processing">The Concept: "Subconscious Processing"</h3>
+<p>
+When you step away from your computer, <code>claudeCode</code> doesn't have to sleep.
+</p>
+<p>
+<strong>Auto-Dream</strong> allows the system to run low-priority tasks when the user is idle. It uses the <a href="10<em>auto</em>mode_classifier.md">Auto-Mode Classifier</a> to find safe tasks, like:
+</p>
+<ul>
+<li>Updating documentation.</li>
+<li>Fixing typos.</li>
+<li>Organizing import statements.</li>
+</ul>
+<p>
+It's like a Roomba for your code. It cleans up the dust while you are away.
+</p>
+<h2 id="feature-5-remote-bridge">Feature 5: Remote Bridge</h2>
+<h3 id="the-concept-teleportation">The Concept: "Teleportation"</h3>
+<p>
+Sometimes, the code you want to edit isn't on your laptop. It's on a server in the cloud.
+</p>
+<p>
+<strong>Remote Bridge</strong> allows <code>claudeCode</code> to connect to a remote machine via SSH and treat it as if it were local.
+</p>
+<p>
+It uses the <a href="14<em>model</em>context<em>protocol</em><em>mcp</em>.md">Model Context Protocol (MCP)</a> to tunnel commands.
+</p>
+<ul>
+<li><strong>Local:</strong> You type "List files" on your laptop.</li>
+<li><strong>Bridge:</strong> Sends the command over SSH.</li>
+<li><strong>Remote:</strong> Runs <code>ls</code> on the server.</li>
+<li><strong>Local:</strong> You see the server's files on your screen.</li>
+</ul>
+<h2 id="under-the-hood-implementing-ultraplan">Under the Hood: Implementing Ultraplan</h2>
+<p>
+Let's look closer at <strong>Ultraplan</strong>, as it is the most commonly used unique feature.
+</p>
+<p>
+Ultraplan works by injecting a special "System Prompt" into the <a href="03<em>query</em>engine.md">Query Engine</a>. This prompt forbids the AI from using tools like %%INLINE<em>6%% until it has used the %%INLINE</em>7%%.
+</p>
+<h3 id="the-state-logic">The State Logic</h3>
+<p>
+We track whether we are in "Planning Phase" or "Execution Phase" in <a href="01<em>state</em>management.md">State Management</a>.
+</p>
+<pre data-lang="typescript"><code>// features/ultraplan/state.ts
+
+export const planStateAtom = atom({
+  isPlanning: false,
+  currentPlan: [], // List of steps
+  currentStepIndex: 0
+});
+</code></pre>
+<h3 id="the-plan-tool">The Plan Tool</h3>
+<p>
+The AI calls this tool to save its strategy.
+</p>
+<pre data-lang="typescript"><code>// features/ultraplan/PlanTool.ts
+
+export const PlanTool = buildTool({
+  name: "create_plan",
+  description: "Create a step-by-step plan before coding.",
+  
+  // Input: A list of strings
+  inputSchema: z.object({ steps: z.array(z.string()) }),
+
+  async call({ steps }, context) {
+    // Save the plan to state
+    context.setPlan(steps);
+    return "Plan saved. Ask user for approval.";
+  }
+});
+</code></pre>
+<p>
+<em>Explanation: This tool doesn't edit code. It simply saves a JavaScript array of steps into memory.</em>
+</p>
+<h3 id="enforcing-the-plan">Enforcing the Plan</h3>
+<p>
+In the main loop, we check the state.
+</p>
+<pre data-lang="typescript"><code>// features/ultraplan/guard.ts
+
+function checkPlanGuard(toolName, planState) {
+  // If we have a plan, but haven't finished Step 1...
+  if (planState.isPlanning &amp;&amp; toolName === 'FileEditTool') {
+    // Block the edit!
+    throw new Error("You must approve the plan first.");
+  }
+}
+</code></pre>
+<p>
+<em>Explanation: This ensures the AI respects the architectural phase and doesn't "jump the gun."</em>
+</p>
+<h2 id="why-are-these-important-for-later">Why are these important for later?</h2>
+<p>
+These unique features distinguish <code>claudeCode</code> from simple script runners:
+</p>
+<ul>
+<li><strong><a href="18<em>computer</em>use.md">Computer Use</a>:</strong> In the next chapter, we will unlock the ultimate capability: allowing the AI to move your mouse and see your screen. Features like <strong>Kairos</strong> are critical there to prevent the AI from clicking endlessly if it gets stuck.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>
+You have learned about the "Secret Weapons" of <code>claudeCode</code>:
+</p>
+<ol>
+<li><strong>Buddy System:</strong> Automated pair programming.</li>
+</ol>
+<ol>
+<li><strong>Kairos:</strong> Time limits and awareness.</li>
+</ol>
+<ol>
+<li><strong>Ultraplan:</strong> Structured architectural planning.</li>
+</ol>
+<ol>
+<li><strong>Auto-Dream:</strong> Idle-time cleanup.</li>
+</ol>
+<ol>
+<li><strong>Remote Bridge:</strong> Editing code on distant servers.</li>
+</ol>
+<p>
+Now, we are ready for the most experimental and futuristic chapter of all. What if the AI could stop typing code and start <em>using</em> your computer like a human?
+</p>
+<p>
+<a href="18<em>computer</em>use.md">Next Chapter: Computer Use</a>
+</p>
+<hr>
+<p>
+Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="16-teammates.html">
+          <div class="chapter-nav-label">← Previous</div>
+          <div class="chapter-nav-title">Teammates</div>
+        </a><a class="chapter-nav-card next" href="18-computer-use.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">Computer Use</div>
+        </a></div></div>
+        <aside class="toc-sidebar">
+          <div class="toc-title">On this page</div>
+          <ul class="toc-list"><li style="padding-left:0px"><a href="#feature-1-the-buddy-system">Feature 1: The Buddy System</a></li>
+<li style="padding-left:10px"><a href="#the-concept-pair-programming">The Concept: "Pair Programming"</a></li>
+<li style="padding-left:10px"><a href="#how-it-works">How it works</a></li>
+<li style="padding-left:0px"><a href="#feature-2-kairos-time-awareness">Feature 2: Kairos (Time Awareness)</a></li>
+<li style="padding-left:10px"><a href="#the-concept-the-clock">The Concept: "The Clock"</a></li>
+<li style="padding-left:10px"><a href="#the-use-case-dont-get-stuck">The Use Case: "Don't Get Stuck"</a></li>
+<li style="padding-left:10px"><a href="#code-snippet-the-timeout-logic">Code Snippet: The Timeout Logic</a></li>
+<li style="padding-left:0px"><a href="#feature-3-ultraplan">Feature 3: Ultraplan</a></li>
+<li style="padding-left:10px"><a href="#the-concept-think-before-you-act">The Concept: "Think Before You Act"</a></li>
+<li style="padding-left:10px"><a href="#the-flow">The Flow</a></li>
+<li style="padding-left:10px"><a href="#visual-flow">Visual Flow</a></li>
+<li style="padding-left:0px"><a href="#feature-4-auto-dream">Feature 4: Auto-Dream</a></li>
+<li style="padding-left:10px"><a href="#the-concept-subconscious-processing">The Concept: "Subconscious Processing"</a></li>
+<li style="padding-left:0px"><a href="#feature-5-remote-bridge">Feature 5: Remote Bridge</a></li>
+<li style="padding-left:10px"><a href="#the-concept-teleportation">The Concept: "Teleportation"</a></li>
+<li style="padding-left:0px"><a href="#under-the-hood-implementing-ultraplan">Under the Hood: Implementing Ultraplan</a></li>
+<li style="padding-left:10px"><a href="#the-state-logic">The State Logic</a></li>
+<li style="padding-left:10px"><a href="#the-plan-tool">The Plan Tool</a></li>
+<li style="padding-left:10px"><a href="#enforcing-the-plan">Enforcing the Plan</a></li>
+<li style="padding-left:0px"><a href="#why-are-these-important-for-later">Why are these important for later?</a></li>
+<li style="padding-left:0px"><a href="#conclusion">Conclusion</a></li></ul>
+        </aside></div>
+<footer class="site-footer">
+  <span>claudeCode Tutorial · <a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></span>
+  <span>Generated by <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · Built 2026</span>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1a1c2a',
+    primaryTextColor: '#e8e4da',
+    primaryBorderColor: '#f5a623',
+    lineColor: '#7a7670',
+    secondaryColor: '#13141f',
+    tertiaryColor: '#0b0c13',
+    edgeLabelBackground: '#0b0c13',
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '13px',
+  }
+});
+window.addEventListener('scroll', () => {
+  const bar = document.getElementById('rb');
+  if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
+});
+</script>
+</body>
+</html>
