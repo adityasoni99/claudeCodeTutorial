@@ -38,13 +38,13 @@
 </div>
 <h1 id="chapter-11-notebookedittool">Chapter 11: NotebookEditTool</h1>
 <p>
-In the previous <a href="10<em>auto</em>mode_classifier.md">Auto-Mode Classifier</a> chapter, we discussed how the AI decides if an action is safe enough to perform automatically.
+In the previous <a href="10-auto-mode-classifier.html">Auto-Mode Classifier</a> chapter, we discussed how the AI decides if an action is safe enough to perform automatically.
 </p>
 <p>
 Now, we need to talk about a specific type of file that is notoriously difficult for AI to edit: <strong>Jupyter Notebooks (<code>.ipynb</code>)</strong>.
 </p>
 <p>
-If you use <a href="04_fileedittool.md">FileEditTool</a> on a standard text file, it works perfectly. But if you try to use standard text editing tools on a Notebook, you will likely corrupt the file and break the JSON structure.
+If you use <a href="04-fileedittool.html">FileEditTool</a> on a standard text file, it works perfectly. But if you try to use standard text editing tools on a Notebook, you will likely corrupt the file and break the JSON structure.
 </p>
 <p>
 Enter the <strong>NotebookEditTool</strong>. This is a specialized instrument designed to perform surgery on Data Science notebooks without breaking them.
@@ -72,14 +72,8 @@ The tool needs to:
 </p>
 <ol>
 <li>Open <code>experiments.ipynb</code>.</li>
-</ol>
-<ol>
 <li>Navigate specifically to <strong>Cell #3</strong>.</li>
-</ol>
-<ol>
 <li>Swap the code inside that cell.</li>
-</ol>
-<ol>
 <li>Leave the other 49 cells (and their output images) completely untouched.</li>
 </ol>
 <h2 id="key-concepts">Key Concepts</h2>
@@ -145,20 +139,10 @@ The process is different from editing a normal text file. We must Load -> Parse 
 </p>
 <ol>
 <li><strong>Read:</strong> The tool reads the raw file content.</li>
-</ol>
-<ol>
 <li><strong>Validate:</strong> It checks if the file is valid JSON (not corrupted).</li>
-</ol>
-<ol>
 <li><strong>Parse:</strong> It converts the text into a JavaScript Object (the Notebook structure).</li>
-</ol>
-<ol>
 <li><strong>Locate:</strong> It loops through the <code>cells</code> array to find the matching ID.</li>
-</ol>
-<ol>
 <li><strong>Modify:</strong> It updates that specific object in the array.</li>
-</ol>
-<ol>
 <li><strong>Write:</strong> It converts the whole object back to a string and saves it.</li>
 </ol>
 <p>
@@ -259,9 +243,9 @@ updateFileHistoryState(fullPath);
 The NotebookEditTool is a great example of a "Specialized Tool."
 </p>
 <ul>
-<li><strong><a href="12_websearchtool.md">WebSearchTool</a>:</strong> In the next chapter, we will see another specialized tool that doesn't edit files, but retrieves information from the outside world.</li>
-<li><strong><a href="13<em>feature</em>gating.md">Feature Gating</a>:</strong> Since not every developer uses Python, this tool might be hidden or disabled for users who only work in JavaScript.</li>
-<li><strong><a href="08<em>permission</em><em>_security</em>system.md">Permission & Security System</a>:</strong> Just like <code>FileEditTool</code>, this tool must pass security checks before writing to your disk.</li>
+<li><strong><a href="12-websearchtool.html">WebSearchTool</a>:</strong> In the next chapter, we will see another specialized tool that doesn't edit files, but retrieves information from the outside world.</li>
+<li><strong><a href="13-feature-gating.html">Feature Gating</a>:</strong> Since not every developer uses Python, this tool might be hidden or disabled for users who only work in JavaScript.</li>
+<li><strong><a href="08-permission---security-system.html">Permission & Security System</a>:</strong> Just like <code>FileEditTool</code>, this tool must pass security checks before writing to your disk.</li>
 </ul>
 <h2 id="conclusion">Conclusion</h2>
 <p>
@@ -271,7 +255,7 @@ You have learned that the <strong>NotebookEditTool</strong> allows <code>claudeC
 Now that we can edit code and notebooks, what if the AI needs information it doesn't have? What if it needs to look up documentation online?
 </p>
 <p>
-<a href="12_websearchtool.md">Next Chapter: WebSearchTool</a>
+<a href="12-websearchtool.html">Next Chapter: WebSearchTool</a>
 </p>
 <hr>
 <p>

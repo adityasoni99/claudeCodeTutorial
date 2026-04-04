@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-4-tool-permission-architecture">Chapter 4: Tool Permission Architecture</h1>
 <p>
-Welcome back! In <a href="03<em>external</em>context<em>_</em>connectivity.md">Chapter 3: External Context & Connectivity</a>, we gave our AI "superpowers"—the ability to read files, connect via SSH, and see your IDE.
+Welcome back! In <a href="hooks-03-external-context---connectivity.html">Chapter 3: External Context & Connectivity</a>, we gave our AI "superpowers"—the ability to read files, connect via SSH, and see your IDE.
 </p>
 <p>
 But with great power comes great risk. If the AI hallucinates and tries to run <code>rm -rf /</code> (delete everything), we need a way to stop it. We cannot let the AI execute powerful tools blindly.
@@ -50,33 +50,19 @@ Imagine you are trying to enter a secure building. You don't just walk in.
 </p>
 <ol>
 <li>You stop at the front desk.</li>
-</ol>
-<ol>
 <li>You hand over your ID (<strong>The Context</strong>).</li>
-</ol>
-<ol>
 <li>The guard checks if you are on the list (<strong>Logic</strong>).</li>
-</ol>
-<ol>
 <li>If not, they call the boss to ask for approval (<strong>User Prompt</strong>).</li>
 </ol>
 <p>
-In our application, when the AI wants to use a tool (like %%INLINE<em>1%% or %%INLINE</em>2%%), we pause execution and create a <strong>Permission Context</strong>.
+In our application, when the AI wants to use a tool (like <code>Bash</code> or <code>FileWrite</code>), we pause execution and create a <strong>Permission Context</strong>.
 </p>
 <h3 id="the-flow">The Flow</h3>
 <ol>
 <li><strong>AI Request:</strong> "I want to write code to <code>server.ts</code>."</li>
-</ol>
-<ol>
 <li><strong>Interception:</strong> The app pauses. It does <em>not</em> write the file yet.</li>
-</ol>
-<ol>
 <li><strong>Context Creation:</strong> We package the tool name, the arguments, and the message history into an object called <code>PermissionContext</code>.</li>
-</ol>
-<ol>
 <li><strong>User Decision:</strong> You see a prompt: "Allow writing to server.ts?"</li>
-</ol>
-<ol>
 <li><strong>Execution:</strong> If you click "Allow", the tool runs. If "Deny", the AI receives an error message.</li>
 </ol>
 <hr>
@@ -135,7 +121,7 @@ async handleUserAllow(updatedInput, permissionUpdates) {
 }
 </code></pre>
 <p>
-<strong>Note:</strong> Users can edit commands before running them! That's why we pass %%INLINE<em>9%%. If the AI wanted to run %%INLINE</em>10%% and you changed it to %%INLINE<em>11%%, the %%INLINE</em>12%% is what actually runs.
+<strong>Note:</strong> Users can edit commands before running them! That's why we pass <code>updatedInput</code>. If the AI wanted to run <code>rm -rf /</code> and you changed it to <code>ls</code>, the <code>updatedInput</code> is what actually runs.
 </p>
 <h3 id="scenario-b-the-user-says-no">Scenario B: The User Says "No"</h3>
 <p>
@@ -191,8 +177,6 @@ This is the "Take a Number" system at the deli.
 </p>
 <ol>
 <li><strong><code>push</code></strong>: A new customer (tool request) takes a number.</li>
-</ol>
-<ol>
 <li><strong><code>remove</code></strong>: The customer is served (approved/denied) and leaves the line.</li>
 </ol>
 <hr>
@@ -202,20 +186,10 @@ Let's visualize the journey of a dangerous command, like writing a file.
 </p>
 <ol>
 <li><strong>AI</strong> generates a tool call.</li>
-</ol>
-<ol>
 <li><strong>System</strong> catches it and builds the <code>PermissionContext</code>.</li>
-</ol>
-<ol>
 <li><strong>System</strong> pushes it to the UI Queue.</li>
-</ol>
-<ol>
 <li><strong>User</strong> sees a modal.</li>
-</ol>
-<ol>
 <li><strong>User</strong> clicks "Allow".</li>
-</ol>
-<ol>
 <li><strong>System</strong> runs the tool.</li>
 </ol>
 <div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
@@ -264,7 +238,7 @@ function createResolveOnce&lt;T&gt;(resolve: (value: T) =&gt; void) {
 <p>
 <strong>Explanation:</strong>
  
-This is a "First Come, First Served" lock. The first click wins. Any subsequent clicks are ignored because %%INLINE<em>18%% is already %%INLINE</em>19%%.
+This is a "First Come, First Served" lock. The first click wins. Any subsequent clicks are ignored because <code>claimed</code> is already <code>true</code>.
 </p>
 <hr>
 <h2 id="5-persistence-remember-my-choice">5. Persistence: "Remember My Choice"</h2>
@@ -272,7 +246,7 @@ This is a "First Come, First Served" lock. The first click wins. Any subsequent 
 If you are editing a website, you don't want to click "Allow" for every single file save. You want to say "Allow all edits to this folder."
 </p>
 <p>
-The %%INLINE<em>20%% handles this via %%INLINE</em>21%%.
+The <code>PermissionContext</code> handles this via <code>persistPermissions</code>.
 </p>
 <pre data-lang="typescript"><code>async persistPermissions(updates: PermissionUpdate[]) {
   // 1. Check if there are rules to save
@@ -301,28 +275,25 @@ In this chapter, we built the security layer of our application:
 </p>
 <ol>
 <li><strong><code>createPermissionContext</code></strong>: Creates a frozen snapshot of a request (the Passport).</li>
-</ol>
-<ol>
 <li><strong>Queuing</strong>: Holds multiple requests in a "Waiting Room" so the user isn't overwhelmed.</li>
-</ol>
-<ol>
-<li><strong>%%INLINE<em>24%% / %%INLINE</em>25%%</strong>: The methods that resolve the pause and let the AI continue (or fail).</li>
-</ol>
-<ol>
+<li><strong><code>handleUserAllow</code> / <code>cancelAndAbort</code></strong>: The methods that resolve the pause and let the AI continue (or fail).</li>
 <li><strong><code>createResolveOnce</code></strong>: Ensures we don't accidentally approve the same thing twice.</li>
 </ol>
 <p>
 Now that we have permissions sorted out, and the user has clicked "Allow", we need to actually <em>run</em> the command. If the user pasted a massive block of commands, how do we handle them in order without freezing the UI?
 </p>
 <p>
-<a href="05<em>command</em>execution_queue.md">Next Chapter: Command Execution Queue</a>
+<a href="hooks-05-command-execution-queue.html">Next Chapter: Command Execution Queue</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="hooks.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="hooks-03-external-context---connectivity.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">hooks/ index</div>
+          <div class="chapter-nav-title">03 External Context   Connectivity</div>
+        </a><a class="chapter-nav-card next" href="hooks-05-command-execution-queue.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">05 Command Execution Queue</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

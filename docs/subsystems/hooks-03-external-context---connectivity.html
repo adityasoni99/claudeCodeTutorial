@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-3-external-context-connectivity">Chapter 3: External Context & Connectivity</h1>
 <p>
-Welcome back! In <a href="02<em>modal</em>input_processing.md">Chapter 2: Modal Input Processing</a>, we built a sophisticated keyboard and voice interface for our "Spaceship" (the application). We can now send commands <em>into</em> the system.
+Welcome back! In <a href="hooks-02-modal-input-processing.html">Chapter 2: Modal Input Processing</a>, we built a sophisticated keyboard and voice interface for our "Spaceship" (the application). We can now send commands <em>into</em> the system.
 </p>
 <p>
 But a spaceship flying blindly is useless. It needs <strong>Sensors</strong> and <strong>Comms</strong>.
@@ -45,11 +45,7 @@ This chapter is about <strong>Connectivity</strong>. Our application is not an i
 </p>
 <ol>
 <li><strong>The File System:</strong> Users have files and to-do lists on their hard drives.</li>
-</ol>
-<ol>
 <li><strong>Remote Servers:</strong> We might need to control a machine halfway across the world via SSH.</li>
-</ol>
-<ol>
 <li><strong>IDEs:</strong> We might be running inside VS Code and need to know what file is currently open.</li>
 </ol>
 <p>
@@ -74,7 +70,7 @@ We need a way to "watch" the file system and trigger a re-render the instant the
 We cannot have every component set up its own file watcher (that would be inefficient). Instead, we create a single <strong>Store</strong> that watches the file.
 </p>
 <p>
-We use the %%INLINE<em>2%% hook, which relies on a React feature called %%INLINE</em>3%%. This allows React to subscribe to things that aren't React state.
+We use the <code>useTasksV2</code> hook, which relies on a React feature called <code>useSyncExternalStore</code>. This allows React to subscribe to things that aren't React state.
 </p>
 <h3 id="how-to-use-it">How to use it</h3>
 <pre data-lang="typescript"><code>import { useTasksV2 } from '../hooks/useTasksV2.js';
@@ -98,14 +94,8 @@ export function TaskListDisplay() {
 </p>
 <ol>
 <li>The component mounts.</li>
-</ol>
-<ol>
 <li><code>useTasksV2</code> checks if the file watcher is running. If not, it starts one.</li>
-</ol>
-<ol>
 <li>If you save <code>TODO.md</code> in an external editor, the watcher fires.</li>
-</ol>
-<ol>
 <li>React is notified, and <code>TaskListDisplay</code> updates automatically.</li>
 </ol>
 <hr>
@@ -141,7 +131,7 @@ export function RemoteConsole({ session, setMessages }) {
 <p>
 <strong>Key Concept: The Bridge</strong>
  
-When %%INLINE<em>10%% is true, the main application loop stops processing your commands locally. Instead, it pipes them through %%INLINE</em>11%%, which sends them over the SSH tunnel.
+When <code>isRemoteMode</code> is true, the main application loop stops processing your commands locally. Instead, it pipes them through <code>sendMessage</code>, which sends them over the SSH tunnel.
 </p>
 <hr>
 <h2 id="3-the-universal-translator-inline-12">3. The Universal Translator: <code>useIDEIntegration</code></h2>
@@ -180,17 +170,9 @@ Connecting React to the File System is the most complex "External Context" chall
 <h3 id="the-sequence">The Sequence</h3>
 <ol>
 <li><strong>Store Initialization:</strong> A Singleton (a global object) is created.</li>
-</ol>
-<ol>
 <li><strong>Subscription:</strong> The UI component asks to be notified of changes.</li>
-</ol>
-<ol>
 <li><strong>Watcher:</strong> The Node.js <code>fs.watch</code> function monitors the disk.</li>
-</ol>
-<ol>
 <li><strong>Event:</strong> User saves a file.</li>
-</ol>
-<ol>
 <li><strong>Signal:</strong> The Store alerts React to re-render.</li>
 </ol>
 <div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
@@ -213,7 +195,7 @@ Connecting React to the File System is the most complex "External Context" chall
     React-&gt;&gt;React: Re-render UI</div></div>
 <h3 id="deep-dive-the-singleton-store-code">Deep Dive: The Singleton Store Code</h3>
 <p>
-The magic happens in %%INLINE<em>17%% class (inside %%INLINE</em>18%%). It ensures we don't read the disk 100 times if 100 components ask for tasks.
+The magic happens in <code>TasksV2Store</code> class (inside <code>useTasksV2.ts</code>). It ensures we don't read the disk 100 times if 100 components ask for tasks.
 </p>
 <h4 id="1-the-snapshot-pattern">1. The Snapshot Pattern</h4>
 <p>
@@ -269,25 +251,24 @@ In this chapter, we learned how to give our AI access to the real world:
 </p>
 <ol>
 <li><strong><code>useTasksV2</code></strong>: Uses the <strong>Singleton Store</strong> pattern to watch the file system efficiently without spamming the disk.</li>
-</ol>
-<ol>
 <li><strong><code>useSSHSession</code></strong>: Manages the lifecycle of remote connections, acting as a pipe for commands.</li>
-</ol>
-<ol>
 <li><strong><code>useIDEIntegration</code></strong>: Auto-discovers and connects to IDEs like VS Code to share context.</li>
 </ol>
 <p>
 Now our Spaceship has sensors (File Watchers) and radios (SSH/IDE). It can see the world. But with great power comes great responsibility. If the AI decides to "delete all files," we need a security system to stop it.
 </p>
 <p>
-<a href="04<em>tool</em>permission_architecture.md">Next Chapter: Tool Permission Architecture</a>
+<a href="hooks-04-tool-permission-architecture.html">Next Chapter: Tool Permission Architecture</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="hooks.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="hooks-02-modal-input-processing.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">hooks/ index</div>
+          <div class="chapter-nav-title">02 Modal Input Processing</div>
+        </a><a class="chapter-nav-card next" href="hooks-04-tool-permission-architecture.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">04 Tool Permission Architecture</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

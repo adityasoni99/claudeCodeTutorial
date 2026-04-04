@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-6-lifecycle-termination">Chapter 6: Lifecycle & Termination</h1>
 <p>
-In the <a href="05<em>task</em>visibility<em>_</em>summarization.md">previous chapter</a>, we built a dashboard to see all our running tasks. We learned how to filter them and summarize them into a neat little "Pill" in the footer.
+In the <a href="tasks-05-task-visibility---summarization.html">previous chapter</a>, we built a dashboard to see all our running tasks. We learned how to filter them and summarize them into a neat little "Pill" in the footer.
 </p>
 <p>
 But looking at tasks is easy. The hard part is <strong>ending</strong> them.
@@ -64,11 +64,7 @@ When a tenant (Task) gets evicted (Stopped):
 </p>
 <ol>
 <li><strong>Eviction:</strong> The Manager forces them to leave (Kills the process).</li>
-</ol>
-<ol>
 <li><strong>Utilities:</strong> The Manager turns off the lights and water (Stops timers/watchdogs).</li>
-</ol>
-<ol>
 <li><strong>Cleanup:</strong> The Manager clears out the furniture left behind (Deletes temporary log files).</li>
 </ol>
 <p>
@@ -94,11 +90,7 @@ try {
 </p>
 <ol>
 <li><strong>Input:</strong> You provide the ID <code>task-123</code>.</li>
-</ol>
-<ol>
 <li><strong>Processing:</strong> The system figures out if it's a Shell command, an AI Agent, or a Teammate.</li>
-</ol>
-<ol>
 <li><strong>Result:</strong> The task stops running, and the UI updates to show it is stopped.</li>
 </ol>
 <h2 id="internal-implementation">Internal Implementation</h2>
@@ -107,7 +99,7 @@ How does <code>stopTask</code> handle the differences between an AI Agent (which
 </p>
 <h3 id="visual-walkthrough">Visual Walkthrough</h3>
 <p>
-It uses the <strong>Polymorphism</strong> we learned in <a href="01<em>task</em>state_polymorphism.md">Chapter 1</a>.
+It uses the <strong>Polymorphism</strong> we learned in <a href="tasks-01-task-state-polymorphism.html">Chapter 1</a>.
 </p>
 <div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
     participant U as User
@@ -159,7 +151,7 @@ export async function stopTask(taskId: string, context: ...): Promise&lt;Result&
 </code></pre>
 <h4 id="step-2-the-specific-kill-logic-shell">Step 2: The Specific Kill Logic (Shell)</h4>
 <p>
-Now, let's look at what %%INLINE<em>5%% actually does for a <strong>Local Shell Task</strong> (from <a href="02</em>local<em>shell</em>execution.md">Chapter 2</a>). This code lives in <code>LocalShellTask/killShellTasks.ts</code>.
+Now, let's look at what <code>taskImpl.kill</code> actually does for a <strong>Local Shell Task</strong> (from <a href="tasks-02-local-shell-execution.html">Chapter 2</a>). This code lives in <code>LocalShellTask/killShellTasks.ts</code>.
 </p>
 <p>
 It has to do three things: Kill the process, Stop the Watchdog, and Update the State.
@@ -196,7 +188,7 @@ export function killTask(taskId: string, setAppState: SetAppStateFn): void {
 There is one more complex scenario: <strong>Sub-contractors</strong>.
 </p>
 <p>
-In <a href="03<em>background</em>agent_execution.md">Chapter 3</a>, we learned that an Agent can run shell commands.
+In <a href="tasks-03-background-agent-execution.html">Chapter 3</a>, we learned that an Agent can run shell commands.
  
 If you fire the Agent (stop the main task), you must also fire the commands it started.
 </p>
@@ -229,14 +221,8 @@ In this final chapter, we learned:
 </p>
 <ol>
 <li><strong>Lifecycle Management</strong> is critical to prevent "Zombie" processes.</li>
-</ol>
-<ol>
 <li>We use a <strong>Facility Manager</strong> approach: Evict (Kill), Turn off utilities (Timers), and Cleanup (Files).</li>
-</ol>
-<ol>
 <li><strong><code>stopTask</code></strong> is the polymorphic entry point that handles safety checks.</li>
-</ol>
-<ol>
 <li><strong>Cascading Termination</strong> ensures that sub-tasks are killed when their parent is stopped.</li>
 </ol>
 <h3 id="series-summary">Series Summary</h3>
@@ -244,21 +230,11 @@ In this final chapter, we learned:
 Congratulations! You have completed the <strong>Tasks</strong> project tutorial. You now understand the full architecture:
 </p>
 <ol>
-<li><strong><a href="01<em>task</em>state_polymorphism.md">Polymorphism</a>:</strong> How we treat different things as "Tasks".</li>
-</ol>
-<ol>
-<li><strong><a href="02<em>local</em>shell_execution.md">Shell Execution</a>:</strong> Running raw commands with watchdogs.</li>
-</ol>
-<ol>
-<li><strong><a href="03<em>background</em>agent_execution.md">Agents</a>:</strong> Running async AI contractors.</li>
-</ol>
-<ol>
-<li><strong><a href="04<em>in</em>process_teammates.md">Teammates</a>:</strong> Interactive co-pilots with memory.</li>
-</ol>
-<ol>
-<li><strong><a href="05<em>task</em>visibility<em>_</em>summarization.md">Visibility</a>:</strong> Seeing what is running.</li>
-</ol>
-<ol>
+<li><strong><a href="tasks-01-task-state-polymorphism.html">Polymorphism</a>:</strong> How we treat different things as "Tasks".</li>
+<li><strong><a href="tasks-02-local-shell-execution.html">Shell Execution</a>:</strong> Running raw commands with watchdogs.</li>
+<li><strong><a href="tasks-03-background-agent-execution.html">Agents</a>:</strong> Running async AI contractors.</li>
+<li><strong><a href="tasks-04-in-process-teammates.html">Teammates</a>:</strong> Interactive co-pilots with memory.</li>
+<li><strong><a href="tasks-05-task-visibility---summarization.html">Visibility</a>:</strong> Seeing what is running.</li>
 <li><strong>Lifecycle:</strong> Cleaning up the mess.</li>
 </ol>
 <p>
@@ -267,9 +243,9 @@ You are now ready to build your own robust, multi-tasking AI applications!
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="tasks.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="tasks-05-task-visibility---summarization.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">tasks/ index</div>
+          <div class="chapter-nav-title">05 Task Visibility   Summarization</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

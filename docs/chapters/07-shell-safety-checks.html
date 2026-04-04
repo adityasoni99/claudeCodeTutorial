@@ -38,7 +38,7 @@
 </div>
 <h1 id="chapter-7-shell-safety-checks">Chapter 7: Shell Safety Checks</h1>
 <p>
-In the previous <a href="06<em>bashtool.md">BashTool</a> chapter, we gave %%INLINE</em>0%% the ability to run terminal commands. We described this as giving the AI "hands."
+In the previous <a href="06-bashtool.html">BashTool</a> chapter, we gave <code>claudeCode</code> the ability to run terminal commands. We described this as giving the AI "hands."
 </p>
 <p>
 But imagine if those hands tried to delete your entire hard drive by accident.
@@ -79,12 +79,12 @@ To understand how we catch these commands, we use two simple concepts.
 We don't "understand" the command deeply like a compiler. Instead, we look for "dangerous shapes" in the text using <strong>Regular Expressions (Regex)</strong>.
 </p>
 <ul>
-<li><strong>Safe:</strong> %%INLINE<em>4%%, %%INLINE</em>5%%, <code>echo</code></li>
-<li><strong>Suspicious:</strong> %%INLINE<em>7%%, %%INLINE</em>8%%, <code>drop</code></li>
+<li><strong>Safe:</strong> <code>ls</code>, <code>cd</code>, <code>echo</code></li>
+<li><strong>Suspicious:</strong> <code>rm</code>, <code>truncate</code>, <code>drop</code></li>
 </ul>
 <h3 id="2-the-warning-label">2. The Warning Label</h3>
 <p>
-This system doesn't usually <em>block</em> the user (you might actually <em>want</em> to delete files). Instead, it generates a <strong>Warning Message</strong>. This message is passed to the <strong><a href="02<em>ink</em>ui_framework.md">Ink UI Framework</a></strong> so it can be displayed in red or yellow text when asking for permission.
+This system doesn't usually <em>block</em> the user (you might actually <em>want</em> to delete files). Instead, it generates a <strong>Warning Message</strong>. This message is passed to the <strong><a href="02-ink-ui-framework.html">Ink UI Framework</a></strong> so it can be displayed in red or yellow text when asking for permission.
 </p>
 <h2 id="how-to-use-safety-checks">How to Use Safety Checks</h2>
 <p>
@@ -114,17 +114,9 @@ When the <strong>BashTool</strong> receives a command from the AI, the flow look
 </p>
 <ol>
 <li><strong>Input:</strong> AI suggests <code>git push --force</code>.</li>
-</ol>
-<ol>
 <li><strong>Scan:</strong> The Safety Check loops through a list of known "bad" patterns.</li>
-</ol>
-<ol>
-<li><strong>Match:</strong> It finds that %%INLINE<em>12%% + %%INLINE</em>13%% matches a rule.</li>
-</ol>
-<ol>
+<li><strong>Match:</strong> It finds that <code>push</code> + <code>--force</code> matches a rule.</li>
 <li><strong>Flag:</strong> It returns the warning text associated with that rule.</li>
-</ol>
-<ol>
 <li><strong>UI:</strong> The Permission Screen displays the command <em>plus</em> the warning.</li>
 </ol>
 <p>
@@ -151,7 +143,7 @@ The core of this logic is located in <code>tools/BashTool/destructiveCommandWarn
 </p>
 <h4 id="1-defining-the-rules">1. Defining the Rules</h4>
 <p>
-We create a list of objects. Each object has a %%INLINE<em>15%% (what to look for) and a %%INLINE</em>16%% (what to say).
+We create a list of objects. Each object has a <code>pattern</code> (what to look for) and a <code>warning</code> (what to say).
 </p>
 <pre data-lang="typescript"><code>// tools/BashTool/destructiveCommandWarning.ts
 
@@ -170,7 +162,7 @@ const DESTRUCTIVE_PATTERNS = [
 ];
 </code></pre>
 <p>
-<em>Explanation: We use Regular Expressions (the weird looking characters like %%INLINE<em>17%% and %%INLINE</em>18%%). These allow us to match <code>rm -rf</code> even if there are extra spaces or flags involved.</em>
+<em>Explanation: We use Regular Expressions (the weird looking characters like <code>\b</code> and <code>\s+</code>). These allow us to match <code>rm -rf</code> even if there are extra spaces or flags involved.</em>
 </p>
 <h4 id="2-the-check-function">2. The Check Function</h4>
 <p>
@@ -190,26 +182,26 @@ This function simply loops through the list above.
 }
 </code></pre>
 <p>
-<em>Explanation: This is a classic "Early Return" function. The moment it finds </em>one<em> dangerous thing, it stops looking and reports it. If it finishes the loop without finding anything, it returns <code>null</code>.</em>
+<em>Explanation: This is a classic "Early Return" function. The moment it finds *one</em> dangerous thing, it stops looking and reports it. If it finishes the loop without finding anything, it returns <code>null</code>.*
 </p>
 <h2 id="why-is-this-important-for-later">Why is this important for later?</h2>
 <p>
 This chapter acts as the first line of defense in our security strategy:
 </p>
 <ul>
-<li><strong><a href="08<em>permission</em><em>_security</em>system.md">Permission & Security System</a>:</strong> The next chapter handles the <em>enforcement</em> of these checks. While Chapter 7 detects the danger, Chapter 8 decides whether to block it entirely or ask the user.</li>
-<li><strong><a href="06_bashtool.md">BashTool</a>:</strong> This logic is imported directly into the BashTool so every command is scanned.</li>
-<li><strong><a href="10<em>auto</em>mode<em>classifier.md">Auto-Mode Classifier</a>:</strong> If %%INLINE</em>21%% is running in "Auto Mode" (without user supervision), these safety checks might automatically pause the execution to prevent the AI from doing damage while you are away from the keyboard.</li>
+<li><strong><a href="08-permission---security-system.html">Permission & Security System</a>:</strong> The next chapter handles the <em>enforcement</em> of these checks. While Chapter 7 detects the danger, Chapter 8 decides whether to block it entirely or ask the user.</li>
+<li><strong><a href="06-bashtool.html">BashTool</a>:</strong> This logic is imported directly into the BashTool so every command is scanned.</li>
+<li><strong><a href="10-auto-mode-classifier.html">Auto-Mode Classifier</a>:</strong> If <code>claudeCode</code> is running in "Auto Mode" (without user supervision), these safety checks might automatically pause the execution to prevent the AI from doing damage while you are away from the keyboard.</li>
 </ul>
 <h2 id="conclusion">Conclusion</h2>
 <p>
-You have learned that <strong>Shell Safety Checks</strong> are essentially a spell-checker for danger. By using a list of known destructive patterns (Regex), we can catch commands like %%INLINE<em>22%% or %%INLINE</em>23%% before they happen. This gives the user a chance to say "No!"
+You have learned that <strong>Shell Safety Checks</strong> are essentially a spell-checker for danger. By using a list of known destructive patterns (Regex), we can catch commands like <code>rm -rf</code> or <code>git reset</code> before they happen. This gives the user a chance to say "No!"
 </p>
 <p>
 But detecting danger is only one part of security. How do we manage the overall permissions of the application? Can we restrict the AI to read-only mode?
 </p>
 <p>
-<a href="08<em>permission</em><em>_security</em>system.md">Next Chapter: Permission & Security System</a>
+<a href="08-permission---security-system.html">Next Chapter: Permission & Security System</a>
 </p>
 <hr>
 <p>

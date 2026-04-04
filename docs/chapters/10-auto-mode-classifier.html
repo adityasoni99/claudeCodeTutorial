@@ -38,7 +38,7 @@
 </div>
 <h1 id="chapter-10-auto-mode-classifier">Chapter 10: Auto-Mode Classifier</h1>
 <p>
-In the previous <a href="09<em>rule</em>matching.md">Rule Matching</a> chapter, we learned how to create strict permission rules like "Always allow <code>npm test</code>."
+In the previous <a href="09-rule-matching.html">Rule Matching</a> chapter, we learned how to create strict permission rules like "Always allow <code>npm test</code>."
 </p>
 <p>
 But software development is messy. Sometimes, you want to allow a command <em>only if</em> it is part of a specific context. For example: "Allow file edits, but only if they are just fixing typos in documentation."
@@ -51,15 +51,13 @@ Enter the <strong>Auto-Mode Classifier</strong>. This is a smaller, faster AI mo
 </p>
 <h2 id="what-is-the-auto-mode-classifier">What is the Auto-Mode Classifier?</h2>
 <p>
-The <strong>Auto-Mode Classifier</strong> is a safety guard that runs inside the <a href="08<em>permission</em><em>_security</em>system.md">Permission & Security System</a>.
+The <strong>Auto-Mode Classifier</strong> is a safety guard that runs inside the <a href="08-permission---security-system.html">Permission & Security System</a>.
 </p>
 <p>
 When you run <code>claudeCode</code> in "Auto Mode" (allowing it to work without constant supervision), we still need to prevent disasters. We can't just turn off all security. Instead, we use a secondary AI model to classify every action into two buckets:
 </p>
 <ol>
 <li><strong>Safe / Routine:</strong> Go ahead. (e.g., Reading a file, running a read-only script).</li>
-</ol>
-<ol>
 <li><strong>Risky / Ambiguous:</strong> Stop and ask the user. (e.g., Deleting a database, pushing to the <code>main</code> branch).</li>
 </ol>
 <h3 id="the-central-use-case-the-documentation-fix">The Central Use Case: "The Documentation Fix"</h3>
@@ -127,19 +125,13 @@ This triggers a check where a separate AI model reads your rules and "grades" th
 </p>
 <h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
 <p>
-When the <a href="03<em>query</em>engine.md">Query Engine</a> proposes a tool call, the request is sent to the Classifier.
+When the <a href="03-query-engine.html">Query Engine</a> proposes a tool call, the request is sent to the Classifier.
 </p>
 <ol>
 <li><strong>Context Assembly:</strong> We gather the tool name, arguments, and your custom rules.</li>
-</ol>
-<ol>
 <li><strong>Prompting:</strong> We send this to the Classifier Model.</li>
-</ol>
-<ol>
 <li><strong>Decision:</strong> The model returns a classification.</li>
-</ol>
-<ol>
-<li><strong>Enforcement:</strong> If "Safe," the tool runs. If "Risky," the <a href="02<em>ink</em>ui_framework.md">Ink UI Framework</a> prompts you for permission.</li>
+<li><strong>Enforcement:</strong> If "Safe," the tool runs. If "Risky," the <a href="02-ink-ui-framework.html">Ink UI Framework</a> prompts you for permission.</li>
 </ol>
 <p>
 Here is the flow:
@@ -189,7 +181,7 @@ export function autoModeConfigHandler() {
 </p>
 <h4 id="2-the-critique-logic">2. The Critique Logic</h4>
 <p>
-We use the <a href="03<em>query</em>engine.md">Query Engine</a>'s ability to call models (<code>sideQuery</code>) to review your rules.
+We use the <a href="03-query-engine.html">Query Engine</a>'s ability to call models (<code>sideQuery</code>) to review your rules.
 </p>
 <pre data-lang="typescript"><code>// cli/handlers/autoMode.ts (Simplified)
 
@@ -221,9 +213,9 @@ export async function autoModeCritiqueHandler() {
 The Auto-Mode Classifier allows <code>claudeCode</code> to scale from a simple chatbot to an autonomous agent.
 </p>
 <ul>
-<li><strong><a href="11_notebookedittool.md">NotebookEditTool</a>:</strong> In the next chapter, we look at editing Jupyter Notebooks. The classifier helps determine if running a notebook cell is safe.</li>
-<li><strong><a href="15_agenttool.md">AgentTool</a>:</strong> When we start using "Agents" (sub-workers), the classifier monitors their behavior to ensure they don't go rogue.</li>
-<li><strong><a href="19<em>cost</em>tracking.md">Cost Tracking</a>:</strong> Every time the classifier runs, it uses tokens. We need to track the cost of these "safety checks."</li>
+<li><strong><a href="11-notebookedittool.html">NotebookEditTool</a>:</strong> In the next chapter, we look at editing Jupyter Notebooks. The classifier helps determine if running a notebook cell is safe.</li>
+<li><strong><a href="15-agenttool.html">AgentTool</a>:</strong> When we start using "Agents" (sub-workers), the classifier monitors their behavior to ensure they don't go rogue.</li>
+<li><strong><a href="19-cost-tracking.html">Cost Tracking</a>:</strong> Every time the classifier runs, it uses tokens. We need to track the cost of these "safety checks."</li>
 </ul>
 <h2 id="conclusion">Conclusion</h2>
 <p>
@@ -233,7 +225,7 @@ You have learned that the <strong>Auto-Mode Classifier</strong> is the "Super-Eg
 Now that we understand how the AI decides <em>if</em> it can edit files, let's look at a very specific type of file that requires special handling: Data Science Notebooks.
 </p>
 <p>
-<a href="11_notebookedittool.md">Next Chapter: NotebookEditTool</a>
+<a href="11-notebookedittool.html">Next Chapter: NotebookEditTool</a>
 </p>
 <hr>
 <p>

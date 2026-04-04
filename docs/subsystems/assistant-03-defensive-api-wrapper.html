@@ -38,7 +38,7 @@
 Welcome back! 
 </p>
 <p>
-In <a href="01<em>latest</em>event<em>anchoring.md">Chapter 1</a>, we learned how to get the latest messages. In <a href="02</em>reverse<em>pagination</em>strategy.md">Chapter 2</a>, we learned how to scroll back in time.
+In <a href="assistant-01-latest-event-anchoring.html">Chapter 1</a>, we learned how to get the latest messages. In <a href="assistant-02-reverse-pagination-strategy.html">Chapter 2</a>, we learned how to scroll back in time.
 </p>
 <p>
 However, both of those chapters assumed everything works perfectly. But in the real world, Wi-Fi drops, servers get overloaded, and cables get unplugged.
@@ -114,23 +114,15 @@ Before looking at the code, let's look at the courier's process.
     Note over App: App stays alive, maybe shows "Retry" button</div></div>
 <ol>
 <li><strong>Request:</strong> The App asks <code>fetchPage</code> for data.</li>
-</ol>
-<ol>
-<li><strong>Attempt:</strong> %%INLINE<em>5%% uses %%INLINE</em>6%% (the truck) to try and get it.</li>
-</ol>
-<ol>
+<li><strong>Attempt:</strong> <code>fetchPage</code> uses <code>axios</code> (the truck) to try and get it.</li>
 <li><strong>Failure:</strong> Something goes wrong (timeout, 404, 500 error).</li>
-</ol>
-<ol>
 <li><strong>Defense:</strong> Instead of passing that error back to the App, <code>fetchPage</code> swallows the error.</li>
-</ol>
-<ol>
 <li><strong>Graceful Exit:</strong> It returns <code>null</code>.</li>
 </ol>
 <hr>
 <h3 id="code-implementation">Code Implementation</h3>
 <p>
-Let's dissect %%INLINE<em>9%% in %%INLINE</em>10%%. We will break it down into three small parts to understand the defense mechanisms.
+Let's dissect <code>fetchPage</code> in <code>sessionHistory.ts</code>. We will break it down into three small parts to understand the defense mechanisms.
 </p>
 <h4 id="part-1-the-configuration">Part 1: The Configuration</h4>
 <p>
@@ -148,7 +140,7 @@ const resp = await axios
 </code></pre>
 <ul>
 <li><strong><code>timeout: 15000</code></strong>: If the server takes longer than 15 seconds, we consider it a failure. We don't want the user waiting forever.</li>
-<li><strong>%%INLINE<em>12%%</strong>: By default, %%INLINE</em>13%% throws an error if the server says "404 Not Found" or "500 Error." We disable this. We want to receive the error response object so we can inspect it safely, rather than crashing.</li>
+<li><strong><code>validateStatus: () =&gt; true</code></strong>: By default, <code>axios</code> throws an error if the server says "404 Not Found" or "500 Error." We disable this. We want to receive the error response object so we can inspect it safely, rather than crashing.</li>
 </ul>
 <h4 id="part-2-the-safety-net">Part 2: The Safety Net</h4>
 <p>
@@ -159,7 +151,7 @@ This is the most important part of the defensive strategy.
 </code></pre>
 <ul>
 <li><strong>The Problem:</strong> If the user has no internet connection, <code>axios</code> will fail hard.</li>
-<li><strong>The Solution:</strong> The %%INLINE<em>15%% block catches <em>network level</em> crashes. If the internet is down, this line turns the catastrophic crash into a harmless %%INLINE</em>16%%.</li>
+<li><strong>The Solution:</strong> The <code>.catch(() =&gt; null)</code> block catches <em>network level</em> crashes. If the internet is down, this line turns the catastrophic crash into a harmless <code>null</code>.</li>
 </ul>
 <h4 id="part-3-validation-and-return">Part 3: Validation and Return</h4>
 <p>
@@ -179,7 +171,7 @@ Now that we have a response (or <code>null</code>), we check if it is valid befo
   }
 </code></pre>
 <ul>
-<li><strong>%%INLINE<em>18%%</strong>: If the Safety Net (Part 2) triggered, %%INLINE</em>19%% is null. We stop here.</li>
+<li><strong><code>if (!resp ...)</code></strong>: If the Safety Net (Part 2) triggered, <code>resp</code> is null. We stop here.</li>
 <li><strong><code>resp.status !== 200</code></strong>: If the server sent a "500 Server Error", we stop here.</li>
 <li><strong><code>return null</code></strong>: The courier returns empty-handed.</li>
 </ul>
@@ -200,7 +192,7 @@ Because <code>fetchPage</code> is defensive, our other functions become safe by 
 }
 </code></pre>
 <p>
-If %%INLINE<em>24%% returns %%INLINE</em>25%%, the UI knows something went wrong, but the Javascript keeps running.
+If <code>fetchLatestEvents</code> returns <code>null</code>, the UI knows something went wrong, but the Javascript keeps running.
 </p>
 <hr>
 <h3 id="conclusion">Conclusion</h3>
@@ -216,14 +208,17 @@ By wrapping our raw network calls in <code>fetchPage</code>, we centralized our 
 We have talked a lot about <code>ctx</code> (the Authorization Context) in these code snippets. How do we actually log in and tell the server who we are?
 </p>
 <p>
-<a href="04<em>session</em>authorization_context.md">Next Chapter: Session Authorization Context</a>
+<a href="assistant-04-session-authorization-context.html">Next Chapter: Session Authorization Context</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="assistant.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="assistant-02-reverse-pagination-strategy.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">assistant/ index</div>
+          <div class="chapter-nav-title">02 Reverse Pagination Strategy</div>
+        </a><a class="chapter-nav-card next" href="assistant-04-session-authorization-context.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">04 Session Authorization Context</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

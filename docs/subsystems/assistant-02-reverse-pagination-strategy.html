@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-2-reverse-pagination-strategy">Chapter 2: Reverse Pagination Strategy</h1>
 <p>
-Welcome back! In the previous chapter, <a href="01<em>latest</em>event_anchoring.md">Latest Event Anchoring</a>, we learned how to load the "Live" view of a chat—the most recent messages.
+Welcome back! In the previous chapter, <a href="assistant-01-latest-event-anchoring.html">Latest Event Anchoring</a>, we learned how to load the "Live" view of a chat—the most recent messages.
 </p>
 <p>
 But a chat interface isn't just about what is happening <em>now</em>. It's a history book. Users expect to scroll up and see what was discussed yesterday or last week.
@@ -69,7 +69,7 @@ This strategy relies on a specific piece of data called a "cursor." In our syste
 <ul>
 <li><strong>Chronological Order:</strong> Time moves forward.</li>
 <li><strong>Reverse Pagination:</strong> We move backward.</li>
-<li><strong>The Bookmark:</strong> The %%INLINE<em>2%% (the oldest ID in our current list) becomes the %%INLINE</em>3%% for our next request.</li>
+<li><strong>The Bookmark:</strong> The <code>firstId</code> (the oldest ID in our current list) becomes the <code>before_id</code> for our next request.</li>
 </ul>
 <hr>
 <h3 id="how-to-use-it">How to use it</h3>
@@ -113,11 +113,7 @@ When the user scrolls to the top, use that bookmark to get older data.
 </p>
 <ol>
 <li>We check if <code>hasMore</code> is true (the librarian says there is more text).</li>
-</ol>
-<ol>
 <li>We pass our current top-most ID (<code>bookmark</code>) to the function.</li>
-</ol>
-<ol>
 <li>The system returns the previous slice of history without overlapping or skipping messages.</li>
 </ol>
 <hr>
@@ -142,14 +138,8 @@ Let's visualize the timeline. We are traversing time backwards.
     App--&gt;&gt;User: Prepends messages to UI</div></div>
 <ol>
 <li><strong>User Action:</strong> The user hits the "ceiling" of the current chat.</li>
-</ol>
-<ol>
 <li><strong>Cursor Lookup:</strong> The app looks at the ID of that ceiling message (e.g., ID #850).</li>
-</ol>
-<ol>
 <li><strong>Request:</strong> The app requests messages <em>before</em> #850.</li>
-</ol>
-<ol>
 <li><strong>Response:</strong> The API returns the next chunk (e.g., IDs #750 to #849).</li>
 </ol>
 <hr>
@@ -178,13 +168,13 @@ export async function fetchOlderEvents(
 <ul>
 <li><strong>Explanation:</strong></li>
 <li>It accepts <code>beforeId</code> as a required argument.</li>
-<li>It calls %%INLINE<em>11%% (our <a href="03</em>defensive<em>api</em>wrapper.md">Defensive API Wrapper</a>), passing <code>{ before_id: beforeId }</code> in the parameters object.</li>
+<li>It calls <code>fetchPage</code> (our <a href="assistant-03-defensive-api-wrapper.html">Defensive API Wrapper</a>), passing <code>{ before_id: beforeId }</code> in the parameters object.</li>
 </ul>
 <p>
 <strong>2. The Shared Logic</strong>
 </p>
 <p>
-Just like in Chapter 1, this function relies on %%INLINE<em>13%% to handle the network call. It uses the %%INLINE</em>14%% we will define in <a href="04<em>session</em>authorization_context.md">Session Authorization Context</a> to handle security.
+Just like in Chapter 1, this function relies on <code>fetchPage</code> to handle the network call. It uses the <code>ctx</code> we will define in <a href="assistant-04-session-authorization-context.html">Session Authorization Context</a> to handle security.
 </p>
 <pre data-lang="typescript"><code>// File: sessionHistory.ts
 
@@ -203,13 +193,13 @@ async function fetchPage(
 // ...
 </code></pre>
 <ul>
-<li><strong>Explanation:</strong> %%INLINE<em>15%% is versatile. In Chapter 1, it received %%INLINE</em>16%%. In Chapter 2, it receives %%INLINE<em>17%%. It treats them both simply as %%INLINE</em>18%% to send to the server.</li>
+<li><strong>Explanation:</strong> <code>fetchPage</code> is versatile. In Chapter 1, it received <code>anchor_to_latest</code>. In Chapter 2, it receives <code>before_id</code>. It treats them both simply as <code>params</code> to send to the server.</li>
 </ul>
 <p>
 <strong>3. Updating the Pointers</strong>
 </p>
 <p>
-When the data returns, we need to extract the <em>new</em> pointers so the user can scroll again later. This is part of the <a href="05<em>data</em>normalization_layer.md">Data Normalization Layer</a>.
+When the data returns, we need to extract the <em>new</em> pointers so the user can scroll again later. This is part of the <a href="assistant-05-data-normalization-layer.html">Data Normalization Layer</a>.
 </p>
 <pre data-lang="typescript"><code>  // ... inside fetchPage ...
   return {
@@ -238,14 +228,17 @@ By using the <code>before_id</code> cursor, we can stitch together a conversatio
 To make our assistant robust, we need to wrap these calls in a safety layer.
 </p>
 <p>
-<a href="03<em>defensive</em>api_wrapper.md">Next Chapter: Defensive API Wrapper</a>
+<a href="assistant-03-defensive-api-wrapper.html">Next Chapter: Defensive API Wrapper</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="assistant.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="assistant-01-latest-event-anchoring.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">assistant/ index</div>
+          <div class="chapter-nav-title">01 Latest Event Anchoring</div>
+        </a><a class="chapter-nav-card next" href="assistant-03-defensive-api-wrapper.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">03 Defensive Api Wrapper</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

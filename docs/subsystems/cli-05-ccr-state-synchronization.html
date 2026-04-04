@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-5-ccr-state-synchronization">Chapter 5: CCR State Synchronization</h1>
 <p>
-In the previous chapter, <a href="04<em>transport</em>strategies.md">Transport Strategies</a>, we built the "highway" for our data. We learned how to send raw messages using WebSockets or HTTP/SSE.
+In the previous chapter, <a href="cli-04-transport-strategies.html">Transport Strategies</a>, we built the "highway" for our data. We learned how to send raw messages using WebSockets or HTTP/SSE.
 </p>
 <p>
 However, a raw highway isn't enough. What happens if the internet blips for a second? What if the application tries to send 1,000 tiny messages in one second—will that clog the highway? What if the connection silently dies?
@@ -49,11 +49,7 @@ Imagine you are running a shipping company using the highway (Transport) we buil
 </p>
 <ol>
 <li><strong>The Problem of Chatty Drivers:</strong> If you send a separate delivery truck for every single envelope, you will run out of trucks and money.</li>
-</ol>
-<ol>
 <li><strong>The Problem of Silence:</strong> If a truck driver stops radioing in, you don't know if they are stuck in traffic or if the truck broke down.</li>
-</ol>
-<ol>
 <li><strong>The Problem of Outdated Info:</strong> If a driver radios "I'm at mile 10," then immediately "I'm at mile 11," you only really care about the latest update ("Mile 11").</li>
 </ol>
 <p>
@@ -61,11 +57,7 @@ The <strong>CCR Client</strong> acts as your Logistics Manager. It solves these 
 </p>
 <ol>
 <li><strong>Batching:</strong> Packing many envelopes into one truck (Efficiency).</li>
-</ol>
-<ol>
 <li><strong>Heartbeats:</strong> Forcing drivers to check in every 20 seconds (Liveness).</li>
-</ol>
-<ol>
 <li><strong>Coalescing:</strong> Merging rapid status updates so only the final result is sent (State Sync).</li>
 </ol>
 <h2 id="key-concept-1-the-heartbeat">Key Concept 1: The Heartbeat</h2>
@@ -114,7 +106,7 @@ async enqueue(event: MyEvent): Promise&lt;void&gt; {
 }
 </code></pre>
 <p>
-<em>Explanation:</em> When %%INLINE<em>2%% is called, we don't send data immediately. We just add it to a list (%%INLINE</em>3%%) and check if we are ready to send (<code>drain</code>).
+<em>Explanation:</em> When <code>enqueue</code> is called, we don't send data immediately. We just add it to a list (<code>pending</code>) and check if we are ready to send (<code>drain</code>).
 </p>
 <h3 id="the-bus-driver-drain-loop">The Bus Driver (Drain Loop)</h3>
 <pre data-lang="typescript"><code>// SerialBatchEventUploader.ts (Simplified)
@@ -170,7 +162,7 @@ enqueue(patch: Record&lt;string, unknown&gt;): void {
 }
 </code></pre>
 <p>
-<em>Explanation:</em> By using the spread operator %%INLINE<em>7%%, new keys overwrite old keys. If %%INLINE</em>8%% was %%INLINE<em>9%% and %%INLINE</em>10%% is %%INLINE<em>11%%, the result is %%INLINE</em>12%%. We saved network bandwidth by skipping the outdated step.
+<em>Explanation:</em> By using the spread operator <code>...</code>, new keys overwrite old keys. If <code>pending</code> was <code>{ status: 'Loading' }</code> and <code>patch</code> is <code>{ status: 'Ready' }</code>, the result is <code>{ status: 'Ready' }</code>. We saved network bandwidth by skipping the outdated step.
 </p>
 <h2 id="internal-implementation-the-data-flow">Internal Implementation: The Data Flow</h2>
 <p>
@@ -202,20 +194,10 @@ If a request fails (e.g., Error 500 or Network Error), the uploaders use <strong
 </p>
 <ol>
 <li><strong>Attempt 1:</strong> Fails.</li>
-</ol>
-<ol>
 <li><strong>Wait:</strong> 500ms.</li>
-</ol>
-<ol>
 <li><strong>Attempt 2:</strong> Fails.</li>
-</ol>
-<ol>
 <li><strong>Wait:</strong> 1000ms.</li>
-</ol>
-<ol>
 <li><strong>Attempt 3:</strong> Fails.</li>
-</ol>
-<ol>
 <li><strong>Wait:</strong> 2000ms.</li>
 </ol>
 <p>
@@ -289,31 +271,28 @@ async writeEvent(message: StdoutMessage): Promise&lt;void&gt; {
 </p>
 <ol>
 <li>It <strong>Batches</strong> small messages to save efficiency.</li>
-</ol>
-<ol>
 <li>It <strong>Coalesces</strong> state updates so we only send the latest info.</li>
-</ol>
-<ol>
 <li>It <strong>Heartbeats</strong> to prove we are alive.</li>
-</ol>
-<ol>
 <li>It <strong>Retries</strong> automatically when the internet fails.</li>
 </ol>
 <p>
-By wrapping the raw transport from <a href="04<em>transport</em>strategies.md">Chapter 4</a> in this intelligent layer, we create a robust connection that feels seamless to the user, even on shaky Wi-Fi.
+By wrapping the raw transport from <a href="cli-04-transport-strategies.html">Chapter 4</a> in this intelligent layer, we create a robust connection that feels seamless to the user, even on shaky Wi-Fi.
 </p>
 <p>
 Now that we have a solid communication foundation, how do we extend the capabilities of the AI beyond just chatting? How do we give it tools?
 </p>
 <p>
-<a href="06<em>plugin</em>management.md">Next Chapter: Plugin Management</a>
+<a href="cli-06-plugin-management.html">Next Chapter: Plugin Management</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="cli.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="cli-04-transport-strategies.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">cli/ index</div>
+          <div class="chapter-nav-title">04 Transport Strategies</div>
+        </a><a class="chapter-nav-card next" href="cli-06-plugin-management.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">06 Plugin Management</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

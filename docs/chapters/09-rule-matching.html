@@ -38,7 +38,7 @@
 </div>
 <h1 id="chapter-9-rule-matching">Chapter 9: Rule Matching</h1>
 <p>
-In the previous <a href="08<em>permission</em><em>_security</em>system.md">Permission & Security System</a> chapter, we built a "Bouncer" that stops the AI from running commands without your approval.
+In the previous <a href="08-permission---security-system.html">Permission & Security System</a> chapter, we built a "Bouncer" that stops the AI from running commands without your approval.
 </p>
 <p>
 However, if you had to approve <em>every single command</em> individually, you would quickly get frustrated.
@@ -56,10 +56,10 @@ This is where <strong>Rule Matching</strong> comes in. It is the logic that allo
 </p>
 <h2 id="what-is-rule-matching">What is Rule Matching?</h2>
 <p>
-Rule Matching is the engine that compares a specific command (like %%INLINE<em>4%%) against a stored permission rule (like %%INLINE</em>5%%).
+Rule Matching is the engine that compares a specific command (like <code>git commit -m "wip"</code>) against a stored permission rule (like <code>git commit *</code>).
 </p>
 <p>
-If they match, the <a href="08<em>permission</em><em>_security</em>system.md">Permission & Security System</a> grants access immediately, saving you from a pop-up.
+If they match, the <a href="08-permission---security-system.html">Permission & Security System</a> grants access immediately, saving you from a pop-up.
 </p>
 <h3 id="the-central-use-case-the-test-runner">The Central Use Case: "The Test Runner"</h3>
 <p>
@@ -70,11 +70,7 @@ The AI might try:
 </p>
 <ol>
 <li><code>npm test</code></li>
-</ol>
-<ol>
 <li><code>npm test -- --watch</code></li>
-</ol>
-<ol>
 <li><code>npm test utils.js</code></li>
 </ol>
 <p>
@@ -99,7 +95,7 @@ This uses a special syntax with a colon: <code>command:*</code>. It means "Start
 </p>
 <ul>
 <li><strong>Rule:</strong> <code>npm:*</code></li>
-<li><strong>Matches:</strong> %%INLINE<em>15%%, %%INLINE</em>16%%, <code>npm start</code></li>
+<li><strong>Matches:</strong> <code>npm install</code>, <code>npm test</code>, <code>npm start</code></li>
 </ul>
 <h3 id="3-wildcard-match-the-modern-standard">3. Wildcard Match (The Modern Standard)</h3>
 <p>
@@ -107,7 +103,7 @@ This uses the asterisk <code>*</code> character. It is the most flexible.
 </p>
 <ul>
 <li><strong>Rule:</strong> <code>git commit *</code></li>
-<li><strong>Matches:</strong> %%INLINE<em>20%%, %%INLINE</em>21%%</li>
+<li><strong>Matches:</strong> <code>git commit -m "fix"</code>, <code>git commit -am "wip"</code></li>
 <li><strong>Does NOT Match:</strong> <code>git push</code> (The start is wrong)</li>
 </ul>
 <h2 id="how-to-use-rule-matching">How to Use Rule Matching</h2>
@@ -136,7 +132,7 @@ console.log(isAllowed); // Output: true
 </p>
 <h3 id="example-escaping">Example: Escaping</h3>
 <p>
-What if your filename actually contains a star? Like %%INLINE<em>24%%? You can escape it with a backslash %%INLINE</em>25%%.
+What if your filename actually contains a star? Like <code>image_*.png</code>? You can escape it with a backslash <code>\</code>.
 </p>
 <pre data-lang="typescript"><code>// Rule: Delete strict patterns only
 const rule = "rm image_\\*.png"; 
@@ -154,7 +150,7 @@ console.log(matchWildcardPattern(rule, cmd)); // Output: true
 Computers don't natively understand "wildcards." They understand <strong>Regular Expressions</strong> (Regex).
 </p>
 <p>
-Our Rule Matching engine is essentially a <strong>Translator</strong>. It takes your simple human-readable rule (%%INLINE<em>27%%) and converts it into a complex Regex pattern (%%INLINE</em>28%%) that the computer can execute.
+Our Rule Matching engine is essentially a <strong>Translator</strong>. It takes your simple human-readable rule (<code>git *</code>) and converts it into a complex Regex pattern (<code>^git\ .*$</code>) that the computer can execute.
 </p>
 <p>
 Here is the flow of a match request:
@@ -202,11 +198,11 @@ export function parsePermissionRule(rule: string) {
 }
 </code></pre>
 <p>
-<em>Explanation: This function acts as a sorter. It checks for specific characters (%%INLINE<em>30%% or %%INLINE</em>31%%) to determine the complexity of the rule.</em>
+<em>Explanation: This function acts as a sorter. It checks for specific characters (<code>:*</code> or <code>*</code>) to determine the complexity of the rule.</em>
 </p>
 <h4 id="2-the-wildcard-translator">2. The Wildcard Translator</h4>
 <p>
-This is the most complex part. We need to turn %%INLINE<em>32%% into %%INLINE</em>33%% (Regex for "anything"), but we must be careful not to break real stars (escaped ones).
+This is the most complex part. We need to turn <code>*</code> into <code>.*</code> (Regex for "anything"), but we must be careful not to break real stars (escaped ones).
 </p>
 <pre data-lang="typescript"><code>// utils/permissions/shellRuleMatching.ts
 
@@ -236,9 +232,9 @@ export function matchWildcardPattern(pattern, command) {
 Rule Matching is a small utility that makes the entire system usable.
 </p>
 <ul>
-<li><strong><a href="06_bashtool.md">BashTool</a>:</strong> Every time the BashTool runs, it checks these rules first.</li>
-<li><strong><a href="10<em>auto</em>mode_classifier.md">Auto-Mode Classifier</a>:</strong> In the next chapter, we will discuss "Auto Mode." Rule Matching is one of the ways Auto Mode determines if it can proceed without bothering the user.</li>
-<li><strong><a href="13<em>feature</em>gating.md">Feature Gating</a>:</strong> Sometimes we use matching to enable features for specific file types (e.g., <code>*.ipynb</code>).</li>
+<li><strong><a href="06-bashtool.html">BashTool</a>:</strong> Every time the BashTool runs, it checks these rules first.</li>
+<li><strong><a href="10-auto-mode-classifier.html">Auto-Mode Classifier</a>:</strong> In the next chapter, we will discuss "Auto Mode." Rule Matching is one of the ways Auto Mode determines if it can proceed without bothering the user.</li>
+<li><strong><a href="13-feature-gating.html">Feature Gating</a>:</strong> Sometimes we use matching to enable features for specific file types (e.g., <code>*.ipynb</code>).</li>
 </ul>
 <h2 id="conclusion">Conclusion</h2>
 <p>
@@ -248,7 +244,7 @@ You have learned that <strong>Rule Matching</strong> is the translator between h
 Now that we can verify commands against rules, what if we want the AI to run entirely on its own, making decisions without us?
 </p>
 <p>
-<a href="10<em>auto</em>mode_classifier.md">Next Chapter: Auto-Mode Classifier</a>
+<a href="10-auto-mode-classifier.html">Next Chapter: Auto-Mode Classifier</a>
 </p>
 <hr>
 <p>

@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-4-input-state-management">Chapter 4: Input State Management</h1>
 <p>
-In the previous chapter, <a href="03<em>permission</em><em>_safety</em>system.md">Permission & Safety System</a>, we established the "Bouncer" that stops the agent from doing dangerous things.
+In the previous chapter, <a href="types-03-permission---safety-system.html">Permission & Safety System</a>, we established the "Bouncer" that stops the agent from doing dangerous things.
 </p>
 <p>
 Now that we are safe, we need to talk. You might think handling user input is easy: just an empty box where you type letters. But in a professional agent system, the input box is a complex engine. It handles <strong>Vim keybindings</strong>, <strong>image pasting</strong>, <strong>autocomplete suggestions</strong>, and <strong>history navigation</strong>.
@@ -52,14 +52,8 @@ But for an AI Agent running in a terminal, we need to manage the <strong>entire 
 </p>
 <ol>
 <li><strong>Cursor Logic:</strong> If the user presses the <code>Up Arrow</code>, do we move the cursor up a line, or do we fetch the previous command from history?</li>
-</ol>
-<ol>
-<li><strong>Modes:</strong> Are we typing text (%%INLINE<em>2%%) or navigating code (%%INLINE</em>3%%)?</li>
-</ol>
-<ol>
+<li><strong>Modes:</strong> Are we typing text (<code>Insert Mode</code>) or navigating code (<code>Vim Normal Mode</code>)?</li>
 <li><strong>Rich Content:</strong> What happens if the user pastes a generic screenshot? We can't put binary image data into a text string.</li>
-</ol>
-<ol>
 <li><strong>Ghost Text:</strong> How do we show autocomplete suggestions (like greyed-out text) without actually changing what the user typed?</li>
 </ol>
 <p>
@@ -85,7 +79,7 @@ This tracks where you are physically on the screen. It's not enough to know <em>
 }
 </code></pre>
 <ul>
-<li><strong>Beginner Tip:</strong> %%INLINE<em>6%% is crucial. If a user wants to delete a character, we don't just delete the last letter; we delete the letter at the %%INLINE</em>7%%.</li>
+<li><strong>Beginner Tip:</strong> <code>offset</code> is crucial. If a user wants to delete a character, we don't just delete the last letter; we delete the letter at the <code>offset</code>.</li>
 </ul>
 <h3 id="2-ghost-text-inline-8">2. Ghost Text (<code>InlineGhostText</code>)</h3>
 <p>
@@ -112,7 +106,7 @@ export type VimInputState = BaseInputState &amp; {
 }
 </code></pre>
 <ul>
-<li><strong>Explanation:</strong> In %%INLINE<em>10%% mode, pressing 'i' types the letter 'i'. In %%INLINE</em>11%% mode, pressing 'i' switches you to Insert mode. The state manager must listen to every keystroke to decide what to do.</li>
+<li><strong>Explanation:</strong> In <code>INSERT</code> mode, pressing 'i' types the letter 'i'. In <code>NORMAL</code> mode, pressing 'i' switches you to Insert mode. The state manager must listen to every keystroke to decide what to do.</li>
 </ul>
 <hr>
 <h2 id="use-case-the-smart-paste">Use Case: The "Smart Paste"</h2>
@@ -146,7 +140,7 @@ When the user hits "Enter", we don't just send a string. We bundle the text <em>
 }
 </code></pre>
 <ul>
-<li><strong>Explanation:</strong> The %%INLINE<em>14%% field acts like an email attachment. The %%INLINE</em>15%% is the body of the email, and <code>pastedContents</code> holds the heavy files.</li>
+<li><strong>Explanation:</strong> The <code>pastedContents</code> field acts like an email attachment. The <code>value</code> is the body of the email, and <code>pastedContents</code> holds the heavy files.</li>
 </ul>
 <hr>
 <h2 id="under-the-hood-the-input-pipeline">Under the Hood: The Input Pipeline</h2>
@@ -174,7 +168,7 @@ How does a keystroke become a command? It goes through a pipeline of filtering, 
     Q-&gt;&gt;Q: Attach Metadata (Priority: 'now')</div></div>
 <h3 id="implementation-details">Implementation Details</h3>
 <p>
-Let's look deeper into the %%INLINE<em>17%% in %%INLINE</em>18%%. This is the final output of the Input State Manager. It prepares the data for the <a href="01<em>command</em>architecture.md">Command Architecture</a>.
+Let's look deeper into the <code>QueuedCommand</code> in <code>textInputTypes.ts</code>. This is the final output of the Input State Manager. It prepares the data for the <a href="types-01-command-architecture.html">Command Architecture</a>.
 </p>
 <h4 id="1-prioritization-inline-19">1. Prioritization (<code>QueuePriority</code>)</h4>
 <p>
@@ -211,25 +205,24 @@ Sometimes, input comes from a remote UI (like a phone app connected to the agent
 </p>
 <ol>
 <li><strong>Rich Media:</strong> Pasting images directly into the flow.</li>
-</ol>
-<ol>
 <li><strong>Developer Experience:</strong> Vim bindings and Autocomplete.</li>
-</ol>
-<ol>
 <li><strong>Responsiveness:</strong> Prioritizing "Abort" signals over standard chat.</li>
 </ol>
 <p>
 Now that we have collected the user's input, processed it, and queued it, we might want to extend the agent's capabilities beyond what came in the box.
 </p>
 <p>
-<a href="05<em>extensibility<strong>plugins</strong></em>hooks_.md">Next Chapter: Extensibility (Plugins & Hooks)</a>
+<a href="types-05-extensibility--plugins---hooks-.html">Next Chapter: Extensibility (Plugins & Hooks)</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="types.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="types-03-permission---safety-system.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">types/ index</div>
+          <div class="chapter-nav-title">03 Permission   Safety System</div>
+        </a><a class="chapter-nav-card next" href="types-05-extensibility--plugins---hooks-.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">05 Extensibility  Plugins   Hooks </div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

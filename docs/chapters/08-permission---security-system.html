@@ -38,7 +38,7 @@
 </div>
 <h1 id="chapter-8-permission-security-system">Chapter 8: Permission & Security System</h1>
 <p>
-In the previous <a href="07<em>shell</em>safety<em>checks.md">Shell Safety Checks</a> chapter, we learned how to detect dangerous commands like %%INLINE</em>0%%. But detecting danger is only the first step.
+In the previous <a href="07-shell-safety-checks.html">Shell Safety Checks</a> chapter, we learned how to detect dangerous commands like <code>rm -rf</code>. But detecting danger is only the first step.
 </p>
 <p>
 Now we face a bigger challenge: <strong>Enforcement.</strong>
@@ -51,23 +51,19 @@ The <strong>Permission & Security System</strong> is the judge. It balances safe
 </p>
 <h2 id="what-is-the-permission-system">What is the Permission System?</h2>
 <p>
-Think of the Permission System as a <strong>Bouncer</strong> at a club. Every time a tool (like the <a href="06<em>bashtool.md">BashTool</a> or <a href="04</em>fileedittool.md">FileEditTool</a>) wants to do something, it must show its ID to the bouncer.
+Think of the Permission System as a <strong>Bouncer</strong> at a club. Every time a tool (like the <a href="06-bashtool.html">BashTool</a> or <a href="04-fileedittool.html">FileEditTool</a>) wants to do something, it must show its ID to the bouncer.
 </p>
 <p>
 The bouncer has three responses:
 </p>
 <ol>
 <li><strong>Allow:</strong> "Go right in." (The command runs immediately).</li>
-</ol>
-<ol>
 <li><strong>Deny:</strong> "You're banned." (The command is blocked).</li>
-</ol>
-<ol>
 <li><strong>Ask:</strong> "I need to check with the manager." (The user sees a popup to confirm).</li>
 </ol>
 <h3 id="the-central-use-case-the-auto-refactor">The Central Use Case: "The Auto-Refactor"</h3>
 <p>
-Imagine you ask %%INLINE<em>1%% to: <strong>"Rename the %%INLINE</em>2%% folder to <code>helpers</code> and update all imports."</strong>
+Imagine you ask <code>claudeCode</code> to: <strong>"Rename the <code>utils</code> folder to <code>helpers</code> and update all imports."</strong>
 </p>
 <p>
 This might involve 20 different file edits.
@@ -82,12 +78,12 @@ This might involve 20 different file edits.
 Every permission check returns a <strong>Decision</strong> object. It tells the application what to do next.
 </p>
 <ul>
-<li><strong>%%INLINE<em>4%%</strong>: Can be %%INLINE</em>5%%, %%INLINE<em>6%%, or %%INLINE</em>7%%.</li>
+<li><strong><code>behavior</code></strong>: Can be <code>'allow'</code>, <code>'deny'</code>, or <code>'ask'</code>.</li>
 <li><strong><code>message</code></strong>: If denied or asking, this explains why (e.g., "This command deletes files").</li>
 </ul>
 <h3 id="2-modes-the-threat-level">2. Modes (The "Threat Level")</h3>
 <p>
-The system operates in different modes stored in <a href="01<em>state</em>management.md">State Management</a>:
+The system operates in different modes stored in <a href="01-state-management.html">State Management</a>:
 </p>
 <ul>
 <li><strong>Strict (Default):</strong> Ask for almost everything.</li>
@@ -95,11 +91,11 @@ The system operates in different modes stored in <a href="01<em>state</em>manage
 </ul>
 <h3 id="3-persistent-rules">3. Persistent Rules</h3>
 <p>
-If you tell the system "Always allow %%INLINE<em>9%%," it remembers this. These rules are saved so you don't have to repeat yourself. We will learn exactly how these strings work in <a href="09</em>rule_matching.md">Rule Matching</a>.
+If you tell the system "Always allow <code>npm test</code>," it remembers this. These rules are saved so you don't have to repeat yourself. We will learn exactly how these strings work in <a href="09-rule-matching.html">Rule Matching</a>.
 </p>
 <h2 id="how-to-use-the-system">How to Use the System</h2>
 <p>
-The <a href="03<em>query</em>engine.md">Query Engine</a> typically handles this process automatically before running a tool. However, understanding the flow is vital.
+The <a href="03-query-engine.html">Query Engine</a> typically handles this process automatically before running a tool. However, understanding the flow is vital.
 </p>
 <h3 id="checking-permissions">Checking Permissions</h3>
 <p>
@@ -134,17 +130,9 @@ The permission logic is a waterfall. It checks a series of conditions in order. 
 </p>
 <ol>
 <li><strong>Deny Rules:</strong> Is this specific command on a blacklist? -> <strong>DENY</strong></li>
-</ol>
-<ol>
 <li><strong>Ask Rules:</strong> Did the user specifically say "Always ask me about this"? -> <strong>ASK</strong></li>
-</ol>
-<ol>
-<li><strong>Safety Checks:</strong> Did <a href="07<em>shell</em>safety_checks.md">Shell Safety Checks</a> flag this as dangerous? -> <strong>ASK</strong></li>
-</ol>
-<ol>
+<li><strong>Safety Checks:</strong> Did <a href="07-shell-safety-checks.html">Shell Safety Checks</a> flag this as dangerous? -> <strong>ASK</strong></li>
 <li><strong>Auto Mode:</strong> Is Auto Mode on? Does the AI classifier think this is safe? -> <strong>ALLOW</strong></li>
-</ol>
-<ol>
 <li><strong>Default:</strong> If nothing else matches -> <strong>ASK</strong></li>
 </ol>
 <p>
@@ -230,7 +218,7 @@ async function handleAutoMode(result, context) {
 </p>
 <h4 id="3-the-user-interface">3. The User Interface</h4>
 <p>
-If the final decision is %%INLINE<em>11%%, we render a React component using the <a href="02</em>ink<em>ui</em>framework.md">Ink UI Framework</a>. This happens in <code>BashPermissionRequest.tsx</code>.
+If the final decision is <code>'ask'</code>, we render a React component using the <a href="02-ink-ui-framework.html">Ink UI Framework</a>. This happens in <code>BashPermissionRequest.tsx</code>.
 </p>
 <pre data-lang="tsx"><code>// components/permissions/BashPermissionRequest.tsx
 
@@ -259,19 +247,19 @@ export function BashPermissionRequest({ command, onDone, onReject }) {
 The Permission System is the backbone of trust in <code>claudeCode</code>.
 </p>
 <ul>
-<li><strong><a href="09<em>rule</em>matching.md">Rule Matching</a>:</strong> In the next chapter, we will learn the specific syntax (like <code>npm test:*</code>) used to create persistent permission rules.</li>
-<li><strong><a href="10<em>auto</em>mode_classifier.md">Auto-Mode Classifier</a>:</strong> We mentioned "Auto Mode" uses AI to decide if a command is safe. Chapter 10 explains how that AI classifier works.</li>
-<li><strong><a href="13<em>feature</em>gating.md">Feature Gating</a>:</strong> Some permissions might be locked behind feature flags or enterprise settings.</li>
+<li><strong><a href="09-rule-matching.html">Rule Matching</a>:</strong> In the next chapter, we will learn the specific syntax (like <code>npm test:*</code>) used to create persistent permission rules.</li>
+<li><strong><a href="10-auto-mode-classifier.html">Auto-Mode Classifier</a>:</strong> We mentioned "Auto Mode" uses AI to decide if a command is safe. Chapter 10 explains how that AI classifier works.</li>
+<li><strong><a href="13-feature-gating.html">Feature Gating</a>:</strong> Some permissions might be locked behind feature flags or enterprise settings.</li>
 </ul>
 <h2 id="conclusion">Conclusion</h2>
 <p>
 You have learned that the <strong>Permission & Security System</strong> acts as a gatekeeper. It checks every tool request against a set of rules, modes, and safety checks. It ensures that the powerful tools we built in previous chapters (FileEdit, Bash, Git) are used safely and responsibly.
 </p>
 <p>
-But how exactly does the system know that %%INLINE<em>15%% matches the rule %%INLINE</em>16%%?
+But how exactly does the system know that <code>npm test</code> matches the rule <code>npm *</code>?
 </p>
 <p>
-<a href="09<em>rule</em>matching.md">Next Chapter: Rule Matching</a>
+<a href="09-rule-matching.html">Next Chapter: Rule Matching</a>
 </p>
 <hr>
 <p>

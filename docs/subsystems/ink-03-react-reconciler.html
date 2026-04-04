@@ -35,13 +35,13 @@
 </div>
 <h1 id="chapter-3-react-reconciler">Chapter 3: React Reconciler</h1>
 <p>
-In the previous chapter, <a href="02<em>ink</em>dom<em>_</em>layout_engine.md">Ink DOM & Layout Engine</a>, we discovered that Ink builds an invisible tree of nodes (the Ink DOM) and uses the Yoga engine to calculate layout.
+In the previous chapter, <a href="ink-02-ink-dom---layout-engine.html">Ink DOM & Layout Engine</a>, we discovered that Ink builds an invisible tree of nodes (the Ink DOM) and uses the Yoga engine to calculate layout.
 </p>
 <p>
 But there is a missing link.
 </p>
 <p>
-When you write React code, you are dealing with <strong>State</strong> (%%INLINE<em>0%%) and <strong>Virtual Components</strong>. You aren't manually creating %%INLINE</em>1%% nodes or calculating math.
+When you write React code, you are dealing with <strong>State</strong> (<code>useState</code>) and <strong>Virtual Components</strong>. You aren't manually creating <code>ink-box</code> nodes or calculating math.
 </p>
 <p>
 <strong>Who connects your React state to the Ink DOM?</strong>
@@ -89,12 +89,8 @@ To understand this, let's look at the "Hello World" of interactivity: a Counter.
 <strong>The Challenge:</strong>
 </p>
 <ol>
-<li>React changes %%INLINE<em>2%% from %%INLINE</em>3%% to <code>1</code>.</li>
-</ol>
-<ol>
+<li>React changes <code>count</code> from <code>0</code> to <code>1</code>.</li>
 <li>React creates a new "Virtual" tree: <code>&lt;Text&gt;Count: 1&lt;/Text&gt;</code>.</li>
-</ol>
-<ol>
 <li>The Reconciler must figure out how to update the real Ink DOM to match this new reality without rebuilding the whole world.</li>
 </ol>
 <hr>
@@ -134,20 +130,10 @@ Let's trace what happens when our Counter component starts up.
     Rec-&gt;&gt;IDOM: parent.childNodes.push(child)</div></div>
 <ol>
 <li><strong>React:</strong> "I need a Text element."</li>
-</ol>
-<ol>
 <li><strong>Reconciler:</strong> Calls Ink's <code>createNode</code>.</li>
-</ol>
-<ol>
 <li><strong>React:</strong> "I need the string 'Count: 0'."</li>
-</ol>
-<ol>
 <li><strong>Reconciler:</strong> Calls Ink's <code>createTextNode</code>.</li>
-</ol>
-<ol>
 <li><strong>React:</strong> "Put the string inside the element."</li>
-</ol>
-<ol>
 <li><strong>Reconciler:</strong> Links the two nodes in the Ink DOM.</li>
 </ol>
 <hr>
@@ -157,7 +143,7 @@ Let's look at the actual code Ink uses to implement this "Foreman." This file is
 </p>
 <h3 id="1-creating-elements-inline-13">1. Creating Elements (<code>createInstance</code>)</h3>
 <p>
-When React encounters a %%INLINE<em>14%% or %%INLINE</em>15%%, it calls this method.
+When React encounters a <code>&lt;Box&gt;</code> or <code>&lt;Text&gt;</code>, it calls this method.
 </p>
 <pre data-lang="typescript"><code>// reconciler.ts (Simplified)
 createInstance(type, props, root, hostContext) {
@@ -192,7 +178,7 @@ appendChild(parentNode, childNode) {
 <p>
 <strong>Explanation:</strong>
  
-This wrapper calls %%INLINE<em>18%% in %%INLINE</em>19%%, which pushes the child into the parent's array <em>and</em> connects the underlying Yoga layout nodes together.
+This wrapper calls <code>appendChildNode</code> in <code>dom.ts</code>, which pushes the child into the parent's array <em>and</em> connects the underlying Yoga layout nodes together.
 </p>
 <h3 id="3-handling-updates-inline-20">3. Handling Updates (<code>commitUpdate</code>)</h3>
 <p>
@@ -243,18 +229,10 @@ Simple and direct. It updates the <code>.nodeValue</code> property on the Ink te
 Let's re-run the <strong>Counter</strong> update with our new knowledge.
 </p>
 <ol>
-<li><strong>State Change:</strong> %%INLINE<em>26%% becomes %%INLINE</em>27%%.</li>
-</ol>
-<ol>
+<li><strong>State Change:</strong> <code>count</code> becomes <code>1</code>.</li>
 <li><strong>React Render:</strong> React compares the Virtual DOM and sees the text changed from "Count: 0" to "Count: 1".</li>
-</ol>
-<ol>
 <li><strong>Reconciler Call:</strong> React calls <code>commitTextUpdate(textNode, "Count: 0", "Count: 1")</code>.</li>
-</ol>
-<ol>
 <li><strong>DOM Update:</strong> The <code>textNode</code> in memory now holds the string "Count: 1".</li>
-</ol>
-<ol>
 <li><strong>Dirty Flag:</strong> The node is marked <code>dirty = true</code>.</li>
 </ol>
 <p>
@@ -266,7 +244,7 @@ In this chapter, you learned:
 </p>
 <ul>
 <li><strong>React Reconciler</strong> is the translator between React logic and Ink's internal DOM.</li>
-<li><strong>Host Config</strong> is the dictionary of translation methods (%%INLINE<em>31%%, %%INLINE</em>32%%).</li>
+<li><strong>Host Config</strong> is the dictionary of translation methods (<code>createInstance</code>, <code>commitUpdate</code>).</li>
 <li><strong>Updates are Granular:</strong> The reconciler only touches the specific nodes and properties that changed, keeping performance high.</li>
 </ul>
 <p>
@@ -276,14 +254,17 @@ At this point, we have a DOM tree that updates automatically when React state ch
 How does Ink handle keystrokes like <code>Ctrl+C</code> or moving a selection with Arrow Keys?
 </p>
 <p>
-<a href="04<em>input</em>processing_pipeline.md">Next Chapter: Input Processing Pipeline</a>
+<a href="ink-04-input-processing-pipeline.html">Next Chapter: Input Processing Pipeline</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="ink.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="ink-02-ink-dom---layout-engine.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">ink/ index</div>
+          <div class="chapter-nav-title">02 Ink Dom   Layout Engine</div>
+        </a><a class="chapter-nav-card next" href="ink-04-input-processing-pipeline.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">04 Input Processing Pipeline</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

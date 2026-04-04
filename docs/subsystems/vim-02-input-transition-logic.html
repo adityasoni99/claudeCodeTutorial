@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-2-input-transition-logic">Chapter 2: Input Transition Logic</h1>
 <p>
-In the previous chapter, <a href="01<em>vim</em>state<em>machine.md">Vim State Machine</a>, we learned that Vim acts like a car with a manual transmission. It has different "gears" (states) like %%INLINE</em>0%% and <code>Operator</code>.
+In the previous chapter, <a href="vim-01-vim-state-machine.html">Vim State Machine</a>, we learned that Vim acts like a car with a manual transmission. It has different "gears" (states) like <code>Idle</code> and <code>Operator</code>.
 </p>
 <p>
 But who shifts the gears? Who decides that pressing <code>d</code> should shift from "Neutral" to "Delete Mode"?
@@ -56,11 +56,7 @@ Without this logic, the editor is just a dumb typewriter. We need a system that 
 </p>
 <ol>
 <li><strong>Are we Idle?</strong> If yes, <code>d</code> means "Prepare to delete."</li>
-</ol>
-<ol>
 <li><strong>Are we already waiting to delete?</strong> If yes, <code>d</code> means "Delete the current line."</li>
-</ol>
-<ol>
 <li><strong>Are we waiting for a text object?</strong> If yes, <code>d</code> is invalid (you can't "delete inside d").</li>
 </ol>
 <h2 id="the-architecture">The Architecture</h2>
@@ -69,7 +65,7 @@ The logic is built around one main function that acts as a router. It looks at t
 </p>
 <h3 id="the-main-router">The Main Router</h3>
 <p>
-Here is the simplified code for the main %%INLINE<em>8%% function found in %%INLINE</em>9%%.
+Here is the simplified code for the main <code>transition</code> function found in <code>transitions.ts</code>.
 </p>
 <pre data-lang="typescript"><code>// From transitions.ts
 export function transition(
@@ -96,12 +92,10 @@ Let's walk through the command <code>dw</code> (Delete Word). This command requi
 <h3 id="step-1-from-idle-to-operator">Step 1: From Idle to Operator</h3>
 <ol>
 <li><strong>State:</strong> <code>idle</code></li>
-</ol>
-<ol>
 <li><strong>Input:</strong> <code>d</code></li>
 </ol>
 <p>
-The router calls %%INLINE<em>14%%. This function checks if %%INLINE</em>15%% is a movement (like <code>j</code>) or an operator.
+The router calls <code>fromIdle</code>. This function checks if <code>d</code> is a movement (like <code>j</code>) or an operator.
 </p>
 <pre data-lang="typescript"><code>// Inside fromIdle()
 function fromIdle(input: string, ctx: Context) {
@@ -124,12 +118,10 @@ Now the state has changed.
 </p>
 <ol>
 <li><strong>State:</strong> <code>operator</code> (waiting for motion)</li>
-</ol>
-<ol>
 <li><strong>Input:</strong> <code>w</code> (word)</li>
 </ol>
 <p>
-The router sees %%INLINE<em>20%% is %%INLINE</em>21%%, so it calls <code>fromOperator</code>.
+The router sees <code>state.type</code> is <code>operator</code>, so it calls <code>fromOperator</code>.
 </p>
 <pre data-lang="typescript"><code>// Inside fromOperator()
 function fromOperator(state, input, ctx) {
@@ -173,7 +165,7 @@ Let's look at a few specific scenarios in the code to see how it handles edge ca
 </p>
 <h3 id="1-handling-doubling-inline-25">1. Handling "Doubling" (<code>dd</code>)</h3>
 <p>
-When you are in the %%INLINE<em>26%% state (having pressed %%INLINE</em>27%% once), pressing %%INLINE<em>28%% again means "Delete Line." The %%INLINE</em>29%% function checks for this specifically.
+When you are in the <code>operator</code> state (having pressed <code>d</code> once), pressing <code>d</code> again means "Delete Line." The <code>fromOperator</code> function checks for this specifically.
 </p>
 <pre data-lang="typescript"><code>// Inside transitions.ts -&gt; fromOperator
 function fromOperator(state, input, ctx) {
@@ -190,7 +182,7 @@ function fromOperator(state, input, ctx) {
 What if you type a number? Numbers are transitions too!
 </p>
 <p>
-If you are %%INLINE<em>31%% and type %%INLINE</em>32%%, you aren't moving or deleting. You are building a number.
+If you are <code>idle</code> and type <code>2</code>, you aren't moving or deleting. You are building a number.
 </p>
 <pre data-lang="typescript"><code>// Inside transitions.ts -&gt; fromIdle
 function fromIdle(input, ctx) {
@@ -203,7 +195,7 @@ function fromIdle(input, ctx) {
 }
 </code></pre>
 <p>
-This moves the editor into a %%INLINE<em>33%% state, waiting for the rest of the command (e.g., %%INLINE</em>34%% -> delete 2 lines).
+This moves the editor into a <code>count</code> state, waiting for the rest of the command (e.g., <code>2d</code> -> delete 2 lines).
 </p>
 <h2 id="why-this-matters">Why This Matters</h2>
 <p>
@@ -222,14 +214,8 @@ The <strong>Input Transition Logic</strong> is the traffic controller.
 </p>
 <ol>
 <li>It receives the User Input.</li>
-</ol>
-<ol>
 <li>It checks the State Machine.</li>
-</ol>
-<ol>
-<li>It delegates to a specific handler (%%INLINE<em>35%%, %%INLINE</em>36%%).</li>
-</ol>
-<ol>
+<li>It delegates to a specific handler (<code>fromIdle</code>, <code>fromOperator</code>).</li>
 <li>It returns the Next State or an Action.</li>
 </ol>
 <p>
@@ -239,14 +225,17 @@ However, once the controller decides <em>what</em> to do (e.g., "Delete a Word")
 To answer that, we need to understand Motions.
 </p>
 <p>
-<a href="03<em>motion</em>resolution.md">Next Chapter: Motion Resolution</a>
+<a href="vim-03-motion-resolution.html">Next Chapter: Motion Resolution</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="vim.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="vim-01-vim-state-machine.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">vim/ index</div>
+          <div class="chapter-nav-title">01 Vim State Machine</div>
+        </a><a class="chapter-nav-card next" href="vim-03-motion-resolution.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">03 Motion Resolution</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

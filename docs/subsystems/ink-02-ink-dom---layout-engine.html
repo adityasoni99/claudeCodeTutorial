@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-2-ink-dom-layout-engine">Chapter 2: Ink DOM & Layout Engine</h1>
 <p>
-In the previous chapter, <a href="01<em>core</em>component<em>primitives.md">Core Component Primitives</a>, we learned how to compose UI using %%INLINE</em>0%% and <code>&lt;Text&gt;</code>.
+In the previous chapter, <a href="ink-01-core-component-primitives.html">Core Component Primitives</a>, we learned how to compose UI using <code>&lt;Box&gt;</code> and <code>&lt;Text&gt;</code>.
 </p>
 <p>
 But here is the mystery: <strong>The terminal is just a grid of characters.</strong> It doesn't know what a "Flexbox" is. It doesn't know what a "component" is. It doesn't even know what a "parent" or "child" is.
@@ -52,7 +52,7 @@ The answer is the <strong>Ink DOM</strong> and the <strong>Yoga Layout Engine</s
 Imagine you are building a house. Before you paint the walls (render pixels), you need a blueprint and a wooden frame (DOM) to hold everything together.
 </p>
 <p>
-Browsers have the HTML DOM (%%INLINE<em>3%%, %%INLINE</em>4%%).
+Browsers have the HTML DOM (<code>&lt;div&gt;</code>, <code>&lt;span&gt;</code>).
  
 Ink creates its own <strong>DOM (Document Object Model)</strong> solely in memory.
 </p>
@@ -68,29 +68,21 @@ Let's look at this simple layout:
 To make this work, Ink needs to perform three invisible steps:
 </p>
 <ol>
-<li><strong>Construct a Tree:</strong> Remember that %%INLINE<em>5%% is inside %%INLINE</em>6%%.</li>
-</ol>
-<ol>
+<li><strong>Construct a Tree:</strong> Remember that <code>&lt;Text&gt;</code> is inside <code>&lt;Box&gt;</code>.</li>
 <li><strong>Calculate Math:</strong> Figure out the exact X and Y coordinates for the text based on the Box's size.</li>
-</ol>
-<ol>
 <li><strong>Store Data:</strong> Hold the style information (colors, bold) until we are ready to print.</li>
 </ol>
 <hr>
 <h2 id="concept-1-the-ink-dom-node">Concept 1: The Ink DOM Node</h2>
 <p>
-In a browser, you have %%INLINE<em>7%%. In Ink, we have %%INLINE</em>8%%.
+In a browser, you have <code>HTMLElement</code>. In Ink, we have <code>DOMElement</code>.
 </p>
 <p>
-An %%INLINE<em>9%% (or %%INLINE</em>10%%) is a plain JavaScript object that represents one piece of your UI. It acts as a container for:
+An <code>InkNode</code> (or <code>DOMElement</code>) is a plain JavaScript object that represents one piece of your UI. It acts as a container for:
 </p>
 <ol>
 <li><strong>Children:</strong> Which nodes are inside this one?</li>
-</ol>
-<ol>
 <li><strong>Styles:</strong> What colors or margins does this node have?</li>
-</ol>
-<ol>
 <li><strong>The Yoga Node:</strong> A reference to the math engine (more on this below).</li>
 </ol>
 <h3 id="what-a-node-looks-like">What a Node looks like</h3>
@@ -120,11 +112,7 @@ Think of Yoga as a calculator:
 </p>
 <ol>
 <li>You tell it: "I have a parent 100px wide, and a child 10px wide. I want the child centered."</li>
-</ol>
-<ol>
 <li>You say: "Calculate!"</li>
-</ol>
-<ol>
 <li>Yoga replies: "The child should start at X coordinate 45."</li>
 </ol>
 <hr>
@@ -147,14 +135,8 @@ When your React code runs, it talks to the Ink DOM, which talks to Yoga.
     Yoga--&gt;&gt;DOM: Result: { left: 45, top: 5 }</div></div>
 <ol>
 <li><strong>Creation:</strong> React asks Ink to create a node.</li>
-</ol>
-<ol>
 <li><strong>Configuration:</strong> Ink passes styles to the Yoga node.</li>
-</ol>
-<ol>
 <li><strong>Calculation:</strong> Ink triggers a layout calculation.</li>
-</ol>
-<ol>
 <li><strong>Result:</strong> The Yoga node now knows exactly where it sits in the terminal grid.</li>
 </ol>
 <hr>
@@ -164,7 +146,7 @@ Let's look under the hood at how Ink implements this "Invisible Skeleton."
 </p>
 <h3 id="1-creating-a-node-inline-12">1. Creating a Node (<code>dom.ts</code>)</h3>
 <p>
-When Ink initializes a component, it creates a %%INLINE<em>13%%. Notice how it initializes the %%INLINE</em>14%% immediately.
+When Ink initializes a component, it creates a <code>DOMElement</code>. Notice how it initializes the <code>yogaNode</code> immediately.
 </p>
 <pre data-lang="typescript"><code>// dom.ts (Simplified)
 import { createLayoutNode } from './layout/engine.js';
@@ -184,7 +166,7 @@ export const createNode = (nodeName) =&gt; {
 <strong>Explanation:</strong>
 </p>
 <ul>
-<li>%%INLINE<em>15%%: Keeps track of what this is (%%INLINE</em>16%%, <code>ink-text</code>).</li>
+<li><code>nodeName</code>: Keeps track of what this is (<code>ink-box</code>, <code>ink-text</code>).</li>
 <li><code>yogaNode</code>: This is the bridge to the C++ engine.</li>
 </ul>
 <h3 id="2-translating-styles-to-math-inline-19">2. Translating Styles to Math (<code>styles.ts</code>)</h3>
@@ -206,7 +188,7 @@ const applyMarginStyles = (node, style) =&gt; {
 </p>
 <ul>
 <li>This function runs whenever styles change.</li>
-<li>It takes the user-friendly Ink style (%%INLINE<em>21%%) and calls the strict Yoga setter (%%INLINE</em>22%%).</li>
+<li>It takes the user-friendly Ink style (<code>margin</code>) and calls the strict Yoga setter (<code>setMargin</code>).</li>
 </ul>
 <h3 id="3-the-yoga-adapter-inline-23">3. The Yoga Adapter (<code>layout/yoga.ts</code>)</h3>
 <p>
@@ -250,36 +232,36 @@ Here is the lifecycle in the Ink DOM:
 </p>
 <ol>
 <li><strong>Construction:</strong></li>
+</ol>
 <ul>
 <li>Ink creates a parent <code>ink-box</code> (The Box).</li>
 <li>Ink creates a child <code>ink-text</code> (The Text).</li>
 <li>It appends the child to the parent in the DOM <em>and</em> in the Yoga tree.</li>
 </ul>
-</ol>
 <ol>
 <li><strong>Styling:</strong></li>
+</ol>
 <ul>
 <li>The Box has <code>borderStyle="single"</code>.</li>
-<li>%%INLINE<em>29%% sees this and tells Yoga: %%INLINE</em>30%%. Use 1 unit of space for the border.</li>
+<li><code>styles.ts</code> sees this and tells Yoga: <code>node.setBorder(Edge.All, 1)</code>. Use 1 unit of space for the border.</li>
 </ul>
-</ol>
 <ol>
 <li><strong>Measurement:</strong></li>
+</ol>
 <ul>
 <li>The Text node contains "Status: OK" (10 characters).</li>
 <li>Yoga asks: "How big is this child?"</li>
 <li>Ink measures the string and tells Yoga: "It is 10 units wide."</li>
 </ul>
-</ol>
 <ol>
 <li><strong>Layout Calculation:</strong></li>
+</ol>
 <ul>
 <li>Yoga calculates:</li>
 <li>Text Width: 10</li>
 <li>Border Width: 1 (left) + 1 (right) = 2</li>
 <li><strong>Total Box Width:</strong> 12</li>
 </ul>
-</ol>
 <p>
 Now the "Skeleton" is complete. Every node knows its X, Y, Width, and Height.
 </p>
@@ -288,7 +270,7 @@ Now the "Skeleton" is complete. Every node knows its X, Y, Width, and Height.
 In this chapter, we learned:
 </p>
 <ul>
-<li><strong>Ink DOM:</strong> An in-memory tree of objects (%%INLINE<em>31%%, %%INLINE</em>32%%) representing your UI.</li>
+<li><strong>Ink DOM:</strong> An in-memory tree of objects (<code>ink-box</code>, <code>ink-text</code>) representing your UI.</li>
 <li><strong>Yoga Engine:</strong> The math wizard that calculates Flexbox layouts for the terminal.</li>
 <li><strong>The Bridge:</strong> <code>styles.ts</code> translates your props into Yoga commands.</li>
 </ul>
@@ -296,14 +278,17 @@ In this chapter, we learned:
 We have a structure. We have positions. But how does React manage updates to this structure when data changes?
 </p>
 <p>
-<a href="03<em>react</em>reconciler.md">Next Chapter: React Reconciler</a>
+<a href="ink-03-react-reconciler.html">Next Chapter: React Reconciler</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="ink.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="ink-01-core-component-primitives.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">ink/ index</div>
+          <div class="chapter-nav-title">01 Core Component Primitives</div>
+        </a><a class="chapter-nav-card next" href="ink-03-react-reconciler.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">03 React Reconciler</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

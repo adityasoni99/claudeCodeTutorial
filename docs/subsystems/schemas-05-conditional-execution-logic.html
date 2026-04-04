@@ -38,7 +38,7 @@
 Welcome to the final chapter of this tutorial series!
 </p>
 <p>
-In the previous chapter, <a href="04<em>ai</em>verification<em>_</em>interaction.md">AI Verification & Interaction</a>, we gave our system a "brain" by allowing it to ask an AI for help. We can now run commands and consult LLMs.
+In the previous chapter, <a href="schemas-04-ai-verification---interaction.html">AI Verification & Interaction</a>, we gave our system a "brain" by allowing it to ask an AI for help. We can now run commands and consult LLMs.
 </p>
 <p>
 However, we still have a problem with <strong>precision</strong>.
@@ -52,7 +52,7 @@ Let's say you configured a hook to run a "Linter" every time a file is written.
 <li><strong>Action:</strong> Run <code>npm run lint</code>.</li>
 </ul>
 <p>
-This works great when you save a JavaScript file. But what happens when you save a Markdown (%%INLINE<em>2%%) file? Or a plain text (%%INLINE</em>3%%) file? The system still tries to run the linter. It fails, throws errors, and wastes resources.
+This works great when you save a JavaScript file. But what happens when you save a Markdown (<code>.md</code>) file? Or a plain text (<code>.txt</code>) file? The system still tries to run the linter. It fails, throws errors, and wastes resources.
 </p>
 <p>
 The <code>matcher</code> we learned in Chapter 1 is like a sledgehammer—it hits everything. We need a scalpel. We need to say:
@@ -68,17 +68,13 @@ This is a special field called <code>if</code> that lives inside your hook defin
 <h3 id="analogy-the-club-entrance">Analogy: The Club Entrance</h3>
 <ol>
 <li><strong>Event (Chapter 1):</strong> The club is open (<code>tool_finish</code>).</li>
-</ol>
-<ol>
 <li><strong>Matcher (Chapter 1):</strong> The bouncer lets in anyone named "WriteFile".</li>
-</ol>
-<ol>
 <li><strong>Condition (Chapter 5):</strong> The VIP guard checks: "Are you wearing a Tie (<code>*.ts</code>)?"</li>
+</ol>
 <ul>
 <li>If <strong>Yes</strong>: You get to the Hook.</li>
 <li>If <strong>No</strong>: You are turned away quietly.</li>
 </ul>
-</ol>
 <h2 id="solving-the-use-case">Solving the Use Case</h2>
 <p>
 Let's configure a rule that <strong>only</strong> runs a test command when a TypeScript file is saved.
@@ -101,15 +97,13 @@ Let's configure a rule that <strong>only</strong> runs a test command when a Typ
 <strong>Explanation:</strong>
 </p>
 <ol>
-<li><strong>%%INLINE<em>10%%: "WriteFile"</strong>: The system wakes up whenever the %%INLINE</em>11%% tool is used.</li>
+<li><strong><code>matcher</code>: "WriteFile"</strong>: The system wakes up whenever the <code>WriteFile</code> tool is used.</li>
+<li><strong><code>if</code>: "WriteFile(*.ts)"</strong>: Before running <code>npm test</code>, the system looks at the arguments passed to <code>WriteFile</code>.</li>
 </ol>
-<ol>
-<li><strong>%%INLINE<em>12%%: "WriteFile(*.ts)"</strong>: Before running %%INLINE</em>13%%, the system looks at the arguments passed to <code>WriteFile</code>.</li>
 <ul>
-<li>If the input is %%INLINE<em>15%%, the pattern matches %%INLINE</em>16%%. <strong>RUN.</strong></li>
+<li>If the input is <code>script.ts</code>, the pattern matches <code>*.ts</code>. <strong>RUN.</strong></li>
 <li>If the input is <code>README.md</code>, the pattern fails. <strong>SKIP.</strong></li>
 </ul>
-</ol>
 <h3 id="syntax-permission-rules">Syntax: Permission Rules</h3>
 <p>
 The text inside the <code>if</code> field uses a specific syntax known as <strong>Permission Rules</strong>.
@@ -163,14 +157,8 @@ How does the system decide whether to block or proceed?
     Cond-&gt;&gt;Hook: Match Passed! Execute Action.</div></div>
 <ol>
 <li>The system first filters by the broad <strong>Event Matcher</strong>.</li>
-</ol>
-<ol>
 <li>It then looks for the <code>if</code> string in the hook definition.</li>
-</ol>
-<ol>
 <li>It compares the actual runtime arguments (like the filename or command string) against the pattern.</li>
-</ol>
-<ol>
 <li>If it matches, the hook executes. If not, it is silently ignored.</li>
 </ol>
 <h3 id="code-deep-dive">Code Deep Dive</h3>
@@ -209,14 +197,14 @@ const BashCommandHookSchema = z.object({
 <p>
 <strong>Why this matters:</strong>
  
-By adding %%INLINE<em>27%% to the object, Zod allows the user to add the %%INLINE</em>28%% key in their JSON settings. If the user omits it (it is <code>.optional()</code>), the system assumes the condition is "Always True."
+By adding <code>IfConditionSchema()</code> to the object, Zod allows the user to add the <code>"if"</code> key in their JSON settings. If the user omits it (it is <code>.optional()</code>), the system assumes the condition is "Always True."
 </p>
 <h2 id="complex-example-safe-git-automation">Complex Example: Safe Git Automation</h2>
 <p>
 Let's combine everything we've learned in this tutorial.
 </p>
 <p>
-<strong>Goal:</strong> When I run a git commit, I want an AI to verify the commit message is professional, but I don't want this to happen for %%INLINE<em>30%% or %%INLINE</em>31%%.
+<strong>Goal:</strong> When I run a git commit, I want an AI to verify the commit message is professional, but I don't want this to happen for <code>git status</code> or <code>git add</code>.
 </p>
 <pre data-lang="json"><code>{
   "matcher": "Bash", 
@@ -232,13 +220,9 @@ Let's combine everything we've learned in this tutorial.
 }
 </code></pre>
 <ol>
-<li><strong><a href="01<em>event</em>based<em>configuration</em>registry.md">Chapter 1</a></strong>: We listen for <code>Bash</code> tools.</li>
-</ol>
-<ol>
-<li><strong><a href="05<em>conditional</em>execution<em>logic.md">Chapter 5</a></strong>: We filter for only %%INLINE</em>33%% commands using <code>if</code>.</li>
-</ol>
-<ol>
-<li><strong><a href="04<em>ai</em>verification<em>_</em>interaction.md">Chapter 4</a></strong>: We use a <code>prompt</code> hook to ask the AI for advice.</li>
+<li><strong><a href="schemas-01-event-based-configuration-registry.html">Chapter 1</a></strong>: We listen for <code>Bash</code> tools.</li>
+<li><strong><a href="schemas-05-conditional-execution-logic.html">Chapter 5</a></strong>: We filter for only <code>git commit</code> commands using <code>if</code>.</li>
+<li><strong><a href="schemas-04-ai-verification---interaction.html">Chapter 4</a></strong>: We use a <code>prompt</code> hook to ask the AI for advice.</li>
 </ol>
 <h2 id="conclusion">Conclusion</h2>
 <p>
@@ -249,17 +233,9 @@ We have built a powerful, reactive system from scratch:
 </p>
 <ol>
 <li><strong>Event Registry:</strong> We created a central place to listen for application lifecycle events.</li>
-</ol>
-<ol>
 <li><strong>Polymorphism:</strong> We designed a system that can handle Commands, HTTP requests, and AI Prompts using a single list.</li>
-</ol>
-<ol>
 <li><strong>Shell Integration:</strong> We learned how to execute commands safely with timeouts and background modes.</li>
-</ol>
-<ol>
 <li><strong>AI Interaction:</strong> We injected intelligence into the loop to verify and generate content.</li>
-</ol>
-<ol>
 <li><strong>Conditional Logic:</strong> We added the final layer of precision to ensure hooks only run exactly when needed.</li>
 </ol>
 <p>
@@ -268,9 +244,9 @@ You now possess the knowledge to define complex, intelligent, and safe automatio
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="schemas.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="schemas-04-ai-verification---interaction.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">schemas/ index</div>
+          <div class="chapter-nav-title">04 Ai Verification   Interaction</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

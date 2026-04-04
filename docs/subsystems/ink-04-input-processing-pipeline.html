@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-4-input-processing-pipeline">Chapter 4: Input Processing Pipeline</h1>
 <p>
-In the previous chapter, <a href="03<em>react</em>reconciler.md">React Reconciler</a>, we learned how Ink updates the DOM when state changes. We can now <em>output</em> text to the terminal.
+In the previous chapter, <a href="ink-03-react-reconciler.html">React Reconciler</a>, we learned how Ink updates the DOM when state changes. We can now <em>output</em> text to the terminal.
 </p>
 <p>
 But a CLI tool isn't a movie; it's a conversation. You need to listen to the user.
@@ -52,10 +52,8 @@ Terminals are old technology. When you press a key on your keyboard, the termina
 Instead, it sends a <strong>Stream of Bytes</strong>.
 </p>
 <ol>
-<li>If you type %%INLINE<em>1%%, it sends the byte %%INLINE</em>2%%.</li>
-</ol>
-<ol>
-<li>If you press %%INLINE<em>3%%, it sends a sequence of three bytes: %%INLINE</em>4%%, %%INLINE<em>5%%, %%INLINE</em>6%%. In text, that looks like <code>^[A</code> (Escape, Bracket, A).</li>
+<li>If you type <code>a</code>, it sends the byte <code>97</code>.</li>
+<li>If you press <code>Up Arrow</code>, it sends a sequence of three bytes: <code>27</code>, <code>91</code>, <code>65</code>. In text, that looks like <code>^[A</code> (Escape, Bracket, A).</li>
 </ol>
 <p>
 <strong>The Challenge:</strong>
@@ -75,11 +73,7 @@ By default, terminals operate in <strong>Cooked Mode</strong>. This is what happ
 </p>
 <ol>
 <li>You type text. It appears on screen.</li>
-</ol>
-<ol>
 <li>You can use Backspace to fix mistakes.</li>
-</ol>
-<ol>
 <li>Nothing is sent to the program until you hit <strong>Enter</strong>.</li>
 </ol>
 <p>
@@ -89,8 +83,6 @@ In Raw Mode:
 </p>
 <ol>
 <li>Keystrokes are not automatically printed.</li>
-</ol>
-<ol>
 <li>Input is sent to the program <strong>immediately</strong> (no waiting for Enter).</li>
 </ol>
 <p>
@@ -106,9 +98,7 @@ It gives you two arguments:
 </p>
 <ol>
 <li><code>input</code>: The string character (e.g., "a", "1").</li>
-</ol>
-<ol>
-<li>%%INLINE<em>11%%: An object with metadata (e.g., %%INLINE</em>12%%, <code>ctrl: true</code>).</li>
+<li><code>key</code>: An object with metadata (e.g., <code>leftArrow: true</code>, <code>ctrl: true</code>).</li>
 </ol>
 <h3 id="the-robot-implementation">The Robot Implementation</h3>
 <p>
@@ -161,20 +151,14 @@ How does a byte stream turn into that callback execution? Let's trace the journe
     App-&gt;&gt;Hook: Fires callback with event data</div></div>
 <ol>
 <li><strong>Detection:</strong> Node.js detects activity on the Standard Input (<code>stdin</code>).</li>
-</ol>
-<ol>
 <li><strong>Reading:</strong> The root <code>App</code> component wakes up and reads the chunk.</li>
-</ol>
-<ol>
 <li><strong>Parsing:</strong> The chunk is fed into a tokenizer state machine.</li>
-</ol>
-<ol>
 <li><strong>Dispatch:</strong> Ink broadcasts the result to all active <code>useInput</code> hooks.</li>
 </ol>
 <hr>
 <h2 id="deep-dive-inline-18-the-listener">Deep Dive: <code>App.tsx</code> (The Listener)</h2>
 <p>
-The %%INLINE<em>19%% component (which we learned about in <a href="03</em>react_reconciler.md">Chapter 3</a> as the root of our tree) is responsible for monitoring the input stream.
+The <code>App</code> component (which we learned about in <a href="ink-03-react-reconciler.html">Chapter 3</a> as the root of our tree) is responsible for monitoring the input stream.
 </p>
 <p>
 It sets up a listener on <code>stdin</code> when the app mounts.
@@ -233,7 +217,7 @@ function parseKeypress(s) {
 <p>
 <strong>Why is this hard?</strong>
  
-Because %%INLINE<em>23%% is also a key! If you press the %%INLINE</em>24%% key, the computer sends %%INLINE<em>25%%. If you press %%INLINE</em>26%%, it sends %%INLINE<em>27%% followed by %%INLINE</em>28%%. Ink has to wait a few milliseconds to see if more bytes are coming after the %%INLINE<em>29%% to decide if it's the %%INLINE</em>30%% key or the start of a special command.
+Because <code>Escape</code> is also a key! If you press the <code>Esc</code> key, the computer sends <code>27</code>. If you press <code>Arrow Up</code>, it sends <code>27</code> followed by <code>[A</code>. Ink has to wait a few milliseconds to see if more bytes are coming after the <code>27</code> to decide if it's the <code>Esc</code> key or the start of a special command.
 </p>
 <hr>
 <h2 id="deep-dive-mouse-support-complex-inputs">Deep Dive: Mouse Support & Complex Inputs</h2>
@@ -250,7 +234,7 @@ Modern terminals support mouse tracking via "SGR Protocol". When you click, the 
 <li><code>0</code>: Left Mouse Button</li>
 <li><code>32</code>: Column 32</li>
 <li><code>15</code>: Row 15</li>
-<li>%%INLINE<em>35%%: Press (vs %%INLINE</em>36%% for Release)</li>
+<li><code>M</code>: Press (vs <code>m</code> for Release)</li>
 </ul>
 <p>
 <code>parse-keypress.ts</code> decodes this:
@@ -267,7 +251,7 @@ if (match = SGR_MOUSE_RE.exec(s)) {
 }
 </code></pre>
 <p>
-The %%INLINE<em>38%% component then checks if this click happened on top of a component with an %%INLINE</em>39%% handler.
+The <code>App</code> component then checks if this click happened on top of a component with an <code>onClick</code> handler.
 </p>
 <hr>
 <h2 id="deep-dive-inline-40-the-bridge">Deep Dive: <code>useInput.ts</code> (The Bridge)</h2>
@@ -275,7 +259,7 @@ The %%INLINE<em>38%% component then checks if this click happened on top of a co
 Finally, how does the parsed event reach your component? Through the <code>useInput</code> hook.
 </p>
 <p>
-This hook relies on an internal %%INLINE<em>42%%. When %%INLINE</em>43%% processes a key, it emits an <code>'input'</code> event.
+This hook relies on an internal <code>EventEmitter</code>. When <code>App.tsx</code> processes a key, it emits an <code>'input'</code> event.
 </p>
 <pre data-lang="typescript"><code>// hooks/use-input.ts (Simplified)
 const useInput = (handler) =&gt; {
@@ -312,14 +296,17 @@ Now we can <strong>Build</strong> a UI (Components), <strong>Layout</strong> it 
 The final piece of the puzzle is actually putting the pixels on the screen.
 </p>
 <p>
-<a href="05<em>frame</em>renderer.md">Next Chapter: Frame Renderer</a>
+<a href="ink-05-frame-renderer.html">Next Chapter: Frame Renderer</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="ink.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="ink-03-react-reconciler.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">ink/ index</div>
+          <div class="chapter-nav-title">03 React Reconciler</div>
+        </a><a class="chapter-nav-card next" href="ink-05-frame-renderer.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">05 Frame Renderer</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

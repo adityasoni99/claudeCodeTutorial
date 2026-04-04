@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-5-project-setup-intelligence">Chapter 5: Project Setup & Intelligence</h1>
 <p>
-In the previous chapter, <a href="04<em>context</em><em>_memory</em>management.md">Context & Memory Management</a>, we gave our AI a "Brain." It can remember conversation history and read files.
+In the previous chapter, <a href="commands-04-context---memory-management.html">Context & Memory Management</a>, we gave our AI a "Brain." It can remember conversation history and read files.
 </p>
 <p>
 However, dropping an AI into a new codebase is like hiring a new developer. Even if they are a genius, they don't know <em>your</em> specific rules.
@@ -62,7 +62,7 @@ Instead of writing this file manually (which is boring), we use the <code>/init<
 <hr>
 <h2 id="use-case-the-inline-2-command">Use Case: The <code>/init</code> Command</h2>
 <p>
-When a user runs %%INLINE<em>3%%, the application performs a <strong>Phased Analysis</strong> of the current folder. It looks at %%INLINE</em>4%%, <code>Makefile</code>, and existing documentation to understand the project structure.
+When a user runs <code>/init</code>, the application performs a <strong>Phased Analysis</strong> of the current folder. It looks at <code>package.json</code>, <code>Makefile</code>, and existing documentation to understand the project structure.
 </p>
 <h3 id="the-command-structure">The Command Structure</h3>
 <p>
@@ -94,28 +94,20 @@ export default command
 </p>
 <ol>
 <li><strong><code>getPromptForCommand</code></strong>: This function calculates what to tell the AI <em>before</em> the AI does anything.</li>
-</ol>
-<ol>
 <li><strong><code>NEW_INIT_PROMPT</code></strong>: This is a massive block of text (hidden in the variable) that tells the AI: <em>"Look at the file structure, detect languages, find test commands, and write a CLAUDE.md file."</em></li>
 </ol>
 <hr>
 <h2 id="how-intelligence-works-the-phased-prompt">How "Intelligence" Works (The Phased Prompt)</h2>
 <p>
-The "Intelligence" isn't magic; it's a very carefully written set of instructions. The %%INLINE<em>9%% inside %%INLINE</em>10%% guides the AI through a strict workflow.
+The "Intelligence" isn't magic; it's a very carefully written set of instructions. The <code>NEW_INIT_PROMPT</code> inside <code>init.ts</code> guides the AI through a strict workflow.
 </p>
 <p>
 Here is a breakdown of the instructions we send to the AI:
 </p>
 <ol>
 <li><strong>Phase 1 (Interview):</strong> "Ask the user what they want. Do they want shared project rules or private personal rules?"</li>
-</ol>
-<ol>
-<li><strong>Phase 2 (Exploration):</strong> "Read %%INLINE<em>11%%, %%INLINE</em>12%%, or <code>requirements.txt</code>. Figure out how to build and test this code."</li>
-</ol>
-<ol>
+<li><strong>Phase 2 (Exploration):</strong> "Read <code>package.json</code>, <code>Cargo.toml</code>, or <code>requirements.txt</code>. Figure out how to build and test this code."</li>
 <li><strong>Phase 3 (Proposal):</strong> "Propose a <code>CLAUDE.md</code> file content and ask the user if it looks good."</li>
-</ol>
-<ol>
 <li><strong>Phase 4 (Execution):</strong> "Write the file to disk."</li>
 </ol>
 <h3 id="visualizing-the-logic">Visualizing the Logic</h3>
@@ -156,14 +148,8 @@ This is complex because it requires permissions. We need to:
 </p>
 <ol>
 <li>Check if the user has the GitHub CLI (<code>gh</code>) installed.</li>
-</ol>
-<ol>
 <li>Authenticate with GitHub.</li>
-</ol>
-<ol>
 <li>Create a secret API Key in the repo.</li>
-</ol>
-<ol>
 <li>Push a <code>.github/workflows/claude.yml</code> file.</li>
 </ol>
 <p>
@@ -218,7 +204,7 @@ By using <code>gh api</code>, we can inject the file directly into the repositor
 <hr>
 <h2 id="the-ui-for-setup">The UI for Setup</h2>
 <p>
-To make this complex setup process friendly, we use the <strong>Interactive TUI</strong> concepts from <a href="02<em>interactive</em>tui<em>_text</em>user<em>interface</em>.md">Chapter 2</a>.
+To make this complex setup process friendly, we use the <strong>Interactive TUI</strong> concepts from <a href="commands-02-interactive-tui--text-user-interface-.html">Chapter 2</a>.
 </p>
 <p>
 The <code>InstallGitHubApp</code> component manages a state machine that guides the user step-by-step.
@@ -249,11 +235,7 @@ In <strong>Project Setup & Intelligence</strong>, we learned how to onboard the 
 </p>
 <ol>
 <li><strong>Intelligence (<code>/init</code>):</strong> We use a prompt command to tell the AI to scan the project files and generate its own documentation.</li>
-</ol>
-<ol>
-<li><strong>Briefing Packet (%%INLINE<em>22%%):</strong> The result of %%INLINE</em>23%%. A file that serves as the project-specific memory for the AI.</li>
-</ol>
-<ol>
+<li><strong>Briefing Packet (<code>CLAUDE.md</code>):</strong> The result of <code>/init</code>. A file that serves as the project-specific memory for the AI.</li>
 <li><strong>Integrations:</strong> We use the <code>gh</code> CLI and React TUI components to automate setting up GitHub Actions, giving the AI permission to run inside Pull Requests.</li>
 </ol>
 <p>
@@ -263,14 +245,17 @@ Now the AI knows <em>who</em> you are (Auth), <em>what</em> you are saying (Cont
 The final piece of the puzzle is giving the AI <strong>Tools</strong>—the ability to run commands, edit files, and search the web.
 </p>
 <p>
-<a href="06<em>plugin</em><em>_mcp</em>integration.md">Next Chapter: Plugin & MCP Integration</a>
+<a href="commands-06-plugin---mcp-integration.html">Next Chapter: Plugin & MCP Integration</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="commands.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="commands-04-context---memory-management.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">commands/ index</div>
+          <div class="chapter-nav-title">04 Context   Memory Management</div>
+        </a><a class="chapter-nav-card next" href="commands-06-plugin---mcp-integration.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">06 Plugin   Mcp Integration</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

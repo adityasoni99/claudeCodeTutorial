@@ -43,17 +43,9 @@ Welcome to the first chapter of the <strong>components</strong> project tutorial
 </p>
 <ol>
 <li>Where does it live?</li>
-</ol>
-<ol>
 <li>What is its name?</li>
-</ol>
-<ol>
 <li>What AI model does it use (e.g., GPT-4)?</li>
-</ol>
-<ol>
 <li>What tools can it use (e.g., Google Search)?</li>
-</ol>
-<ol>
 <li>What is its personality?</li>
 </ol>
 <p>
@@ -71,11 +63,7 @@ Before we look at code, let's understand the pieces involved.
 </p>
 <ol>
 <li><strong>The Wizard:</strong> This is the overall container. It manages the timeline of creation.</li>
-</ol>
-<ol>
 <li><strong>The Steps:</strong> These are the individual screens (e.g., the screen where you pick a color).</li>
-</ol>
-<ol>
 <li><strong>The Provider:</strong> Think of this as the "backpack" or "memory" of the wizard. It holds onto the data (like the Agent's name) as you move from Step 1 to Step 2.</li>
 </ol>
 <h3 id="analogy-the-sandwich-assembly-line">Analogy: The Sandwich Assembly Line</h3>
@@ -124,8 +112,6 @@ When this component loads, it does two main things:
 </p>
 <ol>
 <li>It defines the <strong>Order of Operations</strong> (which step comes first, second, etc.).</li>
-</ol>
-<ol>
 <li>It wraps everything in a <strong>WizardProvider</strong> so the steps can talk to each other.</li>
 </ol>
 <p>
@@ -164,7 +150,7 @@ const steps = [
 ];
 </code></pre>
 <p>
-<em>Explanation:</em> We create a list called %%INLINE<em>4%%. Each item has an %%INLINE</em>5%% and the actual <code>component</code> (the React code) that should show up on the screen for that step.
+<em>Explanation:</em> We create a list called <code>steps</code>. Each item has an <code>id</code> and the actual <code>component</code> (the React code) that should show up on the screen for that step.
 </p>
 <h4 id="2-the-return-statement-the-wrapper">2. The Return Statement (The Wrapper)</h4>
 <p>
@@ -185,19 +171,15 @@ return (
 <em>Explanation:</em>
 </p>
 <ul>
-<li>%%INLINE<em>8%%: This is the "brain." We feed it the %%INLINE</em>9%% list we created above. It handles the logic of "Next," "Back," and saving data.</li>
+<li><code>&lt;WizardProvider&gt;</code>: This is the "brain." We feed it the <code>steps</code> list we created above. It handles the logic of "Next," "Back," and saving data.</li>
 <li><code>&lt;WizardStepDisplay /&gt;</code>: This is a placeholder for the part of the code that asks the Provider, "Which component should I show right now?"</li>
 <li><code>&lt;WizardNavigationButtons /&gt;</code>: These are your "Next" and "Previous" buttons.</li>
 </ul>
 <h3 id="summary-of-internal-logic">Summary of Internal Logic</h3>
 <ol>
 <li><strong>Configuration:</strong> The file hardcodes the sequence: Location -> Method -> Generate -> Type -> Prompt -> Description -> Tools -> Model -> Color -> Memory.</li>
-</ol>
-<ol>
 <li><strong>State Management:</strong> It relies on <code>WizardProvider</code> to keep track of the form data (like the agent's name) so it doesn't get lost when you switch to the "Tools" screen.</li>
-</ol>
-<ol>
-<li><strong>Composition:</strong> It combines many smaller components (like %%INLINE<em>13%% or %%INLINE</em>14%%) into one cohesive flow.</li>
+<li><strong>Composition:</strong> It combines many smaller components (like <code>LocationStep</code> or <code>ColorStep</code>) into one cohesive flow.</li>
 </ol>
 <hr>
 <h2 id="conclusion">Conclusion</h2>
@@ -216,7 +198,7 @@ We learned that:
 You now understand the high-level entry point for creating agents!
 </p>
 <p>
-<a href="02<em>coming</em>soon.md">Next Chapter: Coming Soon</a>
+<a href="02_coming_soon.html">Next Chapter: Coming Soon</a>
 </p>
 <hr>
 <p>

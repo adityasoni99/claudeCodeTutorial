@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-4-contextual-recall-mechanism">Chapter 4: Contextual Recall Mechanism</h1>
 <p>
-In the previous chapter, <a href="03<em>two</em>tier<em>storage</em>architecture<strong>index<em>vs</strong>detail</em>.md">Two-Tier Storage Architecture (Index vs. Detail)</a>, we learned how to keep the AI's "backpack" light by using a simple index file (<code>MEMORY.md</code>).
+In the previous chapter, <a href="memdir-03-two-tier-storage-architecture--index-vs--detail-.html">Two-Tier Storage Architecture (Index vs. Detail)</a>, we learned how to keep the AI's "backpack" light by using a simple index file (<code>MEMORY.md</code>).
 </p>
 <p>
 However, as your project grows, that index might get truncated, or it might not be specific enough. If you have 100 files about "Authentication," a simple index isn't enough to find the <em>exact</em> file about "OAuth Token Expiration on Tuesdays."
@@ -49,11 +49,7 @@ Imagine you walk into a massive library and yell, "Help with login!"
 </p>
 <ol>
 <li><strong>Keyword Search (Ctrl+F):</strong> Looks for the word "login." It misses books titled "Authentication" or "Sign-in Protocols" because the word "login" isn't in the title.</li>
-</ol>
-<ol>
 <li><strong>Vector Database (The Hard Way):</strong> Requires complex math, heavy infrastructure, and syncing data to a cloud vector store. Overkill for a local project.</li>
-</ol>
-<ol>
 <li><strong>The Reference Librarian (Our Way):</strong> You talk to a smart librarian. You describe your problem. The librarian scans the <em>titles</em> and <em>summaries</em> of the books and says, "Ah, you need this specific manual on OAuth."</li>
 </ol>
 <p>
@@ -65,11 +61,7 @@ Imagine you walk into a massive library and yell, "Help with login!"
 </p>
 <ol>
 <li><code>style_guide.md</code>: "We use blue buttons."</li>
-</ol>
-<ol>
 <li><code>database_schema.md</code>: "Users table has a UUID."</li>
-</ol>
-<ol>
 <li><code>api_errors.md</code>: "Error 500 usually means the database is locked."</li>
 </ol>
 <p>
@@ -80,14 +72,8 @@ Imagine you walk into a massive library and yell, "Help with login!"
 </p>
 <ol>
 <li>The system scans the <em>descriptions</em> of all 3 files.</li>
-</ol>
-<ol>
 <li>It asks a fast AI: "Which of these files helps answer 'Why is the server returning a 500 code?'"</li>
-</ol>
-<ol>
 <li>The AI picks only <strong>#3 (<code>api_errors.md</code>)</strong>.</li>
-</ol>
-<ol>
 <li>The system loads <em>only</em> file #3 into the main conversation.</li>
 </ol>
 <h2 id="internal-implementation-under-the-hood">Internal Implementation: Under the Hood</h2>
@@ -134,7 +120,7 @@ export async function scanMemoryFiles(dir: string) {
 }
 </code></pre>
 <p>
-<em>Explanation:</em> This function runs %%INLINE<em>6%% on your memory folder and reads the first 30 lines of each file to extract the %%INLINE</em>7%%.
+<em>Explanation:</em> This function runs <code>ls</code> on your memory folder and reads the first 30 lines of each file to extract the <code>description</code>.
 </p>
 <h3 id="step-2-creating-the-menu-the-manifest">Step 2: Creating the Menu (The Manifest)</h3>
 <p>
@@ -188,14 +174,8 @@ export async function findRelevantMemories(query, memoryDir) {
 </p>
 <ol>
 <li>We build the prompt.</li>
-</ol>
-<ol>
 <li>We call <code>sideQuery</code> (a lightweight wrapper around the LLM API).</li>
-</ol>
-<ol>
 <li>The LLM replies with a JSON list of filenames.</li>
-</ol>
-<ol>
 <li>We trust the LLM's judgment because it understands context (it knows "500 code" relates to "HTTP errors").</li>
 </ol>
 <h3 id="step-4-filtering-noise-safety-check">Step 4: Filtering Noise (Safety Check)</h3>
@@ -225,11 +205,7 @@ You might have heard of "Vector Embeddings" (RAG). That is the industry standard
 </p>
 <ol>
 <li><strong>Complexity:</strong> Vectors require a database (Pinecone, Weaviate) or a local Python server.</li>
-</ol>
-<ol>
 <li><strong>Staleness:</strong> If you edit a file, you have to re-calculate the vectors.</li>
-</ol>
-<ol>
 <li><strong>Scale:</strong> Most coding projects have < 500 memory files. A fast LLM (Sonnet) can read a list of 500 titles in milliseconds. It is "smart enough" without the engineering overhead.</li>
 </ol>
 <h2 id="summary">Summary</h2>
@@ -238,18 +214,14 @@ In this chapter, we learned:
 </p>
 <ol>
 <li><strong>The Problem:</strong> Finding the right memory file without reading all of them.</li>
-</ol>
-<ol>
 <li><strong>The Solution:</strong> A <strong>Contextual Recall Mechanism</strong> acting like a reference librarian.</li>
-</ol>
-<ol>
 <li><strong>The Method:</strong></li>
+</ol>
 <ul>
 <li><strong>Scan:</strong> Get headers of all files.</li>
 <li><strong>Format:</strong> Create a text "Menu" of options.</li>
 <li><strong>Side Query:</strong> Ask a fast LLM to pick the relevant ones.</li>
 </ul>
-</ol>
 <ol>
 <li><strong>The Benefit:</strong> We find files based on <em>meaning</em>, not just keywords, without heavy database infrastructure.</li>
 </ol>
@@ -260,14 +232,17 @@ Now the AI can find the right memories. But what happens if those memories are <
 We need a way to verify if a memory is still true.
 </p>
 <p>
-<a href="05<em>temporal</em>freshness<em>_</em>verification.md">Next Chapter: Temporal Freshness & Verification</a>
+<a href="memdir-05-temporal-freshness---verification.html">Next Chapter: Temporal Freshness & Verification</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="memdir.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="memdir-03-two-tier-storage-architecture--index-vs--detail-.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">memdir/ index</div>
+          <div class="chapter-nav-title">03 Two Tier Storage Architecture  Index Vs  Detail </div>
+        </a><a class="chapter-nav-card next" href="memdir-05-temporal-freshness---verification.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">05 Temporal Freshness   Verification</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

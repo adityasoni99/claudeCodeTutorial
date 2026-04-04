@@ -38,7 +38,7 @@
 </div>
 <h1 id="chapter-3-query-engine">Chapter 3: Query Engine</h1>
 <p>
-In the previous chapters, we built the application's memory in <a href="01<em>state</em>management.md">State Management</a> and its face in the <a href="02<em>ink</em>ui_framework.md">Ink UI Framework</a>.
+In the previous chapters, we built the application's memory in <a href="01-state-management.html">State Management</a> and its face in the <a href="02-ink-ui-framework.html">Ink UI Framework</a>.
 </p>
 <p>
 But right now, our application is like a person who can remember things and smile, but can't hold a conversation. If you type a question, nothing processes it.
@@ -62,20 +62,10 @@ Here is what the Query Engine must manage:
 </p>
 <ol>
 <li><strong>Package:</strong> Grab your text and the current file path.</li>
-</ol>
-<ol>
 <li><strong>Send:</strong> Send this to Claude.</li>
-</ol>
-<ol>
 <li><strong>Interpret:</strong> Claude replies: "I need to run the <code>cat</code> command."</li>
-</ol>
-<ol>
 <li><strong>Execute:</strong> The Engine runs the command.</li>
-</ol>
-<ol>
 <li><strong>Loop:</strong> The Engine takes the <em>result</em> of the command and sends it <em>back</em> to Claude.</li>
-</ol>
-<ol>
 <li><strong>Finalize:</strong> Claude replies: "The file contains a list of names." The Engine shows this to you.</li>
 </ol>
 <p>
@@ -101,14 +91,14 @@ This is the most critical part. Modern AIs don't just talk; they can "call funct
 </ul>
 <h3 id="3-streaming">3. Streaming</h3>
 <p>
-We don't want to wait 10 seconds for the whole answer. The Query Engine receives the answer in tiny chunks (tokens) so the <a href="02<em>ink</em>ui_framework.md">Ink UI Framework</a> can display typing animations in real-time.
+We don't want to wait 10 seconds for the whole answer. The Query Engine receives the answer in tiny chunks (tokens) so the <a href="02-ink-ui-framework.html">Ink UI Framework</a> can display typing animations in real-time.
 </p>
 <h2 id="how-to-use-the-query-engine">How to Use the Query Engine</h2>
 <p>
 From a code perspective, using the engine is surprisingly simple because all the complexity is hidden inside.
 </p>
 <p>
-We usually call a main function, often named %%INLINE<em>2%% or %%INLINE</em>3%%.
+We usually call a main function, often named <code>processUserMessage</code> or <code>submitQuery</code>.
 </p>
 <h3 id="starting-a-request">Starting a Request</h3>
 <p>
@@ -150,23 +140,11 @@ Let's trace the flow when a user says "List files."
 </p>
 <ol>
 <li><strong>Input:</strong> User types "List files".</li>
-</ol>
-<ol>
 <li><strong>API Call:</strong> Engine sends "List files" + Context to Claude.</li>
-</ol>
-<ol>
 <li><strong>Decision:</strong> Claude returns a structured message: <code>ToolCall: ls</code>.</li>
-</ol>
-<ol>
 <li><strong>Execution:</strong> Engine detects the tool call, runs <code>ls</code> in the terminal.</li>
-</ol>
-<ol>
 <li><strong>Feedback:</strong> The terminal output ("file1.txt, file2.txt") is captured.</li>
-</ol>
-<ol>
 <li><strong>Loop:</strong> Engine sends the output <em>back</em> to Claude as a "Tool Result".</li>
-</ol>
-<ol>
 <li><strong>Final:</strong> Claude reads the result and generates text: "You have two files..."</li>
 </ol>
 <p>
@@ -218,7 +196,7 @@ async function runLoop(messages) {
 }
 </code></pre>
 <p>
-<em>Explanation: This simplified code shows the heartbeat of %%INLINE<em>7%%. It calls the API. If the API asks for a tool, it runs it and calls %%INLINE</em>8%% again immediately. It only stops when <code>response.hasToolCall</code> is false.</em>
+<em>Explanation: This simplified code shows the heartbeat of <code>claudeCode</code>. It calls the API. If the API asks for a tool, it runs it and calls <code>runLoop</code> again immediately. It only stops when <code>response.hasToolCall</code> is false.</em>
 </p>
 <h3 id="safety-checks">Safety Checks</h3>
 <p>
@@ -239,16 +217,16 @@ async function executeTool(name, args) {
 }
 </code></pre>
 <p>
-<em>Explanation: This ensures the AI doesn't delete files without your permission. We will cover this in detail in <a href="08<em>permission</em><em>_security</em>system.md">Chapter 8: Permission & Security System</a>.</em>
+<em>Explanation: This ensures the AI doesn't delete files without your permission. We will cover this in detail in <a href="08-permission---security-system.html">Chapter 8: Permission & Security System</a>.</em>
 </p>
 <h2 id="why-is-this-important-for-later">Why is this important for later?</h2>
 <p>
 The Query Engine is the hub. It connects to almost every other chapter:
 </p>
 <ul>
-<li><strong><a href="04_fileedittool.md">FileEditTool</a>:</strong> The Engine is what calls this tool when the AI wants to write code.</li>
-<li><strong><a href="05<em>git</em>integration.md">Git Integration</a>:</strong> When you ask to "commit changes," the Engine drives this process.</li>
-<li><strong><a href="14<em>model</em>context<em>protocol</em><em>mcp</em>.md">Context Management</a>:</strong> The Engine gathers data using the MCP standard before every request.</li>
+<li><strong><a href="04-fileedittool.html">FileEditTool</a>:</strong> The Engine is what calls this tool when the AI wants to write code.</li>
+<li><strong><a href="05-git-integration.html">Git Integration</a>:</strong> When you ask to "commit changes," the Engine drives this process.</li>
+<li><strong><a href="14-model-context-protocol--mcp-.html">Context Management</a>:</strong> The Engine gathers data using the MCP standard before every request.</li>
 </ul>
 <h2 id="conclusion">Conclusion</h2>
 <p>
@@ -258,7 +236,7 @@ You have learned that the <strong>Query Engine</strong> is the active brain of t
 But what happens when the Engine decides it needs to modify your code? It hands that job off to a specialist.
 </p>
 <p>
-<a href="04_fileedittool.md">Next Chapter: FileEditTool</a>
+<a href="04-fileedittool.html">Next Chapter: FileEditTool</a>
 </p>
 <hr>
 <p>

@@ -38,10 +38,10 @@
 </div>
 <h1 id="chapter-14-model-context-protocol-mcp">Chapter 14: Model Context Protocol (MCP)</h1>
 <p>
-In the previous <a href="13<em>feature</em>gating.md">Feature Gating</a> chapter, we learned how to turn specific features on and off.
+In the previous <a href="13-feature-gating.html">Feature Gating</a> chapter, we learned how to turn specific features on and off.
 </p>
 <p>
-Up until now, we have built hard-coded tools: <a href="04<em>fileedittool.md">FileEditTool</a> for files, <a href="06</em>bashtool.md">BashTool</a> for the terminal, and <a href="12_websearchtool.md">WebSearchTool</a> for the internet.
+Up until now, we have built hard-coded tools: <a href="04-fileedittool.html">FileEditTool</a> for files, <a href="06-bashtool.html">BashTool</a> for the terminal, and <a href="12-websearchtool.html">WebSearchTool</a> for the internet.
 </p>
 <p>
 But what if you want to connect <code>claudeCode</code> to your <strong>Postgres database</strong>? Or your <strong>Slack workspace</strong>? Or a custom <strong>Internal API</strong>?
@@ -79,14 +79,8 @@ Without MCP, the AI cannot see inside that binary database file.
 </p>
 <ol>
 <li>The AI asks the server: "What tables do you have?"</li>
-</ol>
-<ol>
 <li>The server replies: "Users, Orders."</li>
-</ol>
-<ol>
 <li>The AI sends a SQL query via MCP.</li>
-</ol>
-<ol>
 <li>The server executes it and returns the data.</li>
 </ol>
 <h2 id="key-concepts">Key Concepts</h2>
@@ -115,10 +109,10 @@ How do the Client and Server talk?
 In <code>claudeCode</code>, we don't "write" MCP tools manually. We define a <strong>Generic Wrapper</strong>.
 </p>
 <p>
-When %%INLINE<em>6%% starts, it looks at your configuration. If you have an MCP server configured, %%INLINE</em>7%% asks it: <em>"What tools do you have?"</em>
+When <code>claudeCode</code> starts, it looks at your configuration. If you have an MCP server configured, <code>claudeCode</code> asks it: <em>"What tools do you have?"</em>
 </p>
 <p>
-If the server has a tool named %%INLINE<em>8%%, %%INLINE</em>9%% dynamically creates a tool definition for it.
+If the server has a tool named <code>query_db</code>, <code>claudeCode</code> dynamically creates a tool definition for it.
 </p>
 <h3 id="the-configuration">The Configuration</h3>
 <p>
@@ -143,7 +137,7 @@ Once connected, the AI sees a new tool in its list.
 <li><strong>Inputs:</strong> <code>{ sql: string }</code></li>
 </ul>
 <p>
-The AI uses this tool exactly like it uses <a href="06<em>bashtool.md">BashTool</a>, but the execution happens outside of %%INLINE</em>13%%.
+The AI uses this tool exactly like it uses <a href="06-bashtool.html">BashTool</a>, but the execution happens outside of <code>claudeCode</code>.
 </p>
 <h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
 <p>
@@ -153,18 +147,10 @@ The implementation relies on a <strong>Generic MCP Tool</strong>. This is a cham
 When the AI calls an MCP tool, <code>claudeCode</code> acts as a messenger.
 </p>
 <ol>
-<li><strong>AI Request:</strong> "Call %%INLINE<em>15%% with %%INLINE</em>16%%."</li>
-</ol>
-<ol>
+<li><strong>AI Request:</strong> "Call <code>sqlite_query</code> with <code>SELECT * FROM users</code>."</li>
 <li><strong>Lookup:</strong> The App finds the correct MCP Client connection.</li>
-</ol>
-<ol>
 <li><strong>Transport:</strong> The App sends a JSON message over WebSocket or Stdio.</li>
-</ol>
-<ol>
 <li><strong>Execution:</strong> The external server runs the SQL.</li>
-</ol>
-<ol>
 <li><strong>Response:</strong> The server sends the JSON result back.</li>
 </ol>
 <p>
@@ -197,7 +183,7 @@ The core logic is in <code>tools/MCPTool/MCPTool.ts</code>.
 </p>
 <h4 id="1-the-generic-wrapper">1. The Generic Wrapper</h4>
 <p>
-Unlike specific tools (like %%INLINE<em>18%%) that have strict schemas, the %%INLINE</em>19%% must be flexible because we don't know what the external server requires until runtime.
+Unlike specific tools (like <code>FileEditTool</code>) that have strict schemas, the <code>MCPTool</code> must be flexible because we don't know what the external server requires until runtime.
 </p>
 <pre data-lang="typescript"><code>// tools/MCPTool/MCPTool.ts
 import { buildTool } from '../../Tool.js'
@@ -217,11 +203,11 @@ export const MCPTool = buildTool({
 });
 </code></pre>
 <p>
-<em>Explanation: %%INLINE<em>20%% means "accept any arguments." This is necessary because one MCP tool might need a %%INLINE</em>21%% string, while another might need a <code>channel_id</code>.</em>
+<em>Explanation: <code>z.object({}).passthrough()</code> means "accept any arguments." This is necessary because one MCP tool might need a <code>sql</code> string, while another might need a <code>channel_id</code>.</em>
 </p>
 <h4 id="2-the-transport-layer">2. The Transport Layer</h4>
 <p>
-We need a way to send messages. Here is a simplified look at the %%INLINE<em>23%% in %%INLINE</em>24%%.
+We need a way to send messages. Here is a simplified look at the <code>WebSocketTransport</code> in <code>utils/mcpWebSocketTransport.ts</code>.
 </p>
 <pre data-lang="typescript"><code>// utils/mcpWebSocketTransport.ts
 
@@ -247,7 +233,7 @@ export class WebSocketTransport {
 </p>
 <h4 id="3-the-ui-list">3. The UI List</h4>
 <p>
-We need to show the user what tools are available. We use the <a href="02<em>ink</em>ui_framework.md">Ink UI Framework</a> to render the list.
+We need to show the user what tools are available. We use the <a href="02-ink-ui-framework.html">Ink UI Framework</a> to render the list.
 </p>
 <pre data-lang="tsx"><code>// components/mcp/MCPToolListView.tsx
 
@@ -270,11 +256,11 @@ export function MCPToolListView({ server }) {
 }
 </code></pre>
 <p>
-<em>Explanation: This component reads the <a href="01<em>state</em>management.md">State Management</a> store to find loaded tools and displays them so the user can inspect what capabilities the AI currently has.</em>
+<em>Explanation: This component reads the <a href="01-state-management.html">State Management</a> store to find loaded tools and displays them so the user can inspect what capabilities the AI currently has.</em>
 </p>
 <h2 id="permissions-and-safety">Permissions and Safety</h2>
 <p>
-Because MCP tools connect to the outside world, they are subject to the <a href="08<em>permission</em><em>_security</em>system.md">Permission & Security System</a>.
+Because MCP tools connect to the outside world, they are subject to the <a href="08-permission---security-system.html">Permission & Security System</a>.
 </p>
 <p>
 When an external server registers a tool, it can flag itself as:
@@ -291,9 +277,9 @@ When an external server registers a tool, it can flag itself as:
 MCP is the future of extensibility for <code>claudeCode</code>.
 </p>
 <ul>
-<li><strong><a href="15_agenttool.md">AgentTool</a>:</strong> In the next chapter, we discuss "Agents." Agents can be essentially wrapped as MCP servers, allowing one AI to call another AI as a tool.</li>
-<li><strong><a href="16_teammates.md">Teammates</a>:</strong> MCP allows us to define "Teammates" that have specialized knowledge bases (like a "Legal Expert" connected to a law database).</li>
-<li><strong><a href="18<em>computer</em>use.md">Computer Use</a>:</strong> We can even expose the computer's screen and mouse as an MCP resource!</li>
+<li><strong><a href="15-agenttool.html">AgentTool</a>:</strong> In the next chapter, we discuss "Agents." Agents can be essentially wrapped as MCP servers, allowing one AI to call another AI as a tool.</li>
+<li><strong><a href="16-teammates.html">Teammates</a>:</strong> MCP allows us to define "Teammates" that have specialized knowledge bases (like a "Legal Expert" connected to a law database).</li>
+<li><strong><a href="18-computer-use.html">Computer Use</a>:</strong> We can even expose the computer's screen and mouse as an MCP resource!</li>
 </ul>
 <h2 id="conclusion">Conclusion</h2>
 <p>
@@ -303,7 +289,7 @@ You have learned that the <strong>Model Context Protocol (MCP)</strong> acts as 
 Now that we have a way to plug in external capabilities, what if we want to plug in <em>another AI</em> entirely?
 </p>
 <p>
-<a href="15_agenttool.md">Next Chapter: AgentTool</a>
+<a href="15-agenttool.html">Next Chapter: AgentTool</a>
 </p>
 <hr>
 <p>

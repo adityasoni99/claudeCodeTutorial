@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-4-operator-execution">Chapter 4: Operator Execution</h1>
 <p>
-In the previous chapter, <a href="03<em>motion</em>resolution.md">Motion Resolution</a>, we built the "GPS" for our editor. We learned how to calculate where the cursor <em>should</em> go (e.g., "End of the word").
+In the previous chapter, <a href="vim-03-motion-resolution.html">Motion Resolution</a>, we built the "GPS" for our editor. We learned how to calculate where the cursor <em>should</em> go (e.g., "End of the word").
 </p>
 <p>
 However, calculating a destination doesn't change the text. It just gives us coordinates.
@@ -49,8 +49,6 @@ Imagine a road construction project.
 </p>
 <ol>
 <li><strong>The Surveyor (Motion):</strong> Walks out, measures 10 feet, and plants a flag. They don't dig; they just mark the range.</li>
-</ol>
-<ol>
 <li><strong>The Construction Crew (Operator):</strong> Looks at the starting point (User) and the flag (Surveyor). They perform the heavy lifting within that area.</li>
 </ol>
 <p>
@@ -58,7 +56,7 @@ In Vim, this separation is powerful.
 </p>
 <ul>
 <li>If you have a <strong>"Delete"</strong> crew (Operator), they can work with <em>any</em> Surveyor (Motion).</li>
-<li>%%INLINE<em>0%% (Delete Word), %%INLINE</em>1%% (Delete to end of line), <code>dgg</code> (Delete to start of file).</li>
+<li><code>dw</code> (Delete Word), <code>d$</code> (Delete to end of line), <code>dgg</code> (Delete to start of file).</li>
 </ul>
 <p>
 The logic for "Deleting" is written once. The logic for "Finding the end of the word" is written once. They combine to form a command.
@@ -102,7 +100,7 @@ Let's look at the flow for the command <code>dw</code>.
 <ul>
 <li><strong>Current Text:</strong> <code>Hello World</code></li>
 <li><strong>Cursor:</strong> Index 0 ('H')</li>
-<li><strong>Input:</strong> %%INLINE<em>11%% (Operator) + %%INLINE</em>12%% (Motion)</li>
+<li><strong>Input:</strong> <code>d</code> (Operator) + <code>w</code> (Motion)</li>
 </ul>
 <h3 id="step-1-the-orchestrator">Step 1: The Orchestrator</h3>
 <p>
@@ -133,10 +131,8 @@ export function executeOperatorMotion(
 You might think the range is just <code>[Cursor, Target]</code>. Usually, yes. But there are edge cases:
 </p>
 <ol>
-<li><strong>Backwards Motions:</strong> If you press %%INLINE<em>15%% (delete back), the Target is <em>before</em> the Cursor. We need to swap them so %%INLINE</em>16%% is always smaller than <code>to</code>.</li>
-</ol>
-<ol>
-<li><strong>Inclusivity:</strong> If you use %%INLINE<em>18%% (end of word), the last character should be included. If you use %%INLINE</em>19%% (start of next word), the destination character is <em>not</em> deleted.</li>
+<li><strong>Backwards Motions:</strong> If you press <code>db</code> (delete back), the Target is <em>before</em> the Cursor. We need to swap them so <code>from</code> is always smaller than <code>to</code>.</li>
+<li><strong>Inclusivity:</strong> If you use <code>e</code> (end of word), the last character should be included. If you use <code>w</code> (start of next word), the destination character is <em>not</em> deleted.</li>
 </ol>
 <p>
 We use a helper function to normalize this math.
@@ -157,7 +153,7 @@ function getOperatorRange(cursor, target, motion, op, count) {
 </code></pre>
 <h3 id="step-3-applying-the-operator">Step 3: Applying the Operator</h3>
 <p>
-Now we have clean coordinates: %%INLINE<em>20%%, %%INLINE</em>21%%. We simply slice the string.
+Now we have clean coordinates: <code>from: 0</code>, <code>to: 6</code>. We simply slice the string.
 </p>
 <pre data-lang="typescript"><code>// From operators.ts
 function applyOperator(op, from, to, ctx) {
@@ -200,7 +196,7 @@ While <code>dw</code> is standard, Vim has other types of executions that behave
 </p>
 <h3 id="linewise-operations-inline-24">Linewise Operations (<code>dd</code>)</h3>
 <p>
-When you type %%INLINE<em>25%%, you aren't moving a cursor. You are selecting a whole line. The logic here is slightly different because it ignores specific character columns and looks for newline characters (%%INLINE</em>26%%).
+When you type <code>dd</code>, you aren't moving a cursor. You are selecting a whole line. The logic here is slightly different because it ignores specific character columns and looks for newline characters (<code>\n</code>).
 </p>
 <pre data-lang="typescript"><code>// From operators.ts
 export function executeLineOp(op: Operator, count: number, ctx: OperatorContext) {
@@ -228,11 +224,7 @@ And cursor is on "Line 2":
 </p>
 <ol>
 <li><code>lineStart</code> finds the newline after "Line 1".</li>
-</ol>
-<ol>
 <li><code>lineEnd</code> finds the newline after "Line 2".</li>
-</ol>
-<ol>
 <li><code>applyOperator</code> snips that entire section out.</li>
 </ol>
 <h2 id="summary">Summary</h2>
@@ -245,20 +237,23 @@ And cursor is on "Line 2":
 <li><strong>Execution</strong> Logic brings them together to modify the document.</li>
 </ul>
 <p>
-So far, we have covered motions like %%INLINE<em>30%% (word) and %%INLINE</em>31%% (down). But what if you want to "Delete inside parentheses" (%%INLINE<em>32%%)? %%INLINE</em>33%% isn't a movement; you can't type <code>i)</code> to move your cursor there.
+So far, we have covered motions like <code>w</code> (word) and <code>j</code> (down). But what if you want to "Delete inside parentheses" (<code>di)</code>)? <code>i)</code> isn't a movement; you can't type <code>i)</code> to move your cursor there.
 </p>
 <p>
 These are called <strong>Text Objects</strong>, and they require a special kind of range calculation.
 </p>
 <p>
-<a href="05<em>text</em>objects.md">Next Chapter: Text Objects</a>
+<a href="vim-05-text-objects.html">Next Chapter: Text Objects</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="vim.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="vim-03-motion-resolution.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">vim/ index</div>
+          <div class="chapter-nav-title">03 Motion Resolution</div>
+        </a><a class="chapter-nav-card next" href="vim-05-text-objects.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">05 Text Objects</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

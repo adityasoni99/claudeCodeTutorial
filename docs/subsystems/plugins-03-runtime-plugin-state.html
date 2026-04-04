@@ -38,7 +38,7 @@
 Welcome to the third chapter of the <strong>Plugins</strong> project!
 </p>
 <p>
-In the previous chapter, <a href="02<em>plugin</em>namespacing.md">Plugin Namespacing</a>, we learned how to give every plugin a unique ID (like <code>git-helper@builtin</code>) so we never confuse official features with community ones.
+In the previous chapter, <a href="plugins-02-plugin-namespacing.html">Plugin Namespacing</a>, we learned how to give every plugin a unique ID (like <code>git-helper@builtin</code>) so we never confuse official features with community ones.
 </p>
 <p>
 Now we face a new question: <strong>Is the plugin actually running?</strong>
@@ -49,8 +49,6 @@ Imagine you have a lamp.
 </p>
 <ol>
 <li><strong>The Bulb (The Plugin):</strong> It exists. It <em>can</em> produce light.</li>
-</ol>
-<ol>
 <li><strong>The Switch (The Setting):</strong> You can flip it ON or OFF.</li>
 </ol>
 <p>
@@ -77,12 +75,8 @@ We ship a <code>git-helper</code> plugin.
 To calculate this state, we look at three inputs:
 </p>
 <ol>
-<li><strong>Hard Availability (%%INLINE<em>3%%):</strong> Does the computer actually support this? (e.g., You can't use the %%INLINE</em>4%% plugin if your computer has no Bluetooth chip).</li>
-</ol>
-<ol>
-<li><strong>User Settings:</strong> Has the user explicitly said %%INLINE<em>5%% or %%INLINE</em>6%% in their config file?</li>
-</ol>
-<ol>
+<li><strong>Hard Availability (<code>isAvailable</code>):</strong> Does the computer actually support this? (e.g., You can't use the <code>bluetooth</code> plugin if your computer has no Bluetooth chip).</li>
+<li><strong>User Settings:</strong> Has the user explicitly said <code>true</code> or <code>false</code> in their config file?</li>
 <li><strong>Factory Defaults:</strong> If the user hasn't said anything, what should we do?</li>
 </ol>
 <h2 id="the-inline-7-object">The <code>LoadedPlugin</code> Object</h2>
@@ -110,17 +104,13 @@ When the application asks "What plugins do I have?", the system runs a specific 
 </p>
 <ol>
 <li><strong>Check Hardware:</strong> If the plugin requires specific OS features and they are missing, stop. It's disabled.</li>
-</ol>
-<ol>
 <li><strong>Check Settings:</strong> Look for the specific ID (e.g., <code>git-helper@builtin</code>) in the user's settings file.</li>
-</ol>
-<ol>
 <li><strong>Resolve:</strong></li>
+</ol>
 <ul>
 <li>If the user has a setting, <strong>User wins</strong>.</li>
 <li>If no setting exists, <strong>Default wins</strong>.</li>
 </ul>
-</ol>
 <div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
     participant App
     participant Logic as State Logic
@@ -136,7 +126,7 @@ When the application asks "What plugins do I have?", the system runs a specific 
     Logic--&gt;&gt;App: Returns Plugin Object (enabled: false)</div></div>
 <h3 id="deep-dive-code-breakdown">Deep Dive: Code Breakdown</h3>
 <p>
-Let's look at the real logic inside %%INLINE<em>12%%. We will break the %%INLINE</em>13%% function into small pieces.
+Let's look at the real logic inside <code>builtinPlugins.ts</code>. We will break the <code>getBuiltinPlugins</code> function into small pieces.
 </p>
 <h4 id="1-checking-hardware-availability">1. Checking Hardware Availability</h4>
 <p>
@@ -154,7 +144,7 @@ for (const [name, definition] of BUILTIN_PLUGINS) {
 }
 </code></pre>
 <p>
-<em>Explanation:</em> Some plugins might define an %%INLINE<em>14%% function. If this returns %%INLINE</em>15%% (e.g., "This is a Windows plugin but you are on Mac"), we skip the plugin immediately.
+<em>Explanation:</em> Some plugins might define an <code>isAvailable()</code> function. If this returns <code>false</code> (e.g., "This is a Windows plugin but you are on Mac"), we skip the plugin immediately.
 </p>
 <h4 id="2-fetching-user-settings">2. Fetching User Settings</h4>
 <p>
@@ -171,7 +161,7 @@ const pluginId = `${name}@builtin`
 const userSetting = settings?.enabledPlugins?.[pluginId]
 </code></pre>
 <p>
-<em>Explanation:</em> We retrieve the value stored under the unique ID. %%INLINE<em>16%% will be %%INLINE</em>17%%, %%INLINE<em>18%%, or %%INLINE</em>19%% (if the user has never touched the switch).
+<em>Explanation:</em> We retrieve the value stored under the unique ID. <code>userSetting</code> will be <code>true</code>, <code>false</code>, or <code>undefined</code> (if the user has never touched the switch).
 </p>
 <h4 id="3-the-decision-matrix-the-smart-switch">3. The Decision Matrix (The "Smart Switch")</h4>
 <p>
@@ -188,14 +178,8 @@ const isEnabled =
 </p>
 <ol>
 <li><strong>Ternary Operator:</strong> We ask, "Is <code>userSetting</code> defined?"</li>
-</ol>
-<ol>
 <li><strong>If Yes:</strong> Use the user's setting exactly as is.</li>
-</ol>
-<ol>
 <li><strong>If No:</strong> Fall back to the plugin's <code>defaultEnabled</code>.</li>
-</ol>
-<ol>
 <li><strong>Final Fallback:</strong> If the plugin didn't specify a default, assume <code>true</code> (Enabled).</li>
 </ol>
 <h4 id="4-creating-the-object">4. Creating the Object</h4>
@@ -231,11 +215,7 @@ In this chapter, we learned:
 </p>
 <ol>
 <li><strong>Runtime State</strong> is different from static code; it combines definitions with user preferences.</li>
-</ol>
-<ol>
 <li><strong>The <code>LoadedPlugin</code></strong> abstraction represents this final state.</li>
-</ol>
-<ol>
 <li>The logic hierarchy is: <strong>Hardware Check > User Setting > Factory Default</strong>.</li>
 </ol>
 <p>
@@ -245,14 +225,17 @@ At this point, we have a list of enabled plugins. These plugins contain "skills"
 In the next chapter, we will see how we translate these raw skills into commands the CLI can execute.
 </p>
 <p>
-<a href="04<em>skill</em>to<em>command</em>adaptation.md">Next Chapter: Skill-to-Command Adaptation</a>
+<a href="plugins-04-skill-to-command-adaptation.html">Next Chapter: Skill-to-Command Adaptation</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="plugins.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="plugins-02-plugin-namespacing.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">plugins/ index</div>
+          <div class="chapter-nav-title">02 Plugin Namespacing</div>
+        </a><a class="chapter-nav-card next" href="plugins-04-skill-to-command-adaptation.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">04 Skill To Command Adaptation</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

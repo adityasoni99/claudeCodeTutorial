@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-2-interactive-tui-text-user-interface">Chapter 2: Interactive TUI (Text User Interface)</h1>
 <p>
-In the previous chapter, <a href="01<em>command</em>architecture.md">Command Architecture</a>, we learned how to create commands that output simple text.
+In the previous chapter, <a href="commands-01-command-architecture.html">Command Architecture</a>, we learned how to create commands that output simple text.
 </p>
 <p>
 But what if you need to ask the user a question? Or show a loading spinner while downloading a file? Or display a menu where the user can select an option using their arrow keys?
@@ -54,28 +54,24 @@ In this project, we use React to render <strong>text</strong> directly to your t
 </p>
 <h3 id="why-do-we-do-this">Why do we do this?</h3>
 <ol>
-<li><strong>State Management:</strong> We can easily handle complex states (like %%INLINE<em>1%% -> %%INLINE</em>2%% -> <code>Error</code>).</li>
-</ol>
-<ol>
+<li><strong>State Management:</strong> We can easily handle complex states (like <code>Loading</code> -> <code>Success</code> -> <code>Error</code>).</li>
 <li><strong>Interactivity:</strong> We can capture keystrokes (arrows, enter) to create menus.</li>
-</ol>
-<ol>
 <li><strong>Cleanliness:</strong> instead of printing thousands of lines of logs, we update the screen in place.</li>
 </ol>
 <hr>
 <h2 id="core-components">Core Components</h2>
 <p>
-Instead of HTML tags like %%INLINE<em>4%% or %%INLINE</em>5%%, we use special components designed for the terminal:
+Instead of HTML tags like <code>&lt;div&gt;</code> or <code>&lt;span&gt;</code>, we use special components designed for the terminal:
 </p>
 <ul>
-<li><strong>%%INLINE<em>6%%</strong>: Think of this as a %%INLINE</em>7%%. It's a container for layout (rows and columns).</li>
-<li><strong>%%INLINE<em>8%%</strong>: Think of this as a %%INLINE</em>9%% or <code>&lt;p&gt;</code>. It holds the actual text to display.</li>
+<li><strong><code>&lt;Box&gt;</code></strong>: Think of this as a <code>&lt;div&gt;</code>. It's a container for layout (rows and columns).</li>
+<li><strong><code>&lt;Text&gt;</code></strong>: Think of this as a <code>&lt;span&gt;</code> or <code>&lt;p&gt;</code>. It holds the actual text to display.</li>
 <li><strong><code>&lt;Dialog&gt;</code></strong>: A pre-made window for asking questions.</li>
 </ul>
 <hr>
 <h2 id="use-case-1-the-theme-picker">Use Case 1: The Theme Picker</h2>
 <p>
-Let's look at the %%INLINE<em>12%% command. When a user types %%INLINE</em>13%%, we don't want to just list colors; we want a menu where they can pick one.
+Let's look at the <code>theme</code> command. When a user types <code>/theme</code>, we don't want to just list colors; we want a menu where they can pick one.
 </p>
 <p>
 Here is how the command file (<code>theme.tsx</code>) uses a UI component.
@@ -93,7 +89,7 @@ export const call = async (onDone, context) =&gt; {
 <p>
 <strong>Explanation:</strong>
  
-The %%INLINE<em>15%% function here is special. Instead of doing the work immediately, it returns a <strong>React Component</strong> (%%INLINE</em>16%%). The application detects this and "mounts" the component in the terminal.
+The <code>call</code> function here is special. Instead of doing the work immediately, it returns a <strong>React Component</strong> (<code>&lt;ThemePickerCommand /&gt;</code>). The application detects this and "mounts" the component in the terminal.
 </p>
 <h3 id="the-interactive-component">The Interactive Component</h3>
 <p>
@@ -118,12 +114,8 @@ Now let's look at the component itself (simplified):
 </p>
 <ol>
 <li><strong><code>&lt;Pane&gt;</code></strong>: Creates a colored box around our content.</li>
-</ol>
-<ol>
 <li><strong><code>&lt;ThemePicker&gt;</code></strong>: This component listens for arrow keys to highlight options.</li>
-</ol>
-<ol>
-<li><strong>%%INLINE<em>19%%</strong>: When the user selects a theme, we call %%INLINE</em>20%%. This tells the main app, "We are finished, you can close this UI now."</li>
+<li><strong><code>onDone</code></strong>: When the user selects a theme, we call <code>onDone</code>. This tells the main app, "We are finished, you can close this UI now."</li>
 </ol>
 <hr>
 <h2 id="use-case-2-the-install-command-state-management">Use Case 2: The Install Command (State Management)</h2>
@@ -131,7 +123,7 @@ Now let's look at the component itself (simplified):
 The <code>/install</code> command is more complex. It needs to show progress: "Checking...", then "Installing...", then "Success!".
 </p>
 <p>
-We use React <strong>Hooks</strong> (%%INLINE<em>22%%, %%INLINE</em>23%%) to manage this.
+We use React <strong>Hooks</strong> (<code>useState</code>, <code>useEffect</code>) to manage this.
 </p>
 <h3 id="step-1-define-the-state">Step 1: Define the State</h3>
 <p>
@@ -219,11 +211,7 @@ When you return a React element from a command, the system hands it over to a re
     App-&gt;&gt;Term: UI Unmounts (Returns to normal prompt)</div></div>
 <ol>
 <li><strong>Mounting:</strong> The app reserves space at the bottom of the terminal.</li>
-</ol>
-<ol>
 <li><strong>Diffing:</strong> When state changes, React calculates the difference between the old text and the new text.</li>
-</ol>
-<ol>
 <li><strong>Painting:</strong> It sends special ANSI codes to the terminal to erase specific lines and write new ones, creating the illusion of animation.</li>
 </ol>
 <hr>
@@ -254,29 +242,26 @@ We will explore how this global memory works in the next chapter.
 <hr>
 <h2 id="summary">Summary</h2>
 <ol>
-<li><strong>React in Terminal:</strong> We use React components to build rich interfaces (%%INLINE<em>27%%, %%INLINE</em>28%%).</li>
-</ol>
-<ol>
+<li><strong>React in Terminal:</strong> We use React components to build rich interfaces (<code>&lt;Box&gt;</code>, <code>&lt;Text&gt;</code>).</li>
 <li><strong><code>call</code> returns JSX:</strong> Interactive commands return a component instead of a string.</li>
-</ol>
-<ol>
 <li><strong>State Machines:</strong> We use <code>useState</code> to switch between Loading, Success, and Error views.</li>
-</ol>
-<ol>
 <li><strong><code>onDone</code>:</strong> The component must manually tell the app when interaction is finished.</li>
 </ol>
 <p>
 Now that we can build interfaces, we need to handle the most critical part of a user-facing application: knowing who the user is.
 </p>
 <p>
-<a href="03<em>authentication</em><em>_session</em>state.md">Next Chapter: Authentication & Session State</a>
+<a href="commands-03-authentication---session-state.html">Next Chapter: Authentication & Session State</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="commands.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="commands-01-command-architecture.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">commands/ index</div>
+          <div class="chapter-nav-title">01 Command Architecture</div>
+        </a><a class="chapter-nav-card next" href="commands-03-authentication---session-state.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">03 Authentication   Session State</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

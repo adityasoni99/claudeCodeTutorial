@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-6-output-diffing-logupdate">Chapter 6: Output Diffing (LogUpdate)</h1>
 <p>
-In the previous chapter, <a href="05<em>frame</em>renderer.md">Frame Renderer</a>, we learned how Ink takes a tree of components and paints them onto an in-memory grid called a <strong>Frame</strong>.
+In the previous chapter, <a href="ink-05-frame-renderer.html">Frame Renderer</a>, we learned how Ink takes a tree of components and paints them onto an in-memory grid called a <strong>Frame</strong>.
 </p>
 <p>
 We now have a snapshot of what we <em>want</em> the terminal to look like. But there is a problem.
@@ -73,7 +73,7 @@ Let's look at a simple loading spinner that rotates every 100ms.
 <pre data-lang="text"><code>⠙ Loading...
 </code></pre>
 <p>
-Notice that the text " Loading..." didn't change. Only the first character changed from %%INLINE<em>1%% to %%INLINE</em>2%%.
+Notice that the text " Loading..." didn't change. Only the first character changed from <code>⠋</code> to <code>⠙</code>.
  
 Ink should figure this out and send a command to the terminal saying: "Go to column 0, row 0. Draw '⠙'. Done."
 </p>
@@ -87,14 +87,8 @@ A Diff is a list of instructions. It might look like this logically:
 </p>
 <ol>
 <li>Move Cursor to X: 5, Y: 2.</li>
-</ol>
-<ol>
 <li>Set Color to Green.</li>
-</ol>
-<ol>
 <li>Write "Success".</li>
-</ol>
-<ol>
 <li>Move Cursor to X: 0, Y: 3.</li>
 </ol>
 <h3 id="comparing-frames">Comparing Frames</h3>
@@ -177,15 +171,9 @@ Let's trace how the "Spinner" updates.
     
     Note over Diff: "Loading..." is skipped (Identical)</div></div>
 <ol>
-<li><strong>Render:</strong> The <a href="05<em>frame</em>renderer.md">Frame Renderer</a> produces the new grid.</li>
-</ol>
-<ol>
+<li><strong>Render:</strong> The <a href="ink-05-frame-renderer.html">Frame Renderer</a> produces the new grid.</li>
 <li><strong>Compare:</strong> <code>LogUpdate</code> sees that only index 0 changed.</li>
-</ol>
-<ol>
 <li><strong>Patch:</strong> It generates a stream containing a rewind command (<code>\r</code>) and the new character.</li>
-</ol>
-<ol>
 <li><strong>Output:</strong> Node.js writes this string to <code>process.stdout</code>.</li>
 </ol>
 <hr>
@@ -222,7 +210,7 @@ diffEach(prev.screen, next.screen, (x, y, removed, added) =&gt; {
 </p>
 <ul>
 <li><code>moveCursorTo</code>: Logic to get the typewriter head to the right spot.</li>
-<li>%%INLINE<em>14%%: Calculates if we need to switch from "Red" to "Blue". It returns ANSI codes like %%INLINE</em>15%%.</li>
+<li><code>stylePool.transition</code>: Calculates if we need to switch from "Red" to "Blue". It returns ANSI codes like <code>\x1b[31m</code>.</li>
 <li><code>writeCell...</code>: Pushes the character into the output buffer.</li>
 </ul>
 <h3 id="2-handling-resizes-inline-17">2. Handling Resizes (<code>fullResetSequence</code>)</h3>
@@ -244,7 +232,7 @@ if (next.viewport.width !== prev.viewport.width) {
 </p>
 <h3 id="3-outputting-the-buffer">3. Outputting the Buffer</h3>
 <p>
-Finally, all these small move/write instructions are collected into a %%INLINE<em>19%% array. %%INLINE</em>20%% joins them into a single string.
+Finally, all these small move/write instructions are collected into a <code>Diff</code> array. <code>LogUpdate</code> joins them into a single string.
 </p>
 <pre data-lang="typescript"><code>// log-update.ts (Simplified)
 const output = patches.map(p =&gt; {
@@ -267,24 +255,12 @@ Congratulations! You have navigated the entire architecture of Ink.
 Let's recap the journey of a single keystroke:
 </p>
 <ol>
-<li><strong>Input:</strong> User presses %%INLINE<em>22%%. <a href="04</em>input<em>processing</em>pipeline.md">Input Processing Pipeline</a> detects it.</li>
-</ol>
-<ol>
-<li><strong>React:</strong> %%INLINE<em>23%% fires, updating React state (%%INLINE</em>24%%).</li>
-</ol>
-<ol>
-<li><strong>Reconciler:</strong> React calls the <a href="03<em>react</em>reconciler.md">Reconciler</a> to update the <a href="02<em>ink</em>dom<em>_</em>layout_engine.md">Ink DOM</a>.</li>
-</ol>
-<ol>
+<li><strong>Input:</strong> User presses <code>A</code>. <a href="ink-04-input-processing-pipeline.html">Input Processing Pipeline</a> detects it.</li>
+<li><strong>React:</strong> <code>useInput</code> fires, updating React state (<code>setText("A")</code>).</li>
+<li><strong>Reconciler:</strong> React calls the <a href="ink-03-react-reconciler.html">Reconciler</a> to update the <a href="ink-02-ink-dom---layout-engine.html">Ink DOM</a>.</li>
 <li><strong>Layout:</strong> Yoga recalculates the positions of your <code>&lt;Box&gt;</code> elements.</li>
-</ol>
-<ol>
-<li><strong>Render:</strong> The <a href="05<em>frame</em>renderer.md">Frame Renderer</a> paints the DOM onto a grid in memory.</li>
-</ol>
-<ol>
+<li><strong>Render:</strong> The <a href="ink-05-frame-renderer.html">Frame Renderer</a> paints the DOM onto a grid in memory.</li>
 <li><strong>Diff:</strong> <strong>LogUpdate</strong> compares the new grid to the old one.</li>
-</ol>
-<ol>
 <li><strong>Output:</strong> Ink writes <code>\x1b[C A</code> to the terminal.</li>
 </ol>
 <p>
@@ -298,9 +274,9 @@ You now possess the knowledge to build, debug, and contribute to complex termina
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="ink.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="ink-05-frame-renderer.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">ink/ index</div>
+          <div class="chapter-nav-title">05 Frame Renderer</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

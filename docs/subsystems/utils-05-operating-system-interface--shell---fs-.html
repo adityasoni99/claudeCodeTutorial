@@ -38,7 +38,7 @@
 Welcome to Chapter 5 of the <code>utils</code> project tutorial.
 </p>
 <p>
-In the previous chapter, <a href="04<em>git</em>integration.md">Git Integration</a>, we taught the Agent how to understand the history and structure of your project.
+In the previous chapter, <a href="utils-04-git-integration.html">Git Integration</a>, we taught the Agent how to understand the history and structure of your project.
 </p>
 <p>
 Now, we need to give the Agent <strong>Hands</strong>. It’s not enough to just <em>read</em> code; an autonomous agent needs to <em>run</em> commands (like installing packages or running tests) and <em>edit</em> files.
@@ -72,13 +72,9 @@ The file <code>Shell.ts</code> is the Agent's way of typing into the terminal. I
 It handles:
 </p>
 <ol>
-<li><strong>Finding the right shell:</strong> It automatically finds %%INLINE<em>5%% or %%INLINE</em>6%% (or <code>powershell</code> on Windows).</li>
-</ol>
-<ol>
+<li><strong>Finding the right shell:</strong> It automatically finds <code>bash</code> or <code>zsh</code> (or <code>powershell</code> on Windows).</li>
 <li><strong>Timeouts:</strong> If a command hangs for 30 minutes, it kills it so your computer doesn't freeze.</li>
-</ol>
-<ol>
-<li><strong>Output:</strong> It captures what the command prints (%%INLINE<em>8%%) and any errors (%%INLINE</em>9%%).</li>
+<li><strong>Output:</strong> It captures what the command prints (<code>stdout</code>) and any errors (<code>stderr</code>).</li>
 </ol>
 <h3 id="how-to-use-it">How to use it</h3>
 <p>
@@ -103,15 +99,13 @@ async function runTests() {
 </p>
 <h2 id="key-concept-2-the-file-system-fs-wrapper">Key Concept 2: The File System (FS) Wrapper</h2>
 <p>
-Node.js comes with a built-in %%INLINE<em>11%% module, but our project wraps it in %%INLINE</em>12%%.
+Node.js comes with a built-in <code>fs</code> module, but our project wraps it in <code>fsOperations.ts</code>.
 </p>
 <p>
 Why wrap it?
 </p>
 <ol>
 <li><strong>Telemetry:</strong> We can log exactly which files the Agent is touching (useful for debugging).</li>
-</ol>
-<ol>
 <li><strong>Abstraction:</strong> We can easily swap the "Real" file system for a "Fake" one during testing, so the Agent doesn't actually delete your files while we are testing <em>it</em>.</li>
 </ol>
 <h3 id="how-to-use-it">How to use it</h3>
@@ -137,7 +131,7 @@ async function readFileSafely(path) {
 </p>
 <h2 id="key-concept-3-symlink-safety">Key Concept 3: Symlink Safety</h2>
 <p>
-A common security vulnerability involves <strong>Symlinks</strong> (Symbolic Links). A malicious actor (or a confused Agent) might try to read a file named %%INLINE<em>15%%, but that file is actually a shortcut pointing to %%INLINE</em>16%% (system passwords).
+A common security vulnerability involves <strong>Symlinks</strong> (Symbolic Links). A malicious actor (or a confused Agent) might try to read a file named <code>./nice-image.jpg</code>, but that file is actually a shortcut pointing to <code>/etc/shadow</code> (system passwords).
 </p>
 <p>
 Our system uses <code>safeResolvePath</code> to prevent this confusion.
@@ -207,7 +201,7 @@ export async function findSuitableShell(): Promise&lt;string&gt; {
 Before running a command, we sometimes need to understand <em>what</em> it is. For example, is the command setting an environment variable?
 </p>
 <p>
-We use a tool called %%INLINE<em>20%% in %%INLINE</em>21%% to convert the text command into a data structure.
+We use a tool called <code>tree-sitter</code> in <code>bash/parser.ts</code> to convert the text command into a data structure.
 </p>
 <pre data-lang="typescript"><code>// From bash/parser.ts - Simplified
 export async function parseCommand(command: string) {
@@ -231,7 +225,7 @@ export async function parseCommand(command: string) {
 Agents often need to see "the last 10 lines of the error log." Reading a 5GB log file from start to finish just to see the end is slow and crashes memory.
 </p>
 <p>
-%%INLINE<em>23%% includes a smart generator called %%INLINE</em>24%%.
+<code>fsOperations.ts</code> includes a smart generator called <code>readLinesReverse</code>.
 </p>
 <pre data-lang="typescript"><code>// From fsOperations.ts - Simplified
 export async function* readLinesReverse(path: string) {
@@ -259,25 +253,24 @@ In this chapter, we gave the Agent the ability to interact with the machine:
 </p>
 <ol>
 <li><strong>Shell Interface:</strong> <code>Shell.ts</code> executes commands safely, handling timeouts and shell detection.</li>
-</ol>
-<ol>
 <li><strong>File System:</strong> <code>fsOperations.ts</code> wraps Node.js file operations for logging and safety.</li>
-</ol>
-<ol>
 <li><strong>Parsers:</strong> We analyze commands before running them to understand their intent.</li>
 </ol>
 <p>
 We have a configured, authenticated Agent that knows the project history and can now touch files and run commands. But how do we manage the <em>lifecycle</em> of this interaction? How do we handle crashing, restarting, and cleaning up?
 </p>
 <p>
-<a href="06<em>session</em>lifecycle_management.md">Next Chapter: Session Lifecycle Management</a>
+<a href="utils-06-session-lifecycle-management.html">Next Chapter: Session Lifecycle Management</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="utils.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="utils-04-git-integration.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">utils/ index</div>
+          <div class="chapter-nav-title">04 Git Integration</div>
+        </a><a class="chapter-nav-card next" href="utils-06-session-lifecycle-management.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">06 Session Lifecycle Management</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

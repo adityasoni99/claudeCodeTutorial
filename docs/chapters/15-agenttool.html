@@ -38,7 +38,7 @@
 </div>
 <h1 id="chapter-15-agenttool">Chapter 15: AgentTool</h1>
 <p>
-In the previous <a href="14<em>model</em>context<em>protocol</em><em>mcp</em>.md">Model Context Protocol (MCP)</a> chapter, we learned how to extend <code>claudeCode</code> by connecting it to external tools and data sources. We gave the AI more "hands."
+In the previous <a href="14-model-context-protocol--mcp-.html">Model Context Protocol (MCP)</a> chapter, we learned how to extend <code>claudeCode</code> by connecting it to external tools and data sources. We gave the AI more "hands."
 </p>
 <p>
 But sometimes, having more hands isn't enough. Sometimes, the task is so big (like "Refactor this entire legacy module") that a single AI agent gets overwhelmed, distracted, or runs out of context memory.
@@ -57,14 +57,8 @@ If you ask the manager to "Research a topic and write a report," they <em>could<
 </p>
 <ol>
 <li><strong>Manager:</strong> "Contractor, go read these 50 files and summarize them."</li>
-</ol>
-<ol>
 <li><strong>Contractor:</strong> (Works independently for 5 minutes, reading, thinking, taking notes...)</li>
-</ol>
-<ol>
 <li><strong>Contractor:</strong> "Here is the summary."</li>
-</ol>
-<ol>
 <li><strong>Manager:</strong> (Receives the neat summary without seeing the messy 5 minutes of work).</li>
 </ol>
 <p>
@@ -81,7 +75,7 @@ Imagine you ask: <strong>"Check all 20 documentation files and tell me if we men
 <h2 id="key-concepts">Key Concepts</h2>
 <h3 id="1-recursion-loops-within-loops">1. Recursion (Loops within Loops)</h3>
 <p>
-We learned about the "Conversation Loop" in <a href="03<em>query</em>engine.md">Query Engine</a>.
+We learned about the "Conversation Loop" in <a href="03-query-engine.html">Query Engine</a>.
  
 The AgentTool simply starts <strong>another</strong> Query Engine loop inside the current one.
 </p>
@@ -98,7 +92,7 @@ The Sub-Agent starts with a fresh "mind." It doesn't necessarily carry all the b
 <p>
 Does the Sub-Agent get to use the terminal?
  
-Yes. The AgentTool constructs a "Context" for the child that allows it to access the same capabilities (like <a href="06<em>bashtool.md">BashTool</a> or <a href="04</em>fileedittool.md">FileEditTool</a>) that the parent has, but tracked separately.
+Yes. The AgentTool constructs a "Context" for the child that allows it to access the same capabilities (like <a href="06-bashtool.html">BashTool</a> or <a href="04-fileedittool.html">FileEditTool</a>) that the parent has, but tracked separately.
 </p>
 <h2 id="how-to-use-agenttool">How to Use AgentTool</h2>
 <p>
@@ -122,7 +116,7 @@ The tool returns the final text response from the Sub-Agent.
 </code></pre>
 <h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
 <p>
-The implementation of %%INLINE<em>2%% is essentially a recursive function call. It pauses the current agent, creates a new %%INLINE</em>3%%, runs a new <code>query()</code> loop, and waits for it to finish.
+The implementation of <code>AgentTool</code> is essentially a recursive function call. It pauses the current agent, creates a new <code>ToolUseContext</code>, runs a new <code>query()</code> loop, and waits for it to finish.
 </p>
 <p>
 Here is the flow:
@@ -172,11 +166,11 @@ const agentToolUseContext = createSubagentContext(toolUseContext, {
 });
 </code></pre>
 <p>
-<em>Explanation: %%INLINE<em>6%% is like setting up a new desk for a new employee. We give them their own tools and their own message history (%%INLINE</em>7%%).</em>
+<em>Explanation: <code>createSubagentContext</code> is like setting up a new desk for a new employee. We give them their own tools and their own message history (<code>initialMessages</code>).</em>
 </p>
 <h4 id="2-initializing-mcp-skills">2. Initializing MCP (Skills)</h4>
 <p>
-If the sub-agent needs special tools (like a specific database connection via <a href="14<em>model</em>context<em>protocol</em><em>mcp</em>.md">Model Context Protocol (MCP)</a>), we initialize them here.
+If the sub-agent needs special tools (like a specific database connection via <a href="14-model-context-protocol--mcp-.html">Model Context Protocol (MCP)</a>), we initialize them here.
 </p>
 <pre data-lang="typescript"><code>// Connect to agent-specific MCP servers
 const { 
@@ -211,7 +205,7 @@ for await (const message of query({
 }
 </code></pre>
 <p>
-<em>Explanation: We run %%INLINE<em>9%% exactly like the main application does. However, we trap the messages inside %%INLINE</em>10%% instead of printing them directly to the main user output. This keeps the main chat clean.</em>
+<em>Explanation: We run <code>query()</code> exactly like the main application does. However, we trap the messages inside <code>recordSidechainTranscript</code> instead of printing them directly to the main user output. This keeps the main chat clean.</em>
 </p>
 <h4 id="4-cleaning-up">4. Cleaning Up</h4>
 <p>
@@ -238,8 +232,8 @@ When the sub-agent finishes (or crashes), we must clean up resources.
 The AgentTool is the foundation for advanced AI collaboration:
 </p>
 <ul>
-<li><strong><a href="16<em>teammates.md">Teammates</a>:</strong> In the next chapter, we will see how we use %%INLINE</em>12%% to create persistent personas (like "Architect" or "QA Tester") that you can summon by name.</li>
-<li><strong><a href="19<em>cost</em>tracking.md">Cost Tracking</a>:</strong> Sub-agents can use a lot of tokens. We need to track the cost of a sub-agent separately from the main agent.</li>
+<li><strong><a href="16-teammates.html">Teammates</a>:</strong> In the next chapter, we will see how we use <code>AgentTool</code> to create persistent personas (like "Architect" or "QA Tester") that you can summon by name.</li>
+<li><strong><a href="19-cost-tracking.html">Cost Tracking</a>:</strong> Sub-agents can use a lot of tokens. We need to track the cost of a sub-agent separately from the main agent.</li>
 </ul>
 <h2 id="conclusion">Conclusion</h2>
 <p>
@@ -249,7 +243,7 @@ You have learned that the <strong>AgentTool</strong> allows <code>claudeCode</co
 Now that we have the ability to spawn generic sub-agents, let's give them names and personalities.
 </p>
 <p>
-<a href="16_teammates.md">Next Chapter: Teammates</a>
+<a href="16-teammates.html">Next Chapter: Teammates</a>
 </p>
 <hr>
 <p>

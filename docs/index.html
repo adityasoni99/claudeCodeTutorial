@@ -316,6 +316,55 @@ footer a:hover { color: var(--amber); }
   </div>
 </div>
 
+
+<section class="section" id="overview">
+  <div class="container">
+    <div class="sec-label">Repository Overview</div>
+    <h2 class="sec-h2">Intro and Architecture Diagram</h2>
+    <div class="prose"><p>
+<code>claudeCode</code> is an advanced AI CLI tool designed to act as an <strong>autonomous software engineer</strong>. It features a robust <strong>Query Engine</strong> that orchestrates conversation loops, manages state, and executes a diverse suite of tools including file editing, terminal commands, and <strong>Computer Use</strong>. The system emphasizes safety and control through a granular <strong>Permission & Security System</strong> (enhanced by an <strong>Auto-Mode Classifier</strong>), detailed <strong>Cost Tracking</strong>, and deep <strong>Git Integration</strong> for context-aware coding assistance.
+</p>
+<div class="mermaid-wrap"><div class="mermaid">flowchart TD
+    A0["Query Engine"]
+    A1["Ink UI Framework"]
+    A2["State Management"]
+    A3["FileEditTool"]
+    A4["NotebookEditTool"]
+    A5["BashTool"]
+    A6["Shell Safety Checks"]
+    A7["WebSearchTool"]
+    A8["Computer Use"]
+    A9["Model Context Protocol (MCP)"]
+    A10["Permission &amp; Security System"]
+    A11["Rule Matching"]
+    A12["Auto-Mode Classifier"]
+    A13["AgentTool"]
+    A14["Teammates"]
+    A15["Unique Features"]
+    A16["Cost Tracking"]
+    A17["Git Integration"]
+    A18["Feature Gating"]
+    A0 --&gt;|"Tracks usage"| A16
+    A1 --&gt;|"Observes state"| A2
+    A1 --&gt;|"Displays warnings"| A6
+    A3 --&gt;|"Verifies permissions"| A10
+    A3 --&gt;|"Computes diffs"| A17
+    A4 --&gt;|"Verifies permissions"| A10
+    A5 --&gt;|"Validates commands"| A6
+    A7 --&gt;|"Checks availability"| A18
+    A8 --&gt;|"Requires permission"| A10
+    A9 --&gt;|"Requires permission"| A10
+    A10 --&gt;|"Evaluates rules"| A11
+    A10 --&gt;|"Delegates decisions"| A12
+    A12 --&gt;|"Runs side queries"| A0
+    A13 --&gt;|"Initializes servers"| A9
+    A13 --&gt;|"Spawns sub-agents"| A14
+    A14 --&gt;|"Registers tasks"| A2
+    A15 --&gt;|"Utilizes background agents"| A14
+    A16 --&gt;|"Persists session data"| A2</div></div></div>
+  </div>
+</section>
+
 <!-- CHAPTERS -->
 <section class="section" id="chapters">
   <div class="container">
@@ -648,7 +697,9 @@ footer a:hover { color: var(--amber); }
   <span>Built with <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · 2026</span>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <script>
+mermaid.initialize({ startOnLoad: true, theme: 'dark' });
 window.addEventListener('scroll', () => {
   const bar = document.getElementById('rb');
   if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';

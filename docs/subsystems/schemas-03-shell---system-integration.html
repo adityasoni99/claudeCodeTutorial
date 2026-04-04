@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-3-shell-system-integration">Chapter 3: Shell & System Integration</h1>
 <p>
-In the previous chapter, <a href="02<em>polymorphic</em>hook_definitions.md">Polymorphic Hook Definitions</a>, we learned how to differentiate between different types of actions (Commands, HTTP requests, Prompts).
+In the previous chapter, <a href="schemas-02-polymorphic-hook-definitions.html">Polymorphic Hook Definitions</a>, we learned how to differentiate between different types of actions (Commands, HTTP requests, Prompts).
 </p>
 <p>
 Now, we will focus on the most common and powerful action: <strong>The Command</strong>.
@@ -52,11 +52,7 @@ If you simply execute this command blindly, several things could go wrong:
 </p>
 <ol>
 <li><strong>Freezing:</strong> The server runs forever. The AI freezes, waiting for the command to finish.</li>
-</ol>
-<ol>
-<li><strong>Wrong Language:</strong> You are on Windows, but the command uses Linux syntax (%%INLINE<em>1%% vs %%INLINE</em>2%%).</li>
-</ol>
-<ol>
+<li><strong>Wrong Language:</strong> You are on Windows, but the command uses Linux syntax (<code>ls</code> vs <code>dir</code>).</li>
 <li><strong>Runaway Process:</strong> The command hangs and eats up all your CPU.</li>
 </ol>
 <p>
@@ -101,7 +97,7 @@ Operating systems speak different languages. Linux/macOS usually speak <strong>B
 If you write a script that uses <code>grep</code> (Linux search), it will fail on Windows standard command prompt.
 </p>
 <ul>
-<li><strong>Options:</strong> %%INLINE<em>9%% (default) or %%INLINE</em>10%%.</li>
+<li><strong>Options:</strong> <code>"bash"</code> (default) or <code>"powershell"</code>.</li>
 <li><strong>Why it matters:</strong> It ensures your command syntax is interpreted correctly by the underlying OS.</li>
 </ul>
 <h3 id="concept-2-timeouts-inline-11">Concept 2: Timeouts (<code>timeout</code>)</h3>
@@ -125,7 +121,7 @@ By default, the system blocks. It waits for the command to finish before moving 
 This is a special, advanced feature.
 </p>
 <ul>
-<li><strong>%%INLINE<em>16%%</strong>: Like %%INLINE</em>17%%, it runs in the background. <strong>However</strong>, if the command crashes (specifically with exit code 2), it "wakes up" the AI model.</li>
+<li><strong><code>asyncRewake: true</code></strong>: Like <code>async</code>, it runs in the background. <strong>However</strong>, if the command crashes (specifically with exit code 2), it "wakes up" the AI model.</li>
 <li><strong>Use Case:</strong> You start a server in the background. You go to sleep. The server crashes. The system wakes up the AI to investigate why it crashed.</li>
 </ul>
 <h2 id="internal-implementation-under-the-hood">Internal Implementation: Under the Hood</h2>
@@ -155,11 +151,7 @@ How does the system enforce these rules? Let's visualize the flow when a command
     end</div></div>
 <ol>
 <li><strong>Validation:</strong> Zod checks if your settings are valid numbers/strings.</li>
-</ol>
-<ol>
-<li><strong>Selection:</strong> The code checks %%INLINE<em>18%% to decide which executable to spawn (%%INLINE</em>19%% or <code>pwsh.exe</code>).</li>
-</ol>
-<ol>
+<li><strong>Selection:</strong> The code checks <code>shell</code> to decide which executable to spawn (<code>/bin/bash</code> or <code>pwsh.exe</code>).</li>
 <li><strong>Watchdog:</strong> A timer starts alongside the process. If the timer hits zero, the process is killed.</li>
 </ol>
 <h3 id="code-deep-dive">Code Deep Dive</h3>
@@ -186,8 +178,8 @@ const BashCommandHookSchema = z.object({
 <strong>Explanation:</strong>
 </p>
 <ul>
-<li>%%INLINE<em>22%%: Must be strictly %%INLINE</em>23%%.</li>
-<li>%%INLINE<em>24%%: Uses %%INLINE</em>25%%. This limits the user to only valid choices. You can't set shell to <code>"minecraft"</code>.</li>
+<li><code>type</code>: Must be strictly <code>'command'</code>.</li>
+<li><code>shell</code>: Uses <code>z.enum</code>. This limits the user to only valid choices. You can't set shell to <code>"minecraft"</code>.</li>
 </ul>
 <h4 id="part-2-the-safety-async-rules">Part 2: The Safety & Async Rules</h4>
 <p>
@@ -208,8 +200,8 @@ This adds the control layers we discussed.
 <strong>Explanation:</strong>
 </p>
 <ul>
-<li>%%INLINE<em>27%%: Must be a %%INLINE</em>28%% number. You can't have a timeout of -5 seconds.</li>
-<li>%%INLINE<em>29%%: This implies %%INLINE</em>30%%. It's a boolean flag that alters the internal event listener logic to handle crash reports.</li>
+<li><code>timeout</code>: Must be a <code>.positive()</code> number. You can't have a timeout of -5 seconds.</li>
+<li><code>asyncRewake</code>: This implies <code>async</code>. It's a boolean flag that alters the internal event listener logic to handle crash reports.</li>
 </ul>
 <h2 id="summary">Summary</h2>
 <p>
@@ -217,14 +209,8 @@ In this chapter, we learned:
 </p>
 <ol>
 <li><strong>Shell Integration</strong> is about more than just text; it's about managing the execution environment.</li>
-</ol>
-<ol>
 <li><strong><code>shell</code></strong> lets us choose between Bash and PowerShell to ensure compatibility.</li>
-</ol>
-<ol>
 <li><strong><code>timeout</code></strong> prevents infinite loops and hanging processes.</li>
-</ol>
-<ol>
 <li><strong><code>async</code></strong> allows us to run long tasks (like servers) without blocking the AI.</li>
 </ol>
 <p>
@@ -234,14 +220,17 @@ We now have a safe way to run commands. But sometimes, running a command isn't e
 How do we add a "Brain" to our hooks?
 </p>
 <p>
-<a href="04<em>ai</em>verification<em>_</em>interaction.md">Next Chapter: AI Verification & Interaction</a>
+<a href="schemas-04-ai-verification---interaction.html">Next Chapter: AI Verification & Interaction</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="schemas.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="schemas-02-polymorphic-hook-definitions.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">schemas/ index</div>
+          <div class="chapter-nav-title">02 Polymorphic Hook Definitions</div>
+        </a><a class="chapter-nav-card next" href="schemas-04-ai-verification---interaction.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">04 Ai Verification   Interaction</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

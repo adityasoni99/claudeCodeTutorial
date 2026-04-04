@@ -45,8 +45,6 @@ In our application, we have a "Voice Mode" feature. However, we can't just let t
 </p>
 <ol>
 <li><strong>Authentication:</strong> Is the user actually logged in? (Do they have the keys?)</li>
-</ol>
-<ol>
 <li><strong>Configuration:</strong> Is the feature actually enabled on our end? (Do they have clearance?)</li>
 </ol>
 <p>
@@ -72,7 +70,7 @@ If you repeat this everywhere, your code becomes messy. If the rules change (e.g
 We solve this by creating a <strong>Master Checklist</strong> function called <code>isVoiceModeEnabled()</code>. 
 </p>
 <p>
-This function acts as our pilot. It checks the keys (Auth) and the clearance (Remote Flags) and returns a simple %%INLINE<em>1%% (Go) or %%INLINE</em>2%% (No-Go).
+This function acts as our pilot. It checks the keys (Auth) and the clearance (Remote Flags) and returns a simple <code>true</code> (Go) or <code>false</code> (No-Go).
 </p>
 <h3 id="how-to-use-it">How to use it</h3>
 <p>
@@ -93,11 +91,7 @@ if (isVoiceModeEnabled()) {
 </p>
 <ol>
 <li><strong>Input:</strong> None (it checks the global state).</li>
-</ol>
-<ol>
 <li><strong>Output:</strong> <code>true</code> only if <strong>ALL</strong> checks pass.</li>
-</ol>
-<ol>
 <li><strong>Result:</strong> Your UI renders strictly when it is safe to do so.</li>
 </ol>
 <hr>
@@ -111,8 +105,6 @@ When you ask "Is voice enabled?", the system performs two parallel investigation
 </p>
 <ol>
 <li><strong>The Auth Check:</strong> It looks into the user's keychain to see if they have valid credentials for the AI provider (Anthropic).</li>
-</ol>
-<ol>
 <li><strong>The Safety Check:</strong> It checks a "Feature Flag" (via a tool called GrowthBook) to see if we, the developers, have remotely killed the feature due to bugs or maintenance.</li>
 </ol>
 <p>
@@ -152,7 +144,7 @@ export function isVoiceModeEnabled(): boolean {
 </code></pre>
 <h3 id="2-the-auth-check-the-keys">2. The Auth Check (The Keys)</h3>
 <p>
-This function checks if the user is legally allowed to speak. Specifically, it looks for an OAuth token. We will cover the details of how we get these tokens in <a href="03<em>provider</em>specific_authentication.md">Provider-Specific Authentication</a>.
+This function checks if the user is legally allowed to speak. Specifically, it looks for an OAuth token. We will cover the details of how we get these tokens in <a href="voice-03-provider-specific-authentication.html">Provider-Specific Authentication</a>.
 </p>
 <pre data-lang="typescript"><code>export function hasVoiceAuth(): boolean {
   // First, check if the provider is even set to one that supports voice.
@@ -175,7 +167,7 @@ This function checks if the user is legally allowed to speak. Specifically, it l
 </ul>
 <h3 id="3-the-feature-flag-check-the-clearance">3. The Feature Flag Check (The Clearance)</h3>
 <p>
-This check allows us to control the feature remotely without releasing a new version of the app. We use a concept called a "Kill Switch." We will learn how to configure this in <a href="02<em>remote</em>feature<em>gating</em><em>growthbook</em>.md">Remote Feature Gating (GrowthBook)</a>.
+This check allows us to control the feature remotely without releasing a new version of the app. We use a concept called a "Kill Switch." We will learn how to configure this in <a href="voice-02-remote-feature-gating--growthbook-.html">Remote Feature Gating (GrowthBook)</a>.
 </p>
 <pre data-lang="typescript"><code>export function isVoiceGrowthBookEnabled(): boolean {
   // 1. Check if the feature acts as a "kill switch".
@@ -190,9 +182,9 @@ This check allows us to control the feature remotely without releasing a new ver
 <strong>Explanation:</strong>
 </p>
 <ul>
-<li>It uses %%INLINE<em>10%% to check if the code was even compiled into the app. This is part of <a href="05</em>build<em>time</em>code_elimination.md">Build-Time Code Elimination</a>.</li>
+<li>It uses <code>feature('VOICE_MODE')</code> to check if the code was even compiled into the app. This is part of <a href="voice-05-build-time-code-elimination.html">Build-Time Code Elimination</a>.</li>
 <li>It checks a remote flag named <code>tengu_amber_quartz_disabled</code>.</li>
-<li><strong>Logic:</strong> If the "disabled" flag is %%INLINE<em>12%%, the feature is <em>off</em>, so this function returns %%INLINE</em>13%%.</li>
+<li><strong>Logic:</strong> If the "disabled" flag is <code>true</code>, the feature is <em>off</em>, so this function returns <code>false</code>.</li>
 </ul>
 <h2 id="conclusion">Conclusion</h2>
 <p>
@@ -203,18 +195,14 @@ This approach makes your code:
 </p>
 <ol>
 <li><strong>Safer:</strong> You never accidentally enable a feature when the user isn't logged in.</li>
-</ol>
-<ol>
 <li><strong>Cleaner:</strong> Your UI code focuses on UI, not complex logic.</li>
-</ol>
-<ol>
 <li><strong>Controllable:</strong> You can turn off the feature remotely if something breaks.</li>
 </ol>
 <p>
 In the next chapter, we will learn exactly how that remote switch works.
 </p>
 <p>
-<a href="02<em>remote</em>feature<em>gating</em><em>growthbook</em>.md">Next Chapter: Remote Feature Gating (GrowthBook)</a>
+<a href="voice-02-remote-feature-gating--growthbook-.html">Next Chapter: Remote Feature Gating (GrowthBook)</a>
 </p>
 <hr>
 <p>
@@ -222,6 +210,9 @@ Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
 </p><div class="chapter-nav"><a class="chapter-nav-card prev" href="voice.html">
           <div class="chapter-nav-label">← Previous</div>
           <div class="chapter-nav-title">voice/ index</div>
+        </a><a class="chapter-nav-card next" href="voice-02-remote-feature-gating--growthbook-.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">02 Remote Feature Gating  Growthbook </div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

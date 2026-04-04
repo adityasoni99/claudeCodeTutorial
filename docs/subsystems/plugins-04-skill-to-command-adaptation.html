@@ -38,10 +38,10 @@
 Welcome to the fourth chapter of the <strong>Plugins</strong> project!
 </p>
 <p>
-In the previous chapter, <a href="03<em>runtime</em>plugin<em>state.md">Runtime Plugin State</a>, we learned how to determine which plugins are "Enabled" based on user settings. We ended up with a list of %%INLINE</em>0%% objects.
+In the previous chapter, <a href="plugins-03-runtime-plugin-state.html">Runtime Plugin State</a>, we learned how to determine which plugins are "Enabled" based on user settings. We ended up with a list of <code>LoadedPlugin</code> objects.
 </p>
 <p>
-However, we have a compatibility problem. The core logic of our CLI was built to understand <strong>Commands</strong> (like %%INLINE<em>1%% or %%INLINE</em>2%%). Our new plugins provide <strong>Skills</strong>.
+However, we have a compatibility problem. The core logic of our CLI was built to understand <strong>Commands</strong> (like <code>/help</code> or <code>/clear</code>). Our new plugins provide <strong>Skills</strong>.
 </p>
 <p>
 How do we make the old system understand the new features?
@@ -62,12 +62,12 @@ This is exactly what <strong>Skill-to-Command Adaptation</strong> does. It takes
 </p>
 <h3 id="core-use-case">Core Use Case</h3>
 <p>
-We have the %%INLINE<em>5%% plugin enabled. It has a skill called %%INLINE</em>6%%.
+We have the <code>git-helper</code> plugin enabled. It has a skill called <code>commit</code>.
 </p>
 <ul>
 <li><strong>Goal:</strong> The user types <code>/commit</code>.</li>
 <li><strong>Problem:</strong> The command runner doesn't know what a "Git Skill" is. It only knows <code>Command</code>.</li>
-<li><strong>Solution:</strong> We convert the %%INLINE<em>9%% skill into a generic %%INLINE</em>10%% object so the system can run it.</li>
+<li><strong>Solution:</strong> We convert the <code>commit</code> skill into a generic <code>Command</code> object so the system can run it.</li>
 </ul>
 <h2 id="key-concepts">Key Concepts</h2>
 <p>
@@ -75,9 +75,9 @@ To build this adapter, we need to map the concepts from one world to the other.
 </p>
 <h3 id="1-the-metadata-map">1. The Metadata Map</h3>
 <p>
-A <strong>Skill</strong> has specific AI-related fields: %%INLINE<em>11%%, %%INLINE</em>12%%, <code>context</code>.
+A <strong>Skill</strong> has specific AI-related fields: <code>allowedTools</code>, <code>model</code>, <code>context</code>.
  
-A <strong>Command</strong> has generic execution fields: %%INLINE<em>14%%, %%INLINE</em>15%%, <code>description</code>.
+A <strong>Command</strong> has generic execution fields: <code>executionFunction</code>, <code>name</code>, <code>description</code>.
 </p>
 <p>
 Our adapter simply moves data from one bucket to the other.
@@ -94,7 +94,7 @@ This is a subtle but critical detail.
 Why?
 </p>
 <ul>
-<li>If we tag it %%INLINE<em>18%%, the system treats it like %%INLINE</em>19%% or <code>/exit</code>—boring utilities that the AI shouldn't worry about.</li>
+<li>If we tag it <code>builtin</code>, the system treats it like <code>/help</code> or <code>/exit</code>—boring utilities that the AI shouldn't worry about.</li>
 <li>By tagging it <code>bundled</code>, we tell the system: <em>"This is a smart AI feature that came with the app. Track it in analytics and let the AI model use it as a tool."</em></li>
 </ul>
 <h2 id="how-to-use-the-adapter">How to Use the Adapter</h2>
@@ -133,14 +133,8 @@ Let's look at how the code performs this translation.
 <h3 id="the-flow">The Flow</h3>
 <ol>
 <li>The system asks for all commands from enabled plugins.</li>
-</ol>
-<ol>
 <li>The registry loops through the plugins.</li>
-</ol>
-<ol>
 <li>For every skill found, it runs the <code>skillDefinitionToCommand</code> function.</li>
-</ol>
-<ol>
 <li>The resulting list is handed to the CLI core.</li>
 </ol>
 <div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
@@ -163,7 +157,7 @@ The magic happens in <code>builtinPlugins.ts</code> inside a helper function.
 </p>
 <h4 id="1-the-function-signature">1. The Function Signature</h4>
 <p>
-We take a %%INLINE<em>24%% (the plugin way) and return a %%INLINE</em>25%% (the core way).
+We take a <code>BundledSkillDefinition</code> (the plugin way) and return a <code>Command</code> (the core way).
 </p>
 <pre data-lang="typescript"><code>// builtinPlugins.ts
 
@@ -234,40 +228,33 @@ In this chapter, we learned:
 </p>
 <ol>
 <li><strong>The Compatibility Problem:</strong> The Core speaks "Commands," but Plugins speak "Skills."</li>
-</ol>
-<ol>
 <li><strong>The Adapter Pattern:</strong> We wrap skills in a <code>Command</code> object to make them compatible.</li>
-</ol>
-<ol>
-<li><strong>The %%INLINE<em>28%% Tag:</strong> We label these commands as %%INLINE</em>29%% to ensure they are treated as first-class AI features, not just system utilities.</li>
+<li><strong>The <code>bundled</code> Tag:</strong> We label these commands as <code>source: 'bundled'</code> to ensure they are treated as first-class AI features, not just system utilities.</li>
 </ol>
 <p>
 We now have the parts:
 </p>
 <ol>
 <li>A Registry (Chapter 1)</li>
-</ol>
-<ol>
 <li>Namespacing (Chapter 2)</li>
-</ol>
-<ol>
 <li>State Management (Chapter 3)</li>
-</ol>
-<ol>
 <li>Command Adaptation (Chapter 4)</li>
 </ol>
 <p>
 In the final chapter, we will see how to wire all these pieces together during the application startup.
 </p>
 <p>
-<a href="05<em>initialization</em>scaffolding.md">Next Chapter: Initialization Scaffolding</a>
+<a href="plugins-05-initialization-scaffolding.html">Next Chapter: Initialization Scaffolding</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="plugins.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="plugins-03-runtime-plugin-state.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">plugins/ index</div>
+          <div class="chapter-nav-title">03 Runtime Plugin State</div>
+        </a><a class="chapter-nav-card next" href="plugins-05-initialization-scaffolding.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">05 Initialization Scaffolding</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

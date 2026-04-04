@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-2-polymorphic-hook-definitions">Chapter 2: Polymorphic Hook Definitions</h1>
 <p>
-In the previous chapter, <a href="01<em>event</em>based<em>configuration</em>registry.md">Event-Based Configuration Registry</a>, we built the "Rulebook." We learned how to map specific events (like <code>tool_finish</code>) to a list of rules.
+In the previous chapter, <a href="schemas-01-event-based-configuration-registry.html">Event-Based Configuration Registry</a>, we built the "Rulebook." We learned how to map specific events (like <code>tool_finish</code>) to a list of rules.
 </p>
 <p>
 But we left one big question unanswered: <strong>What specific actions can we perform?</strong>
@@ -45,11 +45,7 @@ In Chapter 1, we simply ran a <code>command</code>. But what if you want to:
 </p>
 <ol>
 <li><strong>Ask an AI</strong> to review the code?</li>
-</ol>
-<ol>
 <li><strong>Send a Webhook</strong> to a Slack channel?</li>
-</ol>
-<ol>
 <li><strong>Verify</strong> a task using an autonomous agent?</li>
 </ol>
 <p>
@@ -61,11 +57,7 @@ Imagine you are building a "Deployment" workflow. When you finish writing code, 
 </p>
 <ol>
 <li><strong>Format</strong> the code (requires a Shell Command).</li>
-</ol>
-<ol>
 <li><strong>Log</strong> the event to your analytics server (requires an HTTP Request).</li>
-</ol>
-<ol>
 <li><strong>Check</strong> for security vulnerabilities using an LLM (requires an AI Prompt).</li>
 </ol>
 <p>
@@ -101,7 +93,7 @@ This is the worker. It executes scripts on your machine.
 }
 </code></pre>
 <p>
-<strong>Explanation:</strong> When the system sees %%INLINE<em>3%%, it knows to look for a %%INLINE</em>4%% string and executes it in the terminal.
+<strong>Explanation:</strong> When the system sees <code>type: "command"</code>, it knows to look for a <code>command</code> string and executes it in the terminal.
 </p>
 <h3 id="type-2-the-http-the-sensor">Type 2: The "HTTP" (The Sensor)</h3>
 <p>
@@ -117,7 +109,7 @@ This is the messenger. It talks to the outside world.
 }
 </code></pre>
 <p>
-<strong>Explanation:</strong> When the system sees %%INLINE<em>5%%, it stops looking for shell commands. Instead, it expects a %%INLINE</em>6%%. It sends the event data there automatically.
+<strong>Explanation:</strong> When the system sees <code>type: "http"</code>, it stops looking for shell commands. Instead, it expects a <code>url</code>. It sends the event data there automatically.
 </p>
 <h3 id="type-3-the-prompt-the-brain">Type 3: The "Prompt" (The Brain)</h3>
 <p>
@@ -133,7 +125,7 @@ This is the thinker. It asks an LLM a question.
 }
 </code></pre>
 <p>
-<strong>Explanation:</strong> When the system sees %%INLINE<em>7%%, it knows it needs to talk to an AI model. It sends the %%INLINE</em>8%% text to the LLM and streams the response back to you.
+<strong>Explanation:</strong> When the system sees <code>type: "prompt"</code>, it knows it needs to talk to an AI model. It sends the <code>prompt</code> text to the LLM and streams the response back to you.
 </p>
 <h2 id="internal-implementation-under-the-hood">Internal Implementation: Under the Hood</h2>
 <p>
@@ -156,11 +148,7 @@ Here is how the system processes a generic hook object:
     G --&gt; H[Execute via LLM Client]</div></div>
 <ol>
 <li>The system receives a generic object from the configuration.</li>
-</ol>
-<ol>
 <li>It looks at the <code>type</code> property <strong>first</strong>.</li>
-</ol>
-<ol>
 <li>Based on that value, it routes the data to the correct validator and execution engine.</li>
 </ol>
 <h3 id="code-deep-dive">Code Deep Dive</h3>
@@ -187,7 +175,7 @@ const HttpHookSchema = z.object({
 <strong>Explanation:</strong>
 </p>
 <ul>
-<li>%%INLINE<em>11%%: This is the magic. It enforces that if you use the %%INLINE</em>12%%, the <code>type</code> field <em>must</em> be exactly the string "command".</li>
+<li><code>z.literal('command')</code>: This is the magic. It enforces that if you use the <code>BashCommandHookSchema</code>, the <code>type</code> field <em>must</em> be exactly the string "command".</li>
 </ul>
 <h4 id="2-the-discriminated-union">2. The Discriminated Union</h4>
 <p>
@@ -209,8 +197,8 @@ export const HookCommandSchema = lazySchema(() =&gt; {
 <strong>Explanation:</strong>
 </p>
 <ul>
-<li>%%INLINE<em>14%%: This tells Zod, "I have a list of possible objects. They are all different, but they all share one common field called %%INLINE</em>15%%."</li>
-<li>When Zod validates data, it checks %%INLINE<em>16%% first. If it finds %%INLINE</em>17%%, it <em>only</em> checks against <code>HttpHookSchema</code> and ignores the Command schema.</li>
+<li><code>z.discriminatedUnion</code>: This tells Zod, "I have a list of possible objects. They are all different, but they all share one common field called <code>'type'</code>."</li>
+<li>When Zod validates data, it checks <code>'type'</code> first. If it finds <code>"http"</code>, it <em>only</em> checks against <code>HttpHookSchema</code> and ignores the Command schema.</li>
 </ul>
 <h3 id="why-is-this-better">Why is this better?</h3>
 <p>
@@ -224,10 +212,10 @@ If we didn't use this approach, we might have a messy object like this:
 }
 </code></pre>
 <p>
-In the "Wrong Way," you could accidentally provide both a %%INLINE<em>19%% and a %%INLINE</em>20%%, confusing the system.
+In the "Wrong Way," you could accidentally provide both a <code>command</code> and a <code>url</code>, confusing the system.
 </p>
 <p>
-With <strong>Polymorphic Definitions</strong>, the structure is strict. If %%INLINE<em>21%% is "command", you are <strong>not allowed</strong> to have a %%INLINE</em>22%% property. It keeps the configuration clean and error-free.
+With <strong>Polymorphic Definitions</strong>, the structure is strict. If <code>type</code> is "command", you are <strong>not allowed</strong> to have a <code>url</code> property. It keeps the configuration clean and error-free.
 </p>
 <h2 id="summary">Summary</h2>
 <p>
@@ -235,25 +223,24 @@ In this chapter, we learned:
 </p>
 <ol>
 <li><strong>Polymorphism</strong> allows us to define different behaviors (Command, HTTP, Prompt) within the same list of hooks.</li>
-</ol>
-<ol>
 <li>The <strong><code>type</code> field</strong> acts as a discriminator (or label) to tell the system how to handle the data.</li>
-</ol>
-<ol>
 <li><strong>Zod's <code>discriminatedUnion</code></strong> ensures strict validation—you can't mix up settings meant for a URL with settings meant for a shell command.</li>
 </ol>
 <p>
 Now that we know how to <em>define</em> these hooks, let's see how the most common one actually works.
 </p>
 <p>
-<a href="03<em>shell</em><em>_system</em>integration.md">Next Chapter: Shell & System Integration</a>
+<a href="schemas-03-shell---system-integration.html">Next Chapter: Shell & System Integration</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="schemas.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="schemas-01-event-based-configuration-registry.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">schemas/ index</div>
+          <div class="chapter-nav-title">01 Event Based Configuration Registry</div>
+        </a><a class="chapter-nav-card next" href="schemas-03-shell---system-integration.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">03 Shell   System Integration</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

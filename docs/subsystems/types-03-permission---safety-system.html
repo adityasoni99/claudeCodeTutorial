@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-3-permission-safety-system">Chapter 3: Permission & Safety System</h1>
 <p>
-In the previous chapter, <a href="02<em>session</em><em>_transcript</em>persistence.md">Session & Transcript Persistence</a>, we gave our agent a long-term memory. It remembers where it is and what it has done.
+In the previous chapter, <a href="types-02-session---transcript-persistence.html">Session & Transcript Persistence</a>, we gave our agent a long-term memory. It remembers where it is and what it has done.
 </p>
 <p>
 But a powerful memory combined with powerful tools (like file editing or shell execution) creates a risk. What if the agent hallucinates and tries to delete your entire project? What if it tries to upload your <code>.env</code> file to a public server?
@@ -51,15 +51,11 @@ Imagine your computer is an exclusive nightclub. The <strong>Agent</strong> is a
 The <strong>Permission System</strong> is the <strong>Bouncer</strong> at the door.
 </p>
 <p>
-Every time the agent tries to use a tool—whether it's writing a file (%%INLINE<em>1%%) or running a terminal command (%%INLINE</em>2%%)—it must present its "ID" to the Bouncer. The Bouncer checks three things:
+Every time the agent tries to use a tool—whether it's writing a file (<code>write_file</code>) or running a terminal command (<code>run_command</code>)—it must present its "ID" to the Bouncer. The Bouncer checks three things:
 </p>
 <ol>
 <li><strong>The Mode:</strong> Is it "Open House" night or "VIP Only"?</li>
-</ol>
-<ol>
 <li><strong>The Rules:</strong> Is this specific guest on the blacklist?</li>
-</ol>
-<ol>
 <li><strong>The Intuition (Classifiers):</strong> Does this guest <em>look</em> suspicious?</li>
 </ol>
 <p>
@@ -83,7 +79,7 @@ export const EXTERNAL_PERMISSION_MODES = [
 ] as const
 </code></pre>
 <ul>
-<li><strong>Beginner Tip:</strong> When you start the application, you choose a mode. %%INLINE<em>4%% is best for daily use. %%INLINE</em>5%% is great when you want the agent to refactor a lot of code without nagging you.</li>
+<li><strong>Beginner Tip:</strong> When you start the application, you choose a mode. <code>default</code> is best for daily use. <code>acceptEdits</code> is great when you want the agent to refactor a lot of code without nagging you.</li>
 </ul>
 <h3 id="2-permission-rules">2. Permission Rules</h3>
 <p>
@@ -98,7 +94,7 @@ Specific overrides can be set for specific tools. A rule answers: "Who said this
 }
 </code></pre>
 <ul>
-<li><strong>Explanation:</strong> You might have a %%INLINE<em>6%% that says: <em>"Always <strong>deny</strong> the %%INLINE</em>7%% command in this repo."</em></li>
+<li><strong>Explanation:</strong> You might have a <code>projectSetting</code> that says: <em>"Always <strong>deny</strong> the <code>npm publish</code> command in this repo."</em></li>
 </ul>
 <h3 id="3-permission-decisions">3. Permission Decisions</h3>
 <p>
@@ -119,7 +115,7 @@ Let's walk through a scenario: <strong>The Agent tries to run <code>rm -rf /</co
 </p>
 <h3 id="step-1-the-request">Step 1: The Request</h3>
 <p>
-The agent constructs a command object. It wants to use the tool %%INLINE<em>10%% with the argument %%INLINE</em>11%%.
+The agent constructs a command object. It wants to use the tool <code>run_command</code> with the argument <code>rm -rf /</code>.
 </p>
 <h3 id="step-2-the-logic-check">Step 2: The Logic Check</h3>
 <p>
@@ -140,7 +136,7 @@ The system returns an "Ask" decision.
 </code></pre>
 <h3 id="step-4-the-user-interface">Step 4: The User Interface</h3>
 <p>
-Because %%INLINE<em>14%% is %%INLINE</em>15%%, the tool execution pauses. The user sees a prompt:
+Because <code>behavior</code> is <code>'ask'</code>, the tool execution pauses. The user sees a prompt:
 </p>
 <blockquote><p>⚠️ <strong>Warning:</strong> The agent wants to delete files. Allow? [Y/n]</p></blockquote>
 <p>
@@ -224,7 +220,7 @@ export type PermissionExplanation = {
 <hr>
 <h2 id="conclusion">Conclusion</h2>
 <p>
-The <strong>Permission & Safety System</strong> is the gatekeeper of the application. It ensures that while the <a href="01<em>command</em>architecture.md">Command Architecture</a> provides the <em>ability</em> to act, and <a href="02<em>session</em><em>_transcript</em>persistence.md">Session Persistence</a> provides the <em>context</em> to act intelligently, the Agent never acts <em>recklessly</em>.
+The <strong>Permission & Safety System</strong> is the gatekeeper of the application. It ensures that while the <a href="types-01-command-architecture.html">Command Architecture</a> provides the <em>ability</em> to act, and <a href="types-02-session---transcript-persistence.html">Session Persistence</a> provides the <em>context</em> to act intelligently, the Agent never acts <em>recklessly</em>.
 </p>
 <p>
 By separating "Capability" (Tools) from "Policy" (Permissions), we can build powerful agents that are safe enough to run on your local machine.
@@ -233,14 +229,17 @@ By separating "Capability" (Tools) from "Policy" (Permissions), we can build pow
 Now that the agent is safe to accept input, we need to handle the complex state of that input—what if the user is typing, pasting an image, or interrupting the agent?
 </p>
 <p>
-<a href="04<em>input</em>state_management.md">Next Chapter: Input State Management</a>
+<a href="types-04-input-state-management.html">Next Chapter: Input State Management</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="types.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="types-02-session---transcript-persistence.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">types/ index</div>
+          <div class="chapter-nav-title">02 Session   Transcript Persistence</div>
+        </a><a class="chapter-nav-card next" href="types-04-input-state-management.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">04 Input State Management</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

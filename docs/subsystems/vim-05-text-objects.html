@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-5-text-objects">Chapter 5: Text Objects</h1>
 <p>
-In the previous chapter, <a href="04<em>operator</em>execution.md">Operator Execution</a>, we learned how to combine an <strong>Operator</strong> (like Delete) with a <strong>Motion</strong> (like "move to next word").
+In the previous chapter, <a href="vim-04-operator-execution.html">Operator Execution</a>, we learned how to combine an <strong>Operator</strong> (like Delete) with a <strong>Motion</strong> (like "move to next word").
 </p>
 <p>
 This works great if you are at the <em>start</em> of the word. But what if you are in the middle?
@@ -48,7 +48,7 @@ Imagine you have this code, and your cursor is on the letter <code>r</code> in "
               ^ Cursor is here
 </code></pre>
 <p>
-If you type %%INLINE<em>1%% (Delete Word), Vim calculates the range from the cursor (%%INLINE</em>2%%) to the next word start (<code>M</code>).
+If you type <code>dw</code> (Delete Word), Vim calculates the range from the cursor (<code>r</code>) to the next word start (<code>M</code>).
  
 <strong>Result:</strong> <code>console.log("E Message");</code>
 </p>
@@ -57,7 +57,7 @@ This is rarely what you want. You usually want to delete the <em>whole</em> stri
 </p>
 <h2 id="the-solution-the-magic-wand">The Solution: The "Magic Wand"</h2>
 <p>
-Standard Motions (%%INLINE<em>5%%, %%INLINE</em>6%%, <code>$</code>) are like drawing a line with a ruler. They go from Point A to Point B.
+Standard Motions (<code>w</code>, <code>j</code>, <code>$</code>) are like drawing a line with a ruler. They go from Point A to Point B.
 </p>
 <p>
 <strong>Text Objects</strong> are like the "Magic Wand" tool in Photoshop. You click inside an object, and the software automatically figures out the boundaries based on context.
@@ -86,18 +86,109 @@ Every text object comes in two flavors. Think of a text object like an orange.
 <strong>Example: <code>( hello )</code></strong>
 </p>
 <ul>
-<li>%%INLINE<em>14%% deletes %%INLINE</em>15%%. Result: <code>(  )</code></li>
-<li>%%INLINE<em>17%% deletes %%INLINE</em>18%%. Result: `%%INLINE<em>19%%di"%%INLINE</em>20%%di"%%INLINE<em>21%%var x = "hello world";%%INLINE</em>22%%di"%%INLINE<em>23%%textObjects.ts%%INLINE</em>24%%textObjects.ts%%INLINE<em>25%%findQuoteObject%%INLINE</em>26%%[5, 17, 25, 30]%%INLINE<em>27%%iw%%INLINE</em>28%%textObjects.ts%%INLINE<em>29%%executeOperatorTextObj%%INLINE</em>30%%w%%INLINE<em>31%%j%%INLINE</em>32%%iw%%INLINE<em>33%%i"%%INLINE</em>34%%inner%%INLINE<em>35%%around%%INLINE</em>36%%.<code>) or "Paste from clipboard" (</code>p`), we need a place to store global state.</li>
+<li><code>di(</code> deletes <code>hello</code>. Result: <code>(  )</code></li>
+<li><code>da(</code> deletes <code>( hello )</code>. Result: `<code>
+
+### 2. The Search Strategy
+Unlike a motion, which usually just goes forward, a Text Object must look in **both directions**.
+
+If you type </code>di"<code> (delete inside quotes), the engine must:
+1.  Scan **Backwards** to find the opening quote.
+2.  Scan **Forwards** to find the closing quote.
+3.  Return the range between them.
+
+## Use Case: Delete Inside Quotes (</code>di"<code>)
+
+Let's solve the specific problem of deleting a string literal.
+
+**Scenario:**
+*   Text: </code>var x = "hello world";<code>
+*   Cursor: On 'w' in "world".
+*   Command: </code>di"<code>
+
+**The Goal:**
+We need a function that returns the start and end indices of the text *between* the quotes, ignoring the quotes themselves.
+
+## Internal Implementation
+
+How does the engine actually find these boundaries? It uses a dedicated module: </code>textObjects.ts<code>.
+
+### Visualizing the Algorithm
+
+Here is what happens when you trigger a text object command.
+
+%%MERMAID_0%%
+
+### The Code Structure
+
+The logic lives in </code>textObjects.ts<code>. It acts as a specialized resolver.
+
+#### 1. Defining the Delimiters
+First, we tell the engine what pairs exist.
+
+%%CODE_1%%
+
+#### 2. The Entry Point
+When the Operator calls for a text object, we check the type and dispatch the correct searcher.
+
+%%CODE_2%%
+
+### Deep Dive: Finding Quotes
+
+Finding quotes is tricky because they don't have distinct "open" and "close" characters. We have to find *all* quotes on the line and see where the cursor falls.
+
+Here is a simplified version of </code>findQuoteObject<code>:
+
+%%CODE_3%%
+
+Once we have the positions (e.g., indices </code>[5, 17, 25, 30]<code>), we assume they come in pairs: (5-17) is a string, (25-30) is a string.
+
+%%CODE_4%%
+
+### Deep Dive: Finding Words (</code>iw<code>)
+
+Finding a "word" is different. It relies on character classification (is this a letter or a symbol?).
+
+1.  **Identify the type:** Look at the character under the cursor. Is it a word character (a-z) or punctuation?
+2.  **Scan Left:** Keep moving left until the character type changes.
+3.  **Scan Right:** Keep moving right until the character type changes.
+
+%%CODE_5%%
+
+## Integration with Operators
+
+Now that we have </code>textObjects.ts<code> calculating ranges, we simply plug it into our operator execution.
+
+Recall </code>executeOperatorTextObj<code> from the previous chapter?
+
+%%CODE_6%%
+
+This is the beauty of the system. The **Operator** doesn't know how to find a quote. The **Text Object Finder** doesn't know how to delete text. They communicate via simple Start/End coordinates.
+
+## Summary
+
+Text Objects represent a leap in editing efficiency. They allow you to tell the editor *what* you want to modify based on the structure of your code, rather than counting characters or lines.
+
+*   **Motions** are for navigation (</code>w<code>, </code>j<code>).
+*   **Text Objects** are for selection (</code>iw<code>, </code>i"<code>).
+*   **Scopes** define the boundary (</code>inner<code> vs </code>around<code>).
+
+At this point, we have a fully functional editor! We can type, move, delete lines, and manipulate complex objects.
+
+However, complex commands often need to store data or repeat actions. To handle things like "Repeat last command" (</code>.<code>) or "Paste from clipboard" (</code>p`), we need a place to store global state.</li>
 </ul>
 <p>
-<a href="06<em>operator</em>context.md">Next Chapter: Operator Context</a>
+<a href="vim-06-operator-context.html">Next Chapter: Operator Context</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="vim.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="vim-04-operator-execution.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">vim/ index</div>
+          <div class="chapter-nav-title">04 Operator Execution</div>
+        </a><a class="chapter-nav-card next" href="vim-06-operator-context.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">06 Operator Context</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

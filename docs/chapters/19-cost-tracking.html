@@ -41,7 +41,7 @@
 Welcome to the final chapter of our journey!
 </p>
 <p>
-In the previous <a href="18<em>computer</em>use.md">Computer Use</a> chapter, we gave the AI the power to see your screen and move your mouse. While incredible, sending high-definition screenshots to an AI model consumes a massive amount of data.
+In the previous <a href="18-computer-use.html">Computer Use</a> chapter, we gave the AI the power to see your screen and move your mouse. While incredible, sending high-definition screenshots to an AI model consumes a massive amount of data.
 </p>
 <p>
 This leads to a very practical question: <strong>"How much is this costing me?"</strong>
@@ -62,11 +62,7 @@ Imagine you are using <code>claudeCode</code> to refactor a large project. You'v
 </p>
 <ol>
 <li>How much money have I spent so far?</li>
-</ol>
-<ol>
 <li>Which model is costing the most?</li>
-</ol>
-<ol>
 <li>How many tokens did I save using caching?</li>
 </ol>
 <p>
@@ -133,21 +129,13 @@ function checkBudget() {
 </code></pre>
 <h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
 <p>
-The Cost Tracker is a passive listener. It waits for the <a href="03<em>query</em>engine.md">Query Engine</a> to finish a request, grabs the receipt, and adds it to the pile.
+The Cost Tracker is a passive listener. It waits for the <a href="03-query-engine.html">Query Engine</a> to finish a request, grabs the receipt, and adds it to the pile.
 </p>
 <ol>
 <li><strong>Request:</strong> The app sends a message to Claude.</li>
-</ol>
-<ol>
-<li><strong>Response:</strong> The API returns the text <em>plus</em> a %%INLINE<em>6%% object (e.g., %%INLINE</em>7%%).</li>
-</ol>
-<ol>
+<li><strong>Response:</strong> The API returns the text <em>plus</em> a <code>usage</code> object (e.g., <code>{ input_tokens: 50, output_tokens: 10 }</code>).</li>
 <li><strong>Calculation:</strong> We look up the price of the specific model used (e.g., Claude 3.5 Sonnet).</li>
-</ol>
-<ol>
-<li><strong>Update:</strong> We add the cost to the global <a href="01<em>state</em>management.md">State Management</a> store.</li>
-</ol>
-<ol>
+<li><strong>Update:</strong> We add the cost to the global <a href="01-state-management.html">State Management</a> store.</li>
 <li><strong>Persistence:</strong> We save this new total to a JSON file on disk.</li>
 </ol>
 <p>
@@ -193,7 +181,7 @@ export function addToTotalSessionCost(cost, usage, model) {
 }
 </code></pre>
 <p>
-<em>Explanation: This acts as the central register. It takes the calculated %%INLINE<em>10%% and the raw %%INLINE</em>11%% numbers and ensures they are stored in the Global State.</em>
+<em>Explanation: This acts as the central register. It takes the calculated <code>cost</code> and the raw <code>usage</code> numbers and ensures they are stored in the Global State.</em>
 </p>
 <h4 id="2-formatting-the-report">2. Formatting the Report</h4>
 <p>
@@ -231,7 +219,7 @@ export function saveCurrentSessionCosts(fpsMetrics) {
 }
 </code></pre>
 <p>
-<em>Explanation: We save the data into %%INLINE<em>13%%. When you restart the app, %%INLINE</em>14%% (not shown here) reads this back into memory.</em>
+<em>Explanation: We save the data into <code>projectConfig</code>. When you restart the app, <code>restoreCostStateForSession</code> (not shown here) reads this back into memory.</em>
 </p>
 <h2 id="why-is-this-important">Why is this important?</h2>
 <p>
@@ -240,7 +228,7 @@ Cost Tracking provides transparency.
 <ul>
 <li><strong>Trust:</strong> Users trust the tool more when they can see exactly what it costs.</li>
 <li><strong>Optimization:</strong> By seeing "Cache Write" vs "Cache Read" stats, developers can optimize their prompts to save money.</li>
-<li><strong>Safety:</strong> It prevents runaway scripts (like an infinite loop in <a href="18<em>computer</em>use.md">Computer Use</a>) from draining a bank account unnoticed.</li>
+<li><strong>Safety:</strong> It prevents runaway scripts (like an infinite loop in <a href="18-computer-use.html">Computer Use</a>) from draining a bank account unnoticed.</li>
 </ul>
 <h2 id="conclusion">Conclusion</h2>
 <p>
@@ -254,24 +242,12 @@ In this final chapter, you learned that <strong>Cost Tracking</strong> is the ac
 We have covered an immense amount of ground:
 </p>
 <ol>
-<li>We built a brain with <strong><a href="01<em>state</em>management.md">State Management</a></strong>.</li>
-</ol>
-<ol>
-<li>We gave it a face with <strong><a href="02<em>ink</em>ui_framework.md">Ink UI Framework</a></strong>.</li>
-</ol>
-<ol>
-<li>We gave it agency with the <strong><a href="03<em>query</em>engine.md">Query Engine</a></strong>.</li>
-</ol>
-<ol>
-<li>We gave it hands to code (<strong><a href="04<em>fileedittool.md">FileEditTool</a></strong>) and run commands (<strong><a href="06</em>bashtool.md">BashTool</a></strong>).</li>
-</ol>
-<ol>
-<li>We secured it with <strong><a href="07<em>shell</em>safety<em>checks.md">Shell Safety Checks</a></strong> and <strong><a href="08</em>permission<em>_</em>security_system.md">Permissions</a></strong>.</li>
-</ol>
-<ol>
-<li>We expanded its mind with <strong><a href="14<em>model</em>context<em>protocol</em><em>mcp</em>.md">MCP</a></strong> and <strong><a href="16_teammates.md">Teammates</a></strong>.</li>
-</ol>
-<ol>
+<li>We built a brain with <strong><a href="01-state-management.html">State Management</a></strong>.</li>
+<li>We gave it a face with <strong><a href="02-ink-ui-framework.html">Ink UI Framework</a></strong>.</li>
+<li>We gave it agency with the <strong><a href="03-query-engine.html">Query Engine</a></strong>.</li>
+<li>We gave it hands to code (<strong><a href="04-fileedittool.html">FileEditTool</a></strong>) and run commands (<strong><a href="06-bashtool.html">BashTool</a></strong>).</li>
+<li>We secured it with <strong><a href="07-shell-safety-checks.html">Shell Safety Checks</a></strong> and <strong><a href="08-permission---security-system.html">Permissions</a></strong>.</li>
+<li>We expanded its mind with <strong><a href="14-model-context-protocol--mcp-.html">MCP</a></strong> and <strong><a href="16-teammates.html">Teammates</a></strong>.</li>
 <li>And finally, we learned to track the bill with <strong>Cost Tracking</strong>.</li>
 </ol>
 <p>

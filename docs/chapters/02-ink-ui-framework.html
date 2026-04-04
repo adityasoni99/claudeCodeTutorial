@@ -38,7 +38,7 @@
 </div>
 <h1 id="chapter-2-ink-ui-framework">Chapter 2: Ink UI Framework</h1>
 <p>
-In the previous <a href="01<em>state</em>management.md">State Management</a> chapter, we learned how <code>claudeCode</code> remembers information (like "Fix the bug"). However, data sitting in memory is invisible.
+In the previous <a href="01-state-management.html">State Management</a> chapter, we learned how <code>claudeCode</code> remembers information (like "Fix the bug"). However, data sitting in memory is invisible.
 </p>
 <p>
 Now, we need to answer the question: <strong>How do we show this information to the user inside a terminal window?</strong>
@@ -77,8 +77,8 @@ To build this UI, we use three main building blocks.
 Just like building with LEGO bricks, we build the interface out of small, reusable pieces.
 </p>
 <ul>
-<li><strong>%%INLINE<em>4%%</strong>: Used for displaying words (like a %%INLINE</em>5%% or <code>&lt;p&gt;</code> in HTML).</li>
-<li><strong>%%INLINE<em>7%%</strong>: Used for layout (like a %%INLINE</em>8%%). It holds other components.</li>
+<li><strong><code>&lt;Text&gt;</code></strong>: Used for displaying words (like a <code>&lt;span&gt;</code> or <code>&lt;p&gt;</code> in HTML).</li>
+<li><strong><code>&lt;Box&gt;</code></strong>: Used for layout (like a <code>&lt;div&gt;</code>). It holds other components.</li>
 </ul>
 <h3 id="2-flexbox-layouts">2. Flexbox Layouts</h3>
 <p>
@@ -116,7 +116,7 @@ function StatusDashboard() {
 </p>
 <h3 id="step-2-connecting-to-state">Step 2: Connecting to State</h3>
 <p>
-Now, let's make it dynamic. We will pull the "task description" from the <a href="01<em>state</em>management.md">State Management</a> store.
+Now, let's make it dynamic. We will pull the "task description" from the <a href="01-state-management.html">State Management</a> store.
 </p>
 <pre data-lang="tsx"><code>import { useTaskState } from './state/store';
 import { Text, Box } from 'ink';
@@ -152,7 +152,7 @@ function LoadingBar() {
 }
 </code></pre>
 <p>
-<em>Explanation: %%INLINE<em>10%% tells Ink to put the items next to each other, like books on a shelf. %%INLINE</em>11%% adds a space between them.</em>
+<em>Explanation: <code>flexDirection="row"</code> tells Ink to put the items next to each other, like books on a shelf. <code>gap={1}</code> adds a space between them.</em>
 </p>
 <h2 id="under-the-hood-how-it-works">Under the Hood: How it Works</h2>
 <p>
@@ -163,14 +163,8 @@ When you change the state (e.g., update the task name), the following happens:
 </p>
 <ol>
 <li><strong>State Change:</strong> The Store updates.</li>
-</ol>
-<ol>
 <li><strong>Re-render:</strong> React calculates what the new UI should look like.</li>
-</ol>
-<ol>
 <li><strong>Diffing:</strong> Ink compares the new UI to the old UI.</li>
-</ol>
-<ol>
 <li><strong>Painting:</strong> Ink sends special control codes (ANSI codes) to the terminal to erase specific lines and write new ones.</li>
 </ol>
 <p>
@@ -202,7 +196,7 @@ export function startUI() {
 }
 </code></pre>
 <p>
-We also handle user input (keyboard presses) using the %%INLINE<em>13%% hook. This is crucial for features requiring confirmation, which we will see in <a href="07</em>shell<em>safety</em>checks.md">Chapter 7: Shell Safety Checks</a>.
+We also handle user input (keyboard presses) using the <code>useInput</code> hook. This is crucial for features requiring confirmation, which we will see in <a href="07-shell-safety-checks.html">Chapter 7: Shell Safety Checks</a>.
 </p>
 <pre data-lang="tsx"><code>import { useInput } from 'ink';
 
@@ -223,9 +217,9 @@ function InputHandler() {
 The UI Framework is the "face" of every tool we will build:
 </p>
 <ul>
-<li><strong><a href="03<em>query</em>engine.md">Query Engine</a>:</strong> The user types their question into an Ink <code>&lt;TextInput&gt;</code>.</li>
-<li><strong><a href="12<em>websearchtool.md">WebSearchTool</a>:</strong> We display search results in a neat list using %%INLINE</em>15%% layouts.</li>
-<li><strong><a href="16<em>teammates.md">Teammates</a>:</strong> We show avatars and names of different AI agents using colorful %%INLINE</em>16%% components.</li>
+<li><strong><a href="03-query-engine.html">Query Engine</a>:</strong> The user types their question into an Ink <code>&lt;TextInput&gt;</code>.</li>
+<li><strong><a href="12-websearchtool.html">WebSearchTool</a>:</strong> We display search results in a neat list using <code>&lt;Box&gt;</code> layouts.</li>
+<li><strong><a href="16-teammates.html">Teammates</a>:</strong> We show avatars and names of different AI agents using colorful <code>&lt;Text&gt;</code> components.</li>
 </ul>
 <h2 id="conclusion">Conclusion</h2>
 <p>
@@ -235,7 +229,7 @@ You have learned that the <strong>Ink UI Framework</strong> allows <code>claudeC
 Now that we have a brain (State) and a face (UI), we need ears. How does the application understand what the user wants to do?
 </p>
 <p>
-<a href="03<em>query</em>engine.md">Next Chapter: Query Engine</a>
+<a href="03-query-engine.html">Next Chapter: Query Engine</a>
 </p>
 <hr>
 <p>

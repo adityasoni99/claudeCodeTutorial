@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-5-static-content-assets">Chapter 5: Static Content Assets</h1>
 <p>
-Welcome back! In the previous chapter, <a href="04<em>prompt</em>generation_logic.md">Prompt Generation Logic</a>, we learned how to write the "brain" of a skill—the code that takes user input and transforms it into instructions for the AI.
+Welcome back! In the previous chapter, <a href="skills-04-prompt-generation-logic.html">Prompt Generation Logic</a>, we learned how to write the "brain" of a skill—the code that takes user input and transforms it into instructions for the AI.
 </p>
 <p>
 Sometimes, however, a skill doesn't need complex logic. It simply needs <strong>knowledge</strong>.
@@ -45,8 +45,6 @@ Imagine you are building a skill called <code>/help-api</code> that explains how
 </p>
 <ol>
 <li><strong>In the code?</strong> Putting 50 pages of text into a TypeScript variable makes your code unreadable.</li>
-</ol>
-<ol>
 <li><strong>In loose files?</strong> If you distribute your app as a single binary file, you can't rely on <code>documentation.md</code> existing on the user's hard drive.</li>
 </ol>
 <p>
@@ -69,11 +67,7 @@ We will build a skill called <code>/docs</code>.
 </p>
 <ol>
 <li>We have a large file: <code>manual.md</code>.</li>
-</ol>
-<ol>
 <li>We want to bundle it inside our executable.</li>
-</ol>
-<ol>
 <li>When the user types <code>/docs</code>, we read the content and give it to the AI.</li>
 </ol>
 <h2 id="key-concepts">Key Concepts</h2>
@@ -82,11 +76,7 @@ To achieve this, we rely on three concepts:
 </p>
 <ol>
 <li><strong>The Asset Loader:</strong> A build tool feature (like in Bun) that allows us to import a <code>.md</code> file as if it were a string variable.</li>
-</ol>
-<ol>
 <li><strong>Lazy Loading:</strong> Using JavaScript's <code>await import(...)</code> to load a file only when a function is executed, not when the app starts.</li>
-</ol>
-<ol>
 <li><strong>File Extraction:</strong> A feature of our Skills engine that can write these internal assets to a temporary real folder so the AI can use tools like <code>grep</code> on them.</li>
 </ol>
 <h2 id="step-by-step-implementation">Step-by-Step Implementation</h2>
@@ -139,7 +129,7 @@ export function registerDocsSkill() {
 }
 </code></pre>
 <p>
-<em>Explanation:</em> Notice we use %%INLINE<em>10%% inside the function. If the user never types %%INLINE</em>11%%, the application never loads <code>content.ts</code> into memory. This keeps our app fast and lightweight.
+<em>Explanation:</em> Notice we use <code>await import(...)</code> inside the function. If the user never types <code>/docs</code>, the application never loads <code>content.ts</code> into memory. This keeps our app fast and lightweight.
 </p>
 <h2 id="advanced-file-extraction">Advanced: File Extraction</h2>
 <p>
@@ -238,10 +228,8 @@ if (files) {
 <em>Explanation:</em> 
 </p>
 <ol>
-<li>%%INLINE<em>18%%: This helper function loops through your %%INLINE</em>19%% object and uses Node.js <code>fs</code> (filesystem) commands to write them to a temp folder.</li>
-</ol>
-<ol>
-<li>%%INLINE<em>21%%: This modifies the message sent to the AI, adding: %%INLINE</em>22%%.</li>
+<li><code>extractBundledSkillFiles</code>: This helper function loops through your <code>files</code> object and uses Node.js <code>fs</code> (filesystem) commands to write them to a temp folder.</li>
+<li><code>prependBaseDir</code>: This modifies the message sent to the AI, adding: <code>Base directory for this skill: &lt;path&gt;</code>.</li>
 </ol>
 <h3 id="real-world-example-the-claude-api-skill">Real World Example: The Claude API Skill</h3>
 <p>
@@ -251,12 +239,8 @@ The most complex use of this system in our project is the <strong>Claude API Ski
 It contains documentation for Python, TypeScript, Go, and Java. It uses a smart detector to only show relevant docs.
 </p>
 <ol>
-<li><strong>Detection:</strong> It scans the user's current folder for %%INLINE<em>24%% (TypeScript) or %%INLINE</em>25%% (Python).</li>
-</ol>
-<ol>
+<li><strong>Detection:</strong> It scans the user's current folder for <code>package.json</code> (TypeScript) or <code>requirements.txt</code> (Python).</li>
 <li><strong>Filtering:</strong> It loads a massive object containing <em>all</em> docs (<code>claudeApiContent.ts</code>).</li>
-</ol>
-<ol>
 <li><strong>Selection:</strong> It picks only the Markdown strings matching the detected language.</li>
 </ol>
 <pre data-lang="typescript"><code>// Simplified logic from src/skills/bundled/claudeApi.ts
@@ -281,11 +265,7 @@ async getPromptForCommand(args) {
 </p>
 <ol>
 <li><strong>Bundle</strong> text files using <code>import content from './file.md'</code>.</li>
-</ol>
-<ol>
 <li><strong>Lazy Load</strong> them using <code>await import(...)</code> to save memory.</li>
-</ol>
-<ol>
 <li><strong>Extract</strong> them using the <code>files: {}</code> property if you want the AI to be able to grep/search them as real files.</li>
 </ol>
 <p>
@@ -295,14 +275,17 @@ This mechanism allows our AI assistant to carry a massive library of documentati
 So far, we have built skills that run logic inside our own application (Loop, Remember, Docs). But what if we want to talk to <em>other</em> servers? What if we want to control a database or a web browser that lives outside our binary?
 </p>
 <p>
-<a href="06<em>mcp</em>skill_bridge.md">Next Chapter: MCP Skill Bridge</a>
+<a href="skills-06-mcp-skill-bridge.html">Next Chapter: MCP Skill Bridge</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="skills.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="skills-04-prompt-generation-logic.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">skills/ index</div>
+          <div class="chapter-nav-title">04 Prompt Generation Logic</div>
+        </a><a class="chapter-nav-card next" href="skills-06-mcp-skill-bridge.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">06 Mcp Skill Bridge</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

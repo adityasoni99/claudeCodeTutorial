@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-5-frame-renderer">Chapter 5: Frame Renderer</h1>
 <p>
-In the previous chapter, <a href="04<em>input</em>processing<em>pipeline.md">Input Processing Pipeline</a>, we gave our application ears—it can listen to user keystrokes. Before that, in <a href="02</em>ink<em>dom</em><em>_layout</em>engine.md">Ink DOM & Layout Engine</a>, we gave it a skeleton using Yoga.
+In the previous chapter, <a href="ink-04-input-processing-pipeline.html">Input Processing Pipeline</a>, we gave our application ears—it can listen to user keystrokes. Before that, in <a href="ink-02-ink-dom---layout-engine.html">Ink DOM & Layout Engine</a>, we gave it a skeleton using Yoga.
 </p>
 <p>
 But right now, our application is just a ghost. We have a mathematical structure in memory (the Ink DOM) and input events flying around, but we haven't actually <strong>drawn</strong> anything to the terminal yet.
@@ -49,15 +49,11 @@ Imagine you are an artist.
 </p>
 <ol>
 <li><strong>The Subject:</strong> You have a tree of objects (the Ink DOM).</li>
-</ol>
-<ol>
 <li><strong>The Rules:</strong> You have instructions on where they stand (Yoga coordinates).</li>
-</ol>
-<ol>
 <li><strong>The Canvas:</strong> You have a sheet of graph paper (the Terminal).</li>
 </ol>
 <p>
-The Terminal is a strict medium. It is a grid of cells. You cannot draw "half a pixel." You cannot draw a circle. You can only place a specific character (like %%INLINE<em>0%%, %%INLINE</em>1%%, or <code>█</code>) into a specific row and column.
+The Terminal is a strict medium. It is a grid of cells. You cannot draw "half a pixel." You cannot draw a circle. You can only place a specific character (like <code>a</code>, <code>│</code>, or <code>█</code>) into a specific row and column.
 </p>
 <p>
  The <strong>Frame Renderer</strong> is responsible for taking the mathematical snapshot of your UI and "painting" it onto that grid.
@@ -111,8 +107,6 @@ Before we can paint, we have a "chicken and egg" problem.
 </p>
 <ol>
 <li>To position a Box, Yoga needs to know how big the text inside it is.</li>
-</ol>
-<ol>
 <li>To know how big the text is, we need to measure the string.</li>
 </ol>
 <p>
@@ -142,7 +136,7 @@ function measureText(text: string, maxWidth: number) {
 <li>It handles <strong>newlines</strong>: <code>\n</code> increases height.</li>
 </ul>
 <p>
-This function feeds the raw data into the Yoga engine so it can calculate %%INLINE<em>8%% and %%INLINE</em>9%% coordinates.
+This function feeds the raw data into the Yoga engine so it can calculate <code>x</code> and <code>y</code> coordinates.
 </p>
 <hr>
 <h2 id="concept-3-the-painting-loop">Concept 3: The Painting Loop</h2>
@@ -154,11 +148,7 @@ It uses the <strong>Painter's Algorithm</strong>:
 </p>
 <ol>
 <li>Draw the root element (background).</li>
-</ol>
-<ol>
 <li>Draw the first child.</li>
-</ol>
-<ol>
 <li>Draw the second child (if it overlaps the first, it overwrites those cells).</li>
 </ol>
 <h3 id="the-implementation-inline-10">The Implementation: <code>renderer.ts</code></h3>
@@ -195,12 +185,8 @@ export default function createRenderer(node, stylePool) {
 </p>
 <ol>
 <li><strong><code>calculateLayout</code></strong>: The layout engine (Yoga) runs the numbers.</li>
-</ol>
-<ol>
 <li><strong><code>createScreen</code></strong>: We get a fresh piece of graph paper.</li>
-</ol>
-<ol>
-<li><strong>%%INLINE<em>13%%</strong>: This is the heavy lifter. It walks through every %%INLINE</em>14%% and <code>&lt;Text&gt;</code>, looks at their calculated X/Y coordinates, and fills in the cells on the graph paper.</li>
+<li><strong><code>renderNodeToOutput</code></strong>: This is the heavy lifter. It walks through every <code>&lt;Box&gt;</code> and <code>&lt;Text&gt;</code>, looks at their calculated X/Y coordinates, and fills in the cells on the graph paper.</li>
 </ol>
 <hr>
 <h2 id="the-workflow-from-tree-to-grid">The Workflow: From Tree to Grid</h2>
@@ -233,7 +219,7 @@ Let's visualize the "Pop-up Dialog" example.
 <hr>
 <h2 id="deep-dive-inline-16">Deep Dive: <code>render-to-screen.ts</code></h2>
 <p>
-While %%INLINE<em>17%% handles the main application loop, Ink also has %%INLINE</em>18%%. This is often used for one-off rendering tasks or testing.
+While <code>renderer.ts</code> handles the main application loop, Ink also has <code>render-to-screen.ts</code>. This is often used for one-off rendering tasks or testing.
 </p>
 <p>
 It highlights an important detail: <strong>Isolation</strong>.
@@ -273,14 +259,8 @@ When <code>renderNodeToOutput</code> runs, it knows the boundaries of the curren
 </p>
 <ol>
 <li>It tries to write "H" at index 0. (Success)</li>
-</ol>
-<ol>
 <li>...</li>
-</ol>
-<ol>
 <li>It tries to write "o" at index 4. (Success)</li>
-</ol>
-<ol>
 <li>It tries to write " " (space) at index 5. <strong>(Stop!)</strong></li>
 </ol>
 <p>
@@ -306,14 +286,17 @@ We have a snapshot. But we generated a <em>new</em> snapshot 100 milliseconds la
 How do we update the screen smoothly, changing <em>only</em> the pixels that are different?
 </p>
 <p>
-<a href="06<em>output</em>diffing<em>_logupdate</em>.md">Next Chapter: Output Diffing (LogUpdate)</a>
+<a href="ink-06-output-diffing--logupdate-.html">Next Chapter: Output Diffing (LogUpdate)</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="ink.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="ink-04-input-processing-pipeline.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">ink/ index</div>
+          <div class="chapter-nav-title">04 Input Processing Pipeline</div>
+        </a><a class="chapter-nav-card next" href="ink-06-output-diffing--logupdate-.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">06 Output Diffing  Logupdate </div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-2-session-transcript-persistence">Chapter 2: Session & Transcript Persistence</h1>
 <p>
-In the previous chapter, <a href="01<em>command</em>architecture.md">Command Architecture</a>, we learned how to make the agent perform actions. But an action without memory is fleeting. If you close your terminal, does the agent forget it wrote a file? Does it forget which Git branch it was on?
+In the previous chapter, <a href="types-01-command-architecture.html">Command Architecture</a>, we learned how to make the agent perform actions. But an action without memory is fleeting. If you close your terminal, does the agent forget it wrote a file? Does it forget which Git branch it was on?
 </p>
 <p>
 This chapter introduces <strong>Session & Transcript Persistence</strong>.
@@ -54,14 +54,8 @@ Imagine you are debugging a crash. You don't just want to know <em>what</em> was
 </p>
 <ol>
 <li><strong>Context:</strong> What directory were we in? (<code>cwd</code>)</li>
-</ol>
-<ol>
 <li><strong>State:</strong> What git branch was active?</li>
-</ol>
-<ol>
 <li><strong>Changes:</strong> Did the agent edit <code>index.ts</code> before crashing?</li>
-</ol>
-<ol>
 <li><strong>Identity:</strong> Was this the main agent or a sub-agent helper?</li>
 </ol>
 <p>
@@ -89,7 +83,7 @@ export function asSessionId(id: string): SessionId {
 </ul>
 <h3 id="2-the-transcript-entry">2. The Transcript Entry</h3>
 <p>
-The transcript is a list. But it's not a list of strings; it's a list of %%INLINE<em>3%% objects. An %%INLINE</em>4%% can be a chat message, but it can also be a hidden system event.
+The transcript is a list. But it's not a list of strings; it's a list of <code>Entry</code> objects. An <code>Entry</code> can be a chat message, but it can also be a hidden system event.
 </p>
 <p>
 Here are a few "flavors" of entries found in <code>logs.ts</code>:
@@ -112,7 +106,7 @@ Even a standard text message carries heavy baggage. We call this a <code>Seriali
 }
 </code></pre>
 <ul>
-<li><strong>Why this matters:</strong> When you resume a session, the agent looks at the last message's %%INLINE<em>7%%. If you are currently in %%INLINE</em>8%%, but the last message was in <code>/home/user/project</code>, the agent knows it needs to switch directories back.</li>
+<li><strong>Why this matters:</strong> When you resume a session, the agent looks at the last message's <code>cwd</code>. If you are currently in <code>/home/user</code>, but the last message was in <code>/home/user/project</code>, the agent knows it needs to switch directories back.</li>
 </ul>
 <hr>
 <h2 id="use-case-resuming-a-coding-task">Use Case: Resuming a Coding Task</h2>
@@ -125,14 +119,8 @@ As the agent works, it generates a stream of mixed events.
 </p>
 <ol>
 <li><strong>User:</strong> "Fix the bug." -> <code>TranscriptMessage</code></li>
-</ol>
-<ol>
 <li><strong>System:</strong> (Agent checks git) -> <code>WorktreeStateEntry</code></li>
-</ol>
-<ol>
 <li><strong>Agent:</strong> (Edits file) -> <code>FileHistorySnapshotMessage</code> (Backup created)</li>
-</ol>
-<ol>
 <li><strong>Agent:</strong> "I fixed it." -> <code>TranscriptMessage</code></li>
 </ol>
 <h3 id="step-2-the-persistence-layer">Step 2: The Persistence Layer</h3>
@@ -152,14 +140,8 @@ When the user types <code>claude resume</code>:
 </p>
 <ol>
 <li>The system reads the JSON.</li>
-</ol>
-<ol>
 <li>It replays the <strong>WorktreeState</strong> (checking out the branch).</li>
-</ol>
-<ol>
 <li>It loads the <strong>File Snapshots</strong> (so it knows what changed).</li>
-</ol>
-<ol>
 <li>It presents the chat history to the Model so it "remembers" the conversation.</li>
 </ol>
 <hr>
@@ -216,7 +198,7 @@ This entry allows the agent to handle complex git setups involving worktrees (ch
 }
 </code></pre>
 <ul>
-<li><strong>Explanation:</strong> If %%INLINE<em>18%% is stored, the resume logic knows to %%INLINE</em>19%% into that specific folder. If it is <code>null</code>, it knows the user exited that mode.</li>
+<li><strong>Explanation:</strong> If <code>worktreeSession</code> is stored, the resume logic knows to <code>cd</code> into that specific folder. If it is <code>null</code>, it knows the user exited that mode.</li>
 </ul>
 <h4 id="2-tracking-attribution-inline-21">2. Tracking Attribution (<code>AttributionSnapshotMessage</code>)</h4>
 <p>
@@ -240,25 +222,24 @@ The <strong>Session & Transcript Persistence</strong> layer is the brain's long-
 </p>
 <ol>
 <li>Safely resume complex tasks.</li>
-</ol>
-<ol>
 <li>Undo file changes (using snapshots).</li>
-</ol>
-<ol>
 <li>Understand the context (git branches, directories) surrounding every message.</li>
 </ol>
 <p>
 Now that our agent can execute commands and remember the results, we need to ensure it doesn't do anything dangerous.
 </p>
 <p>
-<a href="03<em>permission</em><em>_safety</em>system.md">Next Chapter: Permission & Safety System</a>
+<a href="types-03-permission---safety-system.html">Next Chapter: Permission & Safety System</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="types.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="types-01-command-architecture.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">types/ index</div>
+          <div class="chapter-nav-title">01 Command Architecture</div>
+        </a><a class="chapter-nav-card next" href="types-03-permission---safety-system.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">03 Permission   Safety System</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

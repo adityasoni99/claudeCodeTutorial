@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-6-bridge-ui-feedback-the-dashboard">Chapter 6: Bridge UI & Feedback (The "Dashboard")</h1>
 <p>
-In the previous chapter, <a href="05<em>authentication<strong></em>security</strong>the<strong>keycard</strong>.md">Authentication & Security (The "Keycard")</a>, we secured our connection using OAuth tokens and trusted device checks.
+In the previous chapter, <a href="bridge-05-authentication---security--the--keycard--.html">Authentication & Security (The "Keycard")</a>, we secured our connection using OAuth tokens and trusted device checks.
 </p>
 <p>
 At this point, our "Bridge" is fully functional. It has a <strong>Brain</strong> (Core), a <strong>Container</strong> (Session), a <strong>Pipe</strong> (Transport), a <strong>Dispatcher</strong> (Routing), and a <strong>Keycard</strong> (Security).
@@ -55,8 +55,6 @@ Terminal applications have a unique challenge.
 </p>
 <ol>
 <li><strong>Logs:</strong> We need a permanent history of what happened (e.g., "Executed script.py").</li>
-</ol>
-<ol>
 <li><strong>Status:</strong> We need a temporary display of what is happening <em>now</em> (e.g., a spinning loader saying "Connecting...").</li>
 </ol>
 <p>
@@ -88,17 +86,9 @@ Let's walk through what the user sees when they start the app.
 </p>
 <ol>
 <li><strong>Start:</strong> The user runs <code>claude bridge</code>.</li>
-</ol>
-<ol>
 <li><strong>Banner:</strong> The UI prints a welcome message and a large QR code.</li>
-</ol>
-<ol>
 <li><strong>Spinner:</strong> A yellow spinner appears: <code>⠋ Connecting...</code></li>
-</ol>
-<ol>
 <li><strong>Success:</strong> The spinner turns into a green dot: <code>● Connected</code>.</li>
-</ol>
-<ol>
 <li><strong>Action:</strong> When the AI reads a file, a log appears <em>above</em> the status line: <code>[12:00] Reading file...</code></li>
 </ol>
 <h3 id="internal-implementation-the-render-loop">Internal Implementation: The Render Loop</h3>
@@ -157,7 +147,7 @@ function renderStatusLine() {
 <strong>Explanation:</strong>
 </p>
 <ul>
-<li>%%INLINE<em>7%% uses ANSI codes to move the cursor up by %%INLINE</em>8%% rows and delete everything.</li>
+<li><code>clearStatusLines()</code> uses ANSI codes to move the cursor up by <code>statusLineCount</code> rows and delete everything.</li>
 <li>We then write the new content.</li>
 <li>We calculate the new height so we know how much to delete next time.</li>
 </ul>
@@ -236,14 +226,8 @@ export function wrapApiForFaultInjection(api) {
 </p>
 <ol>
 <li>This code wraps the real network calls.</li>
-</ol>
-<ol>
 <li>If a developer queues a "fault," the wrapper throws a fake error.</li>
-</ol>
-<ol>
 <li>The Core catches this error and triggers the "Reconnecting" state.</li>
-</ol>
-<ol>
 <li>The <strong>UI</strong> sees the state change and renders the red/yellow warning status.</li>
 </ol>
 <p>
@@ -278,11 +262,7 @@ It uses:
 </p>
 <ol>
 <li><strong>ANSI Codes</strong> to rewrite the bottom of the screen.</li>
-</ol>
-<ol>
 <li><strong>QR Libraries</strong> to bridge the gap between terminal and mobile.</li>
-</ol>
-<ol>
 <li><strong>State Management</strong> to reflect the complex logic of the Core in simple colors (Green/Yellow/Red).</li>
 </ol>
 <h3 id="project-summary">Project Summary</h3>
@@ -293,21 +273,11 @@ Congratulations! You have completed the <strong>Bridge</strong> tutorial series.
 You now understand the full architecture of a modern remote terminal bridge:
 </p>
 <ol>
-<li><strong><a href="01<em>remote</em>bridge<em>core<strong>the</strong>brain</em>_.md">Remote Bridge Core (The "Brain")</a>:</strong> Orchestrates the connection.</li>
-</ol>
-<ol>
-<li><strong><a href="02<em>session</em>lifecycle<strong>_compatibility</strong>the<strong>container</strong>.md">Session Lifecycle & Compatibility (The "Container")</a>:</strong> Manages the workspace.</li>
-</ol>
-<ol>
-<li><strong><a href="03<em>unified</em>transport<em>layer<strong>the</strong>pipe</em>_.md">Unified Transport Layer (The "Pipe")</a>:</strong> Moves the bytes (SSE/WebSockets).</li>
-</ol>
-<ol>
-<li><strong><a href="04<em>message</em>routing<strong><em>data</em>flow</strong>the<strong>dispatcher</strong>.md">Message Routing & Data Flow (The "Dispatcher")</a>:</strong> Sorts and downloads data.</li>
-</ol>
-<ol>
-<li><strong><a href="05<em>authentication<strong></em>security</strong>the<strong>keycard</strong>.md">Authentication & Security (The "Keycard")</a>:</strong> Protects the connection.</li>
-</ol>
-<ol>
+<li><strong><a href="bridge-01-remote-bridge-core--the--brain--.html">Remote Bridge Core (The "Brain")</a>:</strong> Orchestrates the connection.</li>
+<li><strong><a href="bridge-02-session-lifecycle---compatibility--the--container--.html">Session Lifecycle & Compatibility (The "Container")</a>:</strong> Manages the workspace.</li>
+<li><strong><a href="bridge-03-unified-transport-layer--the--pipe--.html">Unified Transport Layer (The "Pipe")</a>:</strong> Moves the bytes (SSE/WebSockets).</li>
+<li><strong><a href="bridge-04-message-routing---data-flow--the--dispatcher--.html">Message Routing & Data Flow (The "Dispatcher")</a>:</strong> Sorts and downloads data.</li>
+<li><strong><a href="bridge-05-authentication---security--the--keycard--.html">Authentication & Security (The "Keycard")</a>:</strong> Protects the connection.</li>
 <li><strong>Bridge UI & Feedback (The "Dashboard"):</strong> Visualizes the state.</li>
 </ol>
 <p>
@@ -316,9 +286,9 @@ You are now ready to explore the codebase, fix bugs, or add new features to the 
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="bridge.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="bridge-05-authentication---security--the--keycard--.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">bridge/ index</div>
+          <div class="chapter-nav-title">05 Authentication   Security  The  Keycard  </div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

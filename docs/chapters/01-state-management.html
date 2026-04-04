@@ -57,18 +57,14 @@ In <code>claudeCode</code>, <strong>State Management</strong> acts as the applic
 <p>
 Let's look at a simple scenario:
  
-<strong>You ask %%INLINE<em>2%% to: "Fix the bug in %%INLINE</em>3%%."</strong>
+<strong>You ask <code>claudeCode</code> to: "Fix the bug in <code>server.js</code>."</strong>
 </p>
 <p>
 To succeed, the application needs to store three things immediately:
 </p>
 <ol>
 <li><strong>The Task:</strong> "Fix the bug in <code>server.js</code>."</li>
-</ol>
-<ol>
 <li><strong>Permissions:</strong> Does the user allow us to edit files?</li>
-</ol>
-<ol>
 <li><strong>Status:</strong> Is the AI currently thinking or working?</li>
 </ol>
 <p>
@@ -100,7 +96,7 @@ Because the application is big, we group data into categories (or "slices").
 <ul>
 <li><strong>Task State:</strong> What are we doing?</li>
 <li><strong>Settings:</strong> How should the tool behave?</li>
-<li><strong>Teammates:</strong> Who is helping us? (More on this in <a href="16_teammates.md">Teammates</a>).</li>
+<li><strong>Teammates:</strong> Who is helping us? (More on this in <a href="16-teammates.html">Teammates</a>).</li>
 </ul>
 <h2 id="how-to-use-state">How to Use State</h2>
 <p>
@@ -145,14 +141,8 @@ What happens when you change the state? It's a cycle.
 </p>
 <ol>
 <li><strong>Action:</strong> A user or an internal process triggers a change.</li>
-</ol>
-<ol>
 <li><strong>Update:</strong> The Store updates the specific value.</li>
-</ol>
-<ol>
 <li><strong>Notification:</strong> The Store tells all parts of the app, "Hey, something changed!"</li>
-</ol>
-<ol>
 <li><strong>Reaction:</strong> The UI re-draws itself to show the new data.</li>
 </ol>
 <p>
@@ -172,7 +162,7 @@ Here is a visual flow of updating a permission setting:
     UI--&gt;&gt;User: Shows green "Git Enabled" icon</div></div>
 <h3 id="internal-implementation-code">Internal Implementation Code</h3>
 <p>
-Deep inside the %%INLINE<em>7%% directory, we define exactly what our state looks like. We use a library (similar to %%INLINE</em>8%% or <code>zustand</code>) to create these data containers.
+Deep inside the <code>state/</code> directory, we define exactly what our state looks like. We use a library (similar to <code>jotai</code> or <code>zustand</code>) to create these data containers.
 </p>
 <p>
 Here is a simplified look at how a state "atom" (a tiny piece of state) is created.
@@ -193,16 +183,16 @@ export const permissionsAtom = atom(defaultPermissions);
 <em>Explanation: We define the starting values. <code>permissionsAtom</code> is now a shared container that can be imported anywhere in the app.</em>
 </p>
 <p>
-Later, in <a href="08<em>permission</em><em>_security</em>system.md">Chapter 8: Permission & Security System</a>, we will see how these exact atoms are used to block dangerous commands if the state says <code>false</code>.
+Later, in <a href="08-permission---security-system.html">Chapter 8: Permission & Security System</a>, we will see how these exact atoms are used to block dangerous commands if the state says <code>false</code>.
 </p>
 <h2 id="why-is-this-important-for-later">Why is this important for later?</h2>
 <p>
 Almost every feature we will build relies on this chapter:
 </p>
 <ul>
-<li><strong><a href="02<em>ink</em>ui_framework.md">Ink UI Framework</a>:</strong> Needs state to know <em>what</em> to draw on the screen.</li>
-<li><strong><a href="19<em>cost</em>tracking.md">Cost Tracking</a>:</strong> Needs state to keep a running total of tokens used.</li>
-<li><strong><a href="16_teammates.md">Teammates</a>:</strong> Needs state to list which AI agents are currently active in the chat.</li>
+<li><strong><a href="02-ink-ui-framework.html">Ink UI Framework</a>:</strong> Needs state to know <em>what</em> to draw on the screen.</li>
+<li><strong><a href="19-cost-tracking.html">Cost Tracking</a>:</strong> Needs state to keep a running total of tokens used.</li>
+<li><strong><a href="16-teammates.html">Teammates</a>:</strong> Needs state to list which AI agents are currently active in the chat.</li>
 </ul>
 <h2 id="conclusion">Conclusion</h2>
 <p>
@@ -212,7 +202,7 @@ You have learned that <strong>State Management</strong> is the memory of <code>c
 Now that we have data stored, we need a way to show it to the user.
 </p>
 <p>
-<a href="02<em>ink</em>ui_framework.md">Next Chapter: Ink UI Framework</a>
+<a href="02-ink-ui-framework.html">Next Chapter: Ink UI Framework</a>
 </p>
 <hr>
 <p>

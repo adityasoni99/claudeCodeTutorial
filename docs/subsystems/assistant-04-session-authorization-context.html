@@ -38,15 +38,13 @@
 Welcome to Chapter 4!
 </p>
 <p>
-In the previous chapter, <a href="03<em>defensive</em>api_wrapper.md">Defensive API Wrapper</a>, we built a safety mechanism to handle network errors gracefully. We compared it to hiring a courier who handles traffic and road closures for you.
+In the previous chapter, <a href="assistant-03-defensive-api-wrapper.html">Defensive API Wrapper</a>, we built a safety mechanism to handle network errors gracefully. We compared it to hiring a courier who handles traffic and road closures for you.
 </p>
 <p>
 However, even the best courier needs two things to do their job:
 </p>
 <ol>
 <li><strong>The Address:</strong> Where exactly are they going?</li>
-</ol>
-<ol>
 <li><strong>The Keys:</strong> How do they get inside the secure building?</li>
 </ol>
 <p>
@@ -76,7 +74,7 @@ You go to the front gate <strong>once</strong> when you arrive. You show your ID
 <p>
 <strong>The Technical Problem:</strong>
  
-Logging in to an API is "expensive." It takes time to fetch an Access Token and find your Organization ID. If we did this inside every single %%INLINE<em>0%% or %%INLINE</em>1%% call, our chat would be slow and laggy.
+Logging in to an API is "expensive." It takes time to fetch an Access Token and find your Organization ID. If we did this inside every single <code>fetchLatestEvents</code> or <code>fetchOlderEvents</code> call, our chat would be slow and laggy.
 </p>
 <p>
 <strong>The Solution:</strong>
@@ -97,7 +95,7 @@ In our code, the "wristband" is a simple JavaScript object that looks like this:
 }
 </code></pre>
 <p>
-This object contains everything the <a href="03<em>defensive</em>api_wrapper.md">Defensive API Wrapper</a> needs to make a successful call.
+This object contains everything the <a href="assistant-03-defensive-api-wrapper.html">Defensive API Wrapper</a> needs to make a successful call.
 </p>
 <hr>
 <h3 id="how-to-use-it">How to use it</h3>
@@ -116,7 +114,7 @@ const ctx = await createHistoryAuthCtx(currentSessionId);
 </code></pre>
 <h4 id="2-pass-it-to-the-strategies">2. Pass it to the Strategies</h4>
 <p>
-Now that you have the %%INLINE<em>4%%, you pass it to the functions we built in <a href="01</em>latest<em>event</em>anchoring.md">Latest Event Anchoring</a> and <a href="02<em>reverse</em>pagination_strategy.md">Reverse Pagination Strategy</a>.
+Now that you have the <code>ctx</code>, you pass it to the functions we built in <a href="assistant-01-latest-event-anchoring.html">Latest Event Anchoring</a> and <a href="assistant-02-reverse-pagination-strategy.html">Reverse Pagination Strategy</a>.
 </p>
 <pre data-lang="typescript"><code>// Flash the wristband to get the latest messages
 const latest = await fetchLatestEvents(ctx);
@@ -125,7 +123,7 @@ const latest = await fetchLatestEvents(ctx);
 const older = await fetchOlderEvents(ctx, latest.firstId);
 </code></pre>
 <p>
-Notice how %%INLINE<em>5%% doesn't need to know your password or organization ID? It just trusts the %%INLINE</em>6%%.
+Notice how <code>fetchLatestEvents</code> doesn't need to know your password or organization ID? It just trusts the <code>ctx</code>.
 </p>
 <hr>
 <h3 id="under-the-hood-how-it-works">Under the Hood: How it Works</h3>
@@ -150,14 +148,8 @@ Let's see what happens when you ask for this context.
     Builder--&gt;&gt;App: Returns Context Object (The Wristband)</div></div>
 <ol>
 <li><strong>Request:</strong> The App requests a context for a specific chat session.</li>
-</ol>
-<ol>
 <li><strong>Fetch Secrets:</strong> The builder asks the Auth System for the current user's credentials (this is the expensive part).</li>
-</ol>
-<ol>
 <li><strong>Assembly:</strong> The builder combines the credentials and the session ID into a neat package.</li>
-</ol>
-<ol>
 <li><strong>Delivery:</strong> The App receives the context and holds onto it.</li>
 </ol>
 <h4 id="code-implementation">Code Implementation</h4>
@@ -225,9 +217,7 @@ Finally, we put the "keys" into a header object.
 This chapter ties everything together.
 </p>
 <ol>
-<li><strong>Chapter 3 (<a href="03<em>defensive</em>api<em>wrapper.md">Defensive API Wrapper</a>):</strong> The %%INLINE</em>9%% function consumes this %%INLINE<em>10%%. It reads %%INLINE</em>11%% and sends <code>ctx.headers</code> with the request.</li>
-</ol>
-<ol>
+<li><strong>Chapter 3 (<a href="assistant-03-defensive-api-wrapper.html">Defensive API Wrapper</a>):</strong> The <code>fetchPage</code> function consumes this <code>ctx</code>. It reads <code>ctx.baseUrl</code> and sends <code>ctx.headers</code> with the request.</li>
 <li><strong>Chapter 1 & 2:</strong> The strategy functions act as middlemen, passing the <code>ctx</code> from your App to the Wrapper.</li>
 </ol>
 <p>
@@ -250,14 +240,17 @@ Now that we have the data, we need to make sure it looks correct. APIs sometimes
 Join us in the final chapter to learn about the <strong>Data Normalization Layer</strong>.
 </p>
 <p>
-<a href="05<em>data</em>normalization_layer.md">Next Chapter: Data Normalization Layer</a>
+<a href="assistant-05-data-normalization-layer.html">Next Chapter: Data Normalization Layer</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="assistant.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="assistant-03-defensive-api-wrapper.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">assistant/ index</div>
+          <div class="chapter-nav-title">03 Defensive Api Wrapper</div>
+        </a><a class="chapter-nav-card next" href="assistant-05-data-normalization-layer.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">05 Data Normalization Layer</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

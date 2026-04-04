@@ -35,18 +35,16 @@
 </div>
 <h1 id="chapter-2-modal-input-processing">Chapter 2: Modal Input Processing</h1>
 <p>
-Welcome back! In <a href="01<em>global</em>configuration<em>_</em>controls.md">Chapter 1: Global Configuration & Controls</a>, we built the dashboard and global steering of our application.
+Welcome back! In <a href="hooks-01-global-configuration---controls.html">Chapter 1: Global Configuration & Controls</a>, we built the dashboard and global steering of our application.
 </p>
 <p>
 Now, we zoom in on the most important part of the cockpit: <strong>The Input Field</strong>.
 </p>
 <p>
-In a standard web form, an input field is simple: you press %%INLINE<em>0%%, and the letter %%INLINE</em>1%% appears. But in our "Spaceship" (the Hooks application), the input field is a <strong>sophisticated interpreter</strong>. It needs to handle:
+In a standard web form, an input field is simple: you press <code>A</code>, and the letter <code>A</code> appears. But in our "Spaceship" (the Hooks application), the input field is a <strong>sophisticated interpreter</strong>. It needs to handle:
 </p>
 <ol>
 <li><strong>Vim Mode:</strong> Where keys move the cursor instead of typing.</li>
-</ol>
-<ol>
 <li><strong>Voice Mode:</strong> Where holding the spacebar records audio instead of typing spaces.</li>
 </ol>
 <p>
@@ -70,21 +68,15 @@ To achieve this in code, we cannot simply let the keystroke hit the text box dir
 <h3 id="the-flow">The Flow</h3>
 <ol>
 <li>User presses a key.</li>
-</ol>
-<ol>
 <li><strong>Interceptor</strong> catches it.</li>
-</ol>
-<ol>
 <li><strong>Interceptor</strong> checks the current "Mode" (Normal, Insert, Recording).</li>
-</ol>
-<ol>
 <li><strong>Interceptor</strong> decides:</li>
+</ol>
 <ul>
 <li><em>Action A:</em> Update the text.</li>
 <li><em>Action B:</em> Move the cursor.</li>
 <li><em>Action C:</em> Start a microphone stream.</li>
 </ul>
-</ol>
 <hr>
 <h2 id="2-case-study-vim-emulation-inline-4">2. Case Study: Vim Emulation (<code>useVimInput</code>)</h2>
 <p>
@@ -92,7 +84,7 @@ Let's look at how we handle Vim emulation. In Vim, there are two main modes:
 </p>
 <ul>
 <li><strong>INSERT:</strong> Typing works normally.</li>
-<li><strong>NORMAL:</strong> Keys are commands (e.g., %%INLINE<em>5%% moves left, %%INLINE</em>6%% deletes a character).</li>
+<li><strong>NORMAL:</strong> Keys are commands (e.g., <code>h</code> moves left, <code>x</code> deletes a character).</li>
 </ul>
 <p>
 We use a hook called <code>useVimInput</code>. It wraps around a standard text input hook but adds a layer of logic.
@@ -113,7 +105,7 @@ export function useVimInput(props: UseVimInputProps) {
 }
 </code></pre>
 <p>
-<strong>Explanation:</strong> We create a state variable %%INLINE<em>8%%. By default, we are in %%INLINE</em>9%% mode (acting like a normal text box).
+<strong>Explanation:</strong> We create a state variable <code>mode</code>. By default, we are in <code>INSERT</code> mode (acting like a normal text box).
 </p>
 <h3 id="step-2-the-interception-function">Step 2: The Interception Function</h3>
 <p>
@@ -136,7 +128,7 @@ This is the heart of the logic. We create a function <code>handleVimInput</code>
 }
 </code></pre>
 <p>
-<strong>Explanation:</strong> If we are typing (%%INLINE<em>11%%), we mostly let the text input do its job. But we watch specifically for the %%INLINE</em>12%% key to change modes.
+<strong>Explanation:</strong> If we are typing (<code>INSERT</code>), we mostly let the text input do its job. But we watch specifically for the <code>Escape</code> key to change modes.
 </p>
 <h3 id="step-3-handling-commands-normal-mode">Step 3: Handling Commands (Normal Mode)</h3>
 <p>
@@ -161,7 +153,7 @@ if (mode === 'NORMAL') {
 }
 </code></pre>
 <p>
-<strong>Explanation:</strong> Here, pressing the %%INLINE<em>13%% doesn't type a character. It gets converted to a Vim command (%%INLINE</em>14%%), processed by our logic, and results in a cursor movement.
+<strong>Explanation:</strong> Here, pressing the <code>Left Arrow</code> doesn't type a character. It gets converted to a Vim command (<code>h</code>), processed by our logic, and results in a cursor movement.
 </p>
 <hr>
 <h2 id="3-case-study-voice-integration-inline-15">3. Case Study: Voice Integration (<code>useVoiceIntegration</code>)</h2>
@@ -207,20 +199,10 @@ const handleKeyDown = (e: KeyboardEvent) =&gt; {
 </p>
 <ol>
 <li>The user holds Space.</li>
-</ol>
-<ol>
 <li>The OS fires keydown events repeatedly: <code>Hit... Hit... Hit... Hit... Hit...</code></li>
-</ol>
-<ol>
 <li>The first few hits might type spaces (the "Warmup").</li>
-</ol>
-<ol>
 <li>Once we hit <code>HOLD_THRESHOLD</code> (e.g., 5 hits), we realize "Aha! They are holding it!"</li>
-</ol>
-<ol>
 <li>We stop typing spaces and start the microphone.</li>
-</ol>
-<ol>
 <li>Later, we clean up the extra spaces typed during the warmup.</li>
 </ol>
 <hr>
@@ -230,17 +212,9 @@ Let's visualize the journey of a keystroke in our application.
 </p>
 <ol>
 <li><strong>Raw Input:</strong> User presses a key.</li>
-</ol>
-<ol>
-<li><strong>Global Listeners:</strong> <a href="01<em>global</em>configuration<em>_</em>controls.md">Chapter 1</a> listeners check for global hotkeys (like <code>Ctrl+C</code>).</li>
-</ol>
-<ol>
+<li><strong>Global Listeners:</strong> <a href="hooks-01-global-configuration---controls.html">Chapter 1</a> listeners check for global hotkeys (like <code>Ctrl+C</code>).</li>
 <li><strong>Active Overlay Check:</strong> If a popup is open, input goes there.</li>
-</ol>
-<ol>
-<li><strong>Modal Processor:</strong> Our %%INLINE<em>20%% or %%INLINE</em>21%% logic runs.</li>
-</ol>
-<ol>
+<li><strong>Modal Processor:</strong> Our <code>useVimInput</code> or <code>useVoiceIntegration</code> logic runs.</li>
 <li><strong>Final Output:</strong> The text buffer is updated.</li>
 </ol>
 <div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
@@ -294,11 +268,7 @@ In this chapter, we learned that input handling is a series of gates and decisio
 </p>
 <ol>
 <li><strong>Interception:</strong> We catch keys before they print.</li>
-</ol>
-<ol>
 <li><strong>Mode Switching:</strong> We toggle between states (Insert vs. Normal, Idle vs. Recording).</li>
-</ol>
-<ol>
 <li><strong>Transformation:</strong> We turn keys into commands (<code>h</code> -> Move Left) or actions (Space -> Record).</li>
 </ol>
 <p>
@@ -308,14 +278,17 @@ This creates a powerful, professional feel for the user. But what happens if the
 For that, we need our application to reach out to the world.
 </p>
 <p>
-<a href="03<em>external</em>context<em>_</em>connectivity.md">Next Chapter: External Context & Connectivity</a>
+<a href="hooks-03-external-context---connectivity.html">Next Chapter: External Context & Connectivity</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="hooks.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="hooks-01-global-configuration---controls.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">hooks/ index</div>
+          <div class="chapter-nav-title">01 Global Configuration   Controls</div>
+        </a><a class="chapter-nav-card next" href="hooks-03-external-context---connectivity.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">03 External Context   Connectivity</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

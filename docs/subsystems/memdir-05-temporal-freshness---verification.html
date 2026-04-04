@@ -35,13 +35,13 @@
 </div>
 <h1 id="chapter-5-temporal-freshness-verification">Chapter 5: Temporal Freshness & Verification</h1>
 <p>
-In the previous chapter, <a href="04<em>contextual</em>recall_mechanism.md">Contextual Recall Mechanism</a>, we built a "smart librarian" that finds the right memory file for a user's question.
+In the previous chapter, <a href="memdir-04-contextual-recall-mechanism.html">Contextual Recall Mechanism</a>, we built a "smart librarian" that finds the right memory file for a user's question.
 </p>
 <p>
 But there is a danger lurking in that library. What if the book the librarian hands you is from 1998?
 </p>
 <p>
-Code changes fast. Memories do not update automatically. If a memory says, "The login function is in %%INLINE<em>0%%," but you renamed that file to %%INLINE</em>1%% yesterday, the memory is now a lie. This is called <strong>Memory Drift</strong>.
+Code changes fast. Memories do not update automatically. If a memory says, "The login function is in <code>auth.js</code>," but you renamed that file to <code>auth.ts</code> yesterday, the memory is now a lie. This is called <strong>Memory Drift</strong>.
 </p>
 <p>
 In this chapter, we will learn how <strong>memdir</strong> solves this by treating memories like perishable goods (like milk) rather than permanent facts (like diamonds).
@@ -52,11 +52,7 @@ Imagine this scenario:
 </p>
 <ol>
 <li><strong>Two weeks ago:</strong> You wrote a memory: "Always use <code>util.quickSort()</code> for sorting."</li>
-</ol>
-<ol>
 <li><strong>Yesterday:</strong> You refactored the code and renamed it to <code>util.fastSort()</code>. You forgot to update the memory file.</li>
-</ol>
-<ol>
 <li><strong>Today:</strong> You ask the AI to write a sorting function.</li>
 </ol>
 <p>
@@ -67,7 +63,7 @@ The AI reads the memory. It confidently writes code using <code>util.quickSort()
 <p>
 <strong>With Verification:</strong>
  
-The AI reads the memory but sees a "Warning Label" because the memory is 14 days old. Instead of blindly trusting it, the AI thinks: <em>"This memory is old. I should check if %%INLINE<em>5%% still exists."</em> It runs a %%INLINE</em>6%% command, fails to find it, finds <code>fastSort</code> instead, and writes the correct code.
+The AI reads the memory but sees a "Warning Label" because the memory is 14 days old. Instead of blindly trusting it, the AI thinks: <em>"This memory is old. I should check if <code>util.quickSort</code> still exists."</em> It runs a <code>grep</code> command, fails to find it, finds <code>fastSort</code> instead, and writes the correct code.
 </p>
 <h2 id="key-concept-the-expiration-date">Key Concept: The Expiration Date</h2>
 <p>
@@ -78,8 +74,6 @@ We categorize memories into two states:
 </p>
 <ol>
 <li><strong>Fresh (0-1 days old):</strong> Likely accurate. We trust it.</li>
-</ol>
-<ol>
 <li><strong>Stale (>1 day old):</strong> Potentially dangerous. We treat it as a "historical observation," not a current fact.</li>
 </ol>
 <h2 id="use-case-injecting-the-warning">Use Case: Injecting the Warning</h2>
@@ -183,7 +177,7 @@ export function memoryFreshnessText(mtimeMs: number): string {
 The warning label is useless if the AI doesn't know <em>how</em> to verify things. We explicitly teach it this behavior in the System Prompt.
 </p>
 <p>
-In %%INLINE<em>11%%, we add a section called %%INLINE</em>12%%.
+In <code>src/memoryTypes.ts</code>, we add a section called <code>TRUSTING_RECALL_SECTION</code>.
 </p>
 <pre data-lang="typescript"><code>// src/memoryTypes.ts (Simplified)
 
@@ -207,18 +201,10 @@ When the system combines these pieces, it ensures the AI never hallucinates base
 </p>
 <ol>
 <li><strong>Retrieve:</strong> The system grabs the file.</li>
-</ol>
-<ol>
 <li><strong>Check:</strong> The system checks <code>mtime</code>.</li>
-</ol>
-<ol>
 <li><strong>Warn:</strong> The system appends the warning text if needed.</li>
-</ol>
-<ol>
 <li><strong>Prompt:</strong> The system prompt instructs the AI to verify claims.</li>
-</ol>
-<ol>
-<li><strong>Action:</strong> The AI uses tools (like %%INLINE<em>14%% or %%INLINE</em>15%%) to confirm the memory is still valid before answering you.</li>
+<li><strong>Action:</strong> The AI uses tools (like <code>grep</code> or <code>ls</code>) to confirm the memory is still valid before answering you.</li>
 </ol>
 <h2 id="summary">Summary</h2>
 <p>
@@ -226,14 +212,8 @@ In this chapter, we learned:
 </p>
 <ol>
 <li><strong>The Problem:</strong> Memories drift away from reality as code changes.</li>
-</ol>
-<ol>
 <li><strong>The Solution:</strong> Calculate the age of every memory file.</li>
-</ol>
-<ol>
 <li><strong>The Mechanism:</strong> Inject a <code>&lt;system-reminder&gt;</code> warning for any file older than 1 day.</li>
-</ol>
-<ol>
 <li><strong>The Instruction:</strong> Explicitly tell the AI to verify specific claims (filenames, functions) against the current codebase.</li>
 </ol>
 <p>
@@ -243,14 +223,17 @@ We have now covered how to structure memories, where to store them, how to find 
 But there is one final piece of the puzzle. If the AI is reading and writing files on your computer, how do we make sure it doesn't accidentally read your passwords or delete your operating system?
 </p>
 <p>
-<a href="06<em>path</em>security<em>and</em>sandboxing.md">Next Chapter: Path Security and Sandboxing</a>
+<a href="memdir-06-path-security-and-sandboxing.html">Next Chapter: Path Security and Sandboxing</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="memdir.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="memdir-04-contextual-recall-mechanism.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">memdir/ index</div>
+          <div class="chapter-nav-title">04 Contextual Recall Mechanism</div>
+        </a><a class="chapter-nav-card next" href="memdir-06-path-security-and-sandboxing.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">06 Path Security And Sandboxing</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

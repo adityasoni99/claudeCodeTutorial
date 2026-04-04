@@ -35,18 +35,14 @@
 </div>
 <h1 id="chapter-2-bundled-skill-definition">Chapter 2: Bundled Skill Definition</h1>
 <p>
-Welcome back! In the previous chapter, <a href="01<em>skill</em>registration_pattern.md">Skill Registration Pattern</a>, we learned how to tell the system that a new tool exists by "registering" it.
+Welcome back! In the previous chapter, <a href="skills-01-skill-registration-pattern.html">Skill Registration Pattern</a>, we learned how to tell the system that a new tool exists by "registering" it.
 </p>
 <p>
 But simply saying "I have a tool called Remember" isn't enough. The AI needs to know:
 </p>
 <ol>
 <li><strong>What</strong> is it?</li>
-</ol>
-<ol>
 <li><strong>When</strong> should I use it?</li>
-</ol>
-<ol>
 <li><strong>How</strong> does it work?</li>
 </ol>
 <p>
@@ -65,11 +61,7 @@ We are continuing with our <strong>"Remember"</strong> skill. We want to define 
 </p>
 <ol>
 <li>Its name is <code>remember</code>.</li>
-</ol>
-<ol>
 <li>It tells the user: "I save important information."</li>
-</ol>
-<ol>
 <li>When triggered, it creates a specific message for the AI model to process.</li>
 </ol>
 <h2 id="key-concepts">Key Concepts</h2>
@@ -77,12 +69,8 @@ We are continuing with our <strong>"Remember"</strong> skill. We want to define 
 A skill definition is just a JavaScript object with specific properties. Here are the three most important ones:
 </p>
 <ol>
-<li><strong>Metadata</strong>: The %%INLINE<em>1%% and %%INLINE</em>2%%. This is what the user sees when they list available commands.</li>
-</ol>
-<ol>
+<li><strong>Metadata</strong>: The <code>name</code> and <code>description</code>. This is what the user sees when they list available commands.</li>
 <li><strong>Trigger Logic</strong>: The <code>whenToUse</code> field. This helps the AI decide <em>if</em> this is the right tool for the current conversation.</li>
-</ol>
-<ol>
 <li><strong>Prompt Generator</strong>: The <code>getPromptForCommand</code> function. This is the brain. It takes the user's input and converts it into instructions the AI can understand.</li>
 </ol>
 <h2 id="step-by-step-implementation">Step-by-Step Implementation</h2>
@@ -102,7 +90,7 @@ First, we define who the skill is.
 }
 </code></pre>
 <p>
-<em>Explanation:</em> This acts like the label on a tool. %%INLINE<em>5%% tells the user what to type next (e.g., %%INLINE</em>6%%). <code>whenToUse</code> is a hint specifically for the AI model to know when this skill is relevant.
+<em>Explanation:</em> This acts like the label on a tool. <code>argumentHint</code> tells the user what to type next (e.g., <code>/remember buy milk</code>). <code>whenToUse</code> is a hint specifically for the AI model to know when this skill is relevant.
 </p>
 <h3 id="2-the-prompt-generator">2. The Prompt Generator</h3>
 <p>
@@ -121,7 +109,7 @@ async function generatePrompt(args: string, context: ToolUseContext) {
 }
 </code></pre>
 <p>
-<em>Explanation:</em> When a user types %%INLINE<em>8%%, the %%INLINE</em>9%% variable will contain %%INLINE<em>10%%. This function wraps that text into a structured format (Blocks) that the AI model understands. We will dive deeper into this in <a href="04</em>prompt<em>generation</em>logic.md">Prompt Generation Logic</a>.
+<em>Explanation:</em> When a user types <code>/remember buy milk</code>, the <code>args</code> variable will contain <code>"buy milk"</code>. This function wraps that text into a structured format (Blocks) that the AI model understands. We will dive deeper into this in <a href="skills-04-prompt-generation-logic.html">Prompt Generation Logic</a>.
 </p>
 <h3 id="3-putting-it-together">3. Putting it Together</h3>
 <p>
@@ -180,7 +168,7 @@ export function getBundledSkills(): Command[] {
 }
 </code></pre>
 <p>
-<em>Explanation:</em> %%INLINE<em>13%% is just a simple array. %%INLINE</em>14%% allows other parts of the app to read this list without being able to delete things from it.
+<em>Explanation:</em> <code>bundledSkills</code> is just a simple array. <code>getBundledSkills</code> allows other parts of the app to read this list without being able to delete things from it.
 </p>
 <h3 id="the-registration-logic">The Registration Logic</h3>
 <p>
@@ -201,7 +189,7 @@ export function registerBundledSkill(definition: BundledSkillDefinition): void {
 }
 </code></pre>
 <p>
-<em>Explanation:</em> The %%INLINE<em>15%% function is a converter. It takes your user-friendly definition and maps it to the internal %%INLINE</em>16%% structure required by the application's core loop.
+<em>Explanation:</em> The <code>registerBundledSkill</code> function is a converter. It takes your user-friendly definition and maps it to the internal <code>Command</code> structure required by the application's core loop.
 </p>
 <h3 id="advanced-handling-static-files">Advanced: Handling Static Files</h3>
 <p>
@@ -236,28 +224,25 @@ The <strong>Bundled Skill Definition</strong> is the blueprint for your capabili
 </p>
 <ol>
 <li>It is a simple <strong>Object</strong> containing metadata and logic.</li>
-</ol>
-<ol>
 <li>It uses <strong><code>getPromptForCommand</code></strong> to translate user input into AI instructions.</li>
-</ol>
-<ol>
 <li>The system <strong>converts</strong> this definition into a standardized Command.</li>
-</ol>
-<ol>
 <li>It supports <strong>advanced features</strong> like file bundling automatically.</li>
 </ol>
 <p>
 Now that we have defined <em>what</em> a skill is, we need to understand how the system loads skills that aren't hardcoded into the binary—skills that live on your hard drive.
 </p>
 <p>
-<a href="03<em>filesystem</em>skill_loader.md">Next Chapter: Filesystem Skill Loader</a>
+<a href="skills-03-filesystem-skill-loader.html">Next Chapter: Filesystem Skill Loader</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="skills.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="skills-01-skill-registration-pattern.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">skills/ index</div>
+          <div class="chapter-nav-title">01 Skill Registration Pattern</div>
+        </a><a class="chapter-nav-card next" href="skills-03-filesystem-skill-loader.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">03 Filesystem Skill Loader</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

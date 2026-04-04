@@ -46,17 +46,15 @@ You hit two major problems immediately:
 </p>
 <ol>
 <li><strong>Clipping (Visuals):</strong> If the autocomplete menu is inside the scrollable chat box, and the menu is tall, it gets cut off by the edge of the chat box.</li>
-</ol>
-<ol>
 <li><strong>Confusion (Input):</strong> If the user presses the <code>Escape</code> key, should it close the autocomplete menu, or should it cancel the whole program?</li>
 </ol>
 <p>
-This chapter explains how <strong>Overlay & Input Coordination</strong> solves these problems using two specific tools: %%INLINE<em>1%% (Visuals) and %%INLINE</em>2%% (Input).
+This chapter explains how <strong>Overlay & Input Coordination</strong> solves these problems using two specific tools: <code>promptOverlayContext</code> (Visuals) and <code>overlayContext</code> (Input).
 </p>
 <hr>
 <h2 id="part-1-the-visual-portal-inline-3">Part 1: The Visual Portal (<code>promptOverlayContext</code>)</h2>
 <p>
-In web development, we have %%INLINE<em>4%% to make things float on top. In a terminal using Ink (our rendering engine), we don't have %%INLINE</em>5%%. If an element is inside a box with <code>overflow: hidden</code>, it gets cut off.
+In web development, we have <code>z-index</code> to make things float on top. In a terminal using Ink (our rendering engine), we don't have <code>z-index</code>. If an element is inside a box with <code>overflow: hidden</code>, it gets cut off.
 </p>
 <p>
 To fix this, we use a <strong>Portal</strong> strategy. We "teleport" the UI element out of the scrollable box and render it near the root of the application, where nothing can clip it.
@@ -64,11 +62,7 @@ To fix this, we use a <strong>Portal</strong> strategy. We "teleport" the UI ele
 <h3 id="how-it-works">How it Works</h3>
 <ol>
 <li>A deeply nested component (like the Input bar) says, "I have a dialog to show."</li>
-</ol>
-<ol>
 <li>It sends that dialog up to the <code>PromptOverlayProvider</code>.</li>
-</ol>
-<ol>
 <li>The Provider renders it <strong>outside</strong> the main layout structure, floating it at the bottom of the screen.</li>
 </ol>
 <h3 id="usage-example">Usage Example</h3>
@@ -104,17 +98,13 @@ Even though <code>MyInputComponent</code> might be buried inside a scrollable bo
 Now that our dialog is visible, we need to manage the keyboard. Specifically, the <strong>Escape</strong> key.
 </p>
 <p>
-If a dropdown is open, %%INLINE<em>10%% should close the dropdown. If nothing is open, %%INLINE</em>11%% might cancel the current generation or exit a mode. To do this, the app needs to know: <strong>Is an overlay currently active?</strong>
+If a dropdown is open, <code>Escape</code> should close the dropdown. If nothing is open, <code>Escape</code> might cancel the current generation or exit a mode. To do this, the app needs to know: <strong>Is an overlay currently active?</strong>
 </p>
 <h3 id="how-it-works">How it Works</h3>
 <ol>
 <li>When an overlay opens, it <strong>registers</strong> itself with a unique ID (e.g., "autocomplete").</li>
-</ol>
-<ol>
 <li>The global state adds this ID to a list of <code>activeOverlays</code>.</li>
-</ol>
-<ol>
-<li>The Input Handler checks %%INLINE<em>13%%. If true, %%INLINE</em>14%% closes the overlay. If false, it does the default action.</li>
+<li>The Input Handler checks <code>useIsOverlayActive()</code>. If true, <code>Escape</code> closes the overlay. If false, it does the default action.</li>
 </ol>
 <h3 id="usage-example">Usage Example</h3>
 <p>
@@ -176,7 +166,7 @@ Here is what happens when you open an Autocomplete menu:
 Open <code>promptOverlayContext.tsx</code>. The magic happens in two parts.
 </p>
 <p>
-First, the <strong>Provider</strong> holds the state (%%INLINE<em>16%% or %%INLINE</em>17%%) and exposes a "Setter".
+First, the <strong>Provider</strong> holds the state (<code>data</code> or <code>dialog</code>) and exposes a "Setter".
 </p>
 <pre data-lang="tsx"><code>// promptOverlayContext.tsx (Simplified)
 export function PromptOverlayProvider({ children }) {
@@ -210,7 +200,7 @@ export function useSetPromptOverlayDialog(node) {
 </code></pre>
 <h3 id="code-walkthrough-the-input-tracker">Code Walkthrough: The Input Tracker</h3>
 <p>
-Open %%INLINE<em>18%%. This file manages a %%INLINE</em>19%% of strings.
+Open <code>overlayContext.tsx</code>. This file manages a <code>Set</code> of strings.
 </p>
 <pre data-lang="tsx"><code>// overlayContext.tsx (Simplified)
 export function useRegisterOverlay(id, enabled = true) {
@@ -246,9 +236,7 @@ In this chapter, we learned how <code>context</code> handles complex UI layering
 </p>
 <ol>
 <li><strong>Visuals:</strong> We use <code>promptOverlayContext</code> to "teleport" UI elements out of clipped containers so they float on top.</li>
-</ol>
-<ol>
-<li><strong>Input:</strong> We use %%INLINE<em>22%% to register active components, ensuring keys like %%INLINE</em>23%% interact with the popup instead of the main app.</li>
+<li><strong>Input:</strong> We use <code>overlayContext</code> to register active components, ensuring keys like <code>Escape</code> interact with the popup instead of the main app.</li>
 </ol>
 <p>
 This foundation allows us to build complex, window-like interfaces inside a simple text terminal.
@@ -257,7 +245,7 @@ This foundation allows us to build complex, window-like interfaces inside a simp
 In the next chapter, we will see how these overlays are used inside larger layout structures.
 </p>
 <p>
-<a href="02<em>modal</em><em>_portal</em>layouts.md">Next Chapter: Modal & Portal Layouts</a>
+<a href="context-02-modal---portal-layouts.html">Next Chapter: Modal & Portal Layouts</a>
 </p>
 <hr>
 <p>
@@ -265,6 +253,9 @@ Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
 </p><div class="chapter-nav"><a class="chapter-nav-card prev" href="context.html">
           <div class="chapter-nav-label">← Previous</div>
           <div class="chapter-nav-title">context/ index</div>
+        </a><a class="chapter-nav-card next" href="context-02-modal---portal-layouts.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">02 Modal   Portal Layouts</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

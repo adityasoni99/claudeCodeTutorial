@@ -38,10 +38,10 @@
 </div>
 <h1 id="chapter-17-unique-features">Chapter 17: Unique Features</h1>
 <p>
-In the previous <a href="16_teammates.md">Teammates</a> chapter, we learned how to spawn background agents to help us multitask.
+In the previous <a href="16-teammates.html">Teammates</a> chapter, we learned how to spawn background agents to help us multitask.
 </p>
 <p>
-We have built a powerful system: it has a brain (<a href="03<em>query</em>engine.md">Query Engine</a>), hands (<a href="06<em>bashtool.md">BashTool</a>), and helpers (<a href="16</em>teammates.md">Teammates</a>).
+We have built a powerful system: it has a brain (<a href="03-query-engine.html">Query Engine</a>), hands (<a href="06-bashtool.html">BashTool</a>), and helpers (<a href="16-teammates.html">Teammates</a>).
 </p>
 <p>
 But <code>claudeCode</code> isn't just a standard chatbot. It includes several "Secret Weapons"—specialized modes and behaviors designed to handle complex, real-world coding scenarios.
@@ -55,25 +55,17 @@ In this chapter, we will tour five unique features that make the application fee
 Programming alone can be error-prone. You might write a bug and not notice it until hours later.
 </p>
 <p>
-The <strong>Buddy System</strong> is a specific configuration of a <a href="16_teammates.md">Teammate</a> that acts as a silent observer. It watches every file change you make and runs a quick "sanity check" in the background.
+The <strong>Buddy System</strong> is a specific configuration of a <a href="16-teammates.html">Teammate</a> that acts as a silent observer. It watches every file change you make and runs a quick "sanity check" in the background.
 </p>
 <h3 id="how-it-works">How it works</h3>
 <p>
 If you enable the Buddy System:
 </p>
 <ol>
-<li>You edit a file using <a href="04_fileedittool.md">FileEditTool</a>.</li>
-</ol>
-<ol>
+<li>You edit a file using <a href="04-fileedittool.html">FileEditTool</a>.</li>
 <li>The Buddy System detects the <code>save</code> event.</li>
-</ol>
-<ol>
 <li>It spins up a lightweight reviewer agent.</li>
-</ol>
-<ol>
 <li>The agent checks for obvious bugs or style issues.</li>
-</ol>
-<ol>
 <li>If it finds something, it gently nudges you: <em>"Hey, you missed a semicolon in line 40."</em></li>
 </ol>
 <h2 id="feature-2-kairos-time-awareness">Feature 2: Kairos (Time Awareness)</h2>
@@ -92,7 +84,7 @@ If you ask the AI to "Run the test suite," and the suite hangs for 30 minutes, a
 </p>
 <h3 id="code-snippet-the-timeout-logic">Code Snippet: The Timeout Logic</h3>
 <p>
-Here is how Kairos might check constraints inside the <a href="03<em>query</em>engine.md">Query Engine</a> loop.
+Here is how Kairos might check constraints inside the <a href="03-query-engine.html">Query Engine</a> loop.
 </p>
 <pre data-lang="typescript"><code>// features/kairos/timer.ts
 
@@ -120,14 +112,8 @@ For simple tasks, the AI just acts. But for huge tasks (e.g., "Rewrite the entir
 <h3 id="the-flow">The Flow</h3>
 <ol>
 <li><strong>Draft:</strong> The AI writes a plan file (e.g., <code>plan.md</code>).</li>
-</ol>
-<ol>
 <li><strong>Review:</strong> It shows you the plan.</li>
-</ol>
-<ol>
 <li><strong>Approve:</strong> You click "Yes."</li>
-</ol>
-<ol>
 <li><strong>Execute:</strong> The AI follows its own checklist step-by-step.</li>
 </ol>
 <h3 id="visual-flow">Visual Flow</h3>
@@ -153,7 +139,7 @@ For simple tasks, the AI just acts. But for huge tasks (e.g., "Rewrite the entir
 When you step away from your computer, <code>claudeCode</code> doesn't have to sleep.
 </p>
 <p>
-<strong>Auto-Dream</strong> allows the system to run low-priority tasks when the user is idle. It uses the <a href="10<em>auto</em>mode_classifier.md">Auto-Mode Classifier</a> to find safe tasks, like:
+<strong>Auto-Dream</strong> allows the system to run low-priority tasks when the user is idle. It uses the <a href="10-auto-mode-classifier.html">Auto-Mode Classifier</a> to find safe tasks, like:
 </p>
 <ul>
 <li>Updating documentation.</li>
@@ -172,7 +158,7 @@ Sometimes, the code you want to edit isn't on your laptop. It's on a server in t
 <strong>Remote Bridge</strong> allows <code>claudeCode</code> to connect to a remote machine via SSH and treat it as if it were local.
 </p>
 <p>
-It uses the <a href="14<em>model</em>context<em>protocol</em><em>mcp</em>.md">Model Context Protocol (MCP)</a> to tunnel commands.
+It uses the <a href="14-model-context-protocol--mcp-.html">Model Context Protocol (MCP)</a> to tunnel commands.
 </p>
 <ul>
 <li><strong>Local:</strong> You type "List files" on your laptop.</li>
@@ -185,11 +171,11 @@ It uses the <a href="14<em>model</em>context<em>protocol</em><em>mcp</em>.md">Mo
 Let's look closer at <strong>Ultraplan</strong>, as it is the most commonly used unique feature.
 </p>
 <p>
-Ultraplan works by injecting a special "System Prompt" into the <a href="03<em>query</em>engine.md">Query Engine</a>. This prompt forbids the AI from using tools like %%INLINE<em>6%% until it has used the %%INLINE</em>7%%.
+Ultraplan works by injecting a special "System Prompt" into the <a href="03-query-engine.html">Query Engine</a>. This prompt forbids the AI from using tools like <code>FileEditTool</code> until it has used the <code>PlanTool</code>.
 </p>
 <h3 id="the-state-logic">The State Logic</h3>
 <p>
-We track whether we are in "Planning Phase" or "Execution Phase" in <a href="01<em>state</em>management.md">State Management</a>.
+We track whether we are in "Planning Phase" or "Execution Phase" in <a href="01-state-management.html">State Management</a>.
 </p>
 <pre data-lang="typescript"><code>// features/ultraplan/state.ts
 
@@ -244,7 +230,7 @@ function checkPlanGuard(toolName, planState) {
 These unique features distinguish <code>claudeCode</code> from simple script runners:
 </p>
 <ul>
-<li><strong><a href="18<em>computer</em>use.md">Computer Use</a>:</strong> In the next chapter, we will unlock the ultimate capability: allowing the AI to move your mouse and see your screen. Features like <strong>Kairos</strong> are critical there to prevent the AI from clicking endlessly if it gets stuck.</li>
+<li><strong><a href="18-computer-use.html">Computer Use</a>:</strong> In the next chapter, we will unlock the ultimate capability: allowing the AI to move your mouse and see your screen. Features like <strong>Kairos</strong> are critical there to prevent the AI from clicking endlessly if it gets stuck.</li>
 </ul>
 <h2 id="conclusion">Conclusion</h2>
 <p>
@@ -252,24 +238,16 @@ You have learned about the "Secret Weapons" of <code>claudeCode</code>:
 </p>
 <ol>
 <li><strong>Buddy System:</strong> Automated pair programming.</li>
-</ol>
-<ol>
 <li><strong>Kairos:</strong> Time limits and awareness.</li>
-</ol>
-<ol>
 <li><strong>Ultraplan:</strong> Structured architectural planning.</li>
-</ol>
-<ol>
 <li><strong>Auto-Dream:</strong> Idle-time cleanup.</li>
-</ol>
-<ol>
 <li><strong>Remote Bridge:</strong> Editing code on distant servers.</li>
 </ol>
 <p>
 Now, we are ready for the most experimental and futuristic chapter of all. What if the AI could stop typing code and start <em>using</em> your computer like a human?
 </p>
 <p>
-<a href="18<em>computer</em>use.md">Next Chapter: Computer Use</a>
+<a href="18-computer-use.html">Next Chapter: Computer Use</a>
 </p>
 <hr>
 <p>

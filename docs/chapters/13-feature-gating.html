@@ -38,7 +38,7 @@
 </div>
 <h1 id="chapter-13-feature-gating">Chapter 13: Feature Gating</h1>
 <p>
-In the previous <a href="12<em>websearchtool.md">WebSearchTool</a> chapter, we gave %%INLINE</em>0%% access to the internet. Before that, in <a href="11_notebookedittool.md">NotebookEditTool</a>, we gave it access to data science files.
+In the previous <a href="12-websearchtool.html">WebSearchTool</a> chapter, we gave <code>claudeCode</code> access to the internet. Before that, in <a href="11-notebookedittool.html">NotebookEditTool</a>, we gave it access to data science files.
 </p>
 <p>
 We are adding powerful features rapidly. But here is a problem: <strong>Not every user needs every feature.</strong>
@@ -108,7 +108,7 @@ if (process.env.ALLOW_EXPERIMENTAL_TOOLS) {
 }
 </code></pre>
 <p>
-<em>Explanation: When we build the app, %%INLINE<em>5%% will be replaced by either %%INLINE</em>6%% or <code>false</code>.</em>
+<em>Explanation: When we build the app, <code>process.env.ALLOW_EXPERIMENTAL_TOOLS</code> will be replaced by either <code>true</code> or <code>false</code>.</em>
 </p>
 <h3 id="the-result">The Result</h3>
 <p>
@@ -126,14 +126,8 @@ The process happens before the application ever starts running. It happens durin
 </p>
 <ol>
 <li><strong>Source:</strong> You write code with flags.</li>
-</ol>
-<ol>
 <li><strong>Config:</strong> The build script (<code>build.ts</code>) defines the values of those flags.</li>
-</ol>
-<ol>
-<li><strong>Bundle:</strong> Bun reads the code, swaps the variables for values (%%INLINE<em>11%%/%%INLINE</em>12%%), and deletes unreachable code.</li>
-</ol>
-<ol>
+<li><strong>Bundle:</strong> Bun reads the code, swaps the variables for values (<code>true</code>/<code>false</code>), and deletes unreachable code.</li>
 <li><strong>Output:</strong> A clean, optimized file is created.</li>
 </ol>
 <p>
@@ -161,7 +155,7 @@ The magic configuration lives in the build script. This is where we tell Bun wha
 </p>
 <h4 id="1-the-build-configuration">1. The Build Configuration</h4>
 <p>
-We use %%INLINE<em>13%% and the %%INLINE</em>14%% property.
+We use <code>Bun.build</code> and the <code>define</code> property.
 </p>
 <pre data-lang="typescript"><code>// scripts/build.ts
 await Bun.build({
@@ -178,11 +172,11 @@ await Bun.build({
 });
 </code></pre>
 <p>
-<em>Explanation: The %%INLINE<em>15%% object tells Bun: "Every time you see %%INLINE</em>16%% in the code, replace it with <code>false</code>."</em>
+<em>Explanation: The <code>define</code> object tells Bun: "Every time you see <code>process.env.IS_DEV</code> in the code, replace it with <code>false</code>."</em>
 </p>
 <h4 id="2-gating-a-dangerous-feature">2. Gating a Dangerous Feature</h4>
 <p>
-Let's see how this protects the <a href="18<em>computer</em>use.md">Computer Use</a> feature, which allows the AI to move the mouse.
+Let's see how this protects the <a href="18-computer-use.html">Computer Use</a> feature, which allows the AI to move the mouse.
 </p>
 <pre data-lang="typescript"><code>// tools/ComputerUse/index.ts
 
@@ -201,7 +195,7 @@ export function getComputerTools() {
 </p>
 <h4 id="3-integration-with-permissions">3. Integration with Permissions</h4>
 <p>
-We often combine Feature Gating with the <a href="08<em>permission</em><em>_security</em>system.md">Permission & Security System</a>.
+We often combine Feature Gating with the <a href="08-permission---security-system.html">Permission & Security System</a>.
 </p>
 <pre data-lang="typescript"><code>// utils/permissions/index.ts
 
@@ -224,19 +218,19 @@ export function getDefaultPermissions() {
 Feature Gating is essential for managing the complexity of the upcoming chapters:
 </p>
 <ul>
-<li><strong><a href="14<em>model</em>context<em>protocol</em><em>mcp</em>.md">Model Context Protocol (MCP)</a>:</strong> This is a complex new standard. We use gating to enable it gradually for users.</li>
-<li><strong><a href="18<em>computer</em>use.md">Computer Use</a>:</strong> This feature is powerful but risky. We gate it so standard users don't accidentally let the AI take over their mouse.</li>
-<li><strong><a href="19<em>cost</em>tracking.md">Cost Tracking</a>:</strong> In enterprise builds (gated via a flag), we might enable stricter logging to track every token spent.</li>
+<li><strong><a href="14-model-context-protocol--mcp-.html">Model Context Protocol (MCP)</a>:</strong> This is a complex new standard. We use gating to enable it gradually for users.</li>
+<li><strong><a href="18-computer-use.html">Computer Use</a>:</strong> This feature is powerful but risky. We gate it so standard users don't accidentally let the AI take over their mouse.</li>
+<li><strong><a href="19-cost-tracking.html">Cost Tracking</a>:</strong> In enterprise builds (gated via a flag), we might enable stricter logging to track every token spent.</li>
 </ul>
 <h2 id="conclusion">Conclusion</h2>
 <p>
-You have learned that <strong>Feature Gating</strong> is the ability to turn features on or off during the build process. By using <strong>Bun's %%INLINE<em>19%% feature</strong>, we can remove experimental or restricted code from the final application entirely. This keeps %%INLINE</em>20%% lightweight, safe, and adaptable for different types of users.
+You have learned that <strong>Feature Gating</strong> is the ability to turn features on or off during the build process. By using <strong>Bun's <code>define</code> feature</strong>, we can remove experimental or restricted code from the final application entirely. This keeps <code>claudeCode</code> lightweight, safe, and adaptable for different types of users.
 </p>
 <p>
 Now that we know how to turn features on, let's look at one of the most exciting gated features: a way to connect the AI to <em>any</em> external data source.
 </p>
 <p>
-<a href="14<em>model</em>context<em>protocol</em><em>mcp</em>.md">Next Chapter: Model Context Protocol (MCP)</a>
+<a href="14-model-context-protocol--mcp-.html">Next Chapter: Model Context Protocol (MCP)</a>
 </p>
 <hr>
 <p>

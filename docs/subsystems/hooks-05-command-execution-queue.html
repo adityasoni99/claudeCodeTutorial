@@ -38,7 +38,7 @@
 Welcome to the final chapter! 
 </p>
 <p>
-In <a href="04<em>tool</em>permission_architecture.md">Chapter 4: Tool Permission Architecture</a>, we built a security system to stop the AI from doing dangerous things without permission. We authorized the command.
+In <a href="hooks-04-tool-permission-architecture.html">Chapter 4: Tool Permission Architecture</a>, we built a security system to stop the AI from doing dangerous things without permission. We authorized the command.
 </p>
 <p>
 But here is a new problem: <strong>Traffic Control.</strong>
@@ -48,11 +48,7 @@ Imagine this scenario:
 </p>
 <ol>
 <li>You paste a huge block of code into the app.</li>
-</ol>
-<ol>
 <li>At the exact same time, a background file-watcher notices a file changed.</li>
-</ol>
-<ol>
 <li>Simultaneously, the AI is already halfway through answering your previous question.</li>
 </ol>
 <p>
@@ -89,7 +85,7 @@ It is a simple reactive object that answers one question: <strong>"Is the AI bus
 </p>
 <h3 id="how-it-works">How it works</h3>
 <p>
-The %%INLINE<em>3%% doesn't just return %%INLINE</em>4%% or <code>false</code>. It allows components to <strong>subscribe</strong> to changes. This means if the AI finishes thinking, the guard instantly notifies the Queue Processor: <em>"Hey! The kitchen is free!"</em>
+The <code>QueryGuard</code> doesn't just return <code>true</code> or <code>false</code>. It allows components to <strong>subscribe</strong> to changes. This means if the AI finishes thinking, the guard instantly notifies the Queue Processor: <em>"Hey! The kitchen is free!"</em>
 </p>
 <pre data-lang="typescript"><code>// Conceptual usage of QueryGuard
 if (queryGuard.isBusy()) {
@@ -109,11 +105,7 @@ Its job is simple:
 </p>
 <ol>
 <li>Watch the <strong>Queue</strong>.</li>
-</ol>
-<ol>
 <li>Watch the <strong>Guard</strong>.</li>
-</ol>
-<ol>
 <li>If there is someone in line <strong>AND</strong> the guard is free... <strong>Execute!</strong></li>
 </ol>
 <h3 id="step-1-subscribing-to-the-state">Step 1: Subscribing to the State</h3>
@@ -176,20 +168,10 @@ Let's visualize what happens when you type a command while the AI is busy.
 </p>
 <ol>
 <li><strong>AI</strong> is processing a previous request (<code>QueryGuard</code> is <strong>Busy</strong>).</li>
-</ol>
-<ol>
 <li><strong>User</strong> types "Hello".</li>
-</ol>
-<ol>
 <li><strong>System</strong> sees the Guard is busy, so it puts "Hello" into the <strong>Queue</strong>.</li>
-</ol>
-<ol>
 <li><strong>AI</strong> finishes. <code>QueryGuard</code> switches to <strong>Free</strong>.</li>
-</ol>
-<ol>
 <li><strong><code>useQueueProcessor</code></strong> sees the Green Light.</li>
-</ol>
-<ol>
 <li>It pulls "Hello" from the Queue and executes it.</li>
 </ol>
 <div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
@@ -243,7 +225,7 @@ By abstracting this logic, our React component stays clean. It doesn't care <em>
 <hr>
 <h2 id="4-preventing-context-lag">4. Preventing "Context Lag"</h2>
 <p>
-You might notice we use %%INLINE<em>15%% instead of %%INLINE</em>16%% or <code>useState</code>.
+You might notice we use <code>useSyncExternalStore</code> instead of <code>useContext</code> or <code>useState</code>.
 </p>
 <p>
 <strong>Why?</strong>
@@ -269,11 +251,7 @@ In this final chapter, we learned how to maintain order in a chaotic system:
 </p>
 <ol>
 <li><strong><code>QueryGuard</code></strong>: The traffic light that prevents the AI from being overwhelmed.</li>
-</ol>
-<ol>
 <li><strong><code>useQueueProcessor</code></strong>: The manager that watches the light and the line, ensuring commands run one by one.</li>
-</ol>
-<ol>
 <li><strong>Prioritization</strong>: Ensuring user commands take precedence over background noise.</li>
 </ol>
 <h3 id="series-conclusion">Series Conclusion</h3>
@@ -281,18 +259,10 @@ In this final chapter, we learned how to maintain order in a chaotic system:
 Congratulations! You have toured the architectural pillars of the <strong>Hooks</strong> project.
 </p>
 <ol>
-<li><strong><a href="01<em>global</em>configuration<em>_</em>controls.md">Chapter 1</a></strong>: We built the Global Dashboard.</li>
-</ol>
-<ol>
-<li><strong><a href="02<em>modal</em>input_processing.md">Chapter 2</a></strong>: We created advanced Input Modes (Vim/Voice).</li>
-</ol>
-<ol>
-<li><strong><a href="03<em>external</em>context<em>_</em>connectivity.md">Chapter 3</a></strong>: We connected to the outside world (Files/SSH).</li>
-</ol>
-<ol>
-<li><strong><a href="04<em>tool</em>permission_architecture.md">Chapter 4</a></strong>: We secured the system with Permissions.</li>
-</ol>
-<ol>
+<li><strong><a href="hooks-01-global-configuration---controls.html">Chapter 1</a></strong>: We built the Global Dashboard.</li>
+<li><strong><a href="hooks-02-modal-input-processing.html">Chapter 2</a></strong>: We created advanced Input Modes (Vim/Voice).</li>
+<li><strong><a href="hooks-03-external-context---connectivity.html">Chapter 3</a></strong>: We connected to the outside world (Files/SSH).</li>
+<li><strong><a href="hooks-04-tool-permission-architecture.html">Chapter 4</a></strong>: We secured the system with Permissions.</li>
 <li><strong>Chapter 5</strong>: We coordinated it all with a unified Execution Queue.</li>
 </ol>
 <p>
@@ -301,9 +271,9 @@ You now understand how this complex spaceship flies. Happy coding!
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="hooks.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="hooks-04-tool-permission-architecture.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">hooks/ index</div>
+          <div class="chapter-nav-title">04 Tool Permission Architecture</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

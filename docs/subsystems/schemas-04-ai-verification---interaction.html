@@ -35,13 +35,13 @@
 </div>
 <h1 id="chapter-4-ai-verification-interaction">Chapter 4: AI Verification & Interaction</h1>
 <p>
-Welcome to Chapter 4! In the previous chapter, <a href="03<em>shell</em><em>_system</em>integration.md">Shell & System Integration</a>, we learned how to make our system execute "dumb" commands—like running a script or starting a server.
+Welcome to Chapter 4! In the previous chapter, <a href="schemas-03-shell---system-integration.html">Shell & System Integration</a>, we learned how to make our system execute "dumb" commands—like running a script or starting a server.
 </p>
 <p>
 But what if you need intelligence? What if you want the system to <strong>think</strong> before it acts?
 </p>
 <p>
-This chapter introduces <strong>AI Verification & Interaction</strong>. We will explore the %%INLINE<em>0%% and %%INLINE</em>1%%. These allow you to pause the automation pipeline and consult a Large Language Model (LLM) to summarize data, generate text, or verify safety.
+This chapter introduces <strong>AI Verification & Interaction</strong>. We will explore the <code>PromptHook</code> and <code>AgentHook</code>. These allow you to pause the automation pipeline and consult a Large Language Model (LLM) to summarize data, generate text, or verify safety.
 </p>
 <h2 id="the-problem-is-this-actually-correct">The Problem: "Is this actually correct?"</h2>
 <p>
@@ -49,8 +49,6 @@ Imagine you have a hook that runs whenever a file is saved.
 </p>
 <ol>
 <li><strong>Chapter 3 approach:</strong> You run a "linter" command. It checks for missing semicolons.</li>
-</ol>
-<ol>
 <li><strong>The limitation:</strong> The linter cannot tell you if the code logic makes sense, or if you accidentally pasted your password into the file.</li>
 </ol>
 <p>
@@ -62,11 +60,7 @@ We need a way to inject a "Brain" into the process. We need a Supervisor.
 </p>
 <ol>
 <li><strong>Read</strong> the code.</li>
-</ol>
-<ol>
 <li><strong>Analyze</strong> it for security flaws.</li>
-</ol>
-<ol>
 <li><strong>Report</strong> its findings to us.</li>
 </ol>
 <h2 id="concept-1-the-inline-2-the-consultant">Concept 1: The <code>PromptHook</code> (The Consultant)</h2>
@@ -90,15 +84,9 @@ Here is how we define a prompt hook in our settings.
 <strong>Explanation:</strong>
 </p>
 <ol>
-<li><strong>%%INLINE<em>4%%</strong>: Must be %%INLINE</em>5%%. This tells the system to wake up the LLM, not the shell.</li>
-</ol>
-<ol>
+<li><strong><code>type</code></strong>: Must be <code>"prompt"</code>. This tells the system to wake up the LLM, not the shell.</li>
 <li><strong><code>prompt</code></strong>: This is the message you send to the AI.</li>
-</ol>
-<ol>
 <li><strong><code>$ARGUMENTS</code></strong>: This is a magic placeholder. When the hook runs, the system replaces this with the actual data (like the file content or tool output).</li>
-</ol>
-<ol>
 <li><strong><code>model</code></strong>: (Optional) You can specify which brain to use. Maybe you want a "smarter" model for security checks.</li>
 </ol>
 <h2 id="concept-2-the-inline-9-the-verifier">Concept 2: The <code>AgentHook</code> (The Verifier)</h2>
@@ -118,7 +106,7 @@ Think of it like a Security Guard. It doesn't just chat; it is looking to pass o
 <strong>Key Differences:</strong>
 </p>
 <ul>
-<li><strong>Purpose:</strong> While a %%INLINE<em>11%% is usually for generating text (summaries, commit messages), an %%INLINE</em>12%% is for checking work.</li>
+<li><strong>Purpose:</strong> While a <code>prompt</code> is usually for generating text (summaries, commit messages), an <code>agent</code> is for checking work.</li>
 <li><strong>Timeouts:</strong> Agent tasks might involve more "thinking" or multiple steps internally, so they often have longer timeouts.</li>
 </ul>
 <h2 id="internal-implementation-under-the-hood">Internal Implementation: Under the Hood</h2>
@@ -142,11 +130,7 @@ When a tool finishes, the system grabs the output and feeds it into your prompt.
     App-&gt;&gt;App: Displays AI response to user</div></div>
 <ol>
 <li><strong>Substitution:</strong> The system injects the real-world data into your prompt template.</li>
-</ol>
-<ol>
 <li><strong>Dispatch:</strong> It uses the configured <code>model</code> string to select the correct API (e.g., OpenAI, Anthropic).</li>
-</ol>
-<ol>
 <li><strong>Streaming:</strong> The response is usually streamed back to the user's interface in real-time.</li>
 </ol>
 <h3 id="code-deep-dive">Code Deep Dive</h3>
@@ -190,7 +174,7 @@ const AgentHookSchema = z.object({
 <strong>Explanation:</strong>
 </p>
 <ul>
-<li>%%INLINE<em>17%%: Must be %%INLINE</em>18%%.</li>
+<li><code>type</code>: Must be <code>"agent"</code>.</li>
 <li><code>timeout</code>: While commands have timeouts to prevent hanging, Agents have timeouts to prevent over-spending or infinite thinking loops.</li>
 </ul>
 <h4 id="integrating-with-the-union">Integrating with the Union</h4>
@@ -211,7 +195,7 @@ export const HookCommandSchema = lazySchema(() =&gt; {
 <p>
 <strong>Explanation:</strong>
  
-Because we use a discriminated union, the validator is strict. If you set %%INLINE<em>21%%, you are allowed to use %%INLINE</em>22%%. If you set %%INLINE<em>23%%, you are allowed to use %%INLINE</em>24%%. You cannot mix them!
+Because we use a discriminated union, the validator is strict. If you set <code>type: "prompt"</code>, you are allowed to use <code>model</code>. If you set <code>type: "command"</code>, you are allowed to use <code>shell</code>. You cannot mix them!
 </p>
 <h2 id="summary">Summary</h2>
 <p>
@@ -219,28 +203,27 @@ In this chapter, we added <strong>Intelligence</strong> to our hooks.
 </p>
 <ol>
 <li>We use <strong><code>PromptHook</code></strong> to ask the AI to summarize, explain, or generate text based on tool outputs.</li>
-</ol>
-<ol>
 <li>We use <strong><code>AgentHook</code></strong> for verification tasks where the AI acts as a supervisor.</li>
-</ol>
-<ol>
 <li>We use the <strong><code>$ARGUMENTS</code></strong> placeholder to pass data from the application into the AI's prompt.</li>
 </ol>
 <p>
-We can now run commands (Chapter 3) and ask the AI questions (Chapter 4). But what if we only want to run a hook <em>sometimes</em>? What if we only want to review code when it's a %%INLINE<em>28%% file, but not a %%INLINE</em>29%% file?
+We can now run commands (Chapter 3) and ask the AI questions (Chapter 4). But what if we only want to run a hook <em>sometimes</em>? What if we only want to review code when it's a <code>.ts</code> file, but not a <code>.md</code> file?
 </p>
 <p>
 For that, we need logic.
 </p>
 <p>
-<a href="05<em>conditional</em>execution_logic.md">Next Chapter: Conditional Execution Logic</a>
+<a href="schemas-05-conditional-execution-logic.html">Next Chapter: Conditional Execution Logic</a>
 </p>
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="schemas.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="schemas-03-shell---system-integration.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">schemas/ index</div>
+          <div class="chapter-nav-title">03 Shell   System Integration</div>
+        </a><a class="chapter-nav-card next" href="schemas-05-conditional-execution-logic.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">05 Conditional Execution Logic</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

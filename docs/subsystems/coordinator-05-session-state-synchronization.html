@@ -38,7 +38,7 @@
 Welcome to the final chapter of our Coordinator tutorial!
 </p>
 <p>
-In the previous chapter, <a href="04<em>dynamic</em>context_injection.md">Dynamic Context Injection</a>, we learned how to build the "Manager's Handbook" (the context) at the exact moment the application starts. We learned how to inject tools based on the environment.
+In the previous chapter, <a href="coordinator-04-dynamic-context-injection.html">Dynamic Context Injection</a>, we learned how to build the "Manager's Handbook" (the context) at the exact moment the application starts. We learned how to inject tools based on the environment.
 </p>
 <p>
 But there is one final, critical challenge: <strong>Time Travel</strong>.
@@ -55,11 +55,7 @@ Imagine this scenario:
 </p>
 <ol>
 <li><strong>Monday</strong>: You start a session in <strong>Coordinator Mode</strong>. The AI acts as a Project Manager, spawning workers and creating plans.</li>
-</ol>
-<ol>
 <li><strong>Monday Night</strong>: You close your laptop. The environment variables (flags) that enabled Coordinator Mode are cleared from memory.</li>
-</ol>
-<ol>
 <li><strong>Tuesday</strong>: You run <code>claude resume</code> to finish the job.</li>
 </ol>
 <p>
@@ -81,8 +77,6 @@ We call this <code>matchSessionMode</code>. It compares two things:
 </p>
 <ol>
 <li><strong>The Persistent State</strong>: What mode was this session in when it was saved to disk? (The History).</li>
-</ol>
-<ol>
 <li><strong>The Current Environment</strong>: What mode is the application trying to start in right now? (The Runtime).</li>
 </ol>
 <p>
@@ -150,7 +144,7 @@ Next, we check if the current environment matches the saved session.
   }
 </code></pre>
 <p>
-<em>Explanation</em>: %%INLINE<em>7%% checks the current environment variable. If %%INLINE</em>8%%, no action is needed.
+<em>Explanation</em>: <code>isCoordinatorMode()</code> checks the current environment variable. If <code>current == saved</code>, no action is needed.
 </p>
 <h3 id="step-3-the-force-switch">Step 3: The "Force Switch"</h3>
 <p>
@@ -164,7 +158,7 @@ If there is a mismatch, we modify the global environment variable <code>process.
   }
 </code></pre>
 <p>
-<em>Explanation</em>: This is the critical line. By setting %%INLINE<em>10%%, any future calls to %%INLINE</em>11%% (like those used in <a href="04<em>dynamic</em>context<em>injection.md">Dynamic Context Injection</a>) will now return %%INLINE</em>12%%. We have successfully put the "Manager Uniform" back on.
+<em>Explanation</em>: This is the critical line. By setting <code>process.env</code>, any future calls to <code>isCoordinatorMode()</code> (like those used in <a href="coordinator-04-dynamic-context-injection.html">Dynamic Context Injection</a>) will now return <code>true</code>. We have successfully put the "Manager Uniform" back on.
 </p>
 <h3 id="step-4-reporting-the-switch">Step 4: Reporting the Switch</h3>
 <p>
@@ -195,19 +189,11 @@ Without this synchronization, the user would have to manually remember to add fl
 Congratulations! You have completed the <strong>Coordinator</strong> project tutorial. Let's recap what we've built:
 </p>
 <ol>
-<li><strong><a href="01<em>coordinator</em>role.md">Coordinator Role</a></strong>: We defined the "Project Manager" persona that delegates tasks instead of doing them alone.</li>
-</ol>
-<ol>
-<li><strong><a href="02<em>worker</em>lifecycle<em>management.md">Worker Lifecycle Management</a></strong>: We gave the Coordinator tools (%%INLINE</em>16%%) to Spawn, Continue, and Stop workers.</li>
-</ol>
-<ol>
-<li><strong><a href="03<em>task</em>notification<em>protocol.md">Task Notification Protocol</a></strong>: We created a standard way (%%INLINE</em>17%%) for workers to report back without confusing the AI.</li>
-</ol>
-<ol>
-<li><strong><a href="04<em>dynamic</em>context_injection.md">Dynamic Context Injection</a></strong>: We learned to assemble the "Employee Handbook" (tools and permissions) dynamically at runtime.</li>
-</ol>
-<ol>
-<li><strong><a href="05<em>session</em>state_synchronization.md">Session State Synchronization</a></strong>: We ensured that when a session resumes, the AI remembers its role.</li>
+<li><strong><a href="coordinator-01-coordinator-role.html">Coordinator Role</a></strong>: We defined the "Project Manager" persona that delegates tasks instead of doing them alone.</li>
+<li><strong><a href="coordinator-02-worker-lifecycle-management.html">Worker Lifecycle Management</a></strong>: We gave the Coordinator tools (<code>AgentTool</code>) to Spawn, Continue, and Stop workers.</li>
+<li><strong><a href="coordinator-03-task-notification-protocol.html">Task Notification Protocol</a></strong>: We created a standard way (<code>&lt;task-notification&gt;</code>) for workers to report back without confusing the AI.</li>
+<li><strong><a href="coordinator-04-dynamic-context-injection.html">Dynamic Context Injection</a></strong>: We learned to assemble the "Employee Handbook" (tools and permissions) dynamically at runtime.</li>
+<li><strong><a href="coordinator-05-session-state-synchronization.html">Session State Synchronization</a></strong>: We ensured that when a session resumes, the AI remembers its role.</li>
 </ol>
 <p>
 You now understand the architecture of an agentic system that can manage parallel work, maintain context hygiene, and persist across sessions.
@@ -218,9 +204,9 @@ You now understand the architecture of an agentic system that can manage paralle
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="coordinator.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="coordinator-04-dynamic-context-injection.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">coordinator/ index</div>
+          <div class="chapter-nav-title">04 Dynamic Context Injection</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

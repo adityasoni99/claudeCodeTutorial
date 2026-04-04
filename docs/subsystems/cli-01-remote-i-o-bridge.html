@@ -49,14 +49,8 @@ In this project, the <strong>Remote I/O Bridge</strong> is that walkie-talkie sy
 </p>
 <ol>
 <li><strong>Local User:</strong> You type a command in your terminal.</li>
-</ol>
-<ol>
 <li><strong>The Bridge:</strong> Captures your input, packages it, and shoots it over the internet.</li>
-</ol>
-<ol>
 <li><strong>Remote Brain:</strong> Processes the thought.</li>
-</ol>
-<ol>
 <li><strong>The Bridge:</strong> Catches the response and displays it on your screen.</li>
 </ol>
 <p>
@@ -71,11 +65,7 @@ Think of it as having three main jobs:
 </p>
 <ol>
 <li><strong>Listen:</strong> It creates a local stream to listen to the server.</li>
-</ol>
-<ol>
 <li><strong>Connect:</strong> It establishes a "Transport" (the actual internet connection).</li>
-</ol>
-<ol>
 <li><strong>Relay:</strong> It moves data back and forth.</li>
 </ol>
 <h3 id="how-to-use-it-high-level">How to Use It (High Level)</h3>
@@ -120,7 +110,7 @@ Now, let's look at the actual code in <code>remoteIO.ts</code> broken down into 
 </p>
 <h3 id="1-setting-up-the-stream">1. Setting up the Stream</h3>
 <p>
-When %%INLINE<em>4%% starts, it first creates a local "pipe" (%%INLINE</em>5%%) to handle incoming data. This is where data from the server will eventually flow.
+When <code>RemoteIO</code> starts, it first creates a local "pipe" (<code>PassThrough</code>) to handle incoming data. This is where data from the server will eventually flow.
 </p>
 <pre data-lang="typescript"><code>import { PassThrough } from 'stream';
 import { StructuredIO } from './structuredIO';
@@ -141,7 +131,7 @@ export class RemoteIO extends StructuredIO {
 </p>
 <h3 id="2-preparing-authentication">2. preparing Authentication</h3>
 <p>
-Before we can connect, we need permission. The bridge grabs a session token. We will cover the details of how this token is generated in <a href="02<em>authentication</em>flow.md">Authentication Flow</a>.
+Before we can connect, we need permission. The bridge grabs a session token. We will cover the details of how this token is generated in <a href="cli-02-authentication-flow.html">Authentication Flow</a>.
 </p>
 <pre data-lang="typescript"><code>// Inside constructor...
 const headers: Record&lt;string, string&gt; = {};
@@ -159,7 +149,7 @@ if (sessionToken) {
 </p>
 <h3 id="3-selecting-the-transport">3. Selecting the Transport</h3>
 <p>
-The bridge doesn't know <em>how</em> to send data (WebSocket? SSE? HTTP?), it just knows <em>what</em> to send. It delegates the "how" to a <strong>Transport</strong>. We will explore this in <a href="04<em>transport</em>strategies.md">Transport Strategies</a>.
+The bridge doesn't know <em>how</em> to send data (WebSocket? SSE? HTTP?), it just knows <em>what</em> to send. It delegates the "how" to a <strong>Transport</strong>. We will explore this in <a href="cli-04-transport-strategies.html">Transport Strategies</a>.
 </p>
 <pre data-lang="typescript"><code>// Inside constructor...
 import { getTransportForUrl } from './transports/transportUtils';
@@ -173,7 +163,7 @@ this.transport = getTransportForUrl(
 );
 </code></pre>
 <p>
-<em>Explanation:</em> %%INLINE<em>8%% asks for a driver (%%INLINE</em>9%%). It hands over the destination (%%INLINE<em>10%%) and the ID card (%%INLINE</em>11%%).
+<em>Explanation:</em> <code>RemoteIO</code> asks for a driver (<code>transport</code>). It hands over the destination (<code>url</code>) and the ID card (<code>headers</code>).
 </p>
 <h3 id="4-wiring-the-connection-the-relay">4. Wiring the Connection (The Relay)</h3>
 <p>
@@ -190,7 +180,7 @@ this.transport.setOnData((data: string) =&gt; {
 });
 </code></pre>
 <p>
-<em>Explanation:</em> This connects the "Walkie-Talkie" speaker. When a signal comes in (%%INLINE<em>12%%), we pipe it directly to the application (%%INLINE</em>13%%), allowing the rest of the CLI to read it.
+<em>Explanation:</em> This connects the "Walkie-Talkie" speaker. When a signal comes in (<code>setOnData</code>), we pipe it directly to the application (<code>inputStream.write</code>), allowing the rest of the CLI to read it.
 </p>
 <h3 id="5-sending-data-out">5. Sending Data Out</h3>
 <p>
@@ -207,7 +197,7 @@ When the user types something, we need to send it away. The <code>write</code> m
 }
 </code></pre>
 <p>
-<em>Explanation:</em> This is the microphone button. It takes a message object and pushes it down the wire. It also checks if we are using "CCR" (Command Control Response), a topic for <a href="05<em>ccr</em>state_synchronization.md">CCR State Synchronization</a>.
+<em>Explanation:</em> This is the microphone button. It takes a message object and pushes it down the wire. It also checks if we are using "CCR" (Command Control Response), a topic for <a href="cli-05-ccr-state-synchronization.html">CCR State Synchronization</a>.
 </p>
 <h3 id="6-keeping-it-alive">6. Keeping it Alive</h3>
 <p>
@@ -234,7 +224,7 @@ The <strong>Remote I/O Bridge</strong> is the lifeline of this application. It c
 Now that we have a connection established, how do we ensure that the person connecting is actually allowed to be there?
 </p>
 <p>
-<a href="02<em>authentication</em>flow.md">Next Chapter: Authentication Flow</a>
+<a href="cli-02-authentication-flow.html">Next Chapter: Authentication Flow</a>
 </p>
 <hr>
 <p>
@@ -242,6 +232,9 @@ Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
 </p><div class="chapter-nav"><a class="chapter-nav-card prev" href="cli.html">
           <div class="chapter-nav-label">← Previous</div>
           <div class="chapter-nav-title">cli/ index</div>
+        </a><a class="chapter-nav-card next" href="cli-02-authentication-flow.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">02 Authentication Flow</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

@@ -38,7 +38,7 @@
 </div>
 <h1 id="chapter-18-computer-use">Chapter 18: Computer Use</h1>
 <p>
-In the previous <a href="17<em>unique</em>features.md">Unique Features</a> chapter, we explored special modes like "Auto-Dream" and "Ultraplan" that make the AI smarter.
+In the previous <a href="17-unique-features.html">Unique Features</a> chapter, we explored special modes like "Auto-Dream" and "Ultraplan" that make the AI smarter.
 </p>
 <p>
 But all those features rely on text. The AI reads text files and writes text commands.
@@ -68,17 +68,9 @@ To do this, the AI must:
 </p>
 <ol>
 <li><strong>See:</strong> Take a screenshot to find the Safari icon.</li>
-</ol>
-<ol>
 <li><strong>Move:</strong> Calculate the X,Y coordinates of the icon and move the mouse.</li>
-</ol>
-<ol>
 <li><strong>Click:</strong> Simulate a mouse click.</li>
-</ol>
-<ol>
 <li><strong>Type:</strong> Type the URL into the address bar.</li>
-</ol>
-<ol>
 <li><strong>Verify:</strong> Take another screenshot to ensure the page loaded.</li>
 </ol>
 <p>
@@ -93,11 +85,7 @@ It works in a "Stop-Motion" animation style:
 </p>
 <ol>
 <li>Take a picture.</li>
-</ol>
-<ol>
 <li>Analyze the picture.</li>
-</ol>
-<ol>
 <li>Decide the next move.</li>
 </ol>
 <h3 id="2-coordinate-system-the-map">2. Coordinate System (The Map)</h3>
@@ -120,14 +108,14 @@ We break down complex human actions into tiny atomic steps:
 </ul>
 <h2 id="how-to-use-computer-use">How to Use Computer Use</h2>
 <p>
-This feature is currently experimental and often hidden behind <a href="13<em>feature</em>gating.md">Feature Gating</a>.
+This feature is currently experimental and often hidden behind <a href="13-feature-gating.html">Feature Gating</a>.
 </p>
 <p>
-When enabled, the <a href="03<em>query</em>engine.md">Query Engine</a> gains access to a tool usually named <code>computer</code>.
+When enabled, the <a href="03-query-engine.html">Query Engine</a> gains access to a tool usually named <code>computer</code>.
 </p>
 <h3 id="the-input-structure">The Input Structure</h3>
 <p>
-The AI sends a command that includes an %%INLINE<em>7%% and sometimes %%INLINE</em>8%% or <code>text</code>.
+The AI sends a command that includes an <code>action</code> and sometimes <code>coordinates</code> or <code>text</code>.
 </p>
 <p>
 <strong>Example 1: Taking a look</strong>
@@ -161,17 +149,9 @@ The implementation relies on a "Loop of Vision." The AI is blind until it asks f
 </p>
 <ol>
 <li><strong>Goal:</strong> User says "Click the Apple menu."</li>
-</ol>
-<ol>
 <li><strong>Vision:</strong> AI calls <code>screenshot</code>.</li>
-</ol>
-<ol>
 <li><strong>Analysis:</strong> AI receives the image. It uses its vision capabilities to find the Apple logo at <code>[20, 10]</code>.</li>
-</ol>
-<ol>
-<li><strong>Action:</strong> AI calls %%INLINE<em>12%% to %%INLINE</em>13%%.</li>
-</ol>
-<ol>
+<li><strong>Action:</strong> AI calls <code>mouse_move</code> to <code>[20, 10]</code>.</li>
 <li><strong>Action:</strong> AI calls <code>left_click</code>.</li>
 </ol>
 <p>
@@ -222,7 +202,7 @@ export const ComputerTool = buildTool({
 });
 </code></pre>
 <p>
-<em>Explanation: We register the tool just like the <a href="06_bashtool.md">BashTool</a>, but the inputs are specific to UI control.</em>
+<em>Explanation: We register the tool just like the <a href="06-bashtool.html">BashTool</a>, but the inputs are specific to UI control.</em>
 </p>
 <h4 id="2-executing-actions-the-bridge">2. Executing Actions (The Bridge)</h4>
 <p>
@@ -244,7 +224,7 @@ async function executeComputerAction(action, coords) {
 }
 </code></pre>
 <p>
-<em>Explanation: We rely on external utilities. %%INLINE<em>16%% is a standard Mac command. For mouse movement, we often use Python libraries like %%INLINE</em>17%% or Swift commands.</em>
+<em>Explanation: We rely on external utilities. <code>screencapture</code> is a standard Mac command. For mouse movement, we often use Python libraries like <code>pyautogui</code> or Swift commands.</em>
 </p>
 <h4 id="3-handling-the-image">3. Handling the Image</h4>
 <p>
@@ -275,24 +255,20 @@ async function getScreenshotData() {
 Giving an AI control over your mouse is inherently risky. What if it tries to drag your "Documents" folder into the Trash?
 </p>
 <p>
-We rely heavily on the <strong><a href="08<em>permission</em><em>_security</em>system.md">Permission & Security System</a></strong>.
+We rely heavily on the <strong><a href="08-permission---security-system.html">Permission & Security System</a></strong>.
 </p>
 <ol>
 <li><strong>High-Risk Flag:</strong> The <code>ComputerTool</code> is marked as "High Risk."</li>
-</ol>
-<ol>
 <li><strong>Confirmation:</strong> The user typically has to approve the session start.</li>
-</ol>
-<ol>
-<li><strong>Interrupt:</strong> The user can shake the mouse or press a key combo to kill the process immediately (using the Abort Controller logic we learned in <a href="16_teammates.md">Teammates</a>).</li>
+<li><strong>Interrupt:</strong> The user can shake the mouse or press a key combo to kill the process immediately (using the Abort Controller logic we learned in <a href="16-teammates.html">Teammates</a>).</li>
 </ol>
 <h2 id="why-is-this-important-for-later">Why is this important for later?</h2>
 <p>
 Computer Use is the most resource-intensive feature in the entire application.
 </p>
 <ul>
-<li><strong><a href="19<em>cost</em>tracking.md">Cost Tracking</a>:</strong> Sending high-definition screenshots to an AI model costs significantly more "tokens" than sending text. In the next chapter, we will see how we track these soaring costs to prevent "Bill Shock."</li>
-<li><strong><a href="14<em>model</em>context<em>protocol</em><em>mcp</em>.md">Model Context Protocol (MCP)</a>:</strong> Eventually, Computer Use can be exposed as an MCP server, allowing <em>other</em> AI agents to control your screen remotely.</li>
+<li><strong><a href="19-cost-tracking.html">Cost Tracking</a>:</strong> Sending high-definition screenshots to an AI model costs significantly more "tokens" than sending text. In the next chapter, we will see how we track these soaring costs to prevent "Bill Shock."</li>
+<li><strong><a href="14-model-context-protocol--mcp-.html">Model Context Protocol (MCP)</a>:</strong> Eventually, Computer Use can be exposed as an MCP server, allowing <em>other</em> AI agents to control your screen remotely.</li>
 </ul>
 <h2 id="conclusion">Conclusion</h2>
 <p>
@@ -302,7 +278,7 @@ You have learned that <strong>Computer Use</strong> gives <code>claudeCode</code
 However, all these screenshots and complex actions come with a price. How do we keep track of how much money we are spending on API fees?
 </p>
 <p>
-<a href="19<em>cost</em>tracking.md">Next Chapter: Cost Tracking</a>
+<a href="19-cost-tracking.html">Next Chapter: Cost Tracking</a>
 </p>
 <hr>
 <p>

@@ -44,6 +44,8 @@ CHAPTERS = [
     ("19_cost_tracking.md",              "Cost Tracking",                "core"),
 ]
 
+CHAPTER_SET = {name for name, _, _ in CHAPTERS}
+
 # All subsystem folders (name, display title, description, icon)
 SUBSYSTEMS = [
     ("state",       "State",       "Core state definition, selectors, teammate view, React integration, and sync",  "🗂"),
@@ -83,7 +85,48 @@ def slugify(text: str) -> str:
     text = re.sub(r'[^\w\s-]', '', text.lower())
     return re.sub(r'[\s_-]+', '-', text).strip('-')
 
-def md_to_html(md: str) -> tuple[str, list[tuple[str,str]]]:
+def rewrite_md_link(href: str, page_kind: str, subsystem_folder: str = '') -> str:
+  """Rewrite markdown links to generated HTML routes."""
+  if not href:
+    return href
+
+  if re.match(r'^(?:https?:|mailto:|tel:|javascript:|#)', href):
+    return href
+
+  path, sep, anchor = href.partition('#')
+  norm = path.strip()
+  target = norm
+
+  if norm.endswith('.md'):
+    base = Path(norm).name
+    stem = Path(base).stem
+
+    if base in CHAPTER_SET:
+      target = f"chapters/{chapter_slug(base)}.html"
+    elif base == 'index.md':
+      if page_kind == 'subsystems' and subsystem_folder:
+        target = f"subsystems/{subsystem_folder}.html"
+      else:
+        target = 'index.html'
+    elif page_kind == 'subsystems' and subsystem_folder and (REPO_ROOT / subsystem_folder / base).exists():
+      target = f"subsystems/{subsystem_folder}-{stem.replace('_', '-')}.html"
+    else:
+      target = norm[:-3] + '.html'
+
+  if page_kind == 'chapters':
+    if target.startswith('chapters/'):
+      target = target[len('chapters/'):]
+    elif target.startswith('subsystems/') or target == 'index.html':
+      target = '../' + target
+  elif page_kind == 'subsystems':
+    if target.startswith('subsystems/'):
+      target = target[len('subsystems/'):]
+    elif target.startswith('chapters/') or target == 'index.html':
+      target = '../' + target
+
+  return f"{target}{sep}{anchor}" if sep else target
+
+def md_to_html(md: str, link_transform=None) -> tuple[str, list[tuple[str,str]]]:
     """
     Convert markdown to HTML, handling Mermaid fences specially.
     Returns (html, toc_entries) where toc_entries = [(level, text, anchor), ...]
@@ -138,16 +181,30 @@ def md_to_html(md: str) -> tuple[str, list[tuple[str,str]]]:
         nonlocal in_p
         if in_p: html_parts.append('</p>'); in_p = False
 
+    def fmt_emphasis(text: str) -> str:
+      text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
+      text = re.sub(r'__(.+?)__', r'<strong>\1</strong>', text)
+      text = re.sub(r'(?<!\*)\*(?!\s)(.+?)(?<!\s)\*(?!\*)', r'<em>\1</em>', text)
+      text = re.sub(r'(?<!\w)_(?!\s)(.+?)(?<!\s)_(?!\w)', r'<em>\1</em>', text)
+      return text
+
     def inline_fmt(text: str) -> str:
-        # bold
-        text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
-        text = re.sub(r'__(.+?)__', r'<strong>\1</strong>', text)
-        # italic
-        text = re.sub(r'\*(.+?)\*', r'<em>\1</em>', text)
-        text = re.sub(r'_(.+?)_', r'<em>\1</em>', text)
-        # links
-        text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2">\1</a>', text)
-        return text
+      links: list[str] = []
+
+      def protect_link(m):
+        label = m.group(1)
+        href = m.group(2).strip()
+        href = link_transform(href) if link_transform else href
+        idx = len(links)
+        links.append(f'<a href="{href}">{fmt_emphasis(label)}</a>')
+        return f"%%LINK_{idx}%%"
+
+      text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', protect_link, text)
+      text = fmt_emphasis(text)
+
+      for idx, link_html in enumerate(links):
+        text = text.replace(f"%%LINK_{idx}%%", link_html)
+      return text
 
     i = 0
     while i < len(lines):
@@ -197,20 +254,32 @@ def md_to_html(md: str) -> tuple[str, list[tuple[str,str]]]:
             i += 1; continue
 
         # Unordered list
-        m_ul = re.match(r'^(\s*)[*\-+]\s+(.+)', line)
+        m_ul = re.match(r'^(\s*)[-*+]\s+(.+)', line)
         if m_ul:
-            flush_table(); flush_p()
-            if not in_ul: html_parts.append('<ul>'); in_ul = True
-            html_parts.append(f'<li>{inline_fmt(m_ul.group(2))}</li>')
-            i += 1; continue
+          flush_table(); flush_p()
+          if in_ol:
+            html_parts.append('</ol>')
+            in_ol = False
+          if not in_ul:
+            html_parts.append('<ul>')
+            in_ul = True
+          html_parts.append(f'<li>{inline_fmt(m_ul.group(2))}</li>')
+          i += 1
+          continue
 
         # Ordered list
         m_ol = re.match(r'^\d+\.\s+(.+)', line)
         if m_ol:
-            flush_list(); flush_table(); flush_p()
-            if not in_ol: html_parts.append('<ol>'); in_ol = True
-            html_parts.append(f'<li>{inline_fmt(m_ol.group(1))}</li>')
-            i += 1; continue
+          flush_table(); flush_p()
+          if in_ul:
+            html_parts.append('</ul>')
+            in_ul = False
+          if not in_ol:
+            html_parts.append('<ol>')
+            in_ol = True
+          html_parts.append(f'<li>{inline_fmt(m_ol.group(1))}</li>')
+          i += 1
+          continue
 
         # Table row
         if '|' in line and re.match(r'^\s*\|', line):
@@ -387,6 +456,18 @@ window.addEventListener('scroll', () => {{
 def chapter_slug(filename: str) -> str:
     return filename.replace('.md', '').replace('_', '-')
 
+def extract_index_overview_md(md: str) -> str:
+  """Keep only the intro + mermaid part of index.md before the chapters section."""
+  lines = md.splitlines()
+  cut = len(lines)
+  for i, line in enumerate(lines):
+    if re.match(r'^##\s+chapters\s*$', line.strip(), re.IGNORECASE):
+      cut = i
+      break
+
+  overview = '\n'.join(lines[:cut]).strip()
+  return overview
+
 def build_chapters(src_root: Path, out_dir: Path):
     chapters_dir = out_dir / 'chapters'
     chapters_dir.mkdir(exist_ok=True)
@@ -398,7 +479,10 @@ def build_chapters(src_root: Path, out_dir: Path):
             continue
 
         md = md_path.read_text(encoding='utf-8')
-        body_html, toc = md_to_html(md)
+        body_html, toc = md_to_html(
+          md,
+          link_transform=lambda href: rewrite_md_link(href, page_kind='chapters')
+        )
 
         # prev / next
         prev_link = prev_title = next_link = next_title = ''
@@ -482,7 +566,10 @@ def build_subsystems(src_root: Path, out_dir: Path):
 
         # Render index.md if present
         if index_md.exists():
-            idx_html, toc = md_to_html(index_md.read_text(encoding='utf-8'))
+            idx_html, toc = md_to_html(
+              index_md.read_text(encoding='utf-8'),
+              link_transform=lambda href, f=folder: rewrite_md_link(href, page_kind='subsystems', subsystem_folder=f)
+            )
             page_body_parts.append(idx_html)
         else:
             toc = []
@@ -529,7 +616,7 @@ def build_subsystems(src_root: Path, out_dir: Path):
         print(f"  ✓ subsystems/{folder}.html")
 
         # Now build individual pages for each non-index md file
-        for mf in other_mds:
+        for idx, mf in enumerate(other_mds):
             slug = mf.stem.replace('_', '-')
             try:
                 md_content = mf.read_text(encoding='utf-8')
@@ -537,11 +624,30 @@ def build_subsystems(src_root: Path, out_dir: Path):
                 print(f"    [ERR] {mf}: {e}")
                 continue
 
-            file_html, file_toc = md_to_html(md_content)
+            file_html, file_toc = md_to_html(
+              md_content,
+              link_transform=lambda href, f=folder: rewrite_md_link(href, page_kind='subsystems', subsystem_folder=f)
+            )
 
             # Extract title from first h1
             m = re.search(r'^#\s+(.+)', md_content, re.MULTILINE)
             file_title = m.group(1).strip() if m else mf.stem.replace('_', ' ').title()
+
+            prev_link = prev_title = next_link = next_title = ''
+            if idx == 0:
+              prev_link = f'{folder}.html'
+              prev_title = f'{folder}/ index'
+            else:
+              prev_file = other_mds[idx - 1]
+              prev_slug = prev_file.stem.replace('_', '-')
+              prev_link = f'{folder}-{prev_slug}.html'
+              prev_title = prev_file.stem.replace('_', ' ').replace('-', ' ').title()
+
+            if idx < len(other_mds) - 1:
+              next_file = other_mds[idx + 1]
+              next_slug = next_file.stem.replace('_', '-')
+              next_link = f'{folder}-{next_slug}.html'
+              next_title = next_file.stem.replace('_', ' ').replace('-', ' ').title()
 
             sub_page = html_page(
                 title=f'{file_title} — {folder}/',
@@ -556,8 +662,10 @@ def build_subsystems(src_root: Path, out_dir: Path):
                 nav_tag='SUBSYSTEM',
                 nav_tag_class='tag-advanced',
                 depth=1,
-                prev_link=f'{folder}.html',
-                prev_title=f'{folder}/ index',
+                prev_link=prev_link,
+                prev_title=prev_title,
+                next_link=next_link,
+                next_title=next_title,
                 toc=file_toc,
             )
             sub_out = sub_dir / f'{folder}-{slug}.html'
@@ -569,6 +677,27 @@ def build_subsystems(src_root: Path, out_dir: Path):
 
 def build_index(src_root: Path, out_dir: Path):
     """Generate the beautiful landing page index.html"""
+
+    index_md_html = ''
+    index_md_path = src_root / 'index.md'
+    if index_md_path.exists():
+        index_md_text = index_md_path.read_text(encoding='utf-8')
+        overview_md = extract_index_overview_md(index_md_text)
+        if overview_md:
+            overview_html, _ = md_to_html(
+                overview_md,
+                link_transform=lambda href: rewrite_md_link(href, page_kind='root')
+            )
+            # Avoid repeating the page title from imported markdown in the landing overview.
+            overview_html = re.sub(r'^\s*<h1[^>]*>.*?</h1>\s*', '', overview_html, count=1, flags=re.DOTALL)
+            index_md_html = f'''
+<section class="section" id="overview">
+  <div class="container">
+    <div class="sec-label">Repository Overview</div>
+    <h2 class="sec-h2">Intro and Architecture Diagram</h2>
+    <div class="prose">{overview_html}</div>
+  </div>
+</section>'''
 
     # Chapter cards
     chapter_cards = ''
@@ -943,6 +1072,8 @@ footer a:hover {{ color: var(--amber); }}
   </div>
 </div>
 
+{index_md_html}
+
 <!-- CHAPTERS -->
 <section class="section" id="chapters">
   <div class="container">
@@ -993,7 +1124,9 @@ footer a:hover {{ color: var(--amber); }}
   <span>Built with <a href="https://github.com/adityasoni99/Code-IQ" target="_blank">Code IQ</a> · {datetime.now().year}</span>
 </footer>
 
+<script src="{MERMAID_CDN}"></script>
 <script>
+mermaid.initialize({{ startOnLoad: true, theme: 'dark' }});
 window.addEventListener('scroll', () => {{
   const bar = document.getElementById('rb');
   if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';

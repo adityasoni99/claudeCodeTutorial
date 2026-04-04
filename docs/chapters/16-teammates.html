@@ -38,7 +38,7 @@
 </div>
 <h1 id="chapter-16-teammates">Chapter 16: Teammates</h1>
 <p>
-In the previous <a href="15_agenttool.md">AgentTool</a> chapter, we learned how to spawn "Sub-Agents" to handle complex tasks. However, those sub-agents were blocking. While the sub-agent was thinking, the main application was frozen, waiting for the result.
+In the previous <a href="15-agenttool.html">AgentTool</a> chapter, we learned how to spawn "Sub-Agents" to handle complex tasks. However, those sub-agents were blocking. While the sub-agent was thinking, the main application was frozen, waiting for the result.
 </p>
 <p>
 But what if you want to keep working while an AI helper does something else in the background?
@@ -56,17 +56,9 @@ Imagine you are fixing a bug. You need to know how a specific API works, but you
 </p>
 <ol>
 <li><strong>You:</strong> "Spawn a researcher to find out how <code>React.useId</code> works."</li>
-</ol>
-<ol>
 <li><strong>System:</strong> Creates a "Researcher" teammate.</li>
-</ol>
-<ol>
 <li><strong>You:</strong> Continue typing code in the main prompt.</li>
-</ol>
-<ol>
 <li><strong>Researcher (Background):</strong> Googles, reads docs, summarizes.</li>
-</ol>
-<ol>
 <li><strong>Researcher:</strong> Pings you 2 minutes later: "Here is how <code>useId</code> works..."</li>
 </ol>
 <p>
@@ -123,17 +115,9 @@ Spawning a teammate is a delicate operation. We have to create a new "virtual th
 </p>
 <ol>
 <li><strong>Request:</strong> The user asks for help.</li>
-</ol>
-<ol>
 <li><strong>Identity:</strong> We generate a unique ID (<code>Name@Team</code>).</li>
-</ol>
-<ol>
 <li><strong>Context:</strong> We create a dedicated memory space (Context) for this agent.</li>
-</ol>
-<ol>
-<li><strong>Registration:</strong> We tell <a href="01<em>state</em>management.md">State Management</a> "Hey, there's a new active agent!" so the UI can show a spinner.</li>
-</ol>
-<ol>
+<li><strong>Registration:</strong> We tell <a href="01-state-management.html">State Management</a> "Hey, there's a new active agent!" so the UI can show a spinner.</li>
 <li><strong>Execution:</strong> The agent starts its own loop (Think -> Act -> Observe) independently.</li>
 </ol>
 <p>
@@ -205,7 +189,7 @@ const teammateContext = createTeammateContext({
 </p>
 <h4 id="3-registering-with-state">3. Registering with State</h4>
 <p>
-We need the <a href="02<em>ink</em>ui_framework.md">Ink UI Framework</a> to display the teammate's status. We do this by adding a "Task" to the global state.
+We need the <a href="02-ink-ui-framework.html">Ink UI Framework</a> to display the teammate's status. We do this by adding a "Task" to the global state.
 </p>
 <pre data-lang="typescript"><code>// utils/swarm/spawnInProcess.ts
 
@@ -258,8 +242,8 @@ export function killInProcessTeammate(taskId, setAppState) {
 Teammates represent the shift from "Chatbot" to "Organization."
 </p>
 <ul>
-<li><strong><a href="17<em>unique</em>features.md">Unique Features</a>:</strong> The ability to run concurrent, stateful agents is one of the standout features of <code>claudeCode</code>.</li>
-<li><strong><a href="19<em>cost</em>tracking.md">Cost Tracking</a>:</strong> Running multiple agents uses more tokens. We track costs per-teammate to see who is spending the most money.</li>
+<li><strong><a href="17-unique-features.html">Unique Features</a>:</strong> The ability to run concurrent, stateful agents is one of the standout features of <code>claudeCode</code>.</li>
+<li><strong><a href="19-cost-tracking.html">Cost Tracking</a>:</strong> Running multiple agents uses more tokens. We track costs per-teammate to see who is spending the most money.</li>
 </ul>
 <h2 id="conclusion">Conclusion</h2>
 <p>
@@ -269,7 +253,7 @@ You have learned that <strong>Teammates</strong> are background workers that all
 Now that we have built the entire system—from State Management to Teammates—let's review what makes this entire project special compared to other tools.
 </p>
 <p>
-<a href="17<em>unique</em>features.md">Next Chapter: Unique Features</a>
+<a href="17-unique-features.html">Next Chapter: Unique Features</a>
 </p>
 <hr>
 <p>

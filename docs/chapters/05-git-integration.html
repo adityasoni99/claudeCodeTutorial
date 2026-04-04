@@ -38,7 +38,7 @@
 </div>
 <h1 id="chapter-5-git-integration">Chapter 5: Git Integration</h1>
 <p>
-In the previous <a href="04<em>fileedittool.md">FileEditTool</a> chapter, we gave %%INLINE</em>0%% the "hands" to modify your code files. But anyone who has written code knows that saving a file is only half the battle.
+In the previous <a href="04-fileedittool.html">FileEditTool</a> chapter, we gave <code>claudeCode</code> the "hands" to modify your code files. But anyone who has written code knows that saving a file is only half the battle.
 </p>
 <p>
 The other half is <strong>Version Control</strong>.
@@ -58,11 +58,7 @@ The <strong>Git Integration</strong> module is a set of utilities that answers t
 </p>
 <ol>
 <li><strong>"Where am I?"</strong> (Are we inside a Git repo?)</li>
-</ol>
-<ol>
 <li><strong>"What changed?"</strong> (Which files did the AI just edit?)</li>
-</ol>
-<ol>
 <li><strong>"Is it safe?"</strong> (Are there uncommitted changes we might overwrite?)</li>
 </ol>
 <h3 id="the-central-use-case-the-context-check">The Central Use Case: "The Context Check"</h3>
@@ -74,12 +70,8 @@ To answer this, the application needs to:
 </p>
 <ol>
 <li>Find the root of your project (where the <code>.git</code> folder lives).</li>
-</ol>
-<ol>
 <li>Run a "diff" to see what looks different from the last commit.</li>
-</ol>
-<ol>
-<li>Return that list to the <a href="03<em>query</em>engine.md">Query Engine</a>.</li>
+<li>Return that list to the <a href="03-query-engine.html">Query Engine</a>.</li>
 </ol>
 <p>
 Without this integration, the AI is blind to the project's history.
@@ -90,7 +82,7 @@ Without this integration, the AI is blind to the project's history.
 Every Git project has a "root" folder. This is where the hidden <code>.git</code> directory lives.
 </p>
 <ul>
-<li>If you are in %%INLINE<em>5%%, the root is %%INLINE</em>6%%.</li>
+<li>If you are in <code>src/utils/</code>, the root is <code>../../</code>.</li>
 <li>We must find this root before running any commands, or Git will get confused.</li>
 </ul>
 <h3 id="2-worktrees-the-virtual-window">2. Worktrees (The Virtual Window)</h3>
@@ -105,7 +97,7 @@ Our integration handles this automatically so the AI doesn't need to know the di
 <li><strong>Dirty:</strong> You have modified files that haven't been committed yet.</li>
 </ul>
 <p>
-Knowing this is crucial for the <a href="10<em>auto</em>mode_classifier.md">Auto-Mode Classifier</a> to decide if a task is "finished."
+Knowing this is crucial for the <a href="10-auto-mode-classifier.html">Auto-Mode Classifier</a> to decide if a task is "finished."
 </p>
 <h2 id="how-to-use-git-utilities">How to Use Git Utilities</h2>
 <p>
@@ -129,7 +121,7 @@ if (!root) {
 }
 </code></pre>
 <p>
-<em>Explanation: %%INLINE<em>8%% looks at the current folder. If it doesn't see %%INLINE</em>9%%, it checks the parent folder, and so on, until it hits the top of the drive.</em>
+<em>Explanation: <code>findGitRoot</code> looks at the current folder. If it doesn't see <code>.git</code>, it checks the parent folder, and so on, until it hits the top of the drive.</em>
 </p>
 <h3 id="checking-for-changes">Checking for Changes</h3>
 <p>
@@ -209,7 +201,7 @@ const findGitRootImpl = (startPath) =&gt; {
 };
 </code></pre>
 <p>
-<em>Explanation: We use a %%INLINE<em>12%% loop to climb up the directory tree. We check for %%INLINE</em>13%% at every step. We use <code>memoization</code> (caching) in the real code so we don't scan the hard drive every single time.</em>
+<em>Explanation: We use a <code>while</code> loop to climb up the directory tree. We check for <code>.git</code> at every step. We use <code>memoization</code> (caching) in the real code so we don't scan the hard drive every single time.</em>
 </p>
 <h4 id="2-resolving-worktrees">2. Resolving Worktrees</h4>
 <p>
@@ -262,9 +254,9 @@ export const getChangedFiles = async () =&gt; {
 This chapter provides the "Project Awareness" needed for advanced features:
 </p>
 <ul>
-<li><strong><a href="06<em>bashtool.md">BashTool</a>:</strong> While Git Integration handles <em>status</em> checks, %%INLINE</em>17%% is what allows the AI to actually run %%INLINE<em>18%% or %%INLINE</em>19%%.</li>
-<li><strong><a href="08<em>permission</em><em>_security</em>system.md">Permission & Security System</a>:</strong> We use <code>findGitRoot</code> to limit the AI's access. We might say: "You can only edit files <em>inside</em> this Git repository."</li>
-<li><strong><a href="16_teammates.md">Teammates</a>:</strong> Teammates (other AI agents) use the git commit history to understand what you were working on yesterday.</li>
+<li><strong><a href="06-bashtool.html">BashTool</a>:</strong> While Git Integration handles <em>status</em> checks, <code>BashTool</code> is what allows the AI to actually run <code>git commit</code> or <code>git push</code>.</li>
+<li><strong><a href="08-permission---security-system.html">Permission & Security System</a>:</strong> We use <code>findGitRoot</code> to limit the AI's access. We might say: "You can only edit files <em>inside</em> this Git repository."</li>
+<li><strong><a href="16-teammates.html">Teammates</a>:</strong> Teammates (other AI agents) use the git commit history to understand what you were working on yesterday.</li>
 </ul>
 <h2 id="conclusion">Conclusion</h2>
 <p>
@@ -274,7 +266,7 @@ You have learned that <strong>Git Integration</strong> is the compass of <code>c
 Now that the AI can read the project status, what if it needs to run other commands? Like listing directories, installing packages, or running tests?
 </p>
 <p>
-<a href="06_bashtool.md">Next Chapter: BashTool</a>
+<a href="06-bashtool.html">Next Chapter: BashTool</a>
 </p>
 <hr>
 <p>

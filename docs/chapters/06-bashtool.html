@@ -38,7 +38,7 @@
 </div>
 <h1 id="chapter-6-bashtool">Chapter 6: BashTool</h1>
 <p>
-In the previous <a href="05<em>git</em>integration.md">Git Integration</a> chapter, we gave <code>claudeCode</code> the ability to understand the history of your project. It can look around and see what files have changed.
+In the previous <a href="05-git-integration.html">Git Integration</a> chapter, we gave <code>claudeCode</code> the ability to understand the history of your project. It can look around and see what files have changed.
 </p>
 <p>
 But seeing isn't enough. To be a true coding assistant, the AI needs to <strong>act</strong>. It needs to run tests, install packages, start servers, and move files.
@@ -51,7 +51,7 @@ Enter the <strong>BashTool</strong>.
 The <code>BashTool</code> is the application's ability to type into your terminal.
 </p>
 <p>
-If the <strong><a href="04_fileedittool.md">FileEditTool</a></strong> is the "Text Editor," the <strong>BashTool</strong> is the "Command Line." It allows the AI to execute shell commands just like a human developer would.
+If the <strong><a href="04-fileedittool.html">FileEditTool</a></strong> is the "Text Editor," the <strong>BashTool</strong> is the "Command Line." It allows the AI to execute shell commands just like a human developer would.
 </p>
 <h3 id="the-central-use-case-running-the-tests">The Central Use Case: "Running the Tests"</h3>
 <p>
@@ -59,20 +59,10 @@ Imagine you ask: <strong>"Run the tests and fix any errors."</strong>
 </p>
 <ol>
 <li>The AI writes code using the FileEditTool.</li>
-</ol>
-<ol>
 <li>Now it needs to verify the fix.</li>
-</ol>
-<ol>
 <li>The AI calls <strong>BashTool</strong> with the command <code>npm test</code>.</li>
-</ol>
-<ol>
 <li>The tool runs the command on your computer.</li>
-</ol>
-<ol>
 <li>The tool captures the output (e.g., "Tests Failed") and sends it back to the AI.</li>
-</ol>
-<ol>
 <li>The AI reads the error and tries again.</li>
 </ol>
 <p>
@@ -81,7 +71,7 @@ Without <code>BashTool</code>, the AI is just a text generator. With it, the AI 
 <h2 id="key-concepts">Key Concepts</h2>
 <h3 id="1-the-shell-session">1. The Shell Session</h3>
 <p>
-When you open a terminal, you are in a "Session." If you type %%INLINE<em>4%%, you stay in the %%INLINE</em>5%% folder for the next command.
+When you open a terminal, you are in a "Session." If you type <code>cd src</code>, you stay in the <code>src</code> folder for the next command.
  
 <code>BashTool</code> tries to maintain this continuity so the AI doesn't get lost.
 </p>
@@ -136,17 +126,9 @@ When the AI requests a command, we don't just blindly run it. We have to spawn a
 </p>
 <ol>
 <li><strong>Request:</strong> AI sends <code>npm test</code>.</li>
-</ol>
-<ol>
-<li><strong>Permission:</strong> (Crucial!) The app asks the user: "Allow this?" (More on this in <a href="07<em>shell</em>safety_checks.md">Shell Safety Checks</a>).</li>
-</ol>
-<ol>
+<li><strong>Permission:</strong> (Crucial!) The app asks the user: "Allow this?" (More on this in <a href="07-shell-safety-checks.html">Shell Safety Checks</a>).</li>
 <li><strong>Spawn:</strong> Node.js creates a new process on your OS.</li>
-</ol>
-<ol>
 <li><strong>Stream:</strong> As the test runs, text flows from the process to our application.</li>
-</ol>
-<ol>
 <li><strong>Result:</strong> When the process stops, we package the text and exit code back to the AI.</li>
 </ol>
 <p>
@@ -179,7 +161,7 @@ The implementation involves two parts: the <strong>Execution Logic</strong> (run
 </p>
 <h4 id="1-the-permission-request-ui">1. The Permission Request (UI)</h4>
 <p>
-Before running anything, we mount a React component to ask the user. This uses the <strong><a href="02<em>ink</em>ui_framework.md">Ink UI Framework</a></strong>.
+Before running anything, we mount a React component to ask the user. This uses the <strong><a href="02-ink-ui-framework.html">Ink UI Framework</a></strong>.
 </p>
 <pre data-lang="tsx"><code>// components/permissions/BashPermissionRequest.tsx (Simplified)
 
@@ -228,22 +210,22 @@ function runShellCommand(commandString) {
 }
 </code></pre>
 <p>
-<em>Explanation: We use %%INLINE<em>11%% with %%INLINE</em>12%%. We accumulate all the text into %%INLINE<em>13%%. When the process emits %%INLINE</em>14%%, we finish the job.</em>
+<em>Explanation: We use <code>spawn</code> with <code>{ shell: true }</code>. We accumulate all the text into <code>output</code>. When the process emits <code>close</code>, we finish the job.</em>
 </p>
 <h3 id="handling-long-running-commands">Handling Long-Running Commands</h3>
 <p>
 What if the user runs a server that never stops?
  
-The %%INLINE<em>15%% includes a <strong>timeout mechanism</strong>. If a command runs too long without output, or if the user presses %%INLINE</em>16%%, the tool sends a "kill signal" to the process to stop it cleanly.
+The <code>BashTool</code> includes a <strong>timeout mechanism</strong>. If a command runs too long without output, or if the user presses <code>Ctrl+C</code>, the tool sends a "kill signal" to the process to stop it cleanly.
 </p>
 <h2 id="why-is-this-important-for-later">Why is this important for later?</h2>
 <p>
 The BashTool is powerful, but power brings danger.
 </p>
 <ul>
-<li><strong><a href="07<em>shell</em>safety<em>checks.md">Shell Safety Checks</a>:</strong> We can't let the AI run %%INLINE</em>17%% by accident. The next chapter explains how we analyze commands <em>before</em> running them.</li>
-<li><strong><a href="10<em>auto</em>mode<em>classifier.md">Auto-Mode Classifier</a>:</strong> The classifier looks at the %%INLINE</em>18%% from the BashTool to decide if the AI completed its task successfully.</li>
-<li><strong><a href="18<em>computer</em>use.md">Computer Use</a>:</strong> Later, we will see how this concept expands beyond the terminal to controlling the mouse and keyboard.</li>
+<li><strong><a href="07-shell-safety-checks.html">Shell Safety Checks</a>:</strong> We can't let the AI run <code>rm -rf /</code> by accident. The next chapter explains how we analyze commands <em>before</em> running them.</li>
+<li><strong><a href="10-auto-mode-classifier.html">Auto-Mode Classifier</a>:</strong> The classifier looks at the <code>Exit Code</code> from the BashTool to decide if the AI completed its task successfully.</li>
+<li><strong><a href="18-computer-use.html">Computer Use</a>:</strong> Later, we will see how this concept expands beyond the terminal to controlling the mouse and keyboard.</li>
 </ul>
 <h2 id="conclusion">Conclusion</h2>
 <p>
@@ -253,7 +235,7 @@ You have learned that the <strong>BashTool</strong> is the "hands" of <code>clau
 However, giving an AI access to your terminal requires strict supervision. How do we ensure it acts safely?
 </p>
 <p>
-<a href="07<em>shell</em>safety_checks.md">Next Chapter: Shell Safety Checks</a>
+<a href="07-shell-safety-checks.html">Next Chapter: Shell Safety Checks</a>
 </p>
 <hr>
 <p>

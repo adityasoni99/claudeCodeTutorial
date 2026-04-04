@@ -46,14 +46,8 @@ Imagine you want to control your computer from your phone. You need a central sy
 </p>
 <ol>
 <li><strong>Dials the connection</strong> to the server.</li>
-</ol>
-<ol>
 <li><strong>Keeps the line open</strong> so commands can flow instantly.</li>
-</ol>
-<ol>
 <li><strong>Renews the security keys</strong> so the connection doesn't drop.</li>
-</ol>
-<ol>
 <li><strong>Hangs up</strong> cleanly when you are done.</li>
 </ol>
 <p>
@@ -73,12 +67,8 @@ Before we look at code, let's understand the three pillars of the Core:
 </p>
 <ol>
 <li><strong>The Session ID:</strong> This is the unique ticket number for the conversation. The Core asks the server, "Can I start a new session?" and gets this ID back.</li>
-</ol>
-<ol>
 <li><strong>The Worker JWT:</strong> Think of this as a temporary ID badge. It allows the Core to talk to the session. The Core is responsible for refreshing this badge before it expires.</li>
-</ol>
-<ol>
-<li><strong>The Transport:</strong> This is the actual "pipe" that sends data. The Core sets it up but delegates the heavy lifting of moving bytes to <a href="03<em>unified</em>transport<em>layer<strong>the</strong>pipe</em>_.md">Unified Transport Layer (The "Pipe")</a>.</li>
+<li><strong>The Transport:</strong> This is the actual "pipe" that sends data. The Core sets it up but delegates the heavy lifting of moving bytes to <a href="bridge-03-unified-transport-layer--the--pipe--.html">Unified Transport Layer (The "Pipe")</a>.</li>
 </ol>
 <h3 id="how-to-use-the-brain">How to Use the "Brain"</h3>
 <p>
@@ -90,7 +80,7 @@ You provide the basics: "Who am I?" (Auth Token) and "Where is the server?" (Bas
 </p>
 <h4 id="output">Output</h4>
 <p>
-You get a <strong>Handle</strong>. This is like a remote control with buttons like %%INLINE<em>1%% or %%INLINE</em>2%%.
+You get a <strong>Handle</strong>. This is like a remote control with buttons like <code>writeMessages</code> or <code>teardown</code>.
 </p>
 <h4 id="simplified-usage-example">Simplified Usage Example</h4>
 <pre data-lang="typescript"><code>// Ideally, this is how you start the brain
@@ -132,7 +122,7 @@ What happens internally when we call that function? It follows a strict "Handsha
     Core-&gt;&gt;Trans: Send Data</div></div>
 <h3 id="internal-implementation-step-by-step">Internal Implementation: Step-by-Step</h3>
 <p>
-Let's look at how %%INLINE<em>3%% implements this logic. We will break it down into the 4 main steps handled by the function %%INLINE</em>4%%.
+Let's look at how <code>remoteBridgeCore.ts</code> implements this logic. We will break it down into the 4 main steps handled by the function <code>initEnvLessBridgeCore</code>.
 </p>
 <h4 id="step-1-create-the-session">Step 1: Create the Session</h4>
 <p>
@@ -184,7 +174,7 @@ transport = await createV2ReplTransport({
 transport.connect(); // Turn it on!
 </code></pre>
 <p>
-<strong>Explanation:</strong> Here, the Core hands off the Session ID and JWT to the Transport layer. You'll learn exactly how this %%INLINE<em>7%% works in <a href="03</em>unified<em>transport</em>layer<strong>the</strong>pipe__.md">Unified Transport Layer (The "Pipe")</a>.
+<strong>Explanation:</strong> Here, the Core hands off the Session ID and JWT to the Transport layer. You'll learn exactly how this <code>createV2ReplTransport</code> works in <a href="bridge-03-unified-transport-layer--the--pipe--.html">Unified Transport Layer (The "Pipe")</a>.
 </p>
 <h4 id="step-4-the-refresh-scheduler">Step 4: The Refresh Scheduler</h4>
 <p>
@@ -204,7 +194,7 @@ const refresh = createTokenRefreshScheduler({
 refresh.scheduleFromExpiresIn(sessionId, credentials.expires_in);
 </code></pre>
 <p>
-<strong>Explanation:</strong> This acts like a heartbeat. If the session lasts hours, the Brain ensures the connection never drops due to expired security badges. It coordinates with <a href="05<em>authentication<strong></em>security</strong>the<strong>keycard</strong>.md">Authentication & Security (The "Keycard")</a> to handle 401 errors if things go wrong.
+<strong>Explanation:</strong> This acts like a heartbeat. If the session lasts hours, the Brain ensures the connection never drops due to expired security badges. It coordinates with <a href="bridge-05-authentication---security--the--keycard--.html">Authentication & Security (The "Keycard")</a> to handle 401 errors if things go wrong.
 </p>
 <h3 id="teardown-cleaning-up">Teardown: Cleaning Up</h3>
 <p>
@@ -226,21 +216,15 @@ The <strong>Remote Bridge Core</strong> is the orchestrator. It:
 </p>
 <ol>
 <li><strong>Negotiates</strong> the creation of the session.</li>
-</ol>
-<ol>
 <li><strong>Acquires</strong> the necessary keys (JWTs).</li>
-</ol>
-<ol>
 <li><strong>Wires up</strong> the transport layer.</li>
-</ol>
-<ol>
 <li><strong>Maintains</strong> the session via token refreshes.</li>
 </ol>
 <p>
 It acts as the container for everything else. Now that we have a running "Brain," we need to understand exactly <em>what</em> creates the context for this session and how different versions of the app work together.
 </p>
 <p>
-<a href="02<em>session</em>lifecycle<strong>_compatibility</strong>the<strong>container</strong>.md">Next Chapter: Session Lifecycle & Compatibility (The "Container")</a>
+<a href="bridge-02-session-lifecycle---compatibility--the--container--.html">Next Chapter: Session Lifecycle & Compatibility (The "Container")</a>
 </p>
 <hr>
 <p>
@@ -248,6 +232,9 @@ Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
 </p><div class="chapter-nav"><a class="chapter-nav-card prev" href="bridge.html">
           <div class="chapter-nav-label">← Previous</div>
           <div class="chapter-nav-title">bridge/ index</div>
+        </a><a class="chapter-nav-card next" href="bridge-02-session-lifecycle---compatibility--the--container--.html">
+          <div class="chapter-nav-label">Next →</div>
+          <div class="chapter-nav-title">02 Session Lifecycle   Compatibility  The  Container  </div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

@@ -38,7 +38,7 @@
 Welcome to the final chapter of the <strong>CLI</strong> project tutorial!
 </p>
 <p>
-In the previous chapter, <a href="07<em>mcp</em>integration.md">MCP Integration</a>, we expanded the capabilities of our AI by connecting it to external tools and data sources.
+In the previous chapter, <a href="cli-07-mcp-integration.html">MCP Integration</a>, we expanded the capabilities of our AI by connecting it to external tools and data sources.
 </p>
 <p>
 We now have a fully functional application. It connects to the cloud, authenticates users, speaks a structured language, manages state, and uses plugins. But there is one final piece of the puzzle: <strong>Maintenance.</strong>
@@ -52,12 +52,10 @@ Building software is like running a restaurant.
 </p>
 <ol>
 <li><strong>Opening/Updates (The Renovator):</strong> occasionally, you need to renovate the kitchen or change the menu (update the code). You don't want to force customers to build the new kitchen themselves; you want it to happen automatically.</li>
-</ol>
-<ol>
 <li><strong>Closing/Exit (The Janitor):</strong> When you close for the night, you don't just cut the power. You need to turn off the ovens, sweep the floor, and lock the doors. If you just pull the plug, the building might catch fire (corrupted files or zombie processes).</li>
 </ol>
 <p>
-This chapter covers <strong>Application Lifecycle</strong>: the mechanisms for <strong>Self-Updating</strong> (%%INLINE<em>0%%) and <strong>Graceful Exiting</strong> (%%INLINE</em>1%%).
+This chapter covers <strong>Application Lifecycle</strong>: the mechanisms for <strong>Self-Updating</strong> (<code>update.ts</code>) and <strong>Graceful Exiting</strong> (<code>exit.ts</code>).
 </p>
 <h2 id="key-concept-1-the-centralized-exit-strategy">Key Concept 1: The Centralized Exit Strategy</h2>
 <p>
@@ -78,7 +76,7 @@ If you force quit from random places in your code:
  
 We use a centralized file, <code>exit.ts</code>, to handle all terminations. It acts as the single "Exit Door" for the application.
 </p>
-<h3 id="the-helpers-inline4-and-inline5">The Helpers: %%INLINE<em>4%% and %%INLINE</em>5%%</h3>
+<h3 id="the-helpers-inline-4-and-inline-5">The Helpers: <code>cliOk</code> and <code>cliError</code></h3>
 <p>
 Instead of exiting manually, every command uses these two helper functions.
 </p>
@@ -96,7 +94,7 @@ export function cliOk(msg?: string): never {
 }
 </code></pre>
 <p>
-<em>Explanation:</em> When a command finishes successfully, we print a message and exit with code %%INLINE<em>6%%. The %%INLINE</em>7%% type helps the code editor understand that no code will run after this line.
+<em>Explanation:</em> When a command finishes successfully, we print a message and exit with code <code>0</code>. The <code>: never</code> type helps the code editor understand that no code will run after this line.
 </p>
 <pre data-lang="typescript"><code>// exit.ts
 
@@ -111,7 +109,7 @@ export function cliError(msg?: string): never {
 }
 </code></pre>
 <p>
-<em>Explanation:</em> If an error occurs, we print to %%INLINE<em>8%% (so error logs can be separated from normal output) and exit with code %%INLINE</em>9%%, telling the operating system that something went wrong.
+<em>Explanation:</em> If an error occurs, we print to <code>stderr</code> (so error logs can be separated from normal output) and exit with code <code>1</code>, telling the operating system that something went wrong.
 </p>
 <h2 id="key-concept-2-the-self-updating-mechanism">Key Concept 2: The Self-Updating Mechanism</h2>
 <p>
@@ -259,23 +257,11 @@ Because of this Lifecycle logic, the user experience is seamless:
 </p>
 <ol>
 <li><strong>User:</strong> types <code>claude update</code>.</li>
-</ol>
-<ol>
 <li><strong>Lifecycle:</strong> Checks if it's Homebrew. It's not.</li>
-</ol>
-<ol>
 <li><strong>Lifecycle:</strong> Checks if it's Native. It is.</li>
-</ol>
-<ol>
 <li><strong>Lifecycle:</strong> Downloads the new binary.</li>
-</ol>
-<ol>
 <li><strong>Lifecycle:</strong> Replaces the old file.</li>
-</ol>
-<ol>
-<li><strong>Lifecycle:</strong> Calls %%INLINE<em>19%% from %%INLINE</em>20%%.</li>
-</ol>
-<ol>
+<li><strong>Lifecycle:</strong> Calls <code>cliOk("Updated successfully")</code> from <code>exit.ts</code>.</li>
 <li><strong>Result:</strong> The process cleans up and terminates.</li>
 </ol>
 <h2 id="conclusion">Conclusion</h2>
@@ -284,8 +270,6 @@ The <strong>Application Lifecycle</strong> is the unsung hero of the CLI.
 </p>
 <ol>
 <li><strong>Updates:</strong> It ensures the user always has the latest features and bug fixes by intelligently detecting how the app was installed.</li>
-</ol>
-<ol>
 <li><strong>Exits:</strong> It ensures that when the app closes, it does so safely and predictably, keeping the user's terminal clean.</li>
 </ol>
 <h3 id="series-wrap-up">Series Wrap-Up</h3>
@@ -293,13 +277,13 @@ The <strong>Application Lifecycle</strong> is the unsung hero of the CLI.
 Congratulations! You have navigated the entire architecture of the <strong>CLI</strong> project.
 </p>
 <ul>
-<li>You built the bridge to the internet in <a href="01<em>remote</em>i<em>o</em>bridge.md">Remote I/O Bridge</a>.</li>
-<li>You secured it in <a href="02<em>authentication</em>flow.md">Authentication Flow</a>.</li>
-<li>You defined a language in <a href="03<em>structured</em>message_protocol.md">Structured Message Protocol</a>.</li>
-<li>You optimized shipping in <a href="04<em>transport</em>strategies.md">Transport Strategies</a>.</li>
-<li>You synchronized data in <a href="05<em>ccr</em>state_synchronization.md">CCR State Synchronization</a>.</li>
-<li>You expanded features in <a href="06<em>plugin</em>management.md">Plugin Management</a>.</li>
-<li>You connected external tools in <a href="07<em>mcp</em>integration.md">MCP Integration</a>.</li>
+<li>You built the bridge to the internet in <a href="cli-01-remote-i-o-bridge.html">Remote I/O Bridge</a>.</li>
+<li>You secured it in <a href="cli-02-authentication-flow.html">Authentication Flow</a>.</li>
+<li>You defined a language in <a href="cli-03-structured-message-protocol.html">Structured Message Protocol</a>.</li>
+<li>You optimized shipping in <a href="cli-04-transport-strategies.html">Transport Strategies</a>.</li>
+<li>You synchronized data in <a href="cli-05-ccr-state-synchronization.html">CCR State Synchronization</a>.</li>
+<li>You expanded features in <a href="cli-06-plugin-management.html">Plugin Management</a>.</li>
+<li>You connected external tools in <a href="cli-07-mcp-integration.html">MCP Integration</a>.</li>
 <li>And finally, you learned how to maintain the app in <strong>Application Lifecycle</strong>.</li>
 </ul>
 <p>
@@ -308,15 +292,15 @@ You now possess a complete mental map of how a modern, cloud-connected AI termin
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="cli.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="cli-07-mcp-integration.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">cli/ index</div>
+          <div class="chapter-nav-title">07 Mcp Integration</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>
           <ul class="toc-list"><li style="padding-left:0px"><a href="#motivation-the-renovator-and-the-janitor">Motivation: The Renovator and The Janitor</a></li>
 <li style="padding-left:0px"><a href="#key-concept-1-the-centralized-exit-strategy">Key Concept 1: The Centralized Exit Strategy</a></li>
-<li style="padding-left:10px"><a href="#the-helpers-inline4-and-inline5">The Helpers: %%INLINE4%% and %%INLINE5%%</a></li>
+<li style="padding-left:10px"><a href="#the-helpers-inline-4-and-inline-5">The Helpers: %%INLINE_4%% and %%INLINE_5%%</a></li>
 <li style="padding-left:0px"><a href="#key-concept-2-the-self-updating-mechanism">Key Concept 2: The Self-Updating Mechanism</a></li>
 <li style="padding-left:10px"><a href="#the-challenge-how-was-i-installed">The Challenge: "How was I installed?"</a></li>
 <li style="padding-left:10px"><a href="#the-doctor-diagnostic">The Doctor Diagnostic</a></li>

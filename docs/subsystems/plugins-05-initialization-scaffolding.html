@@ -38,21 +38,15 @@
 Welcome to the final chapter of the <strong>Plugins</strong> project!
 </p>
 <p>
-In the previous chapter, <a href="04<em>skill</em>to<em>command</em>adaptation.md">Skill-to-Command Adaptation</a>, we created a universal adapter that translates our fancy Plugin Skills into standard Commands the CLI can understand.
+In the previous chapter, <a href="plugins-04-skill-to-command-adaptation.html">Skill-to-Command Adaptation</a>, we created a universal adapter that translates our fancy Plugin Skills into standard Commands the CLI can understand.
 </p>
 <p>
 We now have all the pieces:
 </p>
 <ol>
 <li><strong>The Registry:</strong> A place to store definitions.</li>
-</ol>
-<ol>
 <li><strong>The ID System:</strong> A way to name them uniquely.</li>
-</ol>
-<ol>
 <li><strong>The State Logic:</strong> A way to check if they are on or off.</li>
-</ol>
-<ol>
 <li><strong>The Adapter:</strong> A way to run them.</li>
 </ol>
 <p>
@@ -90,7 +84,7 @@ We define a single function, usually named <code>initBuiltinPlugins</code>.
 </p>
 <ul>
 <li><strong>When it runs:</strong> Immediately when the application starts.</li>
-<li><strong>What it does:</strong> It imports plugin definitions and hands them to the Registry we built in <a href="01<em>built</em>in<em>plugin</em>registry.md">Built-in Plugin Registry</a>.</li>
+<li><strong>What it does:</strong> It imports plugin definitions and hands them to the Registry we built in <a href="plugins-01-built-in-plugin-registry.html">Built-in Plugin Registry</a>.</li>
 </ul>
 <h2 id="how-to-use-the-scaffolding">How to Use the Scaffolding</h2>
 <p>
@@ -128,17 +122,9 @@ What happens when the user types <code>my-cli start</code>? Let's visualize the 
 <h3 id="the-startup-flow">The Startup Flow</h3>
 <ol>
 <li><strong>App Launch:</strong> The main process begins.</li>
-</ol>
-<ol>
 <li><strong>Scaffolding Call:</strong> The main process calls <code>initBuiltinPlugins()</code>.</li>
-</ol>
-<ol>
 <li><strong>Registration:</strong> The function loops through every line of code we wrote above.</li>
-</ol>
-<ol>
 <li><strong>Storage:</strong> The definitions are stored in the global <code>Map</code> (from Chapter 1).</li>
-</ol>
-<ol>
 <li><strong>Ready:</strong> The app continues loading, now aware that these plugins exist.</li>
 </ol>
 <div class="mermaid-wrap"><div class="mermaid">sequenceDiagram
@@ -183,7 +169,7 @@ export function initBuiltinPlugins(): void {
 </p>
 <h4 id="why-bundled-vs-built-in">Why "Bundled" vs "Built-in"?</h4>
 <p>
-You might notice the folder is named %%INLINE<em>7%%, but the function talks about %%INLINE</em>8%%.
+You might notice the folder is named <code>bundled</code>, but the function talks about <code>BuiltinPlugins</code>.
 </p>
 <ul>
 <li><strong>Bundled:</strong> Means "Included in the download."</li>
@@ -198,11 +184,7 @@ In this final chapter, we learned:
 </p>
 <ol>
 <li><strong>Initialization Scaffolding</strong> is the "main entry point" for plugins.</li>
-</ol>
-<ol>
 <li>It separates the <strong>definition</strong> of a feature from the <strong>act of loading</strong> it.</li>
-</ol>
-<ol>
 <li>It serves as a clean list of exactly which "factory settings" are installed.</li>
 </ol>
 <h3 id="project-wrap-up">Project Wrap-Up</h3>
@@ -213,18 +195,10 @@ Congratulations! You have walked through the entire architecture of a modular Pl
 Let's review what we built:
 </p>
 <ol>
-<li><strong><a href="01<em>built</em>in<em>plugin</em>registry.md">Built-in Plugin Registry</a>:</strong> The storage warehouse (<code>Map</code>) for our features.</li>
-</ol>
-<ol>
-<li><strong><a href="02<em>plugin</em>namespacing.md">Plugin Namespacing</a>:</strong> The naming convention (<code>@builtin</code>) that keeps them safe from conflicts.</li>
-</ol>
-<ol>
-<li><strong><a href="03<em>runtime</em>plugin_state.md">Runtime Plugin State</a>:</strong> The logic ("Smart Switch") that respects user settings.</li>
-</ol>
-<ol>
-<li><strong><a href="04<em>skill</em>to<em>command</em>adaptation.md">Skill-to-Command Adaptation</a>:</strong> The translator that makes plugins compatible with the core CLI.</li>
-</ol>
-<ol>
+<li><strong><a href="plugins-01-built-in-plugin-registry.html">Built-in Plugin Registry</a>:</strong> The storage warehouse (<code>Map</code>) for our features.</li>
+<li><strong><a href="plugins-02-plugin-namespacing.html">Plugin Namespacing</a>:</strong> The naming convention (<code>@builtin</code>) that keeps them safe from conflicts.</li>
+<li><strong><a href="plugins-03-runtime-plugin-state.html">Runtime Plugin State</a>:</strong> The logic ("Smart Switch") that respects user settings.</li>
+<li><strong><a href="plugins-04-skill-to-command-adaptation.html">Skill-to-Command Adaptation</a>:</strong> The translator that makes plugins compatible with the core CLI.</li>
 <li><strong>Initialization Scaffolding:</strong> The assembly line that wires it all together at startup.</li>
 </ol>
 <p>
@@ -233,9 +207,9 @@ You now have a system that is modular, user-configurable, and ready to scale. Ha
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="plugins.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="plugins-04-skill-to-command-adaptation.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">plugins/ index</div>
+          <div class="chapter-nav-title">04 Skill To Command Adaptation</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>

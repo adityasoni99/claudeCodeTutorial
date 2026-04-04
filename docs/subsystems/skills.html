@@ -39,7 +39,7 @@
 
 <h1 id="tutorial-skills">Tutorial: skills</h1>
 <p>
-This project manages <strong>skills</strong>, which are custom capabilities or commands (like %%INLINE<em>0%% or %%INLINE</em>1%%) available to the AI model. It supports two main types of skills: <strong>bundled skills</strong> built directly into the CLI binary, and <strong>user-defined skills</strong> loaded dynamically from markdown files in the filesystem. The system handles discovery, parsing, and the dynamic generation of context-aware <strong>prompts</strong> that guide the model's behavior.
+This project manages <strong>skills</strong>, which are custom capabilities or commands (like <code>/loop</code> or <code>/debug</code>) available to the AI model. It supports two main types of skills: <strong>bundled skills</strong> built directly into the CLI binary, and <strong>user-defined skills</strong> loaded dynamically from markdown files in the filesystem. The system handles discovery, parsing, and the dynamic generation of context-aware <strong>prompts</strong> that guide the model's behavior.
 </p>
 <div class="mermaid-wrap"><div class="mermaid">flowchart TD
     A0["Bundled Skill Definition"]
@@ -55,22 +55,12 @@ This project manages <strong>skills</strong>, which are custom capabilities or c
     A1 --&gt;|"Registers factories with"| A5</div></div>
 <h2 id="chapters">Chapters</h2>
 <ol>
-<li><a href="01<em>skill</em>registration_pattern.md">Skill Registration Pattern</a></li>
-</ol>
-<ol>
-<li><a href="02<em>bundled</em>skill_definition.md">Bundled Skill Definition</a></li>
-</ol>
-<ol>
-<li><a href="03<em>filesystem</em>skill_loader.md">Filesystem Skill Loader</a></li>
-</ol>
-<ol>
-<li><a href="04<em>prompt</em>generation_logic.md">Prompt Generation Logic</a></li>
-</ol>
-<ol>
-<li><a href="05<em>static</em>content_assets.md">Static Content Assets</a></li>
-</ol>
-<ol>
-<li><a href="06<em>mcp</em>skill_bridge.md">MCP Skill Bridge</a></li>
+<li><a href="skills-01-skill-registration-pattern.html">Skill Registration Pattern</a></li>
+<li><a href="skills-02-bundled-skill-definition.html">Bundled Skill Definition</a></li>
+<li><a href="skills-03-filesystem-skill-loader.html">Filesystem Skill Loader</a></li>
+<li><a href="skills-04-prompt-generation-logic.html">Prompt Generation Logic</a></li>
+<li><a href="skills-05-static-content-assets.html">Static Content Assets</a></li>
+<li><a href="skills-06-mcp-skill-bridge.html">MCP Skill Bridge</a></li>
 </ol>
 <hr>
 <p>

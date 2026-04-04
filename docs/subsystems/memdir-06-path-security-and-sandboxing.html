@@ -35,7 +35,7 @@
 </div>
 <h1 id="chapter-6-path-security-and-sandboxing">Chapter 6: Path Security and Sandboxing</h1>
 <p>
-In the previous chapter, <a href="05<em>temporal</em>freshness<em>_</em>verification.md">Temporal Freshness & Verification</a>, we learned how to trust the <strong>content</strong> of a memory by checking if it is too old.
+In the previous chapter, <a href="memdir-05-temporal-freshness---verification.html">Temporal Freshness & Verification</a>, we learned how to trust the <strong>content</strong> of a memory by checking if it is too old.
 </p>
 <p>
 Now we must trust the <strong>intent</strong>.
@@ -52,11 +52,7 @@ Imagine you invite a guest to stay at your house. You tell them: <em>"You can pu
 </p>
 <ol>
 <li><strong>The Good Guest:</strong> Puts their suitcase in the Guest Room.</li>
-</ol>
-<ol>
 <li><strong>The Climbing Guest:</strong> Climbs out the Guest Room window and breaks into your Bedroom.</li>
-</ol>
-<ol>
 <li><strong>The Tunneling Guest:</strong> Drills a hole in the floor to access the basement.</li>
 </ol>
 <p>
@@ -80,20 +76,10 @@ The computer interprets this as:
 </p>
 <ol>
 <li>Start in <code>memory/team</code></li>
-</ol>
-<ol>
 <li>Go up (<code>memory/</code>)</li>
-</ol>
-<ol>
 <li>Go up (Project Root)</li>
-</ol>
-<ol>
 <li>Go up (User Home)</li>
-</ol>
-<ol>
 <li>Go up (Root of drive)</li>
-</ol>
-<ol>
 <li>Go down to <code>etc/passwd</code></li>
 </ol>
 <p>
@@ -101,10 +87,10 @@ If we just blindly write to the path the AI gives us, we overwrite a system file
 </p>
 <h3 id="2-symlink-attacks-tunneling-out">2. Symlink Attacks (Tunneling Out)</h3>
 <p>
-A <strong>Symbolic Link</strong> (symlink) is a shortcut. You can have a file inside %%INLINE<em>7%% that actually points to a file <em>outside</em> %%INLINE</em>8%%.
+A <strong>Symbolic Link</strong> (symlink) is a shortcut. You can have a file inside <code>memory/</code> that actually points to a file <em>outside</em> <code>memory/</code>.
 </p>
 <p>
-If %%INLINE<em>9%% points to %%INLINE</em>10%%, writing to the shortcut actually overwrites your private key.
+If <code>memory/team/shortcut.md</code> points to <code>~/.ssh/id_rsa</code>, writing to the shortcut actually overwrites your private key.
 </p>
 <h2 id="internal-implementation-the-security-guard">Internal Implementation: The Security Guard</h2>
 <p>
@@ -133,7 +119,7 @@ Here is what happens every time the AI tries to write a memory:
     end</div></div>
 <h3 id="step-1-blocking-path-traversal">Step 1: Blocking Path Traversal</h3>
 <p>
-We use Node.js's %%INLINE<em>11%% function. This function processes all the %%INLINE</em>12%% segments <em>before</em> we check the path.
+We use Node.js's <code>resolve</code> function. This function processes all the <code>..</code> segments <em>before</em> we check the path.
 </p>
 <p>
 Here is a simplified version of the logic found in <code>src/teamMemPaths.ts</code>:
@@ -160,7 +146,7 @@ function validatePath(inputPath: string, allowedFolder: string) {
 <li><strong>Allowed:</strong> <code>/Users/me/project/memory</code></li>
 <li><strong>Input:</strong> <code>memory/../../etc/passwd</code></li>
 <li><strong>Resolved:</strong> <code>/etc/passwd</code></li>
-<li><strong>Check:</strong> Does %%INLINE<em>17%% start with %%INLINE</em>18%%? <strong>NO.</strong> -> <strong>Error.</strong></li>
+<li><strong>Check:</strong> Does <code>/etc/passwd</code> start with <code>/Users/me/project/memory</code>? <strong>NO.</strong> -> <strong>Error.</strong></li>
 </ul>
 <h3 id="step-2-blocking-symlinks-the-real-path">Step 2: Blocking Symlinks (The Real Path)</h3>
 <p>
@@ -238,7 +224,7 @@ async function realpathDeepestExisting(path: string) {
 }
 </code></pre>
 <p>
-This ensures that even if you try to write to %%INLINE<em>27%%, we verify that %%INLINE</em>28%% isn't a symlink to somewhere dangerous.
+This ensures that even if you try to write to <code>memory/team/new_folder/file.md</code>, we verify that <code>memory/team</code> isn't a symlink to somewhere dangerous.
 </p>
 <h2 id="putting-it-all-together">Putting It All Together</h2>
 <p>
@@ -246,17 +232,9 @@ When the AI decides to write a memory:
 </p>
 <ol>
 <li><strong>Sanitize:</strong> We remove weird characters and null bytes.</li>
-</ol>
-<ol>
 <li><strong>Resolve:</strong> We collapse all <code>..</code> to get the absolute path.</li>
-</ol>
-<ol>
 <li><strong>Containment Check 1:</strong> Does the string start with <code>/memory/team</code>?</li>
-</ol>
-<ol>
 <li><strong>Realpath:</strong> We find the physical location on the disk.</li>
-</ol>
-<ol>
 <li><strong>Containment Check 2:</strong> Does the physical location start with <code>/memory/team</code>?</li>
 </ol>
 <p>
@@ -270,22 +248,12 @@ We have reached the end of the <strong>memdir</strong> tutorial series!
 We have built a complete, production-grade memory system:
 </p>
 <ol>
-<li><strong><a href="01<em>structured</em>memory_taxonomy.md">Structured Taxonomy</a>:</strong> We categorized <em>what</em> to save (User, Feedback, Project).</li>
-</ol>
-<ol>
-<li><strong><a href="02<em>scoped</em>persistence<strong>private<em>vs</strong>team</em>.md">Scoped Persistence</a>:</strong> We decided <em>who</em> sees it (Private vs. Team).</li>
-</ol>
-<ol>
-<li><strong><a href="03<em>two</em>tier<em>storage</em>architecture<strong>index<em>vs</strong>detail</em>.md">Two-Tier Architecture</a>:</strong> We managed <em>scale</em> (Index vs. Detail files).</li>
-</ol>
-<ol>
-<li><strong><a href="04<em>contextual</em>recall_mechanism.md">Contextual Recall</a>:</strong> We learned how to <em>find</em> memories (Smart "Librarian" Search).</li>
-</ol>
-<ol>
-<li><strong><a href="05<em>temporal</em>freshness<em>_</em>verification.md">Temporal Freshness</a>:</strong> We learned how to <em>verify</em> data (Fresh vs. Stale warnings).</li>
-</ol>
-<ol>
-<li><strong><a href="06<em>path</em>security<em>and</em>sandboxing.md">Path Security</a>:</strong> We ensured the system is <em>safe</em> (Sandboxing).</li>
+<li><strong><a href="memdir-01-structured-memory-taxonomy.html">Structured Taxonomy</a>:</strong> We categorized <em>what</em> to save (User, Feedback, Project).</li>
+<li><strong><a href="memdir-02-scoped-persistence--private-vs--team-.html">Scoped Persistence</a>:</strong> We decided <em>who</em> sees it (Private vs. Team).</li>
+<li><strong><a href="memdir-03-two-tier-storage-architecture--index-vs--detail-.html">Two-Tier Architecture</a>:</strong> We managed <em>scale</em> (Index vs. Detail files).</li>
+<li><strong><a href="memdir-04-contextual-recall-mechanism.html">Contextual Recall</a>:</strong> We learned how to <em>find</em> memories (Smart "Librarian" Search).</li>
+<li><strong><a href="memdir-05-temporal-freshness---verification.html">Temporal Freshness</a>:</strong> We learned how to <em>verify</em> data (Fresh vs. Stale warnings).</li>
+<li><strong><a href="memdir-06-path-security-and-sandboxing.html">Path Security</a>:</strong> We ensured the system is <em>safe</em> (Sandboxing).</li>
 </ol>
 <p>
 By combining these six concepts, <strong>memdir</strong> turns a chaotic stream of AI thoughts into a persistent, organized, and safe knowledge base for your engineering team.
@@ -296,9 +264,9 @@ Thank you for reading!
 <hr>
 <p>
 Generated by <a href="https://github.com/adityasoni99/Code-IQ">Code IQ</a>
-</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="memdir.html">
+</p><div class="chapter-nav"><a class="chapter-nav-card prev" href="memdir-05-temporal-freshness---verification.html">
           <div class="chapter-nav-label">← Previous</div>
-          <div class="chapter-nav-title">memdir/ index</div>
+          <div class="chapter-nav-title">05 Temporal Freshness   Verification</div>
         </a></div></div>
         <aside class="toc-sidebar">
           <div class="toc-title">On this page</div>
