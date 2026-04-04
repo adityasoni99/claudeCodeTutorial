@@ -93,9 +93,10 @@ Beyond the top-level chapters, each major subsystem has its own folder with gran
 
 ## How to Use This Tutorial
 
-1. **Start with [Chapter 1: State Management](01_state_management.md)** — it explains the foundational data store every other chapter builds on.
-2. Follow the chapters in order for a progressive understanding, or jump directly to the topic you're interested in.
-3. Each chapter's folder (e.g. `state/`, `query/`) contains sub-chapters for more detailed exploration.
+1. **Start with [index.md](index.md)** for the high-level overview and chapter map.
+2. Continue to **[Chapter 1: State Management](01_state_management.md)**, which introduces the foundational data store every other chapter builds on.
+3. Follow the chapters in order for a progressive understanding, or jump directly to the topic you're interested in.
+4. Each chapter folder (for example, [state/](state/) and [query/](query/)) contains deeper sub-chapters for focused exploration.
 
 ---
 
