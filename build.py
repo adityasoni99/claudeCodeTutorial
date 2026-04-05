@@ -181,6 +181,12 @@ def md_to_html(md: str, link_transform=None) -> tuple[str, list[tuple[str,str]]]
         nonlocal in_p
         if in_p: html_parts.append('</p>'); in_p = False
 
+    def restore_inline_tokens(text: str) -> str:
+      def repl(m):
+        idx = int(m.group(1))
+        return inline_codes[idx] if 0 <= idx < len(inline_codes) else m.group(0)
+      return re.sub(r'%%INLINE_(\d+)%%', repl, text)
+
     def fmt_emphasis(text: str) -> str:
       text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
       text = re.sub(r'__(.+?)__', r'<strong>\1</strong>', text)
@@ -217,6 +223,7 @@ def md_to_html(md: str, link_transform=None) -> tuple[str, list[tuple[str,str]]]
             level = len(m.group(1))
             text  = inline_fmt(m.group(2).strip())
             plain = re.sub(r'<[^>]+>', '', text)
+            plain = restore_inline_tokens(plain)
             anchor = slugify(plain)
             if level <= 3:
                 toc.append((level, plain, anchor))
@@ -430,6 +437,11 @@ def html_page(
 mermaid.initialize({{
   startOnLoad: true,
   theme: 'dark',
+  flowchart: {{
+    useMaxWidth: false,
+    nodeSpacing: 55,
+    rankSpacing: 70,
+  }},
   themeVariables: {{
     primaryColor: '#1a1c2a',
     primaryTextColor: '#e8e4da',
@@ -439,7 +451,7 @@ mermaid.initialize({{
     tertiaryColor: '#0b0c13',
     edgeLabelBackground: '#0b0c13',
     fontFamily: 'JetBrains Mono, monospace',
-    fontSize: '13px',
+    fontSize: '16px',
   }}
 }});
 window.addEventListener('scroll', () => {{
@@ -1126,7 +1138,19 @@ footer a:hover {{ color: var(--amber); }}
 
 <script src="{MERMAID_CDN}"></script>
 <script>
-mermaid.initialize({{ startOnLoad: true, theme: 'dark' }});
+mermaid.initialize({{
+  startOnLoad: true,
+  theme: 'dark',
+  flowchart: {{
+    useMaxWidth: false,
+    nodeSpacing: 55,
+    rankSpacing: 70,
+  }},
+  themeVariables: {{
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '16px',
+  }}
+}});
 window.addEventListener('scroll', () => {{
   const bar = document.getElementById('rb');
   if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';

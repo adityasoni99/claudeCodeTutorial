@@ -699,7 +699,19 @@ footer a:hover { color: var(--amber); }
 
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <script>
-mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  flowchart: {
+    useMaxWidth: false,
+    nodeSpacing: 55,
+    rankSpacing: 70,
+  },
+  themeVariables: {
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: '16px',
+  }
+});
 window.addEventListener('scroll', () => {
   const bar = document.getElementById('rb');
   if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
