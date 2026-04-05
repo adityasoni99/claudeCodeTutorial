@@ -20,30 +20,10 @@ An in-depth, chapter-by-chapter tutorial that breaks down the internal architect
 
 ---
 
-## Tutorial Structure
+## Architecture
 
-```
-flowchart TD
-    A0["Query Engine"]
-    A1["Ink UI Framework"]
-    A2["State Management"]
-    A3["FileEditTool"]
-    A4["NotebookEditTool"]
-    A5["BashTool"]
-    A6["Shell Safety Checks"]
-    A7["WebSearchTool"]
-    A8["Computer Use"]
-    A9["Model Context Protocol (MCP)"]
-    A10["Permission & Security System"]
-    A11["Rule Matching"]
-    A12["Auto-Mode Classifier"]
-    A13["AgentTool"]
-    A14["Teammates"]
-    A15["Unique Features"]
-    A16["Cost Tracking"]
-    A17["Git Integration"]
-    A18["Feature Gating"]
-```
+<img width="1605" height="926" alt="image" src="https://github.com/user-attachments/assets/63458ea3-67be-4cfc-9d2e-694efc646696" />
+
 
 ---
 
