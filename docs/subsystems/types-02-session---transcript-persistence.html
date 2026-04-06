@@ -283,6 +283,67 @@ mermaid.initialize({
     fontSize: '16px',
   }
 });
+
+function enhanceMermaids() {
+  document.querySelectorAll('.mermaid-wrap').forEach((wrap) => {
+    if (wrap.dataset.enhanced === '1') return;
+    wrap.dataset.enhanced = '1';
+
+    const toolbar = document.createElement('div');
+    toolbar.className = 'mermaid-toolbar';
+
+    const zoomOut = document.createElement('button');
+    zoomOut.type = 'button';
+    zoomOut.textContent = '-';
+
+    const zoomIn = document.createElement('button');
+    zoomIn.type = 'button';
+    zoomIn.textContent = '+';
+
+    const reset = document.createElement('button');
+    reset.type = 'button';
+    reset.textContent = '100%';
+
+    const fullscreen = document.createElement('button');
+    fullscreen.type = 'button';
+    fullscreen.textContent = 'Fullscreen';
+
+    const label = document.createElement('span');
+    label.className = 'mermaid-zoom-label';
+
+    const getScale = () => parseFloat(wrap.dataset.scale || '1');
+    const setScale = (value) => {
+      const bounded = Math.max(0.5, Math.min(3, value));
+      const rounded = Math.round(bounded * 100) / 100;
+      wrap.dataset.scale = String(rounded);
+      wrap.style.setProperty('--mermaid-scale', String(rounded));
+      label.textContent = `${Math.round(rounded * 100)}%`;
+    };
+
+    zoomOut.addEventListener('click', () => setScale(getScale() - 0.1));
+    zoomIn.addEventListener('click', () => setScale(getScale() + 0.1));
+    reset.addEventListener('click', () => setScale(1));
+
+    fullscreen.addEventListener('click', () => {
+      if (document.fullscreenElement === wrap) {
+        document.exitFullscreen();
+        return;
+      }
+      if (wrap.requestFullscreen) {
+        wrap.requestFullscreen();
+      } else {
+        wrap.classList.toggle('is-pseudo-fullscreen');
+      }
+    });
+
+    toolbar.append(zoomOut, label, zoomIn, reset, fullscreen);
+    wrap.prepend(toolbar);
+    setScale(1);
+  });
+}
+
+setTimeout(enhanceMermaids, 80);
+window.addEventListener('resize', enhanceMermaids);
 window.addEventListener('scroll', () => {
   const bar = document.getElementById('rb');
   if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';

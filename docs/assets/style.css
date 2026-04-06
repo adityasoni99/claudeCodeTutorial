@@ -270,6 +270,8 @@ body::before {
   overflow-x: auto;
   overflow-y: hidden;
   width: 100%;
+  position: relative;
+  --mermaid-scale: 1;
 }
 .mermaid {
   font-family: 'JetBrains Mono', monospace !important;
@@ -281,6 +283,61 @@ body::before {
   max-width: none !important;
   min-width: 980px;
   height: auto !important;
+  transform-origin: top left;
+  transform: scale(var(--mermaid-scale));
+}
+
+.mermaid-toolbar {
+  position: sticky;
+  top: 8px;
+  right: 0;
+  margin-left: auto;
+  width: max-content;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(11,12,19,0.86);
+  backdrop-filter: blur(6px);
+}
+
+.mermaid-toolbar button {
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.mermaid-toolbar button:hover {
+  border-color: var(--border-hover);
+  color: var(--amber);
+}
+
+.mermaid-zoom-label {
+  min-width: 44px;
+  text-align: center;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.mermaid-wrap:fullscreen,
+.mermaid-wrap:-webkit-full-screen,
+.mermaid-wrap.is-pseudo-fullscreen {
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  border-radius: 0;
+  border: none;
+  z-index: 10000;
+  padding: 1rem;
+  background: var(--bg);
 }
 /* Override mermaid defaults for dark mode */
 .mermaid .label { fill: #e8e4da !important; }
