@@ -284,39 +284,81 @@ function enhanceMermaids() {
 
     const toolbar = document.createElement('div');
     toolbar.className = 'mermaid-toolbar';
+    toolbar.setAttribute('aria-label', 'Mermaid controls');
 
-    const zoomOut = document.createElement('button');
-    zoomOut.type = 'button';
-    zoomOut.textContent = '-';
+    // Icon SVG helper
+    const iconSvg = (d, title) => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      svg.setAttribute('width', '16');
+      svg.setAttribute('height', '16');
+      svg.setAttribute('fill', 'currentColor');
+      svg.innerHTML = d;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'icon-btn';
+      btn.title = title;
+      btn.appendChild(svg);
+      return btn;
+    };
 
-    const zoomIn = document.createElement('button');
-    zoomIn.type = 'button';
-    zoomIn.textContent = '+';
-
-    const reset = document.createElement('button');
-    reset.type = 'button';
-    reset.textContent = '100%';
-
-    const fullscreen = document.createElement('button');
-    fullscreen.type = 'button';
-    fullscreen.textContent = 'Fullscreen';
+    const zoomOut = iconSvg('<line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2"/>', 'Zoom out');
+    const zoomIn = iconSvg('<line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2"/>', 'Zoom in');
+    const reset = iconSvg('<circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="2" fill="none"/><path d="M12 7v4h3" stroke="currentColor" stroke-width="2" fill="none"/>', 'Reset zoom');
+    const fullscreen = iconSvg('<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke="currentColor" stroke-width="2" fill="none"/>', 'Toggle fullscreen');
+    const panIcon = iconSvg('<path d="M12 9v6m-3-3h6" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5" fill="none" opacity="0.3"/>', 'Pan mode');
 
     const label = document.createElement('span');
     label.className = 'mermaid-zoom-label';
+    label.textContent = '100%';
+
+    // Pan state
+    let isPanning = false;
+    let panStart = {x: 0, y: 0};
+    let panOffset = {x: 0, y: 0};
+
+    const getPanOffset = () => ({
+      x: parseFloat(wrap.dataset.panX || '0'),
+      y: parseFloat(wrap.dataset.panY || '0')
+    });
+    const setPanOffset = (ox, oy) => {
+      wrap.dataset.panX = String(ox);
+      wrap.dataset.panY = String(oy);
+      applyTransform();
+    };
 
     const getScale = () => parseFloat(wrap.dataset.scale || '1');
     const setScale = (value) => {
       const bounded = Math.max(0.5, Math.min(3, value));
       const rounded = Math.round(bounded * 100) / 100;
       wrap.dataset.scale = String(rounded);
-      wrap.style.setProperty('--mermaid-scale', String(rounded));
       label.textContent = `${Math.round(rounded * 100)}%`;
+      applyTransform();
     };
 
+    const applyTransform = () => {
+      const svg = wrap.querySelector('svg');
+      if (!svg) return;
+      const scale = getScale();
+      const offset = getPanOffset();
+      svg.style.transform = `translate(${offset.x}px, ${offset.y}px) scale(${scale})`;
+    };
+
+    // Zoom controls
     zoomOut.addEventListener('click', () => setScale(getScale() - 0.1));
     zoomIn.addEventListener('click', () => setScale(getScale() + 0.1));
-    reset.addEventListener('click', () => setScale(1));
+    reset.addEventListener('click', () => {
+      setScale(1);
+      setPanOffset(0, 0);
+    });
 
+    // Pan controls
+    panIcon.addEventListener('click', () => {
+      panIcon.classList.toggle('active');
+      wrap.classList.toggle('panning-mode');
+    });
+
+    // Fullscreen
     fullscreen.addEventListener('click', () => {
       if (document.fullscreenElement === wrap) {
         document.exitFullscreen();
@@ -329,7 +371,52 @@ function enhanceMermaids() {
       }
     });
 
-    toolbar.append(zoomOut, label, zoomIn, reset, fullscreen);
+    // Wheel zoom (Ctrl/Cmd)
+    wrap.addEventListener('wheel', (e) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.1 : 0.1;
+      setScale(getScale() + delta);
+    }, {passive: false});
+
+    // Drag pan
+    const svg = wrap.querySelector('svg');
+    if (svg) {
+      svg.addEventListener('mousedown', (e) => {
+        if (!wrap.classList.contains('panning-mode')) return;
+        isPanning = true;
+        panStart = {x: e.clientX, y: e.clientY};
+        panOffset = getPanOffset();
+        svg.style.cursor = 'grabbing';
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isPanning) return;
+        const dx = e.clientX - panStart.x;
+        const dy = e.clientY - panStart.y;
+        setPanOffset(panOffset.x + dx, panOffset.y + dy);
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (!isPanning) return;
+        isPanning = false;
+        svg.style.cursor = wrap.classList.contains('panning-mode') ? 'grab' : 'default';
+      });
+
+      svg.addEventListener('mouseenter', () => {
+        if (wrap.classList.contains('panning-mode') && !isPanning) {
+          svg.style.cursor = 'grab';
+        }
+      });
+
+      svg.addEventListener('mouseleave', () => {
+        if (!isPanning) {
+          svg.style.cursor = 'default';
+        }
+      });
+    }
+
+    toolbar.append(zoomOut, zoomIn, reset, label, panIcon, fullscreen);
     wrap.prepend(toolbar);
     setScale(1);
   });
