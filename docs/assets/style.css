@@ -284,6 +284,8 @@ body::before {
   min-width: 980px;
   height: auto !important;
   transform-origin: top left;
+  transform: translate(var(--mermaid-pan-x, 0px), var(--mermaid-pan-y, 0px)) scale(var(--mermaid-scale, 1));
+  transition: transform 0.05s ease-out;
 }
 
 .mermaid-toolbar {
@@ -333,6 +335,8 @@ body::before {
 
 .mermaid-toolbar .icon-btn svg {
   display: block;
+  width: 16px;
+  height: 16px;
 }
 
 .mermaid-zoom-label {

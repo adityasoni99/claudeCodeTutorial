@@ -353,8 +353,6 @@ function enhanceMermaids() {
     const iconSvg = (d, title) => {
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svg.setAttribute('viewBox', '0 0 24 24');
-      svg.setAttribute('width', '16');
-      svg.setAttribute('height', '16');
       svg.setAttribute('fill', 'currentColor');
       svg.innerHTML = d;
       const btn = document.createElement('button');
@@ -378,33 +376,24 @@ function enhanceMermaids() {
     // Pan state
     let isPanning = false;
     let panStart = {x: 0, y: 0};
-    let panOffset = {x: 0, y: 0};
-
-    const getPanOffset = () => ({
-      x: parseFloat(wrap.dataset.panX || '0'),
-      y: parseFloat(wrap.dataset.panY || '0')
-    });
-    const setPanOffset = (ox, oy) => {
-      wrap.dataset.panX = String(ox);
-      wrap.dataset.panY = String(oy);
-      applyTransform();
-    };
+    let panOrigin = {x: 0, y: 0};
+    let panX = 0, panY = 0;
+    const PAN_DRAG_SENSITIVITY = 0.70;
 
     const getScale = () => parseFloat(wrap.dataset.scale || '1');
     const setScale = (value) => {
       const bounded = Math.max(0.5, Math.min(3, value));
       const rounded = Math.round(bounded * 100) / 100;
       wrap.dataset.scale = String(rounded);
+      wrap.style.setProperty('--mermaid-scale', String(rounded));
       label.textContent = `${Math.round(rounded * 100)}%`;
-      applyTransform();
     };
 
-    const applyTransform = () => {
-      const svg = wrap.querySelector('svg');
-      if (!svg) return;
-      const scale = getScale();
-      const offset = getPanOffset();
-      svg.style.transform = `translate(${offset.x}px, ${offset.y}px) scale(${scale})`;
+    const setPan = (x, y) => {
+      panX = x;
+      panY = y;
+      wrap.style.setProperty('--mermaid-pan-x', `${x}px`);
+      wrap.style.setProperty('--mermaid-pan-y', `${y}px`);
     };
 
     // Zoom controls
@@ -412,10 +401,10 @@ function enhanceMermaids() {
     zoomIn.addEventListener('click', () => setScale(getScale() + 0.1));
     reset.addEventListener('click', () => {
       setScale(1);
-      setPanOffset(0, 0);
+      setPan(0, 0);
     });
 
-    // Pan controls
+    // Pan toggle
     panIcon.addEventListener('click', () => {
       panIcon.classList.toggle('active');
       wrap.classList.toggle('panning-mode');
@@ -449,21 +438,21 @@ function enhanceMermaids() {
         if (!wrap.classList.contains('panning-mode')) return;
         isPanning = true;
         panStart = {x: e.clientX, y: e.clientY};
-        panOffset = getPanOffset();
-        svg.style.cursor = 'grabbing';
+        panOrigin = {x: panX, y: panY};
       });
 
       document.addEventListener('mousemove', (e) => {
         if (!isPanning) return;
         const dx = e.clientX - panStart.x;
         const dy = e.clientY - panStart.y;
-        setPanOffset(panOffset.x + dx, panOffset.y + dy);
+        const scaledDx = (dx * PAN_DRAG_SENSITIVITY) / getScale();
+        const scaledDy = (dy * PAN_DRAG_SENSITIVITY) / getScale();
+        setPan(panOrigin.x + scaledDx, panOrigin.y + scaledDy);
       });
 
       document.addEventListener('mouseup', () => {
         if (!isPanning) return;
         isPanning = false;
-        svg.style.cursor = wrap.classList.contains('panning-mode') ? 'grab' : 'default';
       });
 
       svg.addEventListener('mouseenter', () => {
