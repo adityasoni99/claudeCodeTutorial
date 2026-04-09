@@ -419,7 +419,10 @@ body::before {
   border-color: var(--border-hover);
   background: var(--surface2);
 }
-.chapter-nav-card.next { text-align: right; }
+.chapter-nav-card.next {
+  text-align: right;
+  grid-column: 2;
+}
 .chapter-nav-label {
   font-size: 9px; letter-spacing: .15em;
   text-transform: uppercase; color: var(--muted);
@@ -525,6 +528,7 @@ body::before {
   .nav-links-sm { display: none; }
   .page-wrap, .page-with-toc { padding: 72px 1rem 4rem; }
   .chapter-nav { grid-template-columns: 1fr; }
+  .chapter-nav-card.next { grid-column: auto; }
   .mermaid,
   .mermaid svg {
     min-width: 640px;
