@@ -395,6 +395,19 @@ body::before {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+}
+
+.mermaid-wrap.show-toolbar .mermaid-toolbar,
+.mermaid-wrap.panning-mode .mermaid-toolbar,
+.mermaid-wrap:fullscreen .mermaid-toolbar,
+.mermaid-wrap.is-pseudo-fullscreen .mermaid-toolbar {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 .mermaid-toolbar .icon-btn {
@@ -641,6 +654,12 @@ body::before {
 /* ===== LIGHT THEME VISIBILITY FIXES ===== */
 /* Fix hardcoded #fff text that vanishes on parchment background */
 [data-theme="light"] .chapter-title-h1 { color: #1c1b18; }
+[data-theme="light"] .hero-h1 { color: #1c1b18; }
+[data-theme="light"] .sec-h2 { color: #1c1b18; }
+[data-theme="light"] .ch-title { color: #1c1b18; }
+[data-theme="light"] .sub-title { color: #1c1b18; }
+[data-theme="light"] .ch-card:hover { background: rgba(200,196,186,0.55); }
+[data-theme="light"] .sub-card { background: var(--surface); }
 [data-theme="light"] .prose h1,
 [data-theme="light"] .prose h2 { color: #1c1b18; }
 [data-theme="light"] .prose strong { color: #1c1b18; }
@@ -692,3 +711,26 @@ body::before {
 [data-theme="light"] .mermaid svg #arrowhead path,
 [data-theme="light"] .mermaid svg #crosshead path                   { fill: #6a635c !important; stroke: #6a635c !important; }
 [data-theme="light"] .mermaid svg .sequenceNumber                   { fill: #f0ede6 !important; }
+
+/* Fix mermaid FLOWCHART text color in light theme */
+[data-theme="light"] .mermaid svg text,
+[data-theme="light"] .mermaid svg tspan,
+[data-theme="light"] .mermaid svg .label,
+[data-theme="light"] .mermaid svg .label text,
+[data-theme="light"] .mermaid svg .nodeLabel,
+[data-theme="light"] .mermaid svg .flowchartTitleText,
+[data-theme="light"] .mermaid svg .cluster-label text,
+[data-theme="light"] .mermaid svg .edgeLabel span,
+[data-theme="light"] .mermaid svg .edgeLabel div,
+[data-theme="light"] .mermaid svg foreignObject span,
+[data-theme="light"] .mermaid svg foreignObject div {
+  fill: #1c1b18 !important;
+  color: #1c1b18 !important;
+}
+
+[data-theme="light"] .mermaid svg .edgeLabel,
+[data-theme="light"] .mermaid svg .edgeLabel rect,
+[data-theme="light"] .mermaid svg .labelBkg {
+  background: #f0ede6 !important;
+  fill: #f0ede6 !important;
+}

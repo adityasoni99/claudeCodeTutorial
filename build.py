@@ -456,8 +456,55 @@ mermaid.initialize({{
   }}
 }});
 
+function isLightTheme() {{
+  return document.documentElement.getAttribute('data-theme') === 'light';
+}}
+
+function applyFlowchartLightThemeFix(svg) {{
+  const role = (svg.getAttribute('aria-roledescription') || '').toLowerCase();
+  if (!role.includes('flowchart')) return;
+
+  const light = isLightTheme();
+  const textSelectors = [
+    'text',
+    'tspan',
+    '.label',
+    '.label text',
+    '.nodeLabel',
+    '.flowchartTitleText',
+    '.cluster-label text',
+    '.edgeLabel span',
+    '.edgeLabel div',
+    'foreignObject span',
+    'foreignObject div',
+  ].join(', ');
+
+  svg.querySelectorAll(textSelectors).forEach((el) => {{
+    if (light) {{
+      el.style.setProperty('fill', '#1c1b18', 'important');
+      el.style.setProperty('color', '#1c1b18', 'important');
+    }} else {{
+      el.style.removeProperty('fill');
+      el.style.removeProperty('color');
+    }}
+  }});
+
+  svg.querySelectorAll('.edgeLabel rect, .labelBkg').forEach((el) => {{
+    if (light) {{
+      el.style.setProperty('fill', '#f0ede6', 'important');
+      el.style.setProperty('background-color', '#f0ede6', 'important');
+    }} else {{
+      el.style.removeProperty('fill');
+      el.style.removeProperty('background-color');
+    }}
+  }});
+}}
+
 function enhanceMermaids() {{
   document.querySelectorAll('.mermaid-wrap').forEach((wrap) => {{
+    const existingSvg = wrap.querySelector('svg');
+    if (existingSvg) applyFlowchartLightThemeFix(existingSvg);
+
     if (wrap.dataset.enhanced === '1') return;
     wrap.dataset.enhanced = '1';
 
@@ -512,6 +559,16 @@ function enhanceMermaids() {{
       wrap.style.setProperty('--mermaid-pan-y', `${{y}}px`);
     }};
 
+    wrap.addEventListener('mouseenter', () => {{
+      wrap.classList.add('show-toolbar');
+    }});
+
+    wrap.addEventListener('mouseleave', () => {{
+      if (!wrap.classList.contains('panning-mode')) {{
+        wrap.classList.remove('show-toolbar');
+      }}
+    }});
+
     // Zoom controls
     zoomOut.addEventListener('click', () => setScale(getScale() - 0.1));
     zoomIn.addEventListener('click', () => setScale(getScale() + 0.1));
@@ -524,6 +581,9 @@ function enhanceMermaids() {{
     panIcon.addEventListener('click', () => {{
       panIcon.classList.toggle('active');
       wrap.classList.toggle('panning-mode');
+      if (wrap.classList.contains('panning-mode')) {{
+        wrap.classList.add('show-toolbar');
+      }}
     }});
 
     // Fullscreen
@@ -550,6 +610,8 @@ function enhanceMermaids() {{
     // Drag pan
     const svg = wrap.querySelector('svg');
     if (svg) {{
+      applyFlowchartLightThemeFix(svg);
+
       svg.addEventListener('mousedown', (e) => {{
         if (!wrap.classList.contains('panning-mode')) return;
         isPanning = true;
@@ -611,6 +673,7 @@ window.addEventListener('scroll', () => {{
     const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
     localStorage.setItem('theme', next);
     apply(next);
+    setTimeout(enhanceMermaids, 0);
   }});
 }})();
 </script>
@@ -1153,6 +1216,13 @@ footer {{
 footer span {{ font-size: 11px; color: var(--muted2); }}
 footer a {{ color: var(--muted); text-decoration: none; transition: color .2s; }}
 footer a:hover {{ color: var(--amber); }}
+/* ── Light theme overrides for landing page ── */
+[data-theme="light"] .hero-h1 {{ color: #1c1b18; }}
+[data-theme="light"] .sec-h2 {{ color: #1c1b18; }}
+[data-theme="light"] .ch-title {{ color: #1c1b18; }}
+[data-theme="light"] .sub-title {{ color: #1c1b18; }}
+[data-theme="light"] .ch-card:hover {{ background: rgba(200,196,186,0.55); }}
+[data-theme="light"] .sub-card {{ background: var(--surface); }}
 </style>
 </head>
 <body>
@@ -1308,8 +1378,55 @@ mermaid.initialize({{
   }}
 }});
 
+function isLightTheme() {{
+  return document.documentElement.getAttribute('data-theme') === 'light';
+}}
+
+function applyFlowchartLightThemeFix(svg) {{
+  const role = (svg.getAttribute('aria-roledescription') || '').toLowerCase();
+  if (!role.includes('flowchart')) return;
+
+  const light = isLightTheme();
+  const textSelectors = [
+    'text',
+    'tspan',
+    '.label',
+    '.label text',
+    '.nodeLabel',
+    '.flowchartTitleText',
+    '.cluster-label text',
+    '.edgeLabel span',
+    '.edgeLabel div',
+    'foreignObject span',
+    'foreignObject div',
+  ].join(', ');
+
+  svg.querySelectorAll(textSelectors).forEach((el) => {{
+    if (light) {{
+      el.style.setProperty('fill', '#1c1b18', 'important');
+      el.style.setProperty('color', '#1c1b18', 'important');
+    }} else {{
+      el.style.removeProperty('fill');
+      el.style.removeProperty('color');
+    }}
+  }});
+
+  svg.querySelectorAll('.edgeLabel rect, .labelBkg').forEach((el) => {{
+    if (light) {{
+      el.style.setProperty('fill', '#f0ede6', 'important');
+      el.style.setProperty('background-color', '#f0ede6', 'important');
+    }} else {{
+      el.style.removeProperty('fill');
+      el.style.removeProperty('background-color');
+    }}
+  }});
+}}
+
 function enhanceMermaids() {{
   document.querySelectorAll('.mermaid-wrap').forEach((wrap) => {{
+    const existingSvg = wrap.querySelector('svg');
+    if (existingSvg) applyFlowchartLightThemeFix(existingSvg);
+
     if (wrap.dataset.enhanced === '1') return;
     wrap.dataset.enhanced = '1';
 
@@ -1364,6 +1481,16 @@ function enhanceMermaids() {{
       wrap.style.setProperty('--mermaid-pan-y', `${{y}}px`);
     }};
 
+    wrap.addEventListener('mouseenter', () => {{
+      wrap.classList.add('show-toolbar');
+    }});
+
+    wrap.addEventListener('mouseleave', () => {{
+      if (!wrap.classList.contains('panning-mode')) {{
+        wrap.classList.remove('show-toolbar');
+      }}
+    }});
+
     // Zoom controls
     zoomOut.addEventListener('click', () => setScale(getScale() - 0.1));
     zoomIn.addEventListener('click', () => setScale(getScale() + 0.1));
@@ -1376,6 +1503,9 @@ function enhanceMermaids() {{
     panIcon.addEventListener('click', () => {{
       panIcon.classList.toggle('active');
       wrap.classList.toggle('panning-mode');
+      if (wrap.classList.contains('panning-mode')) {{
+        wrap.classList.add('show-toolbar');
+      }}
     }});
 
     // Fullscreen
@@ -1402,6 +1532,8 @@ function enhanceMermaids() {{
     // Drag pan
     const svg = wrap.querySelector('svg');
     if (svg) {{
+      applyFlowchartLightThemeFix(svg);
+
       svg.addEventListener('mousedown', (e) => {{
         if (!wrap.classList.contains('panning-mode')) return;
         isPanning = true;
@@ -1463,6 +1595,7 @@ window.addEventListener('scroll', () => {{
     const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
     localStorage.setItem('theme', next);
     apply(next);
+    setTimeout(enhanceMermaids, 0);
   }});
 }})();
 </script>

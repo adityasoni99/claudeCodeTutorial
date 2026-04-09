@@ -75,33 +75,6 @@
   color: #1c1b18;
 }
 
-[data-theme="light"] .hero-h1,
-[data-theme="light"] .sec-h2,
-[data-theme="light"] .ch-title,
-[data-theme="light"] .sub-title,
-[data-theme="light"] .chapter-title-h1,
-[data-theme="light"] .chapter-nav-title,
-[data-theme="light"] .sub-file-title,
-[data-theme="light"] .prose h1,
-[data-theme="light"] .prose h2,
-[data-theme="light"] .prose strong {
-  color: #1c1b18;
-}
-
-[data-theme="light"] .chapter-nav-card:hover {
-  background: rgba(200,196,186,.55);
-}
-
-[data-theme="light"] .prose a {
-  border-bottom-color: rgba(11,122,109,.3);
-}
-
-[data-theme="light"] .tag-core    { border-color: rgba(184,110,0,.28); }
-[data-theme="light"] .tag-tools   { border-color: rgba(11,122,109,.28); }
-[data-theme="light"] .tag-security{ border-color: rgba(31,126,31,.28); }
-[data-theme="light"] .tag-advanced{ border-color: rgba(107,61,186,.28); }
-[data-theme="light"] .tag-agents  { border-color: rgba(184,64,32,.28); }
-
 [data-theme="light"] .mermaid .node rect,
 [data-theme="light"] .mermaid .node circle,
 [data-theme="light"] .mermaid .node polygon,
@@ -109,55 +82,6 @@
 [data-theme="light"] .mermaid .label { fill: #1c1b18 !important; }
 [data-theme="light"] .mermaid .edgePath .path { stroke: #a8a09a !important; }
 [data-theme="light"] .mermaid .edgeLabel { background: #f0ede6 !important; color: #6a635c !important; }
-
-[data-theme="light"] .mermaid .label text,
-[data-theme="light"] .mermaid .cluster-label text,
-[data-theme="light"] .mermaid .nodeLabel,
-[data-theme="light"] .mermaid .nodeLabel p,
-[data-theme="light"] .mermaid .nodeLabel span,
-[data-theme="light"] .mermaid .edgeLabel .label,
-[data-theme="light"] .mermaid .edgeLabel .label text,
-[data-theme="light"] .mermaid .edgeLabel foreignObject div,
-[data-theme="light"] .mermaid .actor,
-[data-theme="light"] .mermaid .actor-line,
-[data-theme="light"] .mermaid .messageLine0,
-[data-theme="light"] .mermaid .messageLine1,
-[data-theme="light"] .mermaid .messageText,
-[data-theme="light"] .mermaid .loopText,
-[data-theme="light"] .mermaid .noteText,
-[data-theme="light"] .mermaid .sequenceNumber,
-[data-theme="light"] .mermaid .sectionTitle,
-[data-theme="light"] .mermaid .taskText,
-[data-theme="light"] .mermaid .taskTextOutsideRight,
-[data-theme="light"] .mermaid .taskTextOutsideLeft,
-[data-theme="light"] .mermaid .titleText,
-[data-theme="light"] .mermaid .labelText,
-[data-theme="light"] .mermaid .legend text,
-[data-theme="light"] .mermaid .grid .tick text,
-[data-theme="light"] .mermaid .pieTitleText,
-[data-theme="light"] .mermaid .slice text {
-  fill: #1c1b18 !important;
-  color: #1c1b18 !important;
-  stroke: none !important;
-}
-
-[data-theme="light"] .mermaid .note,
-[data-theme="light"] .mermaid .activation0,
-[data-theme="light"] .mermaid .activation1,
-[data-theme="light"] .mermaid .activation2,
-[data-theme="light"] .mermaid .activation3 {
-  fill: #e8e4da !important;
-  stroke: #b86e00 !important;
-}
-
-[data-theme="light"] .mermaid .loopLine,
-[data-theme="light"] .mermaid .messageLine0,
-[data-theme="light"] .mermaid .messageLine1,
-[data-theme="light"] .mermaid .signalLine,
-[data-theme="light"] .mermaid marker path {
-  stroke: #8a837a !important;
-  fill: #8a837a !important;
-}
 
 .theme-toggle {
   background: transparent;
@@ -174,10 +98,6 @@
 .theme-toggle:hover {
   border-color: var(--border-hover);
   color: var(--amber);
-}
-
-[data-theme="light"] .mermaid-toolbar .icon-btn:hover {
-  background: rgba(184,110,0,.09);
 }
 
 
@@ -475,6 +395,19 @@ body::before {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+}
+
+.mermaid-wrap.show-toolbar .mermaid-toolbar,
+.mermaid-wrap.panning-mode .mermaid-toolbar,
+.mermaid-wrap:fullscreen .mermaid-toolbar,
+.mermaid-wrap.is-pseudo-fullscreen .mermaid-toolbar {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 .mermaid-toolbar .icon-btn {
@@ -721,6 +654,12 @@ body::before {
 /* ===== LIGHT THEME VISIBILITY FIXES ===== */
 /* Fix hardcoded #fff text that vanishes on parchment background */
 [data-theme="light"] .chapter-title-h1 { color: #1c1b18; }
+[data-theme="light"] .hero-h1 { color: #1c1b18; }
+[data-theme="light"] .sec-h2 { color: #1c1b18; }
+[data-theme="light"] .ch-title { color: #1c1b18; }
+[data-theme="light"] .sub-title { color: #1c1b18; }
+[data-theme="light"] .ch-card:hover { background: rgba(200,196,186,0.55); }
+[data-theme="light"] .sub-card { background: var(--surface); }
 [data-theme="light"] .prose h1,
 [data-theme="light"] .prose h2 { color: #1c1b18; }
 [data-theme="light"] .prose strong { color: #1c1b18; }
@@ -772,3 +711,26 @@ body::before {
 [data-theme="light"] .mermaid svg #arrowhead path,
 [data-theme="light"] .mermaid svg #crosshead path                   { fill: #6a635c !important; stroke: #6a635c !important; }
 [data-theme="light"] .mermaid svg .sequenceNumber                   { fill: #f0ede6 !important; }
+
+/* Fix mermaid FLOWCHART text color in light theme */
+[data-theme="light"] .mermaid svg text,
+[data-theme="light"] .mermaid svg tspan,
+[data-theme="light"] .mermaid svg .label,
+[data-theme="light"] .mermaid svg .label text,
+[data-theme="light"] .mermaid svg .nodeLabel,
+[data-theme="light"] .mermaid svg .flowchartTitleText,
+[data-theme="light"] .mermaid svg .cluster-label text,
+[data-theme="light"] .mermaid svg .edgeLabel span,
+[data-theme="light"] .mermaid svg .edgeLabel div,
+[data-theme="light"] .mermaid svg foreignObject span,
+[data-theme="light"] .mermaid svg foreignObject div {
+  fill: #1c1b18 !important;
+  color: #1c1b18 !important;
+}
+
+[data-theme="light"] .mermaid svg .edgeLabel,
+[data-theme="light"] .mermaid svg .edgeLabel rect,
+[data-theme="light"] .mermaid svg .labelBkg {
+  background: #f0ede6 !important;
+  fill: #f0ede6 !important;
+}
