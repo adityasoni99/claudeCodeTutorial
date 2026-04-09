@@ -425,6 +425,7 @@ def html_page(
       <li><a href="{GITHUB_URL}" target="_blank">GitHub</a></li>
     </ul>
     {tag_html}
+    <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark theme" aria-label="Toggle theme">🌙</button>
   </div>
 </nav>
 {content_wrap}
@@ -595,6 +596,23 @@ window.addEventListener('scroll', () => {{
   const bar = document.getElementById('rb');
   if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
 }});
+
+// ── Theme toggle ──
+(function() {{
+  const html = document.documentElement;
+  const btn = document.getElementById('theme-toggle');
+  const saved = localStorage.getItem('theme');
+  const apply = (t) => {{
+    if (t === 'light') {{ html.setAttribute('data-theme','light'); if (btn) btn.textContent = '☀️'; }}
+    else {{ html.removeAttribute('data-theme'); if (btn) btn.textContent = '🌙'; }}
+  }};
+  apply(saved || 'dark');
+  if (btn) btn.addEventListener('click', () => {{
+    const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    localStorage.setItem('theme', next);
+    apply(next);
+  }});
+}})();
 </script>
 </body>
 </html>'''
@@ -1151,6 +1169,7 @@ footer a:hover {{ color: var(--amber); }}
       <li><a href="{GITHUB_URL}" target="_blank">GitHub ↗</a></li>
     </ul>
     <span class="nav-tag tag-core">19 Chapters</span>
+    <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark theme" aria-label="Toggle theme">🌙</button>
   </div>
 </nav>
 
@@ -1429,6 +1448,23 @@ window.addEventListener('scroll', () => {{
   const bar = document.getElementById('rb');
   if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
 }});
+
+// ── Theme toggle ──
+(function() {{
+  const html = document.documentElement;
+  const btn = document.getElementById('theme-toggle');
+  const saved = localStorage.getItem('theme');
+  const apply = (t) => {{
+    if (t === 'light') {{ html.setAttribute('data-theme','light'); if (btn) btn.textContent = '☀️'; }}
+    else {{ html.removeAttribute('data-theme'); if (btn) btn.textContent = '🌙'; }}
+  }};
+  apply(saved || 'dark');
+  if (btn) btn.addEventListener('click', () => {{
+    const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    localStorage.setItem('theme', next);
+    apply(next);
+  }});
+}})();
 </script>
 </body>
 </html>'''

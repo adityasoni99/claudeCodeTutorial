@@ -25,6 +25,7 @@
       <li><a href="https://github.com/adityasoni99/claudeCodeTutorial" target="_blank">GitHub</a></li>
     </ul>
     <span class="nav-tag tag-advanced">SUBSYSTEM</span>
+    <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark theme" aria-label="Toggle theme">🌙</button>
   </div>
 </nav>
 <div class="page-with-toc"><div class="prose">
@@ -396,6 +397,23 @@ window.addEventListener('scroll', () => {
   const bar = document.getElementById('rb');
   if (bar) bar.style.width = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight) * 100) + '%';
 });
+
+// ── Theme toggle ──
+(function() {
+  const html = document.documentElement;
+  const btn = document.getElementById('theme-toggle');
+  const saved = localStorage.getItem('theme');
+  const apply = (t) => {
+    if (t === 'light') { html.setAttribute('data-theme','light'); if (btn) btn.textContent = '☀️'; }
+    else { html.removeAttribute('data-theme'); if (btn) btn.textContent = '🌙'; }
+  };
+  apply(saved || 'dark');
+  if (btn) btn.addEventListener('click', () => {
+    const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    localStorage.setItem('theme', next);
+    apply(next);
+  });
+})();
 </script>
 </body>
 </html>

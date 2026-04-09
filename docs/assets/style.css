@@ -4,6 +4,10 @@
   --surface: #13141f;
   --surface2: #1a1c2a;
   --surface3: #1f2133;
+  --glass-bg: rgba(22, 26, 42, 0.58);
+  --glass-bg-strong: rgba(26, 31, 50, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 14px 38px rgba(0, 0, 0, 0.38);
   --border: rgba(255,255,255,0.07);
   --border-hover: rgba(245,166,35,0.4);
   --amber: #f5a623;
@@ -23,11 +27,89 @@
   --red: #ff6b6b;
 }
 
+/* ===== LIGHT THEME ===== */
+[data-theme="light"] {
+  --bg: #f0ede6;
+  --surface: #faf9f7;
+  --surface2: #e8e4da;
+  --surface3: #dedad0;
+  --glass-bg: rgba(250, 249, 247, 0.72);
+  --glass-bg-strong: rgba(240, 237, 230, 0.88);
+  --glass-border: rgba(0, 0, 0, 0.12);
+  --glass-shadow: 0 10px 28px rgba(0, 0, 0, 0.10);
+  --border: rgba(0,0,0,0.09);
+  --border-hover: rgba(180,100,10,0.45);
+  --amber: #b86e00;
+  --amber-dim: rgba(184,110,0,0.12);
+  --amber-glow: rgba(184,110,0,0.05);
+  --cyan: #0b7a6d;
+  --cyan-dim: rgba(11,122,109,0.10);
+  --text: #1c1b18;
+  --muted: #6a635c;
+  --muted2: #a8a09a;
+  --green: #1f7e1f;
+  --green-dim: rgba(31,126,31,0.10);
+  --purple: #6b3dba;
+  --purple-dim: rgba(107,61,186,0.10);
+  --coral: #b84020;
+  --coral-dim: rgba(184,64,32,0.10);
+  --red: #bb2222;
+}
+
+[data-theme="light"] body {
+  background:
+    radial-gradient(1200px 520px at 10% -20%, rgba(11,122,109,0.07), transparent 55%),
+    radial-gradient(900px 460px at 90% -15%, rgba(184,110,0,0.09), transparent 62%),
+    var(--bg);
+}
+
+[data-theme="light"] body::before { background: none; }
+
+[data-theme="light"] .prose code {
+  background: rgba(0,0,0,0.06);
+  border-color: rgba(0,0,0,0.12);
+}
+
+[data-theme="light"] .prose pre,
+[data-theme="light"] .prose pre code {
+  color: #1c1b18;
+}
+
+[data-theme="light"] .mermaid .node rect,
+[data-theme="light"] .mermaid .node circle,
+[data-theme="light"] .mermaid .node polygon,
+[data-theme="light"] .mermaid .node path { fill: #e8e4da !important; stroke: #b86e00 !important; }
+[data-theme="light"] .mermaid .label { fill: #1c1b18 !important; }
+[data-theme="light"] .mermaid .edgePath .path { stroke: #a8a09a !important; }
+[data-theme="light"] .mermaid .edgeLabel { background: #f0ede6 !important; color: #6a635c !important; }
+
+.theme-toggle {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  border-radius: 4px;
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 15px;
+  flex-shrink: 0;
+  transition: border-color .2s, color .2s;
+}
+.theme-toggle:hover {
+  border-color: var(--border-hover);
+  color: var(--amber);
+}
+
+
+
 /* ===== RESET ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; font-size: 16px; }
 body {
-  background: var(--bg);
+  background:
+    radial-gradient(1200px 520px at 10% -20%, rgba(92,240,208,0.10), transparent 55%),
+    radial-gradient(900px 460px at 90% -15%, rgba(245,166,35,0.12), transparent 62%),
+    var(--bg);
   color: var(--text);
   font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
   font-size: 14px;
@@ -49,9 +131,11 @@ body::before {
 .site-nav {
   position: fixed; top: 0; left: 0; right: 0;
   z-index: 100;
-  background: rgba(11,12,19,0.9);
+  background: var(--glass-bg-strong);
   backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
   display: flex; align-items: center; gap: 1rem;
   padding: 0 2rem;
   height: 52px;
@@ -240,8 +324,11 @@ body::before {
   border: 1px solid var(--border);
 }
 .prose pre {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 6px;
   padding: 1.25rem 1.5rem;
   overflow-x: auto;
@@ -262,8 +349,11 @@ body::before {
 
 /* ===== MERMAID ===== */
 .mermaid-wrap {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 6px;
   padding: 1.75rem;
   margin: 1.5rem 0;
@@ -299,10 +389,12 @@ body::before {
   align-items: center;
   gap: 8px;
   padding: 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: 6px;
-  background: rgba(11,12,19,0.92);
+  background: var(--glass-bg-strong);
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
 }
 
 .mermaid-toolbar .icon-btn {
@@ -408,16 +500,19 @@ body::before {
 .chapter-nav-card {
   display: block;
   padding: 1.2rem 1.5rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: 4px;
   text-decoration: none;
-  background: var(--surface);
+  background: var(--glass-bg);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   transition: border-color .2s, background .2s;
   position: relative;
 }
 .chapter-nav-card:hover {
   border-color: var(--border-hover);
-  background: var(--surface2);
+  background: rgba(33, 39, 62, 0.74);
 }
 .chapter-nav-card.next {
   text-align: right;
@@ -449,10 +544,13 @@ body::before {
 }
 .toc-sidebar {
   position: sticky; top: 72px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: 4px;
   padding: 1rem;
-  background: var(--surface);
+  background: var(--glass-bg);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   font-size: 11px;
 }
 .toc-title {
@@ -484,10 +582,12 @@ body::before {
   margin: 2rem 0;
 }
 .sub-file-card {
-  background: var(--surface);
+  background: var(--glass-bg);
   padding: 1.5rem;
   text-decoration: none;
   display: block;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   transition: background .2s;
   position: relative;
 }
@@ -513,11 +613,14 @@ body::before {
 
 /* ===== FOOTER ===== */
 .site-footer {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--glass-border);
   padding: 2rem 2rem;
   display: flex; align-items: center;
   justify-content: space-between; flex-wrap: wrap; gap: 1rem;
   font-size: 11px; color: var(--muted2);
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 .site-footer a { color: var(--muted); text-decoration: none; transition: color .2s; }
 .site-footer a:hover { color: var(--amber); }
@@ -534,3 +637,58 @@ body::before {
     min-width: 640px;
   }
 }
+
+/* ===== LIGHT THEME VISIBILITY FIXES ===== */
+/* Fix hardcoded #fff text that vanishes on parchment background */
+[data-theme="light"] .chapter-title-h1 { color: #1c1b18; }
+[data-theme="light"] .prose h1,
+[data-theme="light"] .prose h2 { color: #1c1b18; }
+[data-theme="light"] .prose strong { color: #1c1b18; }
+[data-theme="light"] .sub-file-title { color: #1c1b18; }
+[data-theme="light"] .chapter-nav-title { color: #1c1b18; }
+
+/* Fix nav card hover (hardcoded dark rgba) */
+[data-theme="light"] .chapter-nav-card:hover { background: rgba(200, 196, 186, 0.55); }
+
+/* Fix prose link underline (hardcoded dark-mode cyan rgba) */
+[data-theme="light"] .prose a { border-bottom-color: rgba(11,122,109,.3); }
+
+/* Fix tag borders (hardcoded dark-mode rgba) */
+[data-theme="light"] .tag-core    { border-color: rgba(184,110,0,.3); }
+[data-theme="light"] .tag-tools   { border-color: rgba(11,122,109,.3); }
+[data-theme="light"] .tag-security{ border-color: rgba(31,126,31,.3); }
+[data-theme="light"] .tag-advanced{ border-color: rgba(107,61,186,.3); }
+[data-theme="light"] .tag-agents  { border-color: rgba(184,64,32,.3); }
+
+/* Fix mermaid toolbar icon button hover/active backgrounds */
+[data-theme="light"] .mermaid-toolbar .icon-btn:hover {
+  background: rgba(184,110,0,0.09);
+}
+[data-theme="light"] .mermaid-toolbar .icon-btn:active,
+[data-theme="light"] .mermaid-toolbar .icon-btn.active {
+  background: rgba(184,110,0,0.16);
+  border-color: var(--amber);
+}
+
+/* Fix mermaid SEQUENCE diagram SVG inline dark styles */
+[data-theme="light"] .mermaid svg .actor                             { stroke: #0b7a6d !important; fill: #e8e4da !important; }
+[data-theme="light"] .mermaid svg text.actor > tspan                { fill: #1c1b18 !important; stroke: none !important; }
+[data-theme="light"] .mermaid svg .actor-line                        { stroke: rgba(0,0,0,0.25) !important; }
+[data-theme="light"] .mermaid svg .messageLine0                      { stroke: #6a635c !important; }
+[data-theme="light"] .mermaid svg .messageLine1                      { stroke: #6a635c !important; }
+[data-theme="light"] .mermaid svg .messageText                       { fill: #1c1b18 !important; stroke: none !important; }
+[data-theme="light"] .mermaid svg .labelBox                          { stroke: #0b7a6d !important; fill: #e8e4da !important; }
+[data-theme="light"] .mermaid svg .labelText,
+[data-theme="light"] .mermaid svg .labelText > tspan                { fill: #1c1b18 !important; stroke: none !important; }
+[data-theme="light"] .mermaid svg .loopText,
+[data-theme="light"] .mermaid svg .loopText > tspan                 { fill: #1c1b18 !important; stroke: none !important; }
+[data-theme="light"] .mermaid svg .loopLine                          { stroke: #0b7a6d !important; fill: transparent !important; }
+[data-theme="light"] .mermaid svg .note                              { stroke: #b86e00 !important; fill: #f5f0e0 !important; }
+[data-theme="light"] .mermaid svg .noteText,
+[data-theme="light"] .mermaid svg .noteText > tspan                 { fill: #1c1b18 !important; stroke: none !important; }
+[data-theme="light"] .mermaid svg .activation0,
+[data-theme="light"] .mermaid svg .activation1,
+[data-theme="light"] .mermaid svg .activation2                      { fill: #dedad0 !important; stroke: #0b7a6d !important; }
+[data-theme="light"] .mermaid svg #arrowhead path,
+[data-theme="light"] .mermaid svg #crosshead path                   { fill: #6a635c !important; stroke: #6a635c !important; }
+[data-theme="light"] .mermaid svg .sequenceNumber                   { fill: #f0ede6 !important; }
