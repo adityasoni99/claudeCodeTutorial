@@ -292,7 +292,8 @@ function applyFlowchartLightThemeFix(svg) {
   const role = (svg.getAttribute('aria-roledescription') || '').toLowerCase();
   if (!role.includes('flowchart')) return;
 
-  const light = isLightTheme();
+  const textColor = isLightTheme() ? '#1c1b18' : '#e8e4da';
+  const labelBg = isLightTheme() ? '#f0ede6' : '#0b0c13';
   const textSelectors = [
     'text',
     'tspan',
@@ -308,23 +309,13 @@ function applyFlowchartLightThemeFix(svg) {
   ].join(', ');
 
   svg.querySelectorAll(textSelectors).forEach((el) => {
-    if (light) {
-      el.style.setProperty('fill', '#1c1b18', 'important');
-      el.style.setProperty('color', '#1c1b18', 'important');
-    } else {
-      el.style.removeProperty('fill');
-      el.style.removeProperty('color');
-    }
+    el.style.setProperty('fill', textColor, 'important');
+    el.style.setProperty('color', textColor, 'important');
   });
 
   svg.querySelectorAll('.edgeLabel rect, .labelBkg').forEach((el) => {
-    if (light) {
-      el.style.setProperty('fill', '#f0ede6', 'important');
-      el.style.setProperty('background-color', '#f0ede6', 'important');
-    } else {
-      el.style.removeProperty('fill');
-      el.style.removeProperty('background-color');
-    }
+    el.style.setProperty('fill', labelBg, 'important');
+    el.style.setProperty('background-color', labelBg, 'important');
   });
 }
 
@@ -495,13 +486,16 @@ window.addEventListener('scroll', () => {
   const apply = (t) => {
     if (t === 'light') { html.setAttribute('data-theme','light'); if (btn) btn.textContent = '☀️'; }
     else { html.removeAttribute('data-theme'); if (btn) btn.textContent = '🌙'; }
+    requestAnimationFrame(() => {
+      enhanceMermaids();
+      setTimeout(enhanceMermaids, 0);
+    });
   };
   apply(saved || 'dark');
   if (btn) btn.addEventListener('click', () => {
     const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
     localStorage.setItem('theme', next);
     apply(next);
-    setTimeout(enhanceMermaids, 0);
   });
 })();
 </script>
